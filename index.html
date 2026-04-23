@@ -67,12 +67,16 @@
       border: 1px solid #3a3c42; position: relative; display: flex; flex-direction: column; gap: 15px;
       box-shadow: 0 10px 40px rgba(0,0,0,0.5);
     }
+
+    /* 管理画面用の拡張モーダル（PC対応レスポンシブ） */
+    .admin-modal { max-width: 90%; }
+    @media (min-width: 600px) {
+      .admin-modal { max-width: 800px; }
+    }
     
-    /* ×ボタンを右上に固定し、色をグレーに指定 */
     .login-modal .btn-close-login {
       position: absolute; top: 12px; right: 15px; background: transparent; border: none; 
-      color: #9ca3af; /* 視認性の良いグレー */
-      font-size: 28px; cursor: pointer; padding: 0; 
+      color: #9ca3af; font-size: 28px; cursor: pointer; padding: 0; 
       width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
       line-height: 1; z-index: 2010; font-weight: normal;
     }
@@ -80,7 +84,6 @@
 
     .login-modal input { width: 100%; padding: 12px; background: #0a0b0d; border: 1px solid #3a3c42; color: #fff; border-radius: 8px; font-size: 16px; text-align: center;}
     
-    /* ×ボタン「以外」の通常ボタンの設定 */
     .login-modal button:not(.btn-close-login) { 
       padding: 14px; border: none; border-radius: 8px; font-weight: bold; 
       color: #000; cursor: pointer; font-size: 15px; transition: opacity 0.2s; 
@@ -93,19 +96,31 @@
     .btn-stop { background: var(--red); width: 100%; }
     .status-text { font-size: 12px; color: var(--text-sub); text-align: center; margin-top: 5px;}
 
-    /* --- 管理用モーダルのスクロール領域 --- */
+    /* --- 管理用モーダルのスクロール領域 & タイルレイアウト --- */
     .scroll-area { 
-      max-height: 65vh; overflow-y: auto; padding-right: 5px; 
+      max-height: 75vh; overflow-y: auto; padding-right: 5px; 
       -ms-overflow-style: none; scrollbar-width: none; 
     }
     .scroll-area::-webkit-scrollbar { display: none; }
 
+    #admin-user-list { display: grid; gap: 15px; grid-template-columns: 1fr; }
+    @media (min-width: 600px) {
+      #admin-user-list { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+    }
+
     .admin-section { margin-bottom: 20px; border-bottom: 1px solid #3a3c42; padding-bottom: 15px; }
-    .admin-user-item { background: #0a0b0d; padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #3a3c42; }
-    .admin-user-item h4 { margin: 0 0 10px 0; font-size: 16px; color: var(--blue); }
-    .admin-ch-checks { display: flex; gap: 12px; flex-wrap: wrap; }
-    .admin-ch-checks label { font-size: 14px; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+    .admin-user-item { background: #0a0b0d; padding: 15px; border-radius: 8px; border: 1px solid #3a3c42; height: 100%; }
+    .admin-user-item h4 { margin: 0 0 12px 0; font-size: 16px; color: var(--blue); }
     .admin-ch-row { display: flex; justify-content: space-between; align-items: center; background: #0a0b0d; padding: 8px 12px; border-radius: 6px; border: 1px solid #3a3c42; margin-bottom: 8px; }
+
+    /* ピル(タグ)型 パーティー割り当てボタン */
+    .admin-ch-checks { display: flex; gap: 8px; flex-wrap: wrap; }
+    .ch-pill {
+      padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: bold; cursor: pointer;
+      transition: all 0.15s; user-select: none; border: 1.5px solid transparent;
+    }
+    .ch-pill.active { background: rgba(74, 222, 128, 0.15); color: var(--green); border-color: var(--green); }
+    .ch-pill.inactive { background: #1c1d21; color: var(--text-sub); border-color: #3a3c42; }
 
     /* --- ヘッダー --- */
     .header {
@@ -184,15 +199,22 @@
     .btn-action {
       width: 48px; height: 48px; border-radius: 50%; border: 1.5px solid;
       display: flex; align-items: center; justify-content: center; background: transparent;
-      touch-action: none; z-index: 10; transition: filter 0.1s; user-select: none;
+      touch-action: none; z-index: 10; transition: all 0.15s; user-select: none;
     }
     .btn-icon { width: 22px; height: 22px; fill: currentColor; pointer-events: none; }
+    
+    /* 薄めのグラデーション表現 (Talk/Listen) */
     .btn-listen { border-color: var(--green); color: var(--green); }
-    .btn-listen.active, .btn-listen.latched { background-color: var(--green); color: var(--bg-dark); }
-    .btn-listen.latched { box-shadow: 0 0 12px rgba(74, 222, 128, 0.4); }
+    .btn-listen.active, .btn-listen.latched { 
+      background: linear-gradient(to right, rgba(74, 222, 128, 0.45) 0%, rgba(74, 222, 128, 0.05) 100%); 
+      color: #fff; box-shadow: 0 0 15px rgba(74, 222, 128, 0.3); border-color: var(--green);
+    }
+    
     .btn-talk { border-color: var(--red); color: var(--red); }
-    .btn-talk.active, .btn-talk.latched { background-color: var(--red); color: var(--text-main); }
-    .btn-talk.latched { box-shadow: 0 0 12px rgba(248, 113, 113, 0.4); }
+    .btn-talk.active, .btn-talk.latched { 
+      background: linear-gradient(to left, rgba(248, 113, 113, 0.45) 0%, rgba(248, 113, 113, 0.05) 100%); 
+      color: #fff; box-shadow: 0 0 15px rgba(248, 113, 113, 0.3); border-color: var(--red);
+    }
 
     .ch-meter-container { height: 4px; background: #0a0b0d; margin: 4px 40px 0; border-radius: 2px; overflow: hidden; position: relative; opacity: 0.8; }
     .ch-meter-fill { height: 100%; width: 0%; transition: width 0.05s linear; background: linear-gradient(90deg, #4ade80 0%, #4ade80 60%, #eab308 80%, #f87171 100%); }
@@ -241,7 +263,7 @@
     </div>
 
     <div id="admin-overlay" class="overlay-base">
-      <div class="login-modal" style="max-width: 400px;">
+      <div class="login-modal admin-modal">
         <button class="btn-close-login" id="btn-close-admin">×</button>
         <h3 style="margin: 0 0 15px 0; text-align: center; color: var(--text-main);">管理メニュー</h3>
         
@@ -254,7 +276,7 @@
 
           <div>
             <h4 style="margin: 0 0 5px 0; color: var(--blue);">メンバー権限管理</h4>
-            <p style="font-size: 12px; color: var(--text-sub); margin-top: 0; margin-bottom: 10px;">ユーザーごとに表示を許可するパーティーを選択</p>
+            <p style="font-size: 12px; color: var(--text-sub); margin-top: 0; margin-bottom: 15px;">ユーザーごとに表示を許可するパーティーを選択</p>
             <div id="admin-user-list"></div>
           </div>
         </div>
@@ -746,12 +768,16 @@
       });
     }
 
+    // --- ピル（タグ）型の割り当てUIと、厳密な接続数のカウント ---
     function updateAdminList() {
       if (!state.isAdmin) return;
       els.adminUserList.innerHTML = '';
+      
       Object.keys(state.userAssignments).forEach(uid => {
         const peerId = Object.keys(state.users).find(p => state.users[p] === uid && state.peers.has(p));
-        const statusSpan = peerId ? `<span style="color:var(--green);font-size:11px;">(Online)</span>` : `<span style="color:var(--text-sub);font-size:11px;">(Offline)</span>`;
+        // 実際にDataConnectionがOpenになっているかを厳密にチェック
+        const isReallyOnline = peerId && state.dataConns[peerId] && state.dataConns[peerId].open;
+        const statusSpan = isReallyOnline ? `<span style="color:var(--green);font-size:11px;">(Online)</span>` : `<span style="color:var(--text-sub);font-size:11px;">(Offline)</span>`;
         
         const div = document.createElement('div');
         div.className = 'admin-user-item';
@@ -759,7 +785,8 @@
         let chHtml = `<div class="admin-ch-checks">`;
         channels.forEach(ch => {
           const isAssigned = state.userAssignments[uid].includes(ch.id);
-          chHtml += `<label><input type="checkbox" class="cb-assign" data-uid="${uid}" value="${ch.id}" ${isAssigned ? 'checked' : ''}> ${ch.name}</label>`;
+          const activeClass = isAssigned ? 'active' : 'inactive';
+          chHtml += `<div class="ch-pill ${activeClass}" data-uid="${uid}" data-chid="${ch.id}">${ch.name}</div>`;
         });
         chHtml += `</div>`;
         
@@ -767,15 +794,26 @@
         els.adminUserList.appendChild(div);
       });
 
-      document.querySelectorAll('.cb-assign').forEach(cb => {
-        cb.addEventListener('change', (e) => {
+      // ピルをクリックしたときのトグル処理
+      document.querySelectorAll('.ch-pill').forEach(pill => {
+        pill.addEventListener('click', (e) => {
           const targetUid = e.target.getAttribute('data-uid');
-          const assigned = Array.from(document.querySelectorAll(`.cb-assign[data-uid="${targetUid}"]:checked`)).map(el => el.value);
+          const chId = e.target.getAttribute('data-chid');
+          
+          let assigned = state.userAssignments[targetUid] || [];
+          if (assigned.includes(chId)) {
+            assigned = assigned.filter(id => id !== chId);
+            e.target.classList.replace('active', 'inactive');
+          } else {
+            assigned.push(chId);
+            e.target.classList.replace('inactive', 'active');
+          }
+          
           state.userAssignments[targetUid] = assigned;
           saveRoomState();
           
           const peerId = Object.keys(state.users).find(p => state.users[p] === targetUid && state.peers.has(p));
-          if(peerId && state.dataConns[peerId]) {
+          if(peerId && state.dataConns[peerId] && state.dataConns[peerId].open) {
              state.dataConns[peerId].send({ type: 'assign-channels', channels: assigned });
           }
         });
@@ -917,7 +955,10 @@
     function removePeer(peerId) {
       if (state.dataConns[peerId] && state.dataConns[peerId].pending) return; 
 
-      delete state.dataConns[peerId];
+      if (state.dataConns[peerId]) {
+          try { state.dataConns[peerId].close(); } catch(e){}
+          delete state.dataConns[peerId];
+      }
       state.peers.delete(peerId);
       delete state.remoteTalkStates[peerId];
       
@@ -925,6 +966,7 @@
         Object.values(state.mediaCalls[peerId].chGains || {}).forEach(gain => {
            try{ gain.disconnect(); }catch(e){}
         });
+        try { state.mediaCalls[peerId].audioEl.pause(); state.mediaCalls[peerId].audioEl.srcObject = null; } catch(e){}
         delete state.mediaCalls[peerId];
       }
       updateAudioRouting();
@@ -932,10 +974,17 @@
       if(state.isAdmin) updateAdminList();
     }
 
+    // --- 正確なオンライン台数のカウント ---
     function updateUserCount() {
       const isOnline = state.mySlot > 0;
-      const count = state.peers.size + 1; 
-      els.roleDisplay.textContent = state.isAdmin ? `ADMIN (${count})` : `MEMBER (${count})`;
+      
+      // 自分を1とし、通信が確立している(openな)端末だけを加算する
+      let activeCount = isOnline ? 1 : 0;
+      state.peers.forEach(p => {
+         if (state.dataConns[p] && state.dataConns[p].open) activeCount++;
+      });
+      
+      els.roleDisplay.textContent = state.isAdmin ? `ADMIN (${activeCount})` : `MEMBER (${activeCount})`;
       els.roleDisplay.style.color = isOnline ? 'var(--blue)' : 'var(--orange)';
       
       if(isOnline) {
@@ -1002,10 +1051,12 @@
       
       state.isAdmin = isAdmin;
       els.btnAdmin.style.display = isAdmin ? 'block' : 'none';
-      els.appTitle.textContent = isAdmin ? "YY-Talk (Admin)" : "YY-Talk";
       
       const roomId = els.hostIdInput.value || 'yytalk';
       const myName = els.joinUserIdInput.value || 'Unknown';
+      
+      // ヘッダーにルーム名を表示
+      els.appTitle.textContent = `YY-Talk - ${roomId}${isAdmin ? ' (Admin)' : ''}`;
       
       safeStorage.set('yytalk_user_profile', JSON.stringify({ roomId, userId: myName, isAdmin }));
       
@@ -1048,6 +1099,14 @@
           
           scanForPeers(roomId);
           setInterval(() => scanForPeers(roomId), 8000);
+          
+          // 定期的な死活監視＆お掃除
+          setInterval(() => {
+             state.peers.forEach(p => {
+                if (state.dataConns[p] && !state.dataConns[p].open) removePeer(p);
+             });
+             updateUserCount();
+          }, 10000);
         });
         
         state.peer.on('error', (err) => {
