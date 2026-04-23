@@ -291,14 +291,13 @@
       clear: () => { try { safeStorage.remove('yytalk_user_profile'); } catch(e) {} }
     };
 
-    // ★ ルームを独立させるため、接続時に固定したIDを保持する
     const state = {
       peer: null, localStream: null,
       mySlot: 0,
       joinTime: 0, 
-      roomId: '',      // 保存・表示用（日本語そのまま）
-      netRoomId: '',   // PeerJS通信用（安全な英数字）
-      myUserId: '',    // 自分のID
+      roomId: '',      
+      netRoomId: '',   
+      myUserId: '',    
       peers: new Set(),
       users: {},             
       registeredUsers: [],   
@@ -410,7 +409,6 @@
         } catch(e){}
       }
       
-      // 保存データが無い（新しいルーム）場合は初期状態を生成する
       const defaultChannels = [
         { id: 'ch1', name: 'ch1', type: 'PL' },
         { id: 'ch2', name: 'ch2', type: 'PL' },
@@ -571,7 +569,6 @@
       const source = audioCtx.createMediaStreamSource(callData.stream);
       callData.source = source;
       
-      // 縦型メーター用
       const peerAnalyser = audioCtx.createAnalyser();
       peerAnalyser.fftSize = 256;
       source.connect(peerAnalyser);
@@ -749,7 +746,6 @@
       });
     }
 
-    // --- マトリックス型UI ---
     function buildAdminMatrix() {
       if (!state.isAdmin) return;
       const container = document.getElementById('admin-matrix-container');
@@ -974,14 +970,8 @@
              if (state.isAdmin) buildAdminMatrix();
           }
           
-          // 古参判定（入室時刻が古い、または同じならスロットが若い人がリーダー）
-          let isSenior = state.joinTime < data.joinTime;
-          if (state.joinTime === data.joinTime) {
-             const remoteSlot = parseInt(conn.peer.split('-s')[1]);
-             isSenior = state.mySlot < remoteSlot;
-          }
-          
-          if (isSenior) {
+          const amILowestSlot = Array.from(state.peers).every(p => parseInt(p.split('-s')[1]) > state.mySlot);
+          if(amILowestSlot) {
             conn.send({ type: 'init-state', channels, assignments: state.userAssignments, registered: state.registeredUsers });
           }
           
@@ -1022,18 +1012,26 @@
           updateAudioRouting();
         }
         else if (data.type === 'assign-channels') {
-          if (!state.isAdmin || data.targetUid === state.myUserId) {
+          // ★修正ポイント: 自分宛ての変更だけをメイン画面に適用する
+          if (data.targetUid === state.myUserId) {
              applyAssignments(data.channels);
           }
-          if (state.isAdmin && data.targetUid) {
+          // 全員が内部データは更新する
+          if (data.targetUid) {
              state.userAssignments[data.targetUid] = data.channels;
-             document.querySelectorAll(`.matrix-toggle[data-uid="${data.targetUid}"]`).forEach(btn => {
-               if (data.channels.includes(btn.getAttribute('data-chid'))) {
-                 btn.classList.add('active');
-               } else {
-                 btn.classList.remove('active');
-               }
-             });
+             // 管理者ならマトリックス表の見た目も更新
+             if (state.isAdmin) {
+                 document.querySelectorAll(`.matrix-toggle[data-uid="${data.targetUid}"]`).forEach(btn => {
+                   if (data.channels.includes(btn.getAttribute('data-chid'))) {
+                     btn.classList.add('active');
+                   } else {
+                     btn.classList.remove('active');
+                   }
+                 });
+             }
+          } else {
+             // 互換性フォールバック
+             if (!state.isAdmin) applyAssignments(data.channels);
           }
           saveRoomState();
         }
@@ -1101,7 +1099,8 @@
          if (state.dataConns[p] && state.dataConns[p].open) activeCount++;
       });
       
-      els.roleDisplay.textContent = state.isAdmin ? `ADMIN (${activeCount})` : `MEMBER (${activeCount})`;
+      // ★ 右上の表示を ACTIVE (人数) に変更
+      els.roleDisplay.textContent = `ACTIVE (${activeCount})`;
       els.roleDisplay.style.color = isOnline ? 'var(--blue)' : 'var(--orange)';
       
       if(isOnline) {
@@ -1152,7 +1151,6 @@
       }
     }
 
-    // --- HTMLからの直接実行(302エラー)を排除し、安全にリスナー登録 ---
     const joinNetwork = async function(isAdmin) {
       const btn = isAdmin ? els.btnJoinAdmin : els.btnJoinMember;
       const originalText = btn.textContent;
@@ -1182,13 +1180,11 @@
       state.isAdmin = isAdmin;
       els.btnAdmin.style.display = isAdmin ? 'block' : 'none';
       
-      // ★ルーム機能の完全分離
       const rawRoomId = els.hostIdInput.value.trim() || 'yytalk';
       const myName = els.joinUserIdInput.value.trim() || 'Unknown';
       
       state.roomId = rawRoomId;
       state.myUserId = myName;
-      // 日本語のルーム名でも安全かつ一意な通信IDに変換
       state.netRoomId = 'yytalk-pro-' + encodeURIComponent(rawRoomId).replace(/%/g, '-');
       
       els.appTitle.textContent = `YY-Talk - ${rawRoomId}${isAdmin ? ' (Admin)' : ''}`;
@@ -1196,7 +1192,6 @@
       
       els.statusMsg.textContent = "データを読み込み中...";
       
-      // ルームに入室した瞬間にローカルのデータをロードする（ルームを跨いだ干渉を防止）
       loadRoomState(state.roomId);
       
       els.statusMsg.textContent = "空きポートを検索中...";
@@ -1216,7 +1211,6 @@
           return;
         }
         
-        // 独立した通信IDで繋ぐ
         const tryId = `${state.netRoomId}-s${slot}`;
         state.peer = new Peer(tryId, peerConfig);
         
@@ -1278,7 +1272,6 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-      // 画面読み込み直後にボタンのロックを解除してリスナーを登録
       els.btnJoinMember.addEventListener('click', () => joinNetwork(false));
       els.btnJoinAdmin.addEventListener('click', () => joinNetwork(true));
       els.btnJoinMember.textContent = "メンバーとして参加";
@@ -1286,7 +1279,6 @@
       els.btnJoinMember.disabled = false;
       els.btnJoinAdmin.disabled = false;
 
-      // 記憶しているユーザー名の復元
       const savedProfile = LocalProfile.get();
       if (savedProfile) {
         els.hostIdInput.value = savedProfile.roomId || '';
