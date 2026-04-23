@@ -68,12 +68,25 @@
       box-shadow: 0 10px 40px rgba(0,0,0,0.5);
     }
 
-    /* 管理画面用の拡張モーダル（PC対応レスポンシブ） */
-    .admin-modal { max-width: 90%; }
-    @media (min-width: 600px) {
-      .admin-modal { max-width: 800px; }
-    }
+    /* 管理画面用の拡張モーダル（PC対応レスポンシブ・2カラム化） */
+    .admin-modal { max-width: 90%; width: 90%; }
     
+    .scroll-area { 
+      max-height: 75vh; overflow-y: auto; padding-right: 5px; 
+      -ms-overflow-style: none; scrollbar-width: none; 
+    }
+    .scroll-area::-webkit-scrollbar { display: none; }
+
+    .admin-grid { display: flex; flex-direction: column; }
+    .admin-section { margin-bottom: 20px; border-bottom: 1px solid #3a3c42; padding-bottom: 15px; }
+    
+    @media (min-width: 800px) {
+      .admin-modal { max-width: 1000px; }
+      .admin-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 30px; }
+      .admin-section { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+      .admin-section:first-child { border-right: 1px solid #3a3c42; padding-right: 30px; }
+    }
+
     .login-modal .btn-close-login {
       position: absolute; top: 12px; right: 15px; background: transparent; border: none; 
       color: #9ca3af; font-size: 28px; cursor: pointer; padding: 0; 
@@ -96,24 +109,15 @@
     .btn-stop { background: var(--red); width: 100%; }
     .status-text { font-size: 12px; color: var(--text-sub); text-align: center; margin-top: 5px;}
 
-    /* --- 管理用モーダルのスクロール領域 & タイルレイアウト --- */
-    .scroll-area { 
-      max-height: 75vh; overflow-y: auto; padding-right: 5px; 
-      -ms-overflow-style: none; scrollbar-width: none; 
-    }
-    .scroll-area::-webkit-scrollbar { display: none; }
-
+    /* --- 管理画面UIパーツ --- */
     #admin-user-list { display: grid; gap: 15px; grid-template-columns: 1fr; }
     @media (min-width: 600px) {
-      #admin-user-list { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+      #admin-user-list { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
     }
-
-    .admin-section { margin-bottom: 20px; border-bottom: 1px solid #3a3c42; padding-bottom: 15px; }
     .admin-user-item { background: #0a0b0d; padding: 15px; border-radius: 8px; border: 1px solid #3a3c42; height: 100%; }
     .admin-user-item h4 { margin: 0 0 12px 0; font-size: 16px; color: var(--blue); }
     .admin-ch-row { display: flex; justify-content: space-between; align-items: center; background: #0a0b0d; padding: 8px 12px; border-radius: 6px; border: 1px solid #3a3c42; margin-bottom: 8px; }
 
-    /* ピル(タグ)型 パーティー割り当てボタン */
     .admin-ch-checks { display: flex; gap: 8px; flex-wrap: wrap; }
     .ch-pill {
       padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: bold; cursor: pointer;
@@ -153,14 +157,23 @@
       display: grid; grid-template-columns: 1fr; gap: 10px; 
     }
     @media (min-width: 600px) {
-      #channel-list-wrap { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
+      #channel-list-wrap { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 15px; }
     }
 
+    /* カードデザインと背景グラデーション */
     .channel-card {
-      background-color: var(--card-bg); border-radius: 10px; position: relative;
-      overflow: hidden; display: flex; flex-direction: column; transition: background-color 0.2s;
+      --bg-color: var(--card-bg);
+      background-color: var(--bg-color);
+      background-image: none;
+      border-radius: 10px; position: relative;
+      overflow: hidden; display: flex; flex-direction: column; transition: background 0.3s ease;
     }
-    .channel-card.expanded { background-color: var(--card-bg-expanded); }
+    .channel-card.expanded { --bg-color: var(--card-bg-expanded); }
+    
+    /* 状態に応じたグラデーション */
+    .channel-card.listen-on { background-image: linear-gradient(to right, rgba(74, 222, 128, 0.15) 0%, transparent 50%); }
+    .channel-card.talk-on { background-image: linear-gradient(to left, rgba(248, 113, 113, 0.15) 0%, transparent 50%); }
+    .channel-card.listen-on.talk-on { background-image: linear-gradient(to right, rgba(74, 222, 128, 0.15) 0%, transparent 30%, transparent 70%, rgba(248, 113, 113, 0.15) 100%); }
 
     .status-line-bg {
       position: absolute; left: 0; top: 10%; bottom: 10%; width: 4px;
@@ -187,49 +200,47 @@
       background: #ffffff; box-shadow: 0 0 8px rgba(0,0,0,0.6); cursor: pointer; margin-top: 3px; 
     }
 
-    .vol-info-row { display: none; padding: 0 20px; font-size: 12px; color: var(--text-sub); }
-    .channel-card.expanded .vol-info-row { display: flex; }
-
-    .main-controls { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; position: relative; }
-    .ch-info { text-align: center; flex: 1; }
+    .main-controls { display: flex; align-items: center; justify-content: space-between; padding: 15px; position: relative; }
+    .ch-info { text-align: center; flex: 1; padding: 0 10px; }
     
     .ch-name { font-size: 16px; font-weight: 500; margin-bottom: 2px; display: inline-block; padding: 2px 6px; border-radius: 4px; }
-    .ch-type { font-size: 10px; color: var(--text-sub); display: inline-block; padding: 2px 6px; border-radius: 4px; pointer-events: auto; }
+    .ch-type { font-size: 10px; color: var(--text-sub); display: inline-block; padding: 2px 6px; border-radius: 4px; }
 
+    /* --- 上質なボタンデザイン (大型化・マットなシャドウ) --- */
     .btn-action {
-      width: 48px; height: 48px; border-radius: 50%; border: 1.5px solid;
+      width: 56px; height: 56px; border-radius: 50%; border: 2px solid;
       display: flex; align-items: center; justify-content: center; background: transparent;
-      touch-action: none; z-index: 10; transition: all 0.15s; user-select: none;
+      touch-action: none; z-index: 10; transition: all 0.2s ease; user-select: none;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
     }
-    .btn-icon { width: 22px; height: 22px; fill: currentColor; pointer-events: none; }
+    .btn-icon { width: 26px; height: 26px; fill: currentColor; pointer-events: none; }
     
-    /* 薄めのグラデーション表現 (Talk/Listen) */
     .btn-listen { border-color: var(--green); color: var(--green); }
     .btn-listen.active, .btn-listen.latched { 
-      background: linear-gradient(to right, rgba(74, 222, 128, 0.45) 0%, rgba(74, 222, 128, 0.05) 100%); 
-      color: #fff; box-shadow: 0 0 15px rgba(74, 222, 128, 0.3); border-color: var(--green);
+      background-color: var(--green); color: var(--bg-dark); 
+      box-shadow: inset 0 2px 4px rgba(255,255,255,0.4), 0 4px 12px rgba(74, 222, 128, 0.4);
     }
     
     .btn-talk { border-color: var(--red); color: var(--red); }
     .btn-talk.active, .btn-talk.latched { 
-      background: linear-gradient(to left, rgba(248, 113, 113, 0.45) 0%, rgba(248, 113, 113, 0.05) 100%); 
-      color: #fff; box-shadow: 0 0 15px rgba(248, 113, 113, 0.3); border-color: var(--red);
+      background-color: var(--red); color: var(--text-main); 
+      box-shadow: inset 0 2px 4px rgba(255,255,255,0.3), 0 4px 12px rgba(248, 113, 113, 0.4);
     }
 
-    .ch-meter-container { height: 4px; background: #0a0b0d; margin: 4px 40px 0; border-radius: 2px; overflow: hidden; position: relative; opacity: 0.8; }
+    .ch-meter-container { height: 4px; background: #0a0b0d; margin: 0 45px 0; border-radius: 2px; overflow: hidden; position: relative; opacity: 0.8; }
     .ch-meter-fill { height: 100%; width: 0%; transition: width 0.05s linear; background: linear-gradient(90deg, #4ade80 0%, #4ade80 60%, #eab308 80%, #f87171 100%); }
-    .btn-expand { text-align: center; padding: 2px 0 8px; color: var(--text-sub); font-size: 16px; letter-spacing: 2px; cursor: pointer; }
+    .btn-expand { text-align: center; padding: 6px 0 8px; color: var(--text-sub); font-size: 16px; letter-spacing: 2px; cursor: pointer; }
 
     .master-meter-container { height: 8px; width: 100%; background: #1c1d21; position: relative; flex-shrink: 0; }
     .master-meter-fill { height: 100%; width: 0%; transition: width 0.05s linear; background: linear-gradient(90deg, #4ade80 0%, #4ade80 60%, #eab308 80%, #f87171 100%); }
 
     @media (max-height: 750px) {
       .channel-list-container { gap: 6px; padding: 6px 10px; }
-      .main-controls { padding: 8px 12px; }
-      .btn-action { width: 44px; height: 44px; }
-      .btn-icon { width: 20px; height: 20px; }
+      .main-controls { padding: 10px 12px; }
+      .btn-action { width: 50px; height: 50px; }
+      .btn-icon { width: 22px; height: 22px; }
       .ch-name { font-size: 15px; margin-bottom: 0; }
-      .btn-expand { padding: 0 0 4px; font-size: 14px; }
+      .btn-expand { padding: 4px 0 4px; font-size: 14px; }
     }
   </style>
 </head>
@@ -255,7 +266,7 @@
           <button class="btn-join-admin" id="btn-join-admin" onclick="joinNetwork(true)">管理者として参加</button>
         </div>
         
-        <button class="btn-stop" id="btn-stop">Disconnect (設定を消去して初期化)</button>
+        <button class="btn-stop" id="btn-stop">Disconnect</button>
         
         <div class="status-text" id="status-msg">待機中... ルーム名を入力して接続</div>
         <div class="status-text" style="color: var(--blue);">My ID: <span id="status-my-id">-</span></div>
@@ -267,14 +278,14 @@
         <button class="btn-close-login" id="btn-close-admin">×</button>
         <h3 style="margin: 0 0 15px 0; text-align: center; color: var(--text-main);">管理メニュー</h3>
         
-        <div class="scroll-area">
+        <div class="scroll-area admin-grid">
           <div class="admin-section">
             <h4 style="margin: 0 0 10px 0; color: var(--orange);">パーティーの作成と編集・削除</h4>
             <div id="admin-channel-list"></div>
             <button id="btn-add-ch" class="btn-login-trigger" style="border-color: var(--green); color: var(--green); width: 100%; padding: 10px; margin-top: 5px;">＋ 新規パーティー作成</button>
           </div>
 
-          <div>
+          <div class="admin-section" style="border-bottom: none;">
             <h4 style="margin: 0 0 5px 0; color: var(--blue);">メンバー権限管理</h4>
             <p style="font-size: 12px; color: var(--text-sub); margin-top: 0; margin-bottom: 15px;">ユーザーごとに表示を許可するパーティーを選択</p>
             <div id="admin-user-list"></div>
@@ -435,8 +446,11 @@
       if(state.talkStates[ch.id] === undefined) state.talkStates[ch.id] = false;
       if(state.channelVolumes[ch.id] === undefined) state.channelVolumes[ch.id] = 1.5;
 
+      const listenClass = state.listenStates[ch.id] ? 'listen-on' : '';
+      const talkClass = state.talkStates[ch.id] ? 'talk-on' : '';
+
       const card = document.createElement('div');
-      card.className = 'channel-card';
+      card.className = `channel-card ${listenClass} ${talkClass}`;
       card.id = `card-${ch.id}`;
       card.innerHTML = `
         <div class="status-line-bg"><div class="status-line-fill" id="meter-${ch.id}"></div></div>
@@ -449,7 +463,6 @@
           </div>
           <svg class="vol-icon" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
         </div>
-        <div class="vol-info-row"><span>Volume</span></div>
         <div class="main-controls">
           <div class="btn-action btn-listen ${state.listenStates[ch.id] ? 'active latched' : ''}" id="listen-${ch.id}">${iconSpeaker}</div>
           <div class="ch-info">
@@ -670,11 +683,15 @@
 
       function applyState(active) {
         let changed = false;
+        const card = document.getElementById(`card-${channelId}`);
+        
         if (type === 'talk' && state.talkStates[channelId] !== active) {
           state.talkStates[channelId] = active; changed = true;
+          if (card) { if(active) card.classList.add('talk-on'); else card.classList.remove('talk-on'); }
         }
         if (type === 'listen' && state.listenStates[channelId] !== active) {
           state.listenStates[channelId] = active; changed = true;
+          if (card) { if(active) card.classList.add('listen-on'); else card.classList.remove('listen-on'); }
         }
         updateAudioRouting();
         if (changed && type === 'talk') syncTalkStates();
@@ -749,6 +766,7 @@
 
           saveRoomState();
           syncChannelInfo();
+          updateAdminList(); // ピルUIへ即時反映
         });
       });
 
@@ -768,14 +786,12 @@
       });
     }
 
-    // --- ピル（タグ）型の割り当てUIと、厳密な接続数のカウント ---
     function updateAdminList() {
       if (!state.isAdmin) return;
       els.adminUserList.innerHTML = '';
       
       Object.keys(state.userAssignments).forEach(uid => {
         const peerId = Object.keys(state.users).find(p => state.users[p] === uid && state.peers.has(p));
-        // 実際にDataConnectionがOpenになっているかを厳密にチェック
         const isReallyOnline = peerId && state.dataConns[peerId] && state.dataConns[peerId].open;
         const statusSpan = isReallyOnline ? `<span style="color:var(--green);font-size:11px;">(Online)</span>` : `<span style="color:var(--text-sub);font-size:11px;">(Offline)</span>`;
         
@@ -794,7 +810,6 @@
         els.adminUserList.appendChild(div);
       });
 
-      // ピルをクリックしたときのトグル処理
       document.querySelectorAll('.ch-pill').forEach(pill => {
         pill.addEventListener('click', (e) => {
           const targetUid = e.target.getAttribute('data-uid');
@@ -831,6 +846,7 @@
             card.style.display = 'none';
             state.listenStates[ch.id] = false;
             state.talkStates[ch.id] = false;
+            card.classList.remove('listen-on', 'talk-on');
             const lBtn = document.getElementById(`listen-${ch.id}`);
             const tBtn = document.getElementById(`talk-${ch.id}`);
             if(lBtn) lBtn.classList.remove('active', 'latched');
@@ -974,11 +990,9 @@
       if(state.isAdmin) updateAdminList();
     }
 
-    // --- 正確なオンライン台数のカウント ---
     function updateUserCount() {
       const isOnline = state.mySlot > 0;
       
-      // 自分を1とし、通信が確立している(openな)端末だけを加算する
       let activeCount = isOnline ? 1 : 0;
       state.peers.forEach(p => {
          if (state.dataConns[p] && state.dataConns[p].open) activeCount++;
@@ -1055,9 +1069,7 @@
       const roomId = els.hostIdInput.value || 'yytalk';
       const myName = els.joinUserIdInput.value || 'Unknown';
       
-      // ヘッダーにルーム名を表示
       els.appTitle.textContent = `YY-Talk - ${roomId}${isAdmin ? ' (Admin)' : ''}`;
-      
       safeStorage.set('yytalk_user_profile', JSON.stringify({ roomId, userId: myName, isAdmin }));
       
       els.statusMsg.textContent = "空きポートを検索中...";
@@ -1100,7 +1112,6 @@
           scanForPeers(roomId);
           setInterval(() => scanForPeers(roomId), 8000);
           
-          // 定期的な死活監視＆お掃除
           setInterval(() => {
              state.peers.forEach(p => {
                 if (state.dataConns[p] && !state.dataConns[p].open) removePeer(p);
