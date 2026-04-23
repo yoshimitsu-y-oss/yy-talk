@@ -305,8 +305,8 @@
         <input id="join-userid" type="text" placeholder="ユーザーID (例: Cam1)">
         
         <div style="display: flex; flex-direction: column; gap: 10px;">
-          <button class="btn-join-member" id="btn-join-member" onclick="joinNetwork(false)">メンバーとして参加</button>
-          <button class="btn-join-admin" id="btn-join-admin" onclick="joinNetwork(true)">管理者として参加</button>
+          <button class="btn-join-member" id="btn-join-member" disabled>システム準備中...</button>
+          <button class="btn-join-admin" id="btn-join-admin" disabled>システム準備中...</button>
         </div>
         
         <button class="btn-stop" id="btn-stop">Disconnect</button>
@@ -780,7 +780,7 @@
       });
     }
 
-    // --- マトリックス型UI (クロスポイント権限管理) ---
+    // --- ★バグ修正★ マトリックス型UIの「スムーズな同期」処理 ---
     function updateAdminMatrix() {
       if (!state.isAdmin) return;
       const container = document.getElementById('admin-matrix-container');
@@ -837,6 +837,7 @@
       html += `</tbody></table></div>`;
       container.innerHTML = html;
 
+      // クロスポイントを押した際の処理
       container.querySelectorAll('.matrix-toggle').forEach(btn => {
         btn.onclick = (e) => {
           const uid = e.target.getAttribute('data-uid');
@@ -854,10 +855,18 @@
           state.userAssignments[uid] = assigned;
           saveRoomState();
           
-          const peerId = Object.keys(state.users).find(p => state.users[p] === uid && state.peers.has(p));
-          if(peerId && state.dataConns[peerId] && state.dataConns[peerId].open) {
-             state.dataConns[peerId].send({ type: 'assign-channels', channels: assigned });
+          // ★修正ポイント: 変更した対象が「自分自身」だった場合、自分のメイン画面に即座に反映させる
+          const myUid = els.joinUserIdInput.value || 'Anonymous';
+          if (uid === myUid) {
+             applyAssignments(assigned);
           }
+          
+          // ★修正ポイント: 自分や対象者だけでなく、他の管理者含めた全員に「権限が変わった」とブロードキャスト送信する
+          Object.values(state.dataConns).forEach(conn => {
+             if(conn && conn.open) {
+                conn.send({ type: 'assign-channels', channels: assigned, targetUid: uid });
+             }
+          });
         };
       });
 
@@ -996,7 +1005,6 @@
              saveRoomState();
           }
           
-          // ★修正ポイント: 古いスロットの端末だけが送信（複数管理者のバグ防止）
           const amILowestSlot = Array.from(state.peers).every(p => parseInt(p.split('-s')[1]) > state.mySlot);
           if(amILowestSlot) {
             conn.send({ type: 'init-state', channels, assignments: state.userAssignments, registered: state.registeredUsers });
@@ -1030,8 +1038,26 @@
           state.remoteTalkStates[conn.peer] = data.states;
           updateAudioRouting();
         }
-        else if (data.type === 'assign-channels' && !state.isAdmin) {
-          applyAssignments(data.channels);
+        else if (data.type === 'assign-channels') {
+          // ★修正ポイント: 自分宛てに変更が飛んできた場合、または管理者権限を持たない一般メンバーの場合は即座にメインUIを更新する
+          const myUid = els.joinUserIdInput.value || 'Anonymous';
+          if (!state.isAdmin || data.targetUid === myUid) {
+             applyAssignments(data.channels);
+          }
+          
+          // 管理者なら、送られてきた他人の変更内容を自分のマトリックスにも同期させる
+          if (state.isAdmin && data.targetUid) {
+             state.userAssignments[data.targetUid] = data.channels;
+             
+             // 画面全体を再描画すると重いため、対象のマスのクラス（緑色）だけをスムーズに切り替える
+             document.querySelectorAll(`.matrix-toggle[data-uid="${data.targetUid}"]`).forEach(btn => {
+               if (data.channels.includes(btn.getAttribute('data-chid'))) {
+                 btn.classList.add('active');
+               } else {
+                 btn.classList.remove('active');
+               }
+             });
+          }
           saveRoomState();
         }
         else if (data.type === 'add-channel') {
@@ -1089,7 +1115,6 @@
       }
       updateAudioRouting();
       updateUserCount();
-      if(state.isAdmin) updateAdminMatrix();
     }
 
     function updateUserCount() {
@@ -1106,6 +1131,18 @@
       if(isOnline) {
         els.btnLoginShow.textContent = "Connected";
         els.btnLoginShow.classList.add('online');
+      }
+      
+      if (state.isAdmin) {
+         document.querySelectorAll('.admin-matrix th').forEach(th => {
+            const uidSpan = th.querySelector('span[style*="font-weight:bold"]');
+            if(uidSpan) {
+               const uid = uidSpan.textContent;
+               const isOnline = Array.from(state.peers).some(p => state.users[p] === uid && state.dataConns[p] && state.dataConns[p].open);
+               const dot = th.querySelector('span:first-child');
+               if(dot) dot.style.color = isOnline ? 'var(--green)' : 'var(--text-sub)';
+            }
+         });
       }
     }
 
@@ -1139,7 +1176,8 @@
       }
     }
 
-    window.joinNetwork = async function(isAdmin) {
+    // --- HTMLからの直接実行(302エラー)を排除し、安全にリスナー登録 ---
+    const joinNetwork = async function(isAdmin) {
       const btn = isAdmin ? els.btnJoinAdmin : els.btnJoinMember;
       const originalText = btn.textContent;
       
@@ -1172,7 +1210,11 @@
       const myName = els.joinUserIdInput.value || 'Unknown';
       
       els.appTitle.textContent = `YY-Talk - ${roomId}${isAdmin ? ' (Admin)' : ''}`;
-      safeStorage.set('yytalk_user_profile', JSON.stringify({ roomId, userId: myName, isAdmin }));
+      
+      els.statusMsg.textContent = "データを読み込み中...";
+      
+      // ルームに最初に入る時のためにローカルからデータをロード
+      loadRoomState(roomId);
       
       els.statusMsg.textContent = "空きポートを検索中...";
       btn.textContent = "サーバー接続中...";
@@ -1199,10 +1241,6 @@
           els.statusMsg.textContent = "接続完了。仲間を探しています...";
           setTimeout(() => els.loginOverlay.style.display = 'none', 500);
           
-          if (slot === 1) {
-             loadRoomState(roomId);
-          }
-
           updateUserCount();
           btn.disabled = false;
           btn.textContent = originalText;
@@ -1229,7 +1267,7 @@
             if (err.type === 'unavailable-id') {
               slot++; 
               state.peer.destroy();
-              setTimeout(tryConnectSlot, 400);
+              setTimeout(tryConnectSlot, 400); 
             } else {
               console.error(err);
               els.statusMsg.textContent = "接続エラー: " + err.type;
@@ -1255,13 +1293,22 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
+      // 画面読み込み直後にボタンのロックを解除してリスナーを登録
+      els.btnJoinMember.addEventListener('click', () => joinNetwork(false));
+      els.btnJoinAdmin.addEventListener('click', () => joinNetwork(true));
+      els.btnJoinMember.textContent = "メンバーとして参加";
+      els.btnJoinAdmin.textContent = "管理者として参加";
+      els.btnJoinMember.disabled = false;
+      els.btnJoinAdmin.disabled = false;
+
+      // 記憶しているユーザー名の復元
       const savedProfile = safeStorage.get('yytalk_user_profile');
       if (savedProfile) {
         try {
           const profile = JSON.parse(savedProfile);
-          els.hostIdInput.value = profile.roomId;
-          els.joinUserIdInput.value = profile.userId;
-        } catch(e) {}
+          els.hostIdInput.value = profile.roomId || '';
+          els.joinUserIdInput.value = profile.userId || '';
+        } catch(e){}
       }
     });
 
