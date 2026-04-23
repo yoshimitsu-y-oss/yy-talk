@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>YY-Talk - PRO Matrix</title>
+  <title>YY-Talk - PRO Cloud Matrix</title>
   
   <script>
     window.onerror = function(message, source, lineno) {
@@ -17,7 +17,7 @@
     :root {
       --bg-dark: #0a0b0d; --card-bg: #1c1d21; --card-bg-expanded: #24262b;
       --text-main: #ffffff; --text-sub: #7a7e85;
-      --green: #4ade80; --red: #ef4444; /* より深みのある上質な赤に変更 */
+      --green: #4ade80; --red: #dc2626;
       --orange: #f97316; --blue: #3b82f6;
     }
 
@@ -53,8 +53,13 @@
       position: absolute; inset: 0; background: rgba(0,0,0,0.85); display: none;
       align-items: center; justify-content: center; flex-direction: column;
       backdrop-filter: blur(4px); z-index: 1000;
+      overflow-y: auto; 
     }
     
+    @media (max-height: 700px) {
+      .overlay-base { align-items: flex-start; padding: 20px 0; }
+    }
+
     #login-overlay { z-index: 2000; }
     #audio-overlay { z-index: 1100; }
     
@@ -66,7 +71,7 @@
     .login-modal {
       background: var(--card-bg); padding: 25px 20px; border-radius: 12px; width: 90%; max-width: 340px;
       border: 1px solid #3a3c42; position: relative; display: flex; flex-direction: column; gap: 15px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5); margin: auto; 
     }
     
     .login-modal .btn-close-login {
@@ -116,42 +121,33 @@
       background-color: #1c1d21; color: var(--text-sub); font-weight: normal; position: sticky; top: 0; z-index: 5;
     }
     
-    /* 斜線と文字配置のトリック */
     .diagonal-header {
       position: relative; min-width: 260px; min-height: 50px;
-      /* 左下から右上への斜線 */
       background: linear-gradient(to top right, #1c1d21 49.2%, #3a3c42 49.2%, #3a3c42 50.8%, #1c1d21 50.8%);
     }
     .diagonal-header .dh-member { position: absolute; top: 8px; right: 15px; font-weight: bold; color: var(--text-main); }
     .diagonal-header .dh-party { position: absolute; bottom: 8px; left: 15px; font-weight: bold; color: var(--text-main); }
 
-    /* 横線をパーティー名の下まで貫通させる */
     .admin-matrix td.ch-cell {
-      text-align: left; background-color: #0a0b0d;
-      display: flex; gap: 8px; align-items: center; justify-content: space-between;
-      min-width: 260px; 
-      border-bottom: none; border-right: 1px solid #3a3c42; border-top: none; border-left: none;
-      /* height100%にしてtdの枠と合わせる */
-      height: 100%; 
+      text-align: left; background-color: #0a0b0d; min-width: 260px; padding: 10px;
     }
     
     .matrix-toggle {
       width: 26px; height: 26px; border-radius: 50%; margin: 0 auto;
       background: #1c1d21; border: 2px solid #3a3c42;
-      cursor: pointer; transition: 0.2s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+      cursor: pointer; transition: 0.1s ease-in-out; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
     }
     .matrix-toggle.active {
       background: var(--green); border-color: var(--green); box-shadow: 0 0 10px rgba(74, 222, 128, 0.4);
     }
     
-    /* 上質な赤色の削除ボタン */
     .btn-delete-col, .btn-delete-row {
-      background: rgba(239, 68, 68, 0.1); color: var(--red); border: 1px solid var(--red); 
-      border-radius: 4px; cursor: pointer; padding: 4px 8px; font-size: 11px;
-      transition: all 0.2s; font-weight: bold;
+      background: var(--red); color: #fff; border: none; 
+      border-radius: 4px; cursor: pointer; padding: 5px 8px; font-size: 11px;
+      transition: all 0.2s; font-weight: bold; box-shadow: 0 0 6px rgba(220, 38, 38, 0.5);
     }
     .btn-delete-col:hover, .btn-delete-row:hover {
-      background: var(--red); color: #fff; box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+      box-shadow: 0 0 10px rgba(220, 38, 38, 0.8); filter: brightness(1.1);
     }
 
     /* --- ヘッダー --- */
@@ -173,7 +169,7 @@
     .btn-login-trigger.online { border-color: var(--blue); color: var(--blue); }
     .btn-admin-trigger { border-color: var(--green); color: var(--green); display: none; }
 
-    /* --- チャンネルリスト (レスポンシブ対応) --- */
+    /* --- チャンネルリスト --- */
     .channel-list-container {
       flex: 1; overflow-y: auto; padding: 10px 10px 20px; 
       display: flex; flex-direction: column; gap: 10px; 
@@ -188,7 +184,6 @@
       #channel-list-wrap { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 15px; }
     }
 
-    /* 背景グラデーション制御用のカードデザイン */
     .channel-card {
       background-color: var(--card-bg);
       border-radius: 10px; position: relative;
@@ -196,7 +191,6 @@
     }
     .channel-card.expanded { background-color: var(--card-bg-expanded); }
     
-    /* 疑似要素を使ったスムーズな背景グラデーション */
     .channel-card::before, .channel-card::after {
       content: ""; position: absolute; top: 0; bottom: 0; width: 50%; opacity: 0; 
       transition: opacity 0.3s ease; pointer-events: none; z-index: 0;
@@ -207,7 +201,6 @@
     .channel-card.listen-on::before { opacity: 1; }
     .channel-card.talk-on::after { opacity: 1; }
     
-    /* 中身を疑似要素の上に持ってくる */
     .channel-card > * { position: relative; z-index: 1; }
 
     .status-line-bg {
@@ -241,7 +234,7 @@
     .ch-name { font-size: 16px; font-weight: 500; margin-bottom: 2px; display: inline-block; padding: 2px 6px; border-radius: 4px; }
     .ch-type { font-size: 10px; color: var(--text-sub); display: inline-block; padding: 2px 6px; border-radius: 4px; pointer-events: auto; }
 
-    /* --- 上質なボタンデザイン (大型化・マットなシャドウ・スライド最適化) --- */
+    /* 上質なボタンデザイン */
     .btn-action {
       width: 56px; height: 56px; border-radius: 50%; border: 2px solid;
       display: flex; align-items: center; justify-content: center; background: #1c1d21;
@@ -260,7 +253,7 @@
     .btn-talk { border-color: var(--red); color: var(--red); }
     .btn-talk.active, .btn-talk.latched { 
       background-color: var(--red); color: var(--text-main); 
-      box-shadow: inset 0 2px 4px rgba(255,255,255,0.3), 0 4px 15px rgba(239, 68, 68, 0.5);
+      box-shadow: inset 0 2px 4px rgba(255,255,255,0.3), 0 4px 15px rgba(220, 38, 38, 0.5);
     }
 
     .ch-meter-container { height: 4px; background: #0a0b0d; margin: 0 45px 0; border-radius: 2px; overflow: hidden; position: relative; opacity: 0.8; }
@@ -272,13 +265,18 @@
 
     /* --- スマホ横向き (ランドスケープ) 対応 --- */
     @media (orientation: landscape) and (max-height: 600px) {
-      .app-container { height: 100vh; border-radius: 0; border: none; }
-      .header { padding: 6px 15px; }
-      .channel-list-container { padding: 5px; }
-      .main-controls { padding: 6px 10px; }
-      .btn-action { width: 46px; height: 46px; }
-      .login-modal { max-height: 90vh; overflow-y: auto; padding: 15px; }
-      .admin-modal .scroll-area { max-height: 65vh; }
+      .app-container { height: 100dvh; max-height: none; border-radius: 0; border: none; }
+      .header { padding: 4px 15px; }
+      .channel-list-container { padding: 5px 10px; gap: 5px; }
+      .main-controls { padding: 5px 10px; }
+      .btn-action { width: 44px; height: 44px; }
+      .btn-icon { width: 20px; height: 20px; }
+      .ch-name { font-size: 14px; margin-bottom: 0; }
+      .btn-expand { padding: 2px 0; font-size: 12px; }
+      
+      .login-modal { max-height: 95vh; overflow-y: auto; padding: 15px; }
+      .admin-modal { max-width: 100%; }
+      .scroll-area { max-height: calc(95vh - 80px); }
     }
   </style>
 </head>
@@ -318,7 +316,7 @@
         
         <div class="scroll-area">
           <div id="admin-matrix-container"></div>
-          <button id="btn-add-ch" style="background:transparent; border:1px dashed var(--green); color:var(--green); width:100%; padding:10px; margin-top:15px; border-radius:8px; cursor:pointer; font-weight:bold; transition: background 0.2s;">＋ 新規パーティーを追加</button>
+          <button id="btn-add-ch" style="background:transparent; border:1px solid var(--green); color:var(--green); width:100%; padding:10px; margin-top:15px; border-radius:8px; cursor:pointer; font-weight:bold; transition: background 0.2s;">＋ 新規パーティーを追加</button>
         </div>
       </div>
     </div>
@@ -345,10 +343,28 @@
   </div>
 
   <script>
-    const safeStorage = {
-      get: (key) => { try { return localStorage.getItem(key); } catch(e) { return null; } },
-      set: (key, val) => { try { localStorage.setItem(key, val); } catch(e) {} },
-      remove: (key) => { try { localStorage.removeItem(key); } catch(e) {} }
+    // --- クラウドストレージ アダプター (KVDB.io を利用した無料オープンAPI) ---
+    // ※実稼働時はFirebaseなどに差し替えてください
+    const CloudStore = {
+      baseUrl: 'https://kvdb.io/bucket/yytalk-pro-cloud/room_',
+      async save(roomId, data) {
+        try {
+          await fetch(this.baseUrl + roomId, {
+            method: 'POST',
+            body: JSON.stringify(data)
+          });
+        } catch(e) { console.warn("Cloud save failed", e); }
+      },
+      async load(roomId) {
+        try {
+          const res = await fetch(this.baseUrl + roomId);
+          if (res.ok) {
+            const text = await res.text();
+            return text ? JSON.parse(text) : null;
+          }
+        } catch(e) { console.warn("Cloud load failed", e); }
+        return null;
+      }
     };
 
     const state = {
@@ -405,7 +421,7 @@
     
     els.btnAdmin.onclick = () => { 
       if (!state.isAdmin) return;
-      updateAdminMatrix();
+      updateAdminMatrix(); // パッチパネルを開く時だけ全体描画
       els.adminOverlay.style.display = 'flex'; 
     };
     els.btnCloseAdmin.onclick = () => { els.adminOverlay.style.display = 'none'; };
@@ -413,13 +429,40 @@
     const iconSpeaker = `<svg class="btn-icon" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
     const iconMic = `<svg class="btn-icon" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>`;
 
+    // --- クラウドへの保存 (デバウンス処理付きで負荷軽減) ---
+    let cloudSaveTimer = null;
     function saveRoomState() {
       const roomId = els.hostIdInput.value || 'yytalk';
-      safeStorage.set('yytalk_room_' + roomId, JSON.stringify({ 
+      const dataToSave = { 
         channels, 
         userAssignments: state.userAssignments,
         registeredUsers: state.registeredUsers
-      }));
+      };
+      // ローカルバックアップも念のため残す
+      try { localStorage.setItem('yytalk_room_' + roomId, JSON.stringify(dataToSave)); } catch(e){}
+      
+      // 連続タップ時は通信せず、1秒操作が止まったらクラウドへ送る
+      clearTimeout(cloudSaveTimer);
+      cloudSaveTimer = setTimeout(() => {
+         CloudStore.save(roomId, dataToSave);
+      }, 1000);
+    }
+
+    async function loadRoomStateCloud(roomId) {
+      els.statusMsg.textContent = "クラウドから設定を取得中...";
+      const data = await CloudStore.load(roomId);
+      if (data && data.channels) {
+         resetAndApplyChannels(data.channels, data.userAssignments, data.registeredUsers);
+      } else {
+         // クラウドに無い場合はローカルキャッシュを探す
+         const local = localStorage.getItem('yytalk_room_' + roomId);
+         if(local) {
+             try {
+                 const parsed = JSON.parse(local);
+                 if(parsed.channels) resetAndApplyChannels(parsed.channels, parsed.userAssignments, parsed.registeredUsers);
+             } catch(e){}
+         }
+      }
     }
 
     function resetAndApplyChannels(newChannels, newAssignments, newRegistered) {
@@ -463,18 +506,6 @@
            applyAssignments(channels.map(c=>c.id)); 
         }
         updateAudioRouting();
-    }
-
-    function loadRoomState(roomId) {
-      const saved = safeStorage.get('yytalk_room_' + roomId);
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (parsed.channels && parsed.channels.length > 0) {
-             resetAndApplyChannels(parsed.channels, parsed.userAssignments, parsed.registeredUsers);
-          }
-        } catch(e){}
-      }
     }
 
     function createChannelCard(ch) {
@@ -565,7 +596,7 @@
         }
       });
       saveRoomState();
-      updateAdminMatrix();
+      updateAdminMatrix(); // 追加などのDOM構造変化は全体再描画
     };
 
     function removeChannel(chId) {
@@ -775,7 +806,7 @@
       });
     }
 
-    // --- マトリックス型UI (クロスポイント権限管理) ---
+    // --- パッチパネル UI ---
     function updateAdminMatrix() {
       if (!state.isAdmin) return;
       const container = document.getElementById('admin-matrix-container');
@@ -830,6 +861,7 @@
       html += `</tbody></table></div>`;
       container.innerHTML = html;
 
+      // パッチ(〇)を押した際の超軽量同期処理 (再描画せずクラスだけ変えて通信)
       container.querySelectorAll('.matrix-toggle').forEach(btn => {
         btn.onclick = (e) => {
           const uid = e.target.getAttribute('data-uid');
@@ -838,19 +870,19 @@
           
           if (assigned.includes(chid)) {
             assigned = assigned.filter(id => id !== chid);
-            e.target.classList.remove('active');
+            e.target.classList.remove('active'); // 瞬時にUIのみ反映
           } else {
             assigned.push(chid);
-            e.target.classList.add('active');
+            e.target.classList.add('active'); // 瞬時にUIのみ反映
           }
           
           state.userAssignments[uid] = assigned;
-          saveRoomState();
+          saveRoomState(); // デバウンス経由でクラウドに安全に送る
           
-          const peerId = Object.keys(state.users).find(p => state.users[p] === uid && state.peers.has(p));
-          if(peerId && state.dataConns[peerId] && state.dataConns[peerId].open) {
-             state.dataConns[peerId].send({ type: 'assign-channels', channels: assigned });
-          }
+          // 該当ユーザーに権限データをブロードキャスト
+          Object.values(state.dataConns).forEach(conn => {
+             if(conn && conn.open) conn.send({ type: 'sync-assignments', assignments: state.userAssignments });
+          });
         };
       });
 
@@ -860,7 +892,7 @@
           state.registeredUsers.push(uid);
           state.userAssignments[uid] = channels.map(c => c.id); 
           saveRoomState();
-          updateAdminMatrix();
+          updateAdminMatrix(); // 全体構造が変わる追加処理は再描画
           
           Object.values(state.dataConns).forEach(conn => {
             if(conn && conn.open) conn.send({ type: 'update-registered', registered: state.registeredUsers });
@@ -888,412 +920,5 @@
         input.addEventListener('change', (e) => {
           const chId = e.target.getAttribute('data-id');
           const ch = channels.find(c => c.id === chId);
-          if (e.target.classList.contains('admin-edit-name')) ch.name = e.target.value;
-          if (e.target.classList.contains('admin-edit-type')) ch.type = e.target.value;
-
-          const nameEl = document.getElementById(`name-${chId}`);
-          const typeEl = document.getElementById(`type-${chId}`);
-          if (nameEl) nameEl.textContent = ch.name;
-          if (typeEl) typeEl.textContent = ch.type;
-
-          saveRoomState();
-          syncChannelInfo();
-        });
-      });
-
-      container.querySelectorAll('.btn-delete-row').forEach(btn => {
-        btn.onclick = (e) => {
-          const chId = e.target.getAttribute('data-id');
-          const ch = channels.find(c => c.id === chId);
-          if(!confirm(`パーティー「${ch.name}」を削除しますか？`)) return;
-          removeChannel(chId);
-          saveRoomState();
-          Object.values(state.dataConns).forEach(conn => {
-            if(conn && conn.open) conn.send({ type: 'remove-channel', chId: chId });
-          });
-          updateAdminMatrix();
-        };
-      });
-    }
-
-    function applyAssignments(assignedIds) {
-      if (!assignedIds) return;
-      channels.forEach(ch => {
-        const card = document.getElementById(`card-${ch.id}`);
-        if(card) {
-          if(assignedIds.includes(ch.id)) {
-            card.style.display = 'flex';
-          } else {
-            card.style.display = 'none';
-            state.listenStates[ch.id] = false;
-            state.talkStates[ch.id] = false;
-            card.classList.remove('listen-on', 'talk-on');
-            const lBtn = document.getElementById(`listen-${ch.id}`);
-            const tBtn = document.getElementById(`talk-${ch.id}`);
-            if(lBtn) { lBtn.classList.remove('active', 'latched'); lBtn.style.transform = 'translateX(0px)'; }
-            if(tBtn) { tBtn.classList.remove('active', 'latched'); tBtn.style.transform = 'translateX(0px)'; }
-          }
-        }
-      });
-      updateAudioRouting();
-      syncTalkStates();
-    }
-
-    function setupDataConnection(conn) {
-      if (state.dataConns[conn.peer] && state.dataConns[conn.peer].open) return; 
-      state.dataConns[conn.peer] = conn;
-
-      const initData = () => {
-        state.peers.add(conn.peer);
-        updateUserCount();
-
-        conn.send({ type: 'hello', userId: els.joinUserIdInput.value || 'Anonymous' });
-        conn.send({ type: 'update-talk-states', states: state.talkStates });
-        
-        const targetSlot = parseInt(conn.peer.split('-s')[1]);
-        if (state.mySlot > targetSlot) {
-            if (!state.mediaCalls[conn.peer]) {
-                const call = state.peer.call(conn.peer, state.localStream);
-                handleCall(call);
-            }
-        }
-      };
-
-      if (conn.open) {
-          initData();
-      } else {
-          conn.on('open', initData);
-      }
-
-      conn.on('data', data => {
-        if (data.type === 'hello') {
-          const uid = data.userId || 'Anonymous';
-          
-          if (uid !== 'Anonymous' && uid === els.joinUserIdInput.value) {
-            const remoteSlot = parseInt(conn.peer.split('-s')[1]);
-            if (state.mySlot > remoteSlot) {
-              alert(`ユーザーID「${uid}」は現在他のオンライン端末で使用されています。別のIDで参加してください。`);
-              safeStorage.remove('yytalk_user_profile');
-              location.reload();
-              return;
-            } else {
-              return; 
-            }
-          }
-
-          state.users[conn.peer] = uid;
-          
-          if (uid !== 'Anonymous' && !state.registeredUsers.includes(uid)) {
-             state.registeredUsers.push(uid);
-             state.userAssignments[uid] = channels.map(c => c.id);
-             saveRoomState();
-          }
-          
-          // ★ バグ修正箇所: 現在のルームの中で「一番若いスロット」の端末だけが最新状態を送信する
-          const amILowestSlot = Array.from(state.peers).every(p => parseInt(p.split('-s')[1]) > state.mySlot);
-          if(amILowestSlot) {
-            conn.send({ type: 'init-state', channels, assignments: state.userAssignments, registered: state.registeredUsers });
-          }
-          
-          updateUserCount();
-          if(state.isAdmin) updateAdminMatrix();
-        }
-        else if (data.type === 'init-state') {
-          resetAndApplyChannels(data.channels, data.assignments, data.registered);
-          saveRoomState();
-          if(state.isAdmin) updateAdminMatrix();
-        }
-        else if (data.type === 'update-ch-info') {
-          channels = data.data;
-          channels.forEach((ch) => { 
-            const nameEl = document.getElementById(`name-${ch.id}`);
-            const typeEl = document.getElementById(`type-${ch.id}`);
-            if(nameEl) nameEl.textContent = ch.name; 
-            if(typeEl) typeEl.textContent = ch.type; 
-          });
-          saveRoomState();
-          if(state.isAdmin) updateAdminMatrix();
-        }
-        else if (data.type === 'update-registered') {
-          state.registeredUsers = data.registered;
-          saveRoomState();
-          if(state.isAdmin) updateAdminMatrix();
-        }
-        else if (data.type === 'update-talk-states') {
-          state.remoteTalkStates[conn.peer] = data.states;
-          updateAudioRouting();
-        }
-        else if (data.type === 'assign-channels' && !state.isAdmin) {
-          applyAssignments(data.channels);
-          saveRoomState();
-        }
-        else if (data.type === 'add-channel') {
-          channels.push(data.ch);
-          createChannelCard(data.ch);
-          setupChannelAudio(data.ch.id);
-          
-          Object.values(state.mediaCalls).forEach(call => {
-            if (call.source && audioCtx) {
-               const splitGain = audioCtx.createGain();
-               splitGain.gain.value = 0;
-               call.source.connect(splitGain);
-               splitGain.connect(state.channelNodes[data.ch.id].analyser);
-               call.chGains[data.ch.id] = splitGain;
-            }
-          });
-          
-          if(data.registered) state.registeredUsers = data.registered;
-          if(data.assignments) state.userAssignments = data.assignments;
-          
-          const myUid = els.joinUserIdInput.value || 'Anonymous';
-          if(state.userAssignments && state.userAssignments[myUid]) {
-             applyAssignments(state.userAssignments[myUid]);
-          }
-          saveRoomState();
-          if(state.isAdmin) updateAdminMatrix();
-        }
-        else if (data.type === 'remove-channel') {
-          removeChannel(data.chId);
-          saveRoomState();
-          if(state.isAdmin) updateAdminMatrix();
-        }
-      });
-
-      conn.on('close', () => removePeer(conn.peer));
-      conn.on('error', () => removePeer(conn.peer));
-    }
-
-    function removePeer(peerId) {
-      if (state.dataConns[peerId] && state.dataConns[peerId].pending) return; 
-
-      if (state.dataConns[peerId]) {
-          try { state.dataConns[peerId].close(); } catch(e){}
-          delete state.dataConns[peerId];
-      }
-      state.peers.delete(peerId);
-      delete state.remoteTalkStates[peerId];
-      
-      if (state.mediaCalls[peerId]) {
-        Object.values(state.mediaCalls[peerId].chGains || {}).forEach(gain => {
-           try{ gain.disconnect(); }catch(e){}
-        });
-        try { state.mediaCalls[peerId].audioEl.pause(); state.mediaCalls[peerId].audioEl.srcObject = null; } catch(e){}
-        delete state.mediaCalls[peerId];
-      }
-      updateAudioRouting();
-      updateUserCount();
-      if(state.isAdmin) updateAdminMatrix();
-    }
-
-    function updateUserCount() {
-      const isOnline = state.mySlot > 0;
-      
-      let activeCount = isOnline ? 1 : 0;
-      state.peers.forEach(p => {
-         if (state.dataConns[p] && state.dataConns[p].open) activeCount++;
-      });
-      
-      els.roleDisplay.textContent = state.isAdmin ? `ADMIN (${activeCount})` : `MEMBER (${activeCount})`;
-      els.roleDisplay.style.color = isOnline ? 'var(--blue)' : 'var(--orange)';
-      
-      if(isOnline) {
-        els.btnLoginShow.textContent = "Connected";
-        els.btnLoginShow.classList.add('online');
-      }
-    }
-
-    const peerConfig = { 
-      config: { 
-        'iceServers': [
-          { urls: 'stun:stun.l.google.com:19302' },
-          { urls: "stun:stun.relay.metered.ca:80" },
-          { urls: "turn:global.relay.metered.ca:80", username: "cce7732b3cc3adfa6f13a545", credential: "l3ACe3V84yTvkBEd" },
-          { urls: "turn:global.relay.metered.ca:80?transport=tcp", username: "cce7732b3cc3adfa6f13a545", credential: "l3ACe3V84yTvkBEd" },
-          { urls: "turn:global.relay.metered.ca:443", username: "cce7732b3cc3adfa6f13a545", credential: "l3ACe3V84yTvkBEd" },
-          { urls: "turns:global.relay.metered.ca:443?transport=tcp", username: "cce7732b3cc3adfa6f13a545", credential: "l3ACe3V84yTvkBEd" }
-        ] 
-      } 
-    };
-
-    async function initMedia() {
-      try {
-        els.statusMsg.textContent = "マイク起動中...";
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            alert("【警告】\nお使いのブラウザやアプリ環境ではマイク機能がサポートされていません。\n(HTTPS接続にするか、Safari/Chromeなどの通常ブラウザアプリで開き直してください)");
-            return false;
-        }
-        state.localStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
-        state.audioEnabled = true;
-        initAudioContext(); 
-        return true;
-      } catch(e) {
-        alert("マイクへのアクセスがブロックされています。\n\n詳細: " + e.message); 
-        return false;
-      }
-    }
-
-    window.joinNetwork = async function(isAdmin) {
-      const btn = isAdmin ? els.btnJoinAdmin : els.btnJoinMember;
-      const originalText = btn.textContent;
-      
-      btn.disabled = true;
-      btn.textContent = "処理中...";
-      btn.style.opacity = "0.5";
-      
-      await new Promise(r => setTimeout(r, 50));
-
-      if (typeof Peer === 'undefined') {
-          alert("通信サーバーのプログラムが読み込めませんでした。\nインターネット接続を確認するか、ページを再読み込みしてください。");
-          btn.disabled = false;
-          btn.textContent = originalText;
-          btn.style.opacity = "1";
-          return;
-      }
-
-      if (!await initMedia()) {
-        btn.disabled = false;
-        btn.textContent = originalText;
-        btn.style.opacity = "1";
-        els.statusMsg.textContent = "マイクが許可されませんでした";
-        return;
-      }
-      
-      state.isAdmin = isAdmin;
-      els.btnAdmin.style.display = isAdmin ? 'block' : 'none';
-      
-      const roomId = els.hostIdInput.value || 'yytalk';
-      const myName = els.joinUserIdInput.value || 'Unknown';
-      
-      els.appTitle.textContent = `YY-Talk - ${roomId}${isAdmin ? ' (Admin)' : ''}`;
-      safeStorage.set('yytalk_user_profile', JSON.stringify({ roomId, userId: myName, isAdmin }));
-      
-      els.statusMsg.textContent = "空きポートを検索中...";
-      btn.textContent = "サーバー接続中...";
-      
-      let slot = 1;
-      const maxSlots = 30;
-      
-      function tryConnectSlot() {
-        if (slot > maxSlots) {
-          alert("申し訳ありません、ルームが満員です（最大30人）。");
-          btn.disabled = false;
-          btn.textContent = originalText;
-          btn.style.opacity = "1";
-          els.statusMsg.textContent = "満員のため接続できませんでした";
-          return;
-        }
-        
-        const tryId = `${roomId}-s${slot}`;
-        state.peer = new Peer(tryId, peerConfig);
-        
-        state.peer.on('open', (id) => {
-          state.mySlot = slot;
-          els.myIdDisplay.textContent = `${myName} (Slot ${slot})`;
-          els.statusMsg.textContent = "接続完了。仲間を探しています...";
-          setTimeout(() => els.loginOverlay.style.display = 'none', 500);
-          
-          if (slot === 1) {
-             loadRoomState(roomId);
-          }
-
-          updateUserCount();
-          btn.disabled = false;
-          btn.textContent = originalText;
-          btn.style.opacity = "1";
-          
-          state.peer.on('connection', conn => setupDataConnection(conn));
-          state.peer.on('call', call => { call.answer(state.localStream); handleCall(call); });
-          
-          scanForPeers(roomId);
-          setInterval(() => scanForPeers(roomId), 8000);
-          
-          setInterval(() => {
-             state.peers.forEach(p => {
-                if (state.dataConns[p] && !state.dataConns[p].open) removePeer(p);
-             });
-             updateUserCount();
-          }, 10000);
-        });
-        
-        state.peer.on('error', (err) => {
-          if (err.type === 'peer-unavailable') return;
-          
-          if (state.mySlot === 0) {
-            if (err.type === 'unavailable-id') {
-              slot++; 
-              state.peer.destroy();
-              setTimeout(tryConnectSlot, 400);
-            } else {
-              console.error(err);
-              els.statusMsg.textContent = "接続エラー: " + err.type;
-              btn.disabled = false;
-              btn.textContent = originalText;
-              btn.style.opacity = "1";
-            }
-          }
-        });
-      }
-      tryConnectSlot();
-    };
-
-    function scanForPeers(roomId) {
-       for (let i = 1; i < state.mySlot; i++) {
-         const targetId = `${roomId}-s${i}`;
-         if (!state.dataConns[targetId]) {
-            const conn = state.peer.connect(targetId);
-            conn.on('open', () => setupDataConnection(conn));
-            conn.on('error', () => { /* 相手がいなくても裏で無視する */ });
-         }
-       }
-    }
-
-    window.addEventListener('DOMContentLoaded', () => {
-      const savedProfile = safeStorage.get('yytalk_user_profile');
-      if (savedProfile) {
-        try {
-          const profile = JSON.parse(savedProfile);
-          els.hostIdInput.value = profile.roomId;
-          els.joinUserIdInput.value = profile.userId;
-        } catch(e) {}
-      }
-    });
-
-    function handleCall(call) {
-      call.on('stream', stream => {
-        if (state.mediaCalls[call.peer]) return; 
-
-        const audioEl = new Audio();
-        audioEl.srcObject = stream;
-        audioEl.muted = true; 
-        audioEl.play().catch(()=>{});
-
-        const callData = { stream, audioEl };
-        state.mediaCalls[call.peer] = callData;
-
-        if (!state.audioEnabled) {
-          els.audioOverlay.style.display = 'flex';
-        } else {
-          setupPeerMixer(callData);
-        }
-        updateUserCount();
-      });
-
-      call.on('close', () => removePeer(call.peer));
-    }
-
-    document.getElementById('btn-enable-audio').onclick = () => {
-      els.dummyAudio.play().catch(()=>{}); 
-      els.audioOverlay.style.display = 'none';
-      state.audioEnabled = true;
-      initAudioContext(); 
-    };
-
-    document.getElementById('btn-stop').onclick = () => {
-      safeStorage.remove('yytalk_user_profile');
-      location.reload();
-    };
-
-  </script>
-</body>
-</html>
+          if (e.target.classList.contains('admin-edit
 
