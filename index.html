@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>YY-Talk - PRO Mesh</title>
+  <title>YY-Talk - PRO Matrix</title>
   
   <script>
     window.onerror = function(message, source, lineno) {
@@ -67,26 +67,7 @@
       border: 1px solid #3a3c42; position: relative; display: flex; flex-direction: column; gap: 15px;
       box-shadow: 0 10px 40px rgba(0,0,0,0.5);
     }
-
-    /* 管理画面用の拡張モーダル（PC対応レスポンシブ・2カラム化） */
-    .admin-modal { max-width: 90%; width: 90%; }
     
-    .scroll-area { 
-      max-height: 75vh; overflow-y: auto; padding-right: 5px; 
-      -ms-overflow-style: none; scrollbar-width: none; 
-    }
-    .scroll-area::-webkit-scrollbar { display: none; }
-
-    .admin-grid { display: flex; flex-direction: column; }
-    .admin-section { margin-bottom: 20px; border-bottom: 1px solid #3a3c42; padding-bottom: 15px; }
-    
-    @media (min-width: 800px) {
-      .admin-modal { max-width: 1000px; }
-      .admin-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 30px; }
-      .admin-section { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-      .admin-section:first-child { border-right: 1px solid #3a3c42; padding-right: 30px; }
-    }
-
     .login-modal .btn-close-login {
       position: absolute; top: 12px; right: 15px; background: transparent; border: none; 
       color: #9ca3af; font-size: 28px; cursor: pointer; padding: 0; 
@@ -109,22 +90,47 @@
     .btn-stop { background: var(--red); width: 100%; }
     .status-text { font-size: 12px; color: var(--text-sub); text-align: center; margin-top: 5px;}
 
-    /* --- 管理画面UIパーツ --- */
-    #admin-user-list { display: grid; gap: 15px; grid-template-columns: 1fr; }
-    @media (min-width: 600px) {
-      #admin-user-list { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+    /* --- 管理画面 (マトリックスUI対応) --- */
+    .admin-modal { max-width: 95%; width: auto; min-width: 320px; }
+    @media (min-width: 800px) { .admin-modal { max-width: 1200px; } }
+    
+    .scroll-area { 
+      max-height: 75vh; overflow: auto; padding-right: 5px; 
+      -ms-overflow-style: none; scrollbar-width: none; 
     }
-    .admin-user-item { background: #0a0b0d; padding: 15px; border-radius: 8px; border: 1px solid #3a3c42; height: 100%; }
-    .admin-user-item h4 { margin: 0 0 12px 0; font-size: 16px; color: var(--blue); }
-    .admin-ch-row { display: flex; justify-content: space-between; align-items: center; background: #0a0b0d; padding: 8px 12px; border-radius: 6px; border: 1px solid #3a3c42; margin-bottom: 8px; }
+    .scroll-area::-webkit-scrollbar { display: none; }
 
-    .admin-ch-checks { display: flex; gap: 8px; flex-wrap: wrap; }
-    .ch-pill {
-      padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: bold; cursor: pointer;
-      transition: all 0.15s; user-select: none; border: 1.5px solid transparent;
+    .admin-matrix-wrapper {
+      width: 100%; overflow-x: auto;
+      border: 1px solid #3a3c42; border-radius: 8px; background: #0a0b0d;
     }
-    .ch-pill.active { background: rgba(74, 222, 128, 0.15); color: var(--green); border-color: var(--green); }
-    .ch-pill.inactive { background: #1c1d21; color: var(--text-sub); border-color: #3a3c42; }
+    .admin-matrix {
+      width: 100%; border-collapse: collapse; min-width: max-content;
+      text-align: center; font-size: 13px;
+    }
+    .admin-matrix th, .admin-matrix td {
+      border: 1px solid #3a3c42; padding: 10px;
+    }
+    .admin-matrix th {
+      background-color: #1c1d21; color: var(--text-sub); font-weight: normal; position: sticky; top: 0; z-index: 5;
+    }
+    .admin-matrix td.ch-cell {
+      text-align: left; background-color: #0a0b0d;
+      display: flex; gap: 8px; align-items: center; justify-content: space-between;
+      min-width: 240px; border-bottom: none; border-right: none; border-top: none;
+    }
+    .matrix-toggle {
+      width: 26px; height: 26px; border-radius: 50%; margin: 0 auto;
+      background: #1c1d21; border: 2px solid #3a3c42;
+      cursor: pointer; transition: 0.2s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+    }
+    .matrix-toggle.active {
+      background: var(--green); border-color: var(--green); box-shadow: 0 0 10px rgba(74, 222, 128, 0.4);
+    }
+    .btn-delete-col, .btn-delete-row {
+      background: transparent; color: var(--red); border: 1px solid var(--red); border-radius: 4px; 
+      cursor: pointer; padding: 2px 6px; font-size: 11px;
+    }
 
     /* --- ヘッダー --- */
     .header {
@@ -145,7 +151,7 @@
     .btn-login-trigger.online { border-color: var(--blue); color: var(--blue); }
     .btn-admin-trigger { border-color: var(--green); color: var(--green); display: none; }
 
-    /* --- チャンネルリスト --- */
+    /* --- チャンネルリスト (レスポンシブ対応) --- */
     .channel-list-container {
       flex: 1; overflow-y: auto; padding: 10px 10px 20px; 
       display: flex; flex-direction: column; gap: 10px; 
@@ -160,24 +166,31 @@
       #channel-list-wrap { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 15px; }
     }
 
-    /* カードデザインと背景グラデーション */
+    /* 背景グラデーション制御用のカードデザイン */
     .channel-card {
-      --bg-color: var(--card-bg);
-      background-color: var(--bg-color);
-      background-image: none;
+      background-color: var(--card-bg);
       border-radius: 10px; position: relative;
-      overflow: hidden; display: flex; flex-direction: column; transition: background 0.3s ease;
+      overflow: hidden; display: flex; flex-direction: column; 
     }
-    .channel-card.expanded { --bg-color: var(--card-bg-expanded); }
+    .channel-card.expanded { background-color: var(--card-bg-expanded); }
     
-    /* 状態に応じたグラデーション */
-    .channel-card.listen-on { background-image: linear-gradient(to right, rgba(74, 222, 128, 0.15) 0%, transparent 50%); }
-    .channel-card.talk-on { background-image: linear-gradient(to left, rgba(248, 113, 113, 0.15) 0%, transparent 50%); }
-    .channel-card.listen-on.talk-on { background-image: linear-gradient(to right, rgba(74, 222, 128, 0.15) 0%, transparent 30%, transparent 70%, rgba(248, 113, 113, 0.15) 100%); }
+    /* 疑似要素を使ったスムーズな背景グラデーション */
+    .channel-card::before, .channel-card::after {
+      content: ""; position: absolute; top: 0; bottom: 0; width: 50%; opacity: 0; 
+      transition: opacity 0.3s ease; pointer-events: none; z-index: 0;
+    }
+    .channel-card::before { left: 0; background: linear-gradient(to right, rgba(74, 222, 128, 0.25) 0%, transparent 100%); }
+    .channel-card::after { right: 0; background: linear-gradient(to left, rgba(248, 113, 113, 0.25) 0%, transparent 100%); }
+    
+    .channel-card.listen-on::before { opacity: 1; }
+    .channel-card.talk-on::after { opacity: 1; }
+    
+    /* 中身を疑似要素の上に持ってくる */
+    .channel-card > * { position: relative; z-index: 1; }
 
     .status-line-bg {
       position: absolute; left: 0; top: 10%; bottom: 10%; width: 4px;
-      background-color: #0a0b0d; border-radius: 0 4px 4px 0; overflow: hidden;
+      background-color: #0a0b0d; border-radius: 0 4px 4px 0; overflow: hidden; z-index: 2;
     }
     .status-line-fill {
       position: absolute; bottom: 0; left: 0; right: 0; height: 50%;
@@ -204,27 +217,29 @@
     .ch-info { text-align: center; flex: 1; padding: 0 10px; }
     
     .ch-name { font-size: 16px; font-weight: 500; margin-bottom: 2px; display: inline-block; padding: 2px 6px; border-radius: 4px; }
-    .ch-type { font-size: 10px; color: var(--text-sub); display: inline-block; padding: 2px 6px; border-radius: 4px; }
+    .ch-type { font-size: 10px; color: var(--text-sub); display: inline-block; padding: 2px 6px; border-radius: 4px; pointer-events: auto; }
 
-    /* --- 上質なボタンデザイン (大型化・マットなシャドウ) --- */
+    /* --- 上質なボタンデザイン (大型化・マットなシャドウ・スライド最適化) --- */
     .btn-action {
       width: 56px; height: 56px; border-radius: 50%; border: 2px solid;
-      display: flex; align-items: center; justify-content: center; background: transparent;
-      touch-action: none; z-index: 10; transition: all 0.2s ease; user-select: none;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      display: flex; align-items: center; justify-content: center; background: #1c1d21;
+      touch-action: none; z-index: 10; user-select: none;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.05);
+      /* ※transformをtransitionから外し、JSでの指スライドの追従性を完璧にする */
+      transition: background-color 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, color 0.2s ease;
     }
     .btn-icon { width: 26px; height: 26px; fill: currentColor; pointer-events: none; }
     
     .btn-listen { border-color: var(--green); color: var(--green); }
     .btn-listen.active, .btn-listen.latched { 
       background-color: var(--green); color: var(--bg-dark); 
-      box-shadow: inset 0 2px 4px rgba(255,255,255,0.4), 0 4px 12px rgba(74, 222, 128, 0.4);
+      box-shadow: inset 0 2px 4px rgba(255,255,255,0.4), 0 4px 15px rgba(74, 222, 128, 0.5);
     }
     
     .btn-talk { border-color: var(--red); color: var(--red); }
     .btn-talk.active, .btn-talk.latched { 
       background-color: var(--red); color: var(--text-main); 
-      box-shadow: inset 0 2px 4px rgba(255,255,255,0.3), 0 4px 12px rgba(248, 113, 113, 0.4);
+      box-shadow: inset 0 2px 4px rgba(255,255,255,0.3), 0 4px 15px rgba(248, 113, 113, 0.5);
     }
 
     .ch-meter-container { height: 4px; background: #0a0b0d; margin: 0 45px 0; border-radius: 2px; overflow: hidden; position: relative; opacity: 0.8; }
@@ -234,13 +249,12 @@
     .master-meter-container { height: 8px; width: 100%; background: #1c1d21; position: relative; flex-shrink: 0; }
     .master-meter-fill { height: 100%; width: 0%; transition: width 0.05s linear; background: linear-gradient(90deg, #4ade80 0%, #4ade80 60%, #eab308 80%, #f87171 100%); }
 
-    @media (max-height: 750px) {
-      .channel-list-container { gap: 6px; padding: 6px 10px; }
-      .main-controls { padding: 10px 12px; }
-      .btn-action { width: 50px; height: 50px; }
-      .btn-icon { width: 22px; height: 22px; }
-      .ch-name { font-size: 15px; margin-bottom: 0; }
-      .btn-expand { padding: 4px 0 4px; font-size: 14px; }
+    /* スマホ横向き (ランドスケープ) 対応 */
+    @media (orientation: landscape) and (max-height: 500px) {
+      .header { padding: 8px 15px; }
+      .channel-list-container { padding: 5px; }
+      .main-controls { padding: 8px 15px; }
+      .btn-action { width: 48px; height: 48px; }
     }
   </style>
 </head>
@@ -276,20 +290,11 @@
     <div id="admin-overlay" class="overlay-base">
       <div class="login-modal admin-modal">
         <button class="btn-close-login" id="btn-close-admin">×</button>
-        <h3 style="margin: 0 0 15px 0; text-align: center; color: var(--text-main);">管理メニュー</h3>
+        <h3 style="margin: 0 0 15px 0; text-align: center; color: var(--text-main);">パッチパネル・権限管理</h3>
         
-        <div class="scroll-area admin-grid">
-          <div class="admin-section">
-            <h4 style="margin: 0 0 10px 0; color: var(--orange);">パーティーの作成と編集・削除</h4>
-            <div id="admin-channel-list"></div>
-            <button id="btn-add-ch" class="btn-login-trigger" style="border-color: var(--green); color: var(--green); width: 100%; padding: 10px; margin-top: 5px;">＋ 新規パーティー作成</button>
-          </div>
-
-          <div class="admin-section" style="border-bottom: none;">
-            <h4 style="margin: 0 0 5px 0; color: var(--blue);">メンバー権限管理</h4>
-            <p style="font-size: 12px; color: var(--text-sub); margin-top: 0; margin-bottom: 15px;">ユーザーごとに表示を許可するパーティーを選択</p>
-            <div id="admin-user-list"></div>
-          </div>
+        <div class="scroll-area">
+          <div id="admin-matrix-container"></div>
+          <button id="btn-add-ch" style="background:transparent; border:1px solid var(--green); color:var(--green); width:100%; padding:10px; margin-top:15px; border-radius:8px; cursor:pointer; font-weight:bold;">＋ 新規パーティー作成</button>
         </div>
       </div>
     </div>
@@ -326,8 +331,9 @@
       peer: null, localStream: null,
       mySlot: 0,
       peers: new Set(),
-      users: {},
-      userAssignments: {},
+      users: {},             // 現在オンラインのユーザー { peerId: 'userId' }
+      registeredUsers: [],   // 事前登録されたメンバーIDのリスト ['Cam1', 'Cam2']
+      userAssignments: {},   // { 'userId': ['ch1', 'ch2'] }
       dataConns: {},    
       mediaCalls: {},   
       talkStates: {},         
@@ -363,12 +369,9 @@
       adminOverlay: document.getElementById('admin-overlay'),
       btnAdmin: document.getElementById('btn-admin'),
       btnCloseAdmin: document.getElementById('btn-close-admin'),
-      adminUserList: document.getElementById('admin-user-list'),
-      adminChannelList: document.getElementById('admin-channel-list'),
       btnAddCh: document.getElementById('btn-add-ch'),
 
       chWrap: document.getElementById('channel-list-wrap'),
-      
       btnJoinMember: document.getElementById('btn-join-member'),
       btnJoinAdmin: document.getElementById('btn-join-admin')
     };
@@ -378,8 +381,7 @@
     
     els.btnAdmin.onclick = () => { 
       if (!state.isAdmin) return;
-      updateAdminChannelList();
-      updateAdminList();
+      updateAdminMatrix();
       els.adminOverlay.style.display = 'flex'; 
     };
     els.btnCloseAdmin.onclick = () => { els.adminOverlay.style.display = 'none'; };
@@ -387,12 +389,17 @@
     const iconSpeaker = `<svg class="btn-icon" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
     const iconMic = `<svg class="btn-icon" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>`;
 
+    // --- ローカル状態の保存と復元 ---
     function saveRoomState() {
       const roomId = els.hostIdInput.value || 'yytalk';
-      safeStorage.set('yytalk_room_' + roomId, JSON.stringify({ channels, userAssignments: state.userAssignments }));
+      safeStorage.set('yytalk_room_' + roomId, JSON.stringify({ 
+        channels, 
+        userAssignments: state.userAssignments,
+        registeredUsers: state.registeredUsers
+      }));
     }
 
-    function resetAndApplyChannels(newChannels, newAssignments) {
+    function resetAndApplyChannels(newChannels, newAssignments, newRegistered) {
         if (audioCtx) {
            Object.values(state.channelNodes).forEach(node => { try { node.masterGain.disconnect(); } catch(e){} });
            Object.values(state.mediaCalls).forEach(call => {
@@ -402,7 +409,14 @@
         }
         state.channelNodes = {};
         channels = newChannels;
+        
         if (newAssignments) state.userAssignments = newAssignments;
+        if (newRegistered) {
+           state.registeredUsers = newRegistered;
+        } else {
+           // 後方互換
+           state.registeredUsers = Object.keys(state.userAssignments || {});
+        }
         
         initChannelsDOM();
         if (audioCtx) {
@@ -435,7 +449,7 @@
         try {
           const parsed = JSON.parse(saved);
           if (parsed.channels && parsed.channels.length > 0) {
-             resetAndApplyChannels(parsed.channels, parsed.userAssignments);
+             resetAndApplyChannels(parsed.channels, parsed.userAssignments, parsed.registeredUsers);
           }
         } catch(e){}
       }
@@ -510,10 +524,13 @@
       createChannelCard(newCh);
       setupChannelAudio(newCh.id);
       
-      Object.keys(state.userAssignments).forEach(uid => state.userAssignments[uid].push(id));
+      state.registeredUsers.forEach(uid => {
+          if (!state.userAssignments[uid]) state.userAssignments[uid] = [];
+          state.userAssignments[uid].push(id);
+      });
       
       Object.values(state.dataConns).forEach(conn => {
-        if(conn && conn.open) conn.send({ type: 'add-channel', ch: newCh, assignments: state.userAssignments });
+        if(conn && conn.open) conn.send({ type: 'add-channel', ch: newCh, assignments: state.userAssignments, registered: state.registeredUsers });
       });
       
       Object.values(state.mediaCalls).forEach(call => {
@@ -526,8 +543,7 @@
         }
       });
       saveRoomState();
-      updateAdminChannelList();
-      updateAdminList();
+      updateAdminMatrix();
     };
 
     function removeChannel(chId) {
@@ -698,6 +714,7 @@
       }
 
       btn.addEventListener('pointerdown', (e) => {
+        // e.preventDefault(); // removed to allow scrolling generally, handle in move
         btn.setPointerCapture(e.pointerId);
         isDown = true; startX = e.clientX; hasDragged = false;
         els.dummyAudio.play().catch(()=>{});
@@ -708,6 +725,7 @@
         if (!isDown) return;
         const deltaX = e.clientX - startX;
         if ((slideDir === 1 && deltaX > 0) || (slideDir === -1 && deltaX < 0)) {
+          e.preventDefault(); // スライド中は画面のスクロールを止める
           btn.style.transform = `translateX(${deltaX}px)`;
           if (Math.abs(deltaX) > 30 && !isLatched) {
             hasDragged = true; isLatched = true;
@@ -736,23 +754,120 @@
       });
     }
 
-    function updateAdminChannelList() {
-      els.adminChannelList.innerHTML = '';
-      channels.forEach(ch => {
-        const div = document.createElement('div');
-        div.className = 'admin-ch-row';
-        div.style.flexWrap = 'wrap';
-        div.innerHTML = `
-          <div style="display:flex; gap:5px; flex:1;">
-            <input type="text" class="admin-edit-name" data-id="${ch.id}" value="${ch.name}" style="flex:1; width:80px; padding:4px 8px; background:#1c1d21; border:1px solid #3a3c42; color:#fff; border-radius:4px; font-size:14px;">
-            <input type="text" class="admin-edit-type" data-id="${ch.id}" value="${ch.type}" style="width:40px; padding:4px; background:#1c1d21; border:1px solid #3a3c42; color:#fff; border-radius:4px; font-size:12px; text-align:center;">
-          </div>
-          <button class="admin-btn-delete" data-id="${ch.id}" style="background: transparent; border: 1px solid var(--red); color: var(--red); border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 12px; margin-left: 10px;">削除</button>
-        `;
-        els.adminChannelList.appendChild(div);
+    // --- マトリックス型UI (クロスポイント権限管理) ---
+    function updateAdminMatrix() {
+      if (!state.isAdmin) return;
+      const container = document.getElementById('admin-matrix-container');
+      
+      let html = `
+      <div class="admin-matrix-wrapper">
+        <table class="admin-matrix">
+          <thead>
+            <tr>
+              <th style="min-width: 260px; text-align:left; background:#111216;">パーティー \\ メンバー</th>`;
+
+      // メンバーの列ヘッダー生成
+      state.registeredUsers.forEach(uid => {
+          const isOnline = Array.from(state.peers).some(p => state.users[p] === uid && state.dataConns[p] && state.dataConns[p].open);
+          const statusColor = isOnline ? 'var(--green)' : 'var(--text-sub)';
+          html += `<th>
+              <div style="display:flex; align-items:center; justify-content:center; gap:5px; margin-bottom:5px;">
+                <span style="color:${statusColor}; font-size:10px;">●</span>
+                <span style="font-weight:bold; color:var(--text-main);">${uid}</span>
+              </div>
+              <button class="btn-delete-col" data-uid="${uid}">削除</button>
+          </th>`;
       });
 
-      document.querySelectorAll('.admin-edit-name, .admin-edit-type').forEach(input => {
+      html += `<th><button id="btn-add-user" style="background:var(--blue); color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;">＋ 追加</button></th>
+            </tr>
+          </thead>
+          <tbody>`;
+
+      // パーティーの行生成
+      channels.forEach(ch => {
+          html += `<tr>
+              <td class="ch-cell">
+                 <div style="display:flex; gap:5px; flex:1;">
+                    <input type="text" class="admin-edit-name" data-id="${ch.id}" value="${ch.name}" style="flex:1; width:80px; background:#1c1d21; border:1px solid #3a3c42; color:#fff; border-radius:4px; font-size:14px; padding:4px 8px;">
+                    <input type="text" class="admin-edit-type" data-id="${ch.id}" value="${ch.type}" style="width:40px; text-align:center; background:#1c1d21; border:1px solid #3a3c42; color:#fff; border-radius:4px; font-size:12px; padding:4px;">
+                 </div>
+                 <button class="btn-delete-row" data-id="${ch.id}">削除</button>
+              </td>`;
+
+          // クロスポイントの生成
+          state.registeredUsers.forEach(uid => {
+              const isAssigned = (state.userAssignments[uid] || []).includes(ch.id);
+              const activeClass = isAssigned ? 'active' : '';
+              html += `<td>
+                  <div class="matrix-toggle ${activeClass}" data-uid="${uid}" data-chid="${ch.id}"></div>
+              </td>`;
+          });
+          html += `<td></td></tr>`;
+      });
+
+      html += `</tbody></table></div>`;
+      container.innerHTML = html;
+
+      // イベントリスナー: クロスポイント(トグル)
+      container.querySelectorAll('.matrix-toggle').forEach(btn => {
+        btn.onclick = (e) => {
+          const uid = e.target.getAttribute('data-uid');
+          const chid = e.target.getAttribute('data-chid');
+          let assigned = state.userAssignments[uid] || [];
+          
+          if (assigned.includes(chid)) {
+            assigned = assigned.filter(id => id !== chid);
+            e.target.classList.remove('active');
+          } else {
+            assigned.push(chid);
+            e.target.classList.add('active');
+          }
+          
+          state.userAssignments[uid] = assigned;
+          saveRoomState();
+          
+          const peerId = Object.keys(state.users).find(p => state.users[p] === uid && state.peers.has(p));
+          if(peerId && state.dataConns[peerId] && state.dataConns[peerId].open) {
+             state.dataConns[peerId].send({ type: 'assign-channels', channels: assigned });
+          }
+        };
+      });
+
+      // イベントリスナー: メンバー追加
+      document.getElementById('btn-add-user').onclick = () => {
+        const uid = prompt('事前登録するメンバーのユーザーIDを入力してください:');
+        if (uid && uid.trim() !== '' && !state.registeredUsers.includes(uid)) {
+          state.registeredUsers.push(uid);
+          state.userAssignments[uid] = channels.map(c => c.id); // 初期は全許可
+          saveRoomState();
+          updateAdminMatrix();
+          
+          Object.values(state.dataConns).forEach(conn => {
+            if(conn && conn.open) conn.send({ type: 'update-registered', registered: state.registeredUsers });
+          });
+        }
+      };
+
+      // イベントリスナー: メンバー削除
+      container.querySelectorAll('.btn-delete-col').forEach(btn => {
+        btn.onclick = (e) => {
+          const uid = e.target.getAttribute('data-uid');
+          if(confirm(`ユーザー「${uid}」をリストから削除しますか？\n(設定も消去されます)`)) {
+             state.registeredUsers = state.registeredUsers.filter(u => u !== uid);
+             delete state.userAssignments[uid];
+             saveRoomState();
+             updateAdminMatrix();
+             
+             Object.values(state.dataConns).forEach(conn => {
+               if(conn && conn.open) conn.send({ type: 'update-registered', registered: state.registeredUsers });
+             });
+          }
+        };
+      });
+
+      // イベントリスナー: パーティー名・タイプの変更
+      container.querySelectorAll('.admin-edit-name, .admin-edit-type').forEach(input => {
         input.addEventListener('change', (e) => {
           const chId = e.target.getAttribute('data-id');
           const ch = channels.find(c => c.id === chId);
@@ -766,72 +881,22 @@
 
           saveRoomState();
           syncChannelInfo();
-          updateAdminList(); // ピルUIへ即時反映
         });
       });
 
-      document.querySelectorAll('.admin-btn-delete').forEach(btn => {
+      // イベントリスナー: パーティー削除
+      container.querySelectorAll('.btn-delete-row').forEach(btn => {
         btn.onclick = (e) => {
           const chId = e.target.getAttribute('data-id');
           const ch = channels.find(c => c.id === chId);
-          if(!confirm(`「${ch.name}」を削除しますか？`)) return;
+          if(!confirm(`パーティー「${ch.name}」を削除しますか？`)) return;
           removeChannel(chId);
           saveRoomState();
           Object.values(state.dataConns).forEach(conn => {
             if(conn && conn.open) conn.send({ type: 'remove-channel', chId: chId });
           });
-          updateAdminChannelList();
-          updateAdminList();
+          updateAdminMatrix();
         };
-      });
-    }
-
-    function updateAdminList() {
-      if (!state.isAdmin) return;
-      els.adminUserList.innerHTML = '';
-      
-      Object.keys(state.userAssignments).forEach(uid => {
-        const peerId = Object.keys(state.users).find(p => state.users[p] === uid && state.peers.has(p));
-        const isReallyOnline = peerId && state.dataConns[peerId] && state.dataConns[peerId].open;
-        const statusSpan = isReallyOnline ? `<span style="color:var(--green);font-size:11px;">(Online)</span>` : `<span style="color:var(--text-sub);font-size:11px;">(Offline)</span>`;
-        
-        const div = document.createElement('div');
-        div.className = 'admin-user-item';
-        
-        let chHtml = `<div class="admin-ch-checks">`;
-        channels.forEach(ch => {
-          const isAssigned = state.userAssignments[uid].includes(ch.id);
-          const activeClass = isAssigned ? 'active' : 'inactive';
-          chHtml += `<div class="ch-pill ${activeClass}" data-uid="${uid}" data-chid="${ch.id}">${ch.name}</div>`;
-        });
-        chHtml += `</div>`;
-        
-        div.innerHTML = `<h4>${uid} ${statusSpan}</h4>${chHtml}`;
-        els.adminUserList.appendChild(div);
-      });
-
-      document.querySelectorAll('.ch-pill').forEach(pill => {
-        pill.addEventListener('click', (e) => {
-          const targetUid = e.target.getAttribute('data-uid');
-          const chId = e.target.getAttribute('data-chid');
-          
-          let assigned = state.userAssignments[targetUid] || [];
-          if (assigned.includes(chId)) {
-            assigned = assigned.filter(id => id !== chId);
-            e.target.classList.replace('active', 'inactive');
-          } else {
-            assigned.push(chId);
-            e.target.classList.replace('inactive', 'active');
-          }
-          
-          state.userAssignments[targetUid] = assigned;
-          saveRoomState();
-          
-          const peerId = Object.keys(state.users).find(p => state.users[p] === targetUid && state.peers.has(p));
-          if(peerId && state.dataConns[peerId] && state.dataConns[peerId].open) {
-             state.dataConns[peerId].send({ type: 'assign-channels', channels: assigned });
-          }
-        });
       });
     }
 
@@ -849,8 +914,8 @@
             card.classList.remove('listen-on', 'talk-on');
             const lBtn = document.getElementById(`listen-${ch.id}`);
             const tBtn = document.getElementById(`talk-${ch.id}`);
-            if(lBtn) lBtn.classList.remove('active', 'latched');
-            if(tBtn) tBtn.classList.remove('active', 'latched');
+            if(lBtn) { lBtn.classList.remove('active', 'latched'); lBtn.style.transform = 'translateX(0px)'; }
+            if(tBtn) { tBtn.classList.remove('active', 'latched'); tBtn.style.transform = 'translateX(0px)'; }
           }
         }
       });
@@ -901,20 +966,25 @@
           }
 
           state.users[conn.peer] = uid;
-          if (!state.userAssignments[uid]) state.userAssignments[uid] = channels.map(c => c.id);
+          
+          if (uid !== 'Anonymous' && !state.registeredUsers.includes(uid)) {
+             state.registeredUsers.push(uid);
+             state.userAssignments[uid] = channels.map(c => c.id);
+             saveRoomState();
+          }
           
           const isLowestSlot = Array.from(state.peers).every(p => parseInt(p.split('-s')[1]) > state.mySlot);
           if(state.isAdmin || isLowestSlot) {
-            conn.send({ type: 'init-state', channels, assignments: state.userAssignments });
+            conn.send({ type: 'init-state', channels, assignments: state.userAssignments, registered: state.registeredUsers });
           }
           
           updateUserCount();
-          if(state.isAdmin) updateAdminList();
+          if(state.isAdmin) updateAdminMatrix();
         }
         else if (data.type === 'init-state') {
-          resetAndApplyChannels(data.channels, data.assignments);
+          resetAndApplyChannels(data.channels, data.assignments, data.registered);
           saveRoomState();
-          if(state.isAdmin) { updateAdminChannelList(); updateAdminList(); }
+          if(state.isAdmin) updateAdminMatrix();
         }
         else if (data.type === 'update-ch-info') {
           channels = data.data;
@@ -925,7 +995,12 @@
             if(typeEl) typeEl.textContent = ch.type; 
           });
           saveRoomState();
-          if(state.isAdmin) { updateAdminChannelList(); updateAdminList(); }
+          if(state.isAdmin) updateAdminMatrix();
+        }
+        else if (data.type === 'update-registered') {
+          state.registeredUsers = data.registered;
+          saveRoomState();
+          if(state.isAdmin) updateAdminMatrix();
         }
         else if (data.type === 'update-talk-states') {
           state.remoteTalkStates[conn.peer] = data.states;
@@ -950,17 +1025,20 @@
             }
           });
           
+          if(data.registered) state.registeredUsers = data.registered;
+          if(data.assignments) state.userAssignments = data.assignments;
+          
           const myUid = els.joinUserIdInput.value || 'Anonymous';
-          if(data.assignments && data.assignments[myUid]) {
-             applyAssignments(data.assignments[myUid]);
+          if(state.userAssignments && state.userAssignments[myUid]) {
+             applyAssignments(state.userAssignments[myUid]);
           }
           saveRoomState();
-          if(state.isAdmin) { updateAdminChannelList(); updateAdminList(); }
+          if(state.isAdmin) updateAdminMatrix();
         }
         else if (data.type === 'remove-channel') {
           removeChannel(data.chId);
           saveRoomState();
-          if(state.isAdmin) { updateAdminChannelList(); updateAdminList(); }
+          if(state.isAdmin) updateAdminMatrix();
         }
       });
 
@@ -987,7 +1065,7 @@
       }
       updateAudioRouting();
       updateUserCount();
-      if(state.isAdmin) updateAdminList();
+      if(state.isAdmin) updateAdminMatrix();
     }
 
     function updateUserCount() {
