@@ -52,13 +52,9 @@
     .overlay-base {
       position: absolute; inset: 0; background: rgba(0,0,0,0.85); display: none;
       align-items: center; justify-content: center; flex-direction: column;
-      backdrop-filter: blur(4px); z-index: 1000;
-      overflow-y: auto; 
+      backdrop-filter: blur(4px); z-index: 1000; overflow-y: auto;
     }
-    
-    @media (max-height: 700px) {
-      .overlay-base { align-items: flex-start; padding: 20px 0; }
-    }
+    @media (max-height: 700px) { .overlay-base { align-items: flex-start; padding: 20px 0; } }
 
     #login-overlay { z-index: 2000; }
     #audio-overlay { z-index: 1100; }
@@ -71,7 +67,7 @@
     .login-modal {
       background: var(--card-bg); padding: 25px 20px; border-radius: 12px; width: 90%; max-width: 340px;
       border: 1px solid #3a3c42; position: relative; display: flex; flex-direction: column; gap: 15px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.5); margin: auto; 
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5); margin: auto;
     }
     
     .login-modal .btn-close-login {
@@ -114,12 +110,8 @@
       width: 100%; border-collapse: collapse; min-width: max-content;
       text-align: center; font-size: 13px;
     }
-    .admin-matrix th, .admin-matrix td {
-      border: 1px solid #3a3c42; padding: 10px;
-    }
-    .admin-matrix th {
-      background-color: #1c1d21; color: var(--text-sub); font-weight: normal; position: sticky; top: 0; z-index: 5;
-    }
+    .admin-matrix th, .admin-matrix td { border: 1px solid #3a3c42; padding: 10px; }
+    .admin-matrix th { background-color: #1c1d21; color: var(--text-sub); font-weight: normal; position: sticky; top: 0; z-index: 5; }
     
     .diagonal-header {
       position: relative; min-width: 260px; min-height: 50px;
@@ -135,10 +127,12 @@
     .matrix-toggle {
       width: 26px; height: 26px; border-radius: 50%; margin: 0 auto;
       background: #1c1d21; border: 2px solid #3a3c42;
-      cursor: pointer; transition: 0.1s ease-in-out; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+      cursor: pointer; transition: 0.15s ease-out; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
     }
+    /* アクティブ時のアニメーションをスムーズに */
     .matrix-toggle.active {
       background: var(--green); border-color: var(--green); box-shadow: 0 0 10px rgba(74, 222, 128, 0.4);
+      transform: scale(1.1);
     }
     
     .btn-delete-col, .btn-delete-row {
@@ -200,7 +194,6 @@
     
     .channel-card.listen-on::before { opacity: 1; }
     .channel-card.talk-on::after { opacity: 1; }
-    
     .channel-card > * { position: relative; z-index: 1; }
 
     .status-line-bg {
@@ -234,7 +227,6 @@
     .ch-name { font-size: 16px; font-weight: 500; margin-bottom: 2px; display: inline-block; padding: 2px 6px; border-radius: 4px; }
     .ch-type { font-size: 10px; color: var(--text-sub); display: inline-block; padding: 2px 6px; border-radius: 4px; pointer-events: auto; }
 
-    /* 上質なボタンデザイン */
     .btn-action {
       width: 56px; height: 56px; border-radius: 50%; border: 2px solid;
       display: flex; align-items: center; justify-content: center; background: #1c1d21;
@@ -263,7 +255,6 @@
     .master-meter-container { height: 8px; width: 100%; background: #1c1d21; position: relative; flex-shrink: 0; }
     .master-meter-fill { height: 100%; width: 0%; transition: width 0.05s linear; background: linear-gradient(90deg, #4ade80 0%, #4ade80 60%, #eab308 80%, #f87171 100%); }
 
-    /* --- スマホ横向き (ランドスケープ) 対応 --- */
     @media (orientation: landscape) and (max-height: 600px) {
       .app-container { height: 100dvh; max-height: none; border-radius: 0; border: none; }
       .header { padding: 4px 15px; }
@@ -273,7 +264,6 @@
       .btn-icon { width: 20px; height: 20px; }
       .ch-name { font-size: 14px; margin-bottom: 0; }
       .btn-expand { padding: 2px 0; font-size: 12px; }
-      
       .login-modal { max-height: 95vh; overflow-y: auto; padding: 15px; }
       .admin-modal { max-width: 100%; }
       .scroll-area { max-height: calc(95vh - 80px); }
@@ -343,28 +333,41 @@
   </div>
 
   <script>
-    // --- クラウドストレージ アダプター (KVDB.io を利用した無料オープンAPI) ---
-    // ※実稼働時はFirebaseなどに差し替えてください
-    const CloudStore = {
-      baseUrl: 'https://kvdb.io/bucket/yytalk-pro-cloud/room_',
-      async save(roomId, data) {
+    // --- クラウド・アダプター (無料のKV APIを使用) ---
+    // ※本番運用時はURLを Firebase 等に変更してください。
+    const Cloud = {
+      baseURL: 'https://kvdb.io/wBv2xPz9QkF4xN9vP9n3bE/', // デモ用共有バケット
+      
+      save: async (roomId, data) => {
         try {
-          await fetch(this.baseUrl + roomId, {
+          await fetch(Cloud.baseURL + roomId, {
             method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
           });
-        } catch(e) { console.warn("Cloud save failed", e); }
+        } catch(e) {
+          console.warn('Cloud save failed, using local storage fallback.', e);
+          localStorage.setItem('yytalk_room_' + roomId, JSON.stringify(data));
+        }
       },
-      async load(roomId) {
+      
+      load: async (roomId) => {
         try {
-          const res = await fetch(this.baseUrl + roomId);
-          if (res.ok) {
-            const text = await res.text();
-            return text ? JSON.parse(text) : null;
-          }
-        } catch(e) { console.warn("Cloud load failed", e); }
-        return null;
+          const res = await fetch(Cloud.baseURL + roomId);
+          if (res.ok) return await res.json();
+        } catch(e) {
+          console.warn('Cloud load failed, using local storage fallback.', e);
+        }
+        const local = localStorage.getItem('yytalk_room_' + roomId);
+        return local ? JSON.parse(local) : null;
       }
+    };
+
+    // ユーザープロファイルのみローカル記憶
+    const LocalProfile = {
+      get: () => { try { return JSON.parse(localStorage.getItem('yytalk_user_profile')); } catch(e) { return null; } },
+      set: (data) => { try { localStorage.setItem('yytalk_user_profile', JSON.stringify(data)); } catch(e) {} },
+      clear: () => { try { localStorage.removeItem('yytalk_user_profile'); } catch(e) {} }
     };
 
     const state = {
@@ -421,7 +424,7 @@
     
     els.btnAdmin.onclick = () => { 
       if (!state.isAdmin) return;
-      updateAdminMatrix(); // パッチパネルを開く時だけ全体描画
+      buildAdminMatrix(); // 開くたびにHTMLを再生成（最新状態）
       els.adminOverlay.style.display = 'flex'; 
     };
     els.btnCloseAdmin.onclick = () => { els.adminOverlay.style.display = 'none'; };
@@ -429,40 +432,9 @@
     const iconSpeaker = `<svg class="btn-icon" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
     const iconMic = `<svg class="btn-icon" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>`;
 
-    // --- クラウドへの保存 (デバウンス処理付きで負荷軽減) ---
-    let cloudSaveTimer = null;
-    function saveRoomState() {
+    function pushToCloud() {
       const roomId = els.hostIdInput.value || 'yytalk';
-      const dataToSave = { 
-        channels, 
-        userAssignments: state.userAssignments,
-        registeredUsers: state.registeredUsers
-      };
-      // ローカルバックアップも念のため残す
-      try { localStorage.setItem('yytalk_room_' + roomId, JSON.stringify(dataToSave)); } catch(e){}
-      
-      // 連続タップ時は通信せず、1秒操作が止まったらクラウドへ送る
-      clearTimeout(cloudSaveTimer);
-      cloudSaveTimer = setTimeout(() => {
-         CloudStore.save(roomId, dataToSave);
-      }, 1000);
-    }
-
-    async function loadRoomStateCloud(roomId) {
-      els.statusMsg.textContent = "クラウドから設定を取得中...";
-      const data = await CloudStore.load(roomId);
-      if (data && data.channels) {
-         resetAndApplyChannels(data.channels, data.userAssignments, data.registeredUsers);
-      } else {
-         // クラウドに無い場合はローカルキャッシュを探す
-         const local = localStorage.getItem('yytalk_room_' + roomId);
-         if(local) {
-             try {
-                 const parsed = JSON.parse(local);
-                 if(parsed.channels) resetAndApplyChannels(parsed.channels, parsed.userAssignments, parsed.registeredUsers);
-             } catch(e){}
-         }
-      }
+      Cloud.save(roomId, { channels, userAssignments: state.userAssignments, registeredUsers: state.registeredUsers });
     }
 
     function resetAndApplyChannels(newChannels, newAssignments, newRegistered) {
@@ -595,8 +567,8 @@
            call.chGains[newCh.id] = splitGain;
         }
       });
-      saveRoomState();
-      updateAdminMatrix(); // 追加などのDOM構造変化は全体再描画
+      pushToCloud();
+      buildAdminMatrix(); // UI再構築
     };
 
     function removeChannel(chId) {
@@ -806,8 +778,8 @@
       });
     }
 
-    // --- パッチパネル UI ---
-    function updateAdminMatrix() {
+    // --- マトリックス型UI (サクサク更新対応) ---
+    function buildAdminMatrix() {
       if (!state.isAdmin) return;
       const container = document.getElementById('admin-matrix-container');
       
@@ -861,7 +833,7 @@
       html += `</tbody></table></div>`;
       container.innerHTML = html;
 
-      // パッチ(〇)を押した際の超軽量同期処理 (再描画せずクラスだけ変えて通信)
+      // クロスポイントの超軽量トグル処理（再描画せずCSSだけ切り替え）
       container.querySelectorAll('.matrix-toggle').forEach(btn => {
         btn.onclick = (e) => {
           const uid = e.target.getAttribute('data-uid');
@@ -870,19 +842,19 @@
           
           if (assigned.includes(chid)) {
             assigned = assigned.filter(id => id !== chid);
-            e.target.classList.remove('active'); // 瞬時にUIのみ反映
+            e.target.classList.remove('active'); // 即時UI反映
           } else {
             assigned.push(chid);
-            e.target.classList.add('active'); // 瞬時にUIのみ反映
+            e.target.classList.add('active'); // 即時UI反映
           }
           
           state.userAssignments[uid] = assigned;
-          saveRoomState(); // デバウンス経由でクラウドに安全に送る
+          pushToCloud(); // 裏でこっそり保存
           
-          // 該当ユーザーに権限データをブロードキャスト
-          Object.values(state.dataConns).forEach(conn => {
-             if(conn && conn.open) conn.send({ type: 'sync-assignments', assignments: state.userAssignments });
-          });
+          const peerId = Object.keys(state.users).find(p => state.users[p] === uid && state.peers.has(p));
+          if(peerId && state.dataConns[peerId] && state.dataConns[peerId].open) {
+             state.dataConns[peerId].send({ type: 'assign-channels', channels: assigned });
+          }
         };
       });
 
@@ -891,8 +863,8 @@
         if (uid && uid.trim() !== '' && !state.registeredUsers.includes(uid)) {
           state.registeredUsers.push(uid);
           state.userAssignments[uid] = channels.map(c => c.id); 
-          saveRoomState();
-          updateAdminMatrix(); // 全体構造が変わる追加処理は再描画
+          pushToCloud();
+          buildAdminMatrix(); // 行/列が増えるので再構築
           
           Object.values(state.dataConns).forEach(conn => {
             if(conn && conn.open) conn.send({ type: 'update-registered', registered: state.registeredUsers });
@@ -906,8 +878,8 @@
           if(confirm(`ユーザー「${uid}」をリストから削除しますか？\n(設定も消去されます)`)) {
              state.registeredUsers = state.registeredUsers.filter(u => u !== uid);
              delete state.userAssignments[uid];
-             saveRoomState();
-             updateAdminMatrix();
+             pushToCloud();
+             buildAdminMatrix(); // 列が減るので再構築
              
              Object.values(state.dataConns).forEach(conn => {
                if(conn && conn.open) conn.send({ type: 'update-registered', registered: state.registeredUsers });
@@ -920,5 +892,445 @@
         input.addEventListener('change', (e) => {
           const chId = e.target.getAttribute('data-id');
           const ch = channels.find(c => c.id === chId);
-          if (e.target.classList.contains('admin-edit
+          if (e.target.classList.contains('admin-edit-name')) ch.name = e.target.value;
+          if (e.target.classList.contains('admin-edit-type')) ch.type = e.target.value;
+
+          const nameEl = document.getElementById(`name-${chId}`);
+          const typeEl = document.getElementById(`type-${chId}`);
+          if (nameEl) nameEl.textContent = ch.name;
+          if (typeEl) typeEl.textContent = ch.type;
+
+          pushToCloud();
+          syncChannelInfo();
+        });
+      });
+
+      container.querySelectorAll('.btn-delete-row').forEach(btn => {
+        btn.onclick = (e) => {
+          const chId = e.target.getAttribute('data-id');
+          const ch = channels.find(c => c.id === chId);
+          if(!confirm(`パーティー「${ch.name}」を削除しますか？`)) return;
+          removeChannel(chId);
+          pushToCloud();
+          Object.values(state.dataConns).forEach(conn => {
+            if(conn && conn.open) conn.send({ type: 'remove-channel', chId: chId });
+          });
+          buildAdminMatrix(); // 行が減るので再構築
+        };
+      });
+    }
+
+    // 単純にマトリックスの丸ボタンの見た目だけを同期させる関数（他人の操作が反映された時用）
+    function syncMatrixUI() {
+      if (!state.isAdmin) return;
+      document.querySelectorAll('.matrix-toggle').forEach(btn => {
+        const uid = btn.getAttribute('data-uid');
+        const chid = btn.getAttribute('data-chid');
+        const assigned = state.userAssignments[uid] || [];
+        if (assigned.includes(chid)) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+    }
+
+    function applyAssignments(assignedIds) {
+      if (!assignedIds) return;
+      channels.forEach(ch => {
+        const card = document.getElementById(`card-${ch.id}`);
+        if(card) {
+          if(assignedIds.includes(ch.id)) {
+            card.style.display = 'flex';
+          } else {
+            card.style.display = 'none';
+            state.listenStates[ch.id] = false;
+            state.talkStates[ch.id] = false;
+            card.classList.remove('listen-on', 'talk-on');
+            const lBtn = document.getElementById(`listen-${ch.id}`);
+            const tBtn = document.getElementById(`talk-${ch.id}`);
+            if(lBtn) { lBtn.classList.remove('active', 'latched'); lBtn.style.transform = 'translateX(0px)'; }
+            if(tBtn) { tBtn.classList.remove('active', 'latched'); tBtn.style.transform = 'translateX(0px)'; }
+          }
+        }
+      });
+      updateAudioRouting();
+      syncTalkStates();
+    }
+
+    function setupDataConnection(conn) {
+      if (state.dataConns[conn.peer] && state.dataConns[conn.peer].open) return; 
+      state.dataConns[conn.peer] = conn;
+
+      const initData = () => {
+        state.peers.add(conn.peer);
+        updateUserCount();
+
+        conn.send({ type: 'hello', userId: els.joinUserIdInput.value || 'Anonymous' });
+        conn.send({ type: 'update-talk-states', states: state.talkStates });
+        
+        const targetSlot = parseInt(conn.peer.split('-s')[1]);
+        if (state.mySlot > targetSlot) {
+            if (!state.mediaCalls[conn.peer]) {
+                const call = state.peer.call(conn.peer, state.localStream);
+                handleCall(call);
+            }
+        }
+      };
+
+      if (conn.open) {
+          initData();
+      } else {
+          conn.on('open', initData);
+      }
+
+      conn.on('data', data => {
+        if (data.type === 'hello') {
+          const uid = data.userId || 'Anonymous';
+          
+          if (uid !== 'Anonymous' && uid === els.joinUserIdInput.value) {
+            const remoteSlot = parseInt(conn.peer.split('-s')[1]);
+            if (state.mySlot > remoteSlot) {
+              alert(`ユーザーID「${uid}」は現在他のオンライン端末で使用されています。別のIDで参加してください。`);
+              LocalProfile.clear();
+              location.reload();
+              return;
+            } else {
+              return; 
+            }
+          }
+
+          state.users[conn.peer] = uid;
+          
+          if (uid !== 'Anonymous' && !state.registeredUsers.includes(uid)) {
+             state.registeredUsers.push(uid);
+             state.userAssignments[uid] = channels.map(c => c.id);
+             pushToCloud();
+             if (state.isAdmin) buildAdminMatrix(); // 新規ユーザーが増えたら表を再構築
+          }
+          
+          // ★ 一番古い端末だけが新規参加者にデータを送る（複数管理者のバグ防止）
+          const amILowestSlot = Array.from(state.peers).every(p => parseInt(p.split('-s')[1]) > state.mySlot);
+          if(amILowestSlot) {
+            conn.send({ type: 'init-state', channels, assignments: state.userAssignments, registered: state.registeredUsers });
+          }
+          
+          updateUserCount();
+        }
+        else if (data.type === 'init-state') {
+          resetAndApplyChannels(data.channels, data.assignments, data.registered);
+          if(state.isAdmin) buildAdminMatrix();
+        }
+        else if (data.type === 'update-ch-info') {
+          channels = data.data;
+          channels.forEach((ch) => { 
+            const nameEl = document.getElementById(`name-${ch.id}`);
+            const typeEl = document.getElementById(`type-${ch.id}`);
+            if(nameEl) nameEl.textContent = ch.name; 
+            if(typeEl) typeEl.textContent = ch.type; 
+          });
+          if(state.isAdmin) {
+             document.querySelectorAll('.admin-edit-name').forEach(input => {
+                const ch = channels.find(c => c.id === input.getAttribute('data-id'));
+                if(ch) input.value = ch.name;
+             });
+             document.querySelectorAll('.admin-edit-type').forEach(input => {
+                const ch = channels.find(c => c.id === input.getAttribute('data-id'));
+                if(ch) input.value = ch.type;
+             });
+          }
+        }
+        else if (data.type === 'update-registered') {
+          state.registeredUsers = data.registered;
+          if(state.isAdmin) buildAdminMatrix();
+        }
+        else if (data.type === 'update-talk-states') {
+          state.remoteTalkStates[conn.peer] = data.states;
+          updateAudioRouting();
+        }
+        else if (data.type === 'assign-channels' && !state.isAdmin) {
+          applyAssignments(data.channels);
+        }
+        else if (data.type === 'assign-channels' && state.isAdmin) {
+           // 他の管理者が変更した場合、マトリックスの見た目だけを同期
+           syncMatrixUI();
+        }
+        else if (data.type === 'add-channel') {
+          channels.push(data.ch);
+          createChannelCard(data.ch);
+          setupChannelAudio(data.ch.id);
+          
+          Object.values(state.mediaCalls).forEach(call => {
+            if (call.source && audioCtx) {
+               const splitGain = audioCtx.createGain();
+               splitGain.gain.value = 0;
+               call.source.connect(splitGain);
+               splitGain.connect(state.channelNodes[data.ch.id].analyser);
+               call.chGains[data.ch.id] = splitGain;
+            }
+          });
+          
+          if(data.registered) state.registeredUsers = data.registered;
+          if(data.assignments) state.userAssignments = data.assignments;
+          
+          const myUid = els.joinUserIdInput.value || 'Anonymous';
+          if(state.userAssignments && state.userAssignments[myUid]) {
+             applyAssignments(state.userAssignments[myUid]);
+          }
+          if(state.isAdmin) buildAdminMatrix();
+        }
+        else if (data.type === 'remove-channel') {
+          removeChannel(data.chId);
+          if(state.isAdmin) buildAdminMatrix();
+        }
+      });
+
+      conn.on('close', () => removePeer(conn.peer));
+      conn.on('error', () => removePeer(conn.peer));
+    }
+
+    function removePeer(peerId) {
+      if (state.dataConns[peerId] && state.dataConns[peerId].pending) return; 
+
+      if (state.dataConns[peerId]) {
+          try { state.dataConns[peerId].close(); } catch(e){}
+          delete state.dataConns[peerId];
+      }
+      state.peers.delete(peerId);
+      delete state.remoteTalkStates[peerId];
+      
+      if (state.mediaCalls[peerId]) {
+        Object.values(state.mediaCalls[peerId].chGains || {}).forEach(gain => {
+           try{ gain.disconnect(); }catch(e){}
+        });
+        try { state.mediaCalls[peerId].audioEl.pause(); state.mediaCalls[peerId].audioEl.srcObject = null; } catch(e){}
+        delete state.mediaCalls[peerId];
+      }
+      updateAudioRouting();
+      updateUserCount();
+    }
+
+    function updateUserCount() {
+      const isOnline = state.mySlot > 0;
+      
+      let activeCount = isOnline ? 1 : 0;
+      state.peers.forEach(p => {
+         if (state.dataConns[p] && state.dataConns[p].open) activeCount++;
+      });
+      
+      els.roleDisplay.textContent = state.isAdmin ? `ADMIN (${activeCount})` : `MEMBER (${activeCount})`;
+      els.roleDisplay.style.color = isOnline ? 'var(--blue)' : 'var(--orange)';
+      
+      if(isOnline) {
+        els.btnLoginShow.textContent = "Connected";
+        els.btnLoginShow.classList.add('online');
+      }
+      
+      // 管理画面のオンライン状況表示を更新 (再描画せずスタイルだけ変える)
+      if (state.isAdmin) {
+         document.querySelectorAll('.admin-matrix th').forEach(th => {
+            const uidSpan = th.querySelector('span[style*="font-weight:bold"]');
+            if(uidSpan) {
+               const uid = uidSpan.textContent;
+               const isOnline = Array.from(state.peers).some(p => state.users[p] === uid && state.dataConns[p] && state.dataConns[p].open);
+               const dot = th.querySelector('span:first-child');
+               if(dot) dot.style.color = isOnline ? 'var(--green)' : 'var(--text-sub)';
+            }
+         });
+      }
+    }
+
+    const peerConfig = { 
+      config: { 
+        'iceServers': [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: "stun:stun.relay.metered.ca:80" },
+          { urls: "turn:global.relay.metered.ca:80", username: "cce7732b3cc3adfa6f13a545", credential: "l3ACe3V84yTvkBEd" },
+          { urls: "turn:global.relay.metered.ca:80?transport=tcp", username: "cce7732b3cc3adfa6f13a545", credential: "l3ACe3V84yTvkBEd" },
+          { urls: "turn:global.relay.metered.ca:443", username: "cce7732b3cc3adfa6f13a545", credential: "l3ACe3V84yTvkBEd" },
+          { urls: "turns:global.relay.metered.ca:443?transport=tcp", username: "cce7732b3cc3adfa6f13a545", credential: "l3ACe3V84yTvkBEd" }
+        ] 
+      } 
+    };
+
+    async function initMedia() {
+      try {
+        els.statusMsg.textContent = "マイク起動中...";
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            alert("【警告】\nお使いのブラウザやアプリ環境ではマイク機能がサポートされていません。\n(HTTPS接続にするか、Safari/Chromeなどの通常ブラウザアプリで開き直してください)");
+            return false;
+        }
+        state.localStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+        state.audioEnabled = true;
+        initAudioContext(); 
+        return true;
+      } catch(e) {
+        alert("マイクへのアクセスがブロックされています。\n\n詳細: " + e.message); 
+        return false;
+      }
+    }
+
+    window.joinNetwork = async function(isAdmin) {
+      const btn = isAdmin ? els.btnJoinAdmin : els.btnJoinMember;
+      const originalText = btn.textContent;
+      
+      btn.disabled = true;
+      btn.textContent = "処理中...";
+      btn.style.opacity = "0.5";
+      
+      await new Promise(r => setTimeout(r, 50));
+
+      if (typeof Peer === 'undefined') {
+          alert("通信サーバーのプログラムが読み込めませんでした。\nインターネット接続を確認するか、ページを再読み込みしてください。");
+          btn.disabled = false;
+          btn.textContent = originalText;
+          btn.style.opacity = "1";
+          return;
+      }
+
+      if (!await initMedia()) {
+        btn.disabled = false;
+        btn.textContent = originalText;
+        btn.style.opacity = "1";
+        els.statusMsg.textContent = "マイクが許可されませんでした";
+        return;
+      }
+      
+      state.isAdmin = isAdmin;
+      els.btnAdmin.style.display = isAdmin ? 'block' : 'none';
+      
+      const roomId = els.hostIdInput.value || 'yytalk';
+      const myName = els.joinUserIdInput.value || 'Unknown';
+      
+      els.appTitle.textContent = `YY-Talk - ${roomId}${isAdmin ? ' (Admin)' : ''}`;
+      LocalProfile.set({ roomId, userId: myName, isAdmin });
+      
+      els.statusMsg.textContent = "データを読み込み中...";
+      btn.textContent = "クラウド接続中...";
+      
+      // 先にクラウドからデータをロードしておく
+      await Cloud.load(roomId);
+      
+      els.statusMsg.textContent = "空きポートを検索中...";
+      btn.textContent = "サーバー接続中...";
+      
+      let slot = 1;
+      const maxSlots = 30;
+      
+      function tryConnectSlot() {
+        if (slot > maxSlots) {
+          alert("申し訳ありません、ルームが満員です（最大30人）。");
+          btn.disabled = false;
+          btn.textContent = originalText;
+          btn.style.opacity = "1";
+          els.statusMsg.textContent = "満員のため接続できませんでした";
+          return;
+        }
+        
+        const tryId = `${roomId}-s${slot}`;
+        state.peer = new Peer(tryId, peerConfig);
+        
+        state.peer.on('open', (id) => {
+          state.mySlot = slot;
+          els.myIdDisplay.textContent = `${myName} (Slot ${slot})`;
+          els.statusMsg.textContent = "接続完了。仲間を探しています...";
+          setTimeout(() => els.loginOverlay.style.display = 'none', 500);
+          
+          updateUserCount();
+          btn.disabled = false;
+          btn.textContent = originalText;
+          btn.style.opacity = "1";
+          
+          state.peer.on('connection', conn => setupDataConnection(conn));
+          state.peer.on('call', call => { call.answer(state.localStream); handleCall(call); });
+          
+          scanForPeers(roomId);
+          setInterval(() => scanForPeers(roomId), 8000);
+          
+          setInterval(() => {
+             state.peers.forEach(p => {
+                if (state.dataConns[p] && !state.dataConns[p].open) removePeer(p);
+             });
+             updateUserCount();
+          }, 10000);
+        });
+        
+        state.peer.on('error', (err) => {
+          if (err.type === 'peer-unavailable') return;
+          
+          if (state.mySlot === 0) {
+            if (err.type === 'unavailable-id') {
+              slot++; 
+              state.peer.destroy();
+              setTimeout(tryConnectSlot, 400);
+            } else {
+              console.error(err);
+              els.statusMsg.textContent = "接続エラー: " + err.type;
+              btn.disabled = false;
+              btn.textContent = originalText;
+              btn.style.opacity = "1";
+            }
+          }
+        });
+      }
+      tryConnectSlot();
+    };
+
+    function scanForPeers(roomId) {
+       for (let i = 1; i < state.mySlot; i++) {
+         const targetId = `${roomId}-s${i}`;
+         if (!state.dataConns[targetId]) {
+            const conn = state.peer.connect(targetId);
+            conn.on('open', () => setupDataConnection(conn));
+            conn.on('error', () => { /* 相手がいなくても裏で無視する */ });
+         }
+       }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedProfile = LocalProfile.get();
+      if (savedProfile) {
+        els.hostIdInput.value = savedProfile.roomId;
+        els.joinUserIdInput.value = savedProfile.userId;
+      }
+    });
+
+    function handleCall(call) {
+      call.on('stream', stream => {
+        if (state.mediaCalls[call.peer]) return; 
+
+        const audioEl = new Audio();
+        audioEl.srcObject = stream;
+        audioEl.muted = true; 
+        audioEl.play().catch(()=>{});
+
+        const callData = { stream, audioEl };
+        state.mediaCalls[call.peer] = callData;
+
+        if (!state.audioEnabled) {
+          els.audioOverlay.style.display = 'flex';
+        } else {
+          setupPeerMixer(callData);
+        }
+        updateUserCount();
+      });
+
+      call.on('close', () => removePeer(call.peer));
+    }
+
+    document.getElementById('btn-enable-audio').onclick = () => {
+      els.dummyAudio.play().catch(()=>{}); 
+      els.audioOverlay.style.display = 'none';
+      state.audioEnabled = true;
+      initAudioContext(); 
+    };
+
+    document.getElementById('btn-stop').onclick = () => {
+      LocalProfile.clear();
+      location.reload();
+    };
+
+  </script>
+</body>
+</html>
 
