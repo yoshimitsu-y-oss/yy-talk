@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>YY-Talk - PRO Cloud Matrix</title>
+  <title>YY-Talk - PRO Matrix</title>
   
   <script>
     window.onerror = function(message, source, lineno) {
@@ -17,7 +17,7 @@
     :root {
       --bg-dark: #0a0b0d; --card-bg: #1c1d21; --card-bg-expanded: #24262b;
       --text-main: #ffffff; --text-sub: #7a7e85;
-      --green: #4ade80; --red: #dc2626;
+      --green: #4ade80; --red: #dc2626; /* より深みのあるマットな赤 */
       --orange: #f97316; --blue: #3b82f6;
     }
 
@@ -48,13 +48,18 @@
       }
     }
 
-    /* --- オーバーレイ (裏画面) --- */
+    /* --- オーバーレイ (裏画面) スクロール安全対策 --- */
     .overlay-base {
       position: absolute; inset: 0; background: rgba(0,0,0,0.85); display: none;
       align-items: center; justify-content: center; flex-direction: column;
-      backdrop-filter: blur(4px); z-index: 1000; overflow-y: auto;
+      backdrop-filter: blur(4px); z-index: 1000;
+      overflow-y: auto; /* 縦幅が足りない時は全体スクロールを許可 */
     }
-    @media (max-height: 700px) { .overlay-base { align-items: flex-start; padding: 20px 0; } }
+    
+    /* 縦幅が短い環境（スマホ横向きなど）では上揃えにしてスクロールを確保 */
+    @media (max-height: 700px) {
+      .overlay-base { align-items: flex-start; padding: 20px 0; }
+    }
 
     #login-overlay { z-index: 2000; }
     #audio-overlay { z-index: 1100; }
@@ -67,7 +72,7 @@
     .login-modal {
       background: var(--card-bg); padding: 25px 20px; border-radius: 12px; width: 90%; max-width: 340px;
       border: 1px solid #3a3c42; position: relative; display: flex; flex-direction: column; gap: 15px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.5); margin: auto;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5); margin: auto; /* スクロール時の余白確保 */
     }
     
     .login-modal .btn-close-login {
@@ -110,16 +115,23 @@
       width: 100%; border-collapse: collapse; min-width: max-content;
       text-align: center; font-size: 13px;
     }
-    .admin-matrix th, .admin-matrix td { border: 1px solid #3a3c42; padding: 10px; }
-    .admin-matrix th { background-color: #1c1d21; color: var(--text-sub); font-weight: normal; position: sticky; top: 0; z-index: 5; }
+    .admin-matrix th, .admin-matrix td {
+      border: 1px solid #3a3c42; padding: 10px;
+    }
+    .admin-matrix th {
+      background-color: #1c1d21; color: var(--text-sub); font-weight: normal; position: sticky; top: 0; z-index: 5;
+    }
     
+    /* 斜線と文字配置のトリック */
     .diagonal-header {
       position: relative; min-width: 260px; min-height: 50px;
+      /* 左下から右上への斜線 */
       background: linear-gradient(to top right, #1c1d21 49.2%, #3a3c42 49.2%, #3a3c42 50.8%, #1c1d21 50.8%);
     }
     .diagonal-header .dh-member { position: absolute; top: 8px; right: 15px; font-weight: bold; color: var(--text-main); }
     .diagonal-header .dh-party { position: absolute; bottom: 8px; left: 15px; font-weight: bold; color: var(--text-main); }
 
+    /* 横線をパーティー名の下まで貫通させる（標準的なtdのボーダーに任せる） */
     .admin-matrix td.ch-cell {
       text-align: left; background-color: #0a0b0d; min-width: 260px; padding: 10px;
     }
@@ -127,14 +139,13 @@
     .matrix-toggle {
       width: 26px; height: 26px; border-radius: 50%; margin: 0 auto;
       background: #1c1d21; border: 2px solid #3a3c42;
-      cursor: pointer; transition: 0.15s ease-out; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+      cursor: pointer; transition: 0.2s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
     }
-    /* アクティブ時のアニメーションをスムーズに */
     .matrix-toggle.active {
       background: var(--green); border-color: var(--green); box-shadow: 0 0 10px rgba(74, 222, 128, 0.4);
-      transform: scale(1.1);
     }
     
+    /* 上質な赤色の削除ボタン（最初から発光・コンパクト化） */
     .btn-delete-col, .btn-delete-row {
       background: var(--red); color: #fff; border: none; 
       border-radius: 4px; cursor: pointer; padding: 5px 8px; font-size: 11px;
@@ -178,6 +189,7 @@
       #channel-list-wrap { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 15px; }
     }
 
+    /* 背景グラデーション制御用のカードデザイン */
     .channel-card {
       background-color: var(--card-bg);
       border-radius: 10px; position: relative;
@@ -194,6 +206,7 @@
     
     .channel-card.listen-on::before { opacity: 1; }
     .channel-card.talk-on::after { opacity: 1; }
+    
     .channel-card > * { position: relative; z-index: 1; }
 
     .status-line-bg {
@@ -227,6 +240,7 @@
     .ch-name { font-size: 16px; font-weight: 500; margin-bottom: 2px; display: inline-block; padding: 2px 6px; border-radius: 4px; }
     .ch-type { font-size: 10px; color: var(--text-sub); display: inline-block; padding: 2px 6px; border-radius: 4px; pointer-events: auto; }
 
+    /* --- 上質なボタンデザイン --- */
     .btn-action {
       width: 56px; height: 56px; border-radius: 50%; border: 2px solid;
       display: flex; align-items: center; justify-content: center; background: #1c1d21;
@@ -255,6 +269,7 @@
     .master-meter-container { height: 8px; width: 100%; background: #1c1d21; position: relative; flex-shrink: 0; }
     .master-meter-fill { height: 100%; width: 0%; transition: width 0.05s linear; background: linear-gradient(90deg, #4ade80 0%, #4ade80 60%, #eab308 80%, #f87171 100%); }
 
+    /* --- スマホ横向き (ランドスケープ) 完全最適化 --- */
     @media (orientation: landscape) and (max-height: 600px) {
       .app-container { height: 100dvh; max-height: none; border-radius: 0; border: none; }
       .header { padding: 4px 15px; }
@@ -264,6 +279,8 @@
       .btn-icon { width: 20px; height: 20px; }
       .ch-name { font-size: 14px; margin-bottom: 0; }
       .btn-expand { padding: 2px 0; font-size: 12px; }
+      
+      /* モーダルがはみ出さないように余白調整 */
       .login-modal { max-height: 95vh; overflow-y: auto; padding: 15px; }
       .admin-modal { max-width: 100%; }
       .scroll-area { max-height: calc(95vh - 80px); }
@@ -333,41 +350,10 @@
   </div>
 
   <script>
-    // --- クラウド・アダプター (無料のKV APIを使用) ---
-    // ※本番運用時はURLを Firebase 等に変更してください。
-    const Cloud = {
-      baseURL: 'https://kvdb.io/wBv2xPz9QkF4xN9vP9n3bE/', // デモ用共有バケット
-      
-      save: async (roomId, data) => {
-        try {
-          await fetch(Cloud.baseURL + roomId, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-          });
-        } catch(e) {
-          console.warn('Cloud save failed, using local storage fallback.', e);
-          localStorage.setItem('yytalk_room_' + roomId, JSON.stringify(data));
-        }
-      },
-      
-      load: async (roomId) => {
-        try {
-          const res = await fetch(Cloud.baseURL + roomId);
-          if (res.ok) return await res.json();
-        } catch(e) {
-          console.warn('Cloud load failed, using local storage fallback.', e);
-        }
-        const local = localStorage.getItem('yytalk_room_' + roomId);
-        return local ? JSON.parse(local) : null;
-      }
-    };
-
-    // ユーザープロファイルのみローカル記憶
-    const LocalProfile = {
-      get: () => { try { return JSON.parse(localStorage.getItem('yytalk_user_profile')); } catch(e) { return null; } },
-      set: (data) => { try { localStorage.setItem('yytalk_user_profile', JSON.stringify(data)); } catch(e) {} },
-      clear: () => { try { localStorage.removeItem('yytalk_user_profile'); } catch(e) {} }
+    const safeStorage = {
+      get: (key) => { try { return localStorage.getItem(key); } catch(e) { return null; } },
+      set: (key, val) => { try { localStorage.setItem(key, val); } catch(e) {} },
+      remove: (key) => { try { localStorage.removeItem(key); } catch(e) {} }
     };
 
     const state = {
@@ -424,7 +410,7 @@
     
     els.btnAdmin.onclick = () => { 
       if (!state.isAdmin) return;
-      buildAdminMatrix(); // 開くたびにHTMLを再生成（最新状態）
+      updateAdminMatrix();
       els.adminOverlay.style.display = 'flex'; 
     };
     els.btnCloseAdmin.onclick = () => { els.adminOverlay.style.display = 'none'; };
@@ -432,9 +418,13 @@
     const iconSpeaker = `<svg class="btn-icon" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
     const iconMic = `<svg class="btn-icon" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>`;
 
-    function pushToCloud() {
+    function saveRoomState() {
       const roomId = els.hostIdInput.value || 'yytalk';
-      Cloud.save(roomId, { channels, userAssignments: state.userAssignments, registeredUsers: state.registeredUsers });
+      safeStorage.set('yytalk_room_' + roomId, JSON.stringify({ 
+        channels, 
+        userAssignments: state.userAssignments,
+        registeredUsers: state.registeredUsers
+      }));
     }
 
     function resetAndApplyChannels(newChannels, newAssignments, newRegistered) {
@@ -478,6 +468,18 @@
            applyAssignments(channels.map(c=>c.id)); 
         }
         updateAudioRouting();
+    }
+
+    function loadRoomState(roomId) {
+      const saved = safeStorage.get('yytalk_room_' + roomId);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed.channels && parsed.channels.length > 0) {
+             resetAndApplyChannels(parsed.channels, parsed.userAssignments, parsed.registeredUsers);
+          }
+        } catch(e){}
+      }
     }
 
     function createChannelCard(ch) {
@@ -567,8 +569,8 @@
            call.chGains[newCh.id] = splitGain;
         }
       });
-      pushToCloud();
-      buildAdminMatrix(); // UI再構築
+      saveRoomState();
+      updateAdminMatrix();
     };
 
     function removeChannel(chId) {
@@ -778,8 +780,8 @@
       });
     }
 
-    // --- マトリックス型UI (サクサク更新対応) ---
-    function buildAdminMatrix() {
+    // --- マトリックス型UI (クロスポイント権限管理) ---
+    function updateAdminMatrix() {
       if (!state.isAdmin) return;
       const container = document.getElementById('admin-matrix-container');
       
@@ -813,11 +815,13 @@
       channels.forEach(ch => {
           html += `<tr>
               <td class="ch-cell">
-                 <div style="display:flex; gap:5px; flex:1;">
-                    <input type="text" class="admin-edit-name" data-id="${ch.id}" value="${ch.name}" style="flex:1; width:80px; background:#1c1d21; border:1px solid #3a3c42; color:#fff; border-radius:4px; font-size:14px; padding:4px 8px;">
-                    <input type="text" class="admin-edit-type" data-id="${ch.id}" value="${ch.type}" style="width:40px; text-align:center; background:#1c1d21; border:1px solid #3a3c42; color:#fff; border-radius:4px; font-size:12px; padding:4px;">
+                 <div style="display:flex; gap:8px; align-items:center; justify-content:space-between; width:100%;">
+                    <div style="display:flex; gap:5px; flex:1;">
+                       <input type="text" class="admin-edit-name" data-id="${ch.id}" value="${ch.name}" style="flex:1; width:80px; background:#1c1d21; border:1px solid #3a3c42; color:#fff; border-radius:4px; font-size:14px; padding:4px 8px;">
+                       <input type="text" class="admin-edit-type" data-id="${ch.id}" value="${ch.type}" style="width:40px; text-align:center; background:#1c1d21; border:1px solid #3a3c42; color:#fff; border-radius:4px; font-size:12px; padding:4px;">
+                    </div>
+                    <button class="btn-delete-row" data-id="${ch.id}">削除</button>
                  </div>
-                 <button class="btn-delete-row" data-id="${ch.id}">削除</button>
               </td>`;
 
           state.registeredUsers.forEach(uid => {
@@ -833,7 +837,6 @@
       html += `</tbody></table></div>`;
       container.innerHTML = html;
 
-      // クロスポイントの超軽量トグル処理（再描画せずCSSだけ切り替え）
       container.querySelectorAll('.matrix-toggle').forEach(btn => {
         btn.onclick = (e) => {
           const uid = e.target.getAttribute('data-uid');
@@ -842,14 +845,14 @@
           
           if (assigned.includes(chid)) {
             assigned = assigned.filter(id => id !== chid);
-            e.target.classList.remove('active'); // 即時UI反映
+            e.target.classList.remove('active');
           } else {
             assigned.push(chid);
-            e.target.classList.add('active'); // 即時UI反映
+            e.target.classList.add('active');
           }
           
           state.userAssignments[uid] = assigned;
-          pushToCloud(); // 裏でこっそり保存
+          saveRoomState();
           
           const peerId = Object.keys(state.users).find(p => state.users[p] === uid && state.peers.has(p));
           if(peerId && state.dataConns[peerId] && state.dataConns[peerId].open) {
@@ -863,8 +866,8 @@
         if (uid && uid.trim() !== '' && !state.registeredUsers.includes(uid)) {
           state.registeredUsers.push(uid);
           state.userAssignments[uid] = channels.map(c => c.id); 
-          pushToCloud();
-          buildAdminMatrix(); // 行/列が増えるので再構築
+          saveRoomState();
+          updateAdminMatrix();
           
           Object.values(state.dataConns).forEach(conn => {
             if(conn && conn.open) conn.send({ type: 'update-registered', registered: state.registeredUsers });
@@ -878,8 +881,8 @@
           if(confirm(`ユーザー「${uid}」をリストから削除しますか？\n(設定も消去されます)`)) {
              state.registeredUsers = state.registeredUsers.filter(u => u !== uid);
              delete state.userAssignments[uid];
-             pushToCloud();
-             buildAdminMatrix(); // 列が減るので再構築
+             saveRoomState();
+             updateAdminMatrix();
              
              Object.values(state.dataConns).forEach(conn => {
                if(conn && conn.open) conn.send({ type: 'update-registered', registered: state.registeredUsers });
@@ -900,7 +903,7 @@
           if (nameEl) nameEl.textContent = ch.name;
           if (typeEl) typeEl.textContent = ch.type;
 
-          pushToCloud();
+          saveRoomState();
           syncChannelInfo();
         });
       });
@@ -911,27 +914,12 @@
           const ch = channels.find(c => c.id === chId);
           if(!confirm(`パーティー「${ch.name}」を削除しますか？`)) return;
           removeChannel(chId);
-          pushToCloud();
+          saveRoomState();
           Object.values(state.dataConns).forEach(conn => {
             if(conn && conn.open) conn.send({ type: 'remove-channel', chId: chId });
           });
-          buildAdminMatrix(); // 行が減るので再構築
+          updateAdminMatrix();
         };
-      });
-    }
-
-    // 単純にマトリックスの丸ボタンの見た目だけを同期させる関数（他人の操作が反映された時用）
-    function syncMatrixUI() {
-      if (!state.isAdmin) return;
-      document.querySelectorAll('.matrix-toggle').forEach(btn => {
-        const uid = btn.getAttribute('data-uid');
-        const chid = btn.getAttribute('data-chid');
-        const assigned = state.userAssignments[uid] || [];
-        if (assigned.includes(chid)) {
-          btn.classList.add('active');
-        } else {
-          btn.classList.remove('active');
-        }
       });
     }
 
@@ -992,7 +980,7 @@
             const remoteSlot = parseInt(conn.peer.split('-s')[1]);
             if (state.mySlot > remoteSlot) {
               alert(`ユーザーID「${uid}」は現在他のオンライン端末で使用されています。別のIDで参加してください。`);
-              LocalProfile.clear();
+              safeStorage.remove('yytalk_user_profile');
               location.reload();
               return;
             } else {
@@ -1005,21 +993,22 @@
           if (uid !== 'Anonymous' && !state.registeredUsers.includes(uid)) {
              state.registeredUsers.push(uid);
              state.userAssignments[uid] = channels.map(c => c.id);
-             pushToCloud();
-             if (state.isAdmin) buildAdminMatrix(); // 新規ユーザーが増えたら表を再構築
+             saveRoomState();
           }
           
-          // ★ 一番古い端末だけが新規参加者にデータを送る（複数管理者のバグ防止）
+          // ★修正ポイント: 古いスロットの端末だけが送信（複数管理者のバグ防止）
           const amILowestSlot = Array.from(state.peers).every(p => parseInt(p.split('-s')[1]) > state.mySlot);
           if(amILowestSlot) {
             conn.send({ type: 'init-state', channels, assignments: state.userAssignments, registered: state.registeredUsers });
           }
           
           updateUserCount();
+          if(state.isAdmin) updateAdminMatrix();
         }
         else if (data.type === 'init-state') {
           resetAndApplyChannels(data.channels, data.assignments, data.registered);
-          if(state.isAdmin) buildAdminMatrix();
+          saveRoomState();
+          if(state.isAdmin) updateAdminMatrix();
         }
         else if (data.type === 'update-ch-info') {
           channels = data.data;
@@ -1029,20 +1018,13 @@
             if(nameEl) nameEl.textContent = ch.name; 
             if(typeEl) typeEl.textContent = ch.type; 
           });
-          if(state.isAdmin) {
-             document.querySelectorAll('.admin-edit-name').forEach(input => {
-                const ch = channels.find(c => c.id === input.getAttribute('data-id'));
-                if(ch) input.value = ch.name;
-             });
-             document.querySelectorAll('.admin-edit-type').forEach(input => {
-                const ch = channels.find(c => c.id === input.getAttribute('data-id'));
-                if(ch) input.value = ch.type;
-             });
-          }
+          saveRoomState();
+          if(state.isAdmin) updateAdminMatrix();
         }
         else if (data.type === 'update-registered') {
           state.registeredUsers = data.registered;
-          if(state.isAdmin) buildAdminMatrix();
+          saveRoomState();
+          if(state.isAdmin) updateAdminMatrix();
         }
         else if (data.type === 'update-talk-states') {
           state.remoteTalkStates[conn.peer] = data.states;
@@ -1050,10 +1032,7 @@
         }
         else if (data.type === 'assign-channels' && !state.isAdmin) {
           applyAssignments(data.channels);
-        }
-        else if (data.type === 'assign-channels' && state.isAdmin) {
-           // 他の管理者が変更した場合、マトリックスの見た目だけを同期
-           syncMatrixUI();
+          saveRoomState();
         }
         else if (data.type === 'add-channel') {
           channels.push(data.ch);
@@ -1077,11 +1056,13 @@
           if(state.userAssignments && state.userAssignments[myUid]) {
              applyAssignments(state.userAssignments[myUid]);
           }
-          if(state.isAdmin) buildAdminMatrix();
+          saveRoomState();
+          if(state.isAdmin) updateAdminMatrix();
         }
         else if (data.type === 'remove-channel') {
           removeChannel(data.chId);
-          if(state.isAdmin) buildAdminMatrix();
+          saveRoomState();
+          if(state.isAdmin) updateAdminMatrix();
         }
       });
 
@@ -1108,6 +1089,7 @@
       }
       updateAudioRouting();
       updateUserCount();
+      if(state.isAdmin) updateAdminMatrix();
     }
 
     function updateUserCount() {
@@ -1124,19 +1106,6 @@
       if(isOnline) {
         els.btnLoginShow.textContent = "Connected";
         els.btnLoginShow.classList.add('online');
-      }
-      
-      // 管理画面のオンライン状況表示を更新 (再描画せずスタイルだけ変える)
-      if (state.isAdmin) {
-         document.querySelectorAll('.admin-matrix th').forEach(th => {
-            const uidSpan = th.querySelector('span[style*="font-weight:bold"]');
-            if(uidSpan) {
-               const uid = uidSpan.textContent;
-               const isOnline = Array.from(state.peers).some(p => state.users[p] === uid && state.dataConns[p] && state.dataConns[p].open);
-               const dot = th.querySelector('span:first-child');
-               if(dot) dot.style.color = isOnline ? 'var(--green)' : 'var(--text-sub)';
-            }
-         });
       }
     }
 
@@ -1203,13 +1172,7 @@
       const myName = els.joinUserIdInput.value || 'Unknown';
       
       els.appTitle.textContent = `YY-Talk - ${roomId}${isAdmin ? ' (Admin)' : ''}`;
-      LocalProfile.set({ roomId, userId: myName, isAdmin });
-      
-      els.statusMsg.textContent = "データを読み込み中...";
-      btn.textContent = "クラウド接続中...";
-      
-      // 先にクラウドからデータをロードしておく
-      await Cloud.load(roomId);
+      safeStorage.set('yytalk_user_profile', JSON.stringify({ roomId, userId: myName, isAdmin }));
       
       els.statusMsg.textContent = "空きポートを検索中...";
       btn.textContent = "サーバー接続中...";
@@ -1236,6 +1199,10 @@
           els.statusMsg.textContent = "接続完了。仲間を探しています...";
           setTimeout(() => els.loginOverlay.style.display = 'none', 500);
           
+          if (slot === 1) {
+             loadRoomState(roomId);
+          }
+
           updateUserCount();
           btn.disabled = false;
           btn.textContent = originalText;
@@ -1288,10 +1255,13 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-      const savedProfile = LocalProfile.get();
+      const savedProfile = safeStorage.get('yytalk_user_profile');
       if (savedProfile) {
-        els.hostIdInput.value = savedProfile.roomId;
-        els.joinUserIdInput.value = savedProfile.userId;
+        try {
+          const profile = JSON.parse(savedProfile);
+          els.hostIdInput.value = profile.roomId;
+          els.joinUserIdInput.value = profile.userId;
+        } catch(e) {}
       }
     });
 
@@ -1326,7 +1296,7 @@
     };
 
     document.getElementById('btn-stop').onclick = () => {
-      LocalProfile.clear();
+      safeStorage.remove('yytalk_user_profile');
       location.reload();
     };
 
