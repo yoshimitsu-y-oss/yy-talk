@@ -17,7 +17,7 @@
     :root {
       --bg-dark: #0a0b0d; --card-bg: #1c1d21; --card-bg-expanded: #24262b;
       --text-main: #ffffff; --text-sub: #7a7e85;
-      --green: #4ade80; --red: #dc2626; /* より深みのあるマットな赤 */
+      --green: #4ade80; --red: #dc2626;
       --orange: #f97316; --blue: #3b82f6;
     }
 
@@ -48,15 +48,13 @@
       }
     }
 
-    /* --- オーバーレイ (裏画面) スクロール安全対策 --- */
     .overlay-base {
       position: absolute; inset: 0; background: rgba(0,0,0,0.85); display: none;
       align-items: center; justify-content: center; flex-direction: column;
       backdrop-filter: blur(4px); z-index: 1000;
-      overflow-y: auto; /* 縦幅が足りない時は全体スクロールを許可 */
+      overflow-y: auto;
     }
     
-    /* 縦幅が短い環境（スマホ横向きなど）では上揃えにしてスクロールを確保 */
     @media (max-height: 700px) {
       .overlay-base { align-items: flex-start; padding: 20px 0; }
     }
@@ -72,7 +70,7 @@
     .login-modal {
       background: var(--card-bg); padding: 25px 20px; border-radius: 12px; width: 90%; max-width: 340px;
       border: 1px solid #3a3c42; position: relative; display: flex; flex-direction: column; gap: 15px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.5); margin: auto; /* スクロール時の余白確保 */
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5); margin: auto;
     }
     
     .login-modal .btn-close-login {
@@ -122,16 +120,13 @@
       background-color: #1c1d21; color: var(--text-sub); font-weight: normal; position: sticky; top: 0; z-index: 5;
     }
     
-    /* 斜線と文字配置のトリック */
     .diagonal-header {
       position: relative; min-width: 260px; min-height: 50px;
-      /* 左下から右上への斜線 */
       background: linear-gradient(to top right, #1c1d21 49.2%, #3a3c42 49.2%, #3a3c42 50.8%, #1c1d21 50.8%);
     }
     .diagonal-header .dh-member { position: absolute; top: 8px; right: 15px; font-weight: bold; color: var(--text-main); }
     .diagonal-header .dh-party { position: absolute; bottom: 8px; left: 15px; font-weight: bold; color: var(--text-main); }
 
-    /* 横線をパーティー名の下まで貫通させる（標準的なtdのボーダーに任せる） */
     .admin-matrix td.ch-cell {
       text-align: left; background-color: #0a0b0d; min-width: 260px; padding: 10px;
     }
@@ -139,20 +134,23 @@
     .matrix-toggle {
       width: 26px; height: 26px; border-radius: 50%; margin: 0 auto;
       background: #1c1d21; border: 2px solid #3a3c42;
-      cursor: pointer; transition: 0.2s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+      cursor: pointer; transition: 0.15s ease-out; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
     }
     .matrix-toggle.active {
       background: var(--green); border-color: var(--green); box-shadow: 0 0 10px rgba(74, 222, 128, 0.4);
+      transform: scale(1.1);
     }
     
-    /* 上質な赤色の削除ボタン（最初から発光・コンパクト化） */
+    /* 極小化した上質レッドの削除ボタン */
     .btn-delete-col, .btn-delete-row {
       background: var(--red); color: #fff; border: none; 
-      border-radius: 4px; cursor: pointer; padding: 5px 8px; font-size: 11px;
-      transition: all 0.2s; font-weight: bold; box-shadow: 0 0 6px rgba(220, 38, 38, 0.5);
+      border-radius: 4px; cursor: pointer; 
+      padding: 3px 8px; /* 大幅にコンパクト化 */
+      font-size: 10px;  /* 文字も小さく */
+      transition: all 0.2s; font-weight: bold; box-shadow: 0 0 5px rgba(220, 38, 38, 0.6);
     }
     .btn-delete-col:hover, .btn-delete-row:hover {
-      box-shadow: 0 0 10px rgba(220, 38, 38, 0.8); filter: brightness(1.1);
+      box-shadow: 0 0 10px rgba(220, 38, 38, 0.9); filter: brightness(1.1);
     }
 
     /* --- ヘッダー --- */
@@ -189,7 +187,6 @@
       #channel-list-wrap { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 15px; }
     }
 
-    /* 背景グラデーション制御用のカードデザイン */
     .channel-card {
       background-color: var(--card-bg);
       border-radius: 10px; position: relative;
@@ -240,7 +237,6 @@
     .ch-name { font-size: 16px; font-weight: 500; margin-bottom: 2px; display: inline-block; padding: 2px 6px; border-radius: 4px; }
     .ch-type { font-size: 10px; color: var(--text-sub); display: inline-block; padding: 2px 6px; border-radius: 4px; pointer-events: auto; }
 
-    /* --- 上質なボタンデザイン --- */
     .btn-action {
       width: 56px; height: 56px; border-radius: 50%; border: 2px solid;
       display: flex; align-items: center; justify-content: center; background: #1c1d21;
@@ -269,7 +265,7 @@
     .master-meter-container { height: 8px; width: 100%; background: #1c1d21; position: relative; flex-shrink: 0; }
     .master-meter-fill { height: 100%; width: 0%; transition: width 0.05s linear; background: linear-gradient(90deg, #4ade80 0%, #4ade80 60%, #eab308 80%, #f87171 100%); }
 
-    /* --- スマホ横向き (ランドスケープ) 完全最適化 --- */
+    /* --- スマホ横向き (ランドスケープ) 対応 --- */
     @media (orientation: landscape) and (max-height: 600px) {
       .app-container { height: 100dvh; max-height: none; border-radius: 0; border: none; }
       .header { padding: 4px 15px; }
@@ -280,7 +276,6 @@
       .ch-name { font-size: 14px; margin-bottom: 0; }
       .btn-expand { padding: 2px 0; font-size: 12px; }
       
-      /* モーダルがはみ出さないように余白調整 */
       .login-modal { max-height: 95vh; overflow-y: auto; padding: 15px; }
       .admin-modal { max-width: 100%; }
       .scroll-area { max-height: calc(95vh - 80px); }
@@ -350,10 +345,17 @@
   </div>
 
   <script>
+    // --- 安全なローカル記憶機能 ---
     const safeStorage = {
       get: (key) => { try { return localStorage.getItem(key); } catch(e) { return null; } },
       set: (key, val) => { try { localStorage.setItem(key, val); } catch(e) {} },
       remove: (key) => { try { localStorage.removeItem(key); } catch(e) {} }
+    };
+
+    const LocalProfile = {
+      get: () => { try { return JSON.parse(safeStorage.get('yytalk_user_profile')); } catch(e) { return null; } },
+      set: (data) => { try { safeStorage.set('yytalk_user_profile', JSON.stringify(data)); } catch(e) {} },
+      clear: () => { try { safeStorage.remove('yytalk_user_profile'); } catch(e) {} }
     };
 
     const state = {
@@ -410,7 +412,7 @@
     
     els.btnAdmin.onclick = () => { 
       if (!state.isAdmin) return;
-      updateAdminMatrix();
+      buildAdminMatrix();
       els.adminOverlay.style.display = 'flex'; 
     };
     els.btnCloseAdmin.onclick = () => { els.adminOverlay.style.display = 'none'; };
@@ -420,11 +422,8 @@
 
     function saveRoomState() {
       const roomId = els.hostIdInput.value || 'yytalk';
-      safeStorage.set('yytalk_room_' + roomId, JSON.stringify({ 
-        channels, 
-        userAssignments: state.userAssignments,
-        registeredUsers: state.registeredUsers
-      }));
+      const data = { channels, userAssignments: state.userAssignments, registeredUsers: state.registeredUsers };
+      safeStorage.set('yytalk_room_' + roomId, JSON.stringify(data));
     }
 
     function resetAndApplyChannels(newChannels, newAssignments, newRegistered) {
@@ -570,7 +569,7 @@
         }
       });
       saveRoomState();
-      updateAdminMatrix();
+      buildAdminMatrix(); 
     };
 
     function removeChannel(chId) {
@@ -631,8 +630,14 @@
       if(!audioCtx || !callData.stream) return;
       const source = audioCtx.createMediaStreamSource(callData.stream);
       callData.source = source;
+
+      // ★ 個別ユーザーごとのメーター解析用ノードを追加
+      const peerAnalyser = audioCtx.createAnalyser();
+      peerAnalyser.fftSize = 256;
+      source.connect(peerAnalyser);
+      callData.analyser = peerAnalyser;
+
       callData.chGains = {};
-      
       channels.forEach(ch => {
         const splitGain = audioCtx.createGain();
         splitGain.gain.value = 0;
@@ -643,6 +648,7 @@
       updateAudioRouting();
     }
 
+    // --- メーター描画ループ ---
     function startMeterDraw() {
       const masterData = new Uint8Array(masterAnalyser.frequencyBinCount);
       let localData = null;
@@ -681,6 +687,31 @@
             if (meterEl) meterEl.style.width = Math.min(chPercent, 100) + '%';
           }
         });
+
+        // ★ マトリックスUIの縦型ユーザーメーターの描画
+        if (state.isAdmin) {
+          const myUid = els.joinUserIdInput.value || 'Anonymous';
+          state.registeredUsers.forEach(uid => {
+            const meterEl = document.getElementById(`user-meter-${uid}`);
+            if (meterEl) {
+              let maxVal = 0;
+              if (uid === myUid) {
+                maxVal = localPercent; // 自分自身はマイク直結の音量
+              } else {
+                const peerId = Object.keys(state.users).find(p => state.users[p] === uid);
+                if (peerId && state.mediaCalls[peerId] && state.mediaCalls[peerId].analyser) {
+                  const pAnalyser = state.mediaCalls[peerId].analyser;
+                  const pData = new Uint8Array(pAnalyser.frequencyBinCount);
+                  pAnalyser.getByteFrequencyData(pData);
+                  let pSum = 0;
+                  for(let i=0; i<pData.length; i++) pSum += pData[i];
+                  maxVal = ((pSum / pData.length) / 255) * 100 * 2.0;
+                }
+              }
+              meterEl.style.height = Math.min(maxVal, 100) + '%';
+            }
+          });
+        }
       }
       draw();
     }
@@ -780,8 +811,8 @@
       });
     }
 
-    // --- ★バグ修正★ マトリックス型UIの「スムーズな同期」処理 ---
-    function updateAdminMatrix() {
+    // --- ★ 完璧なマトリックスUIの描画処理 ---
+    function buildAdminMatrix() {
       if (!state.isAdmin) return;
       const container = document.getElementById('admin-matrix-container');
       
@@ -799,9 +830,12 @@
           const isOnline = Array.from(state.peers).some(p => state.users[p] === uid && state.dataConns[p] && state.dataConns[p].open);
           const statusColor = isOnline ? 'var(--green)' : 'var(--text-sub)';
           html += `<th>
-              <div style="display:flex; align-items:center; justify-content:center; gap:5px; margin-bottom:5px;">
+              <div style="display:flex; align-items:center; justify-content:center; gap:5px; margin-bottom:4px;">
                 <span style="color:${statusColor}; font-size:10px;">●</span>
                 <span style="font-weight:bold; color:var(--text-main);">${uid}</span>
+                <div style="position: relative; width: 4px; height: 14px; background: #0a0b0d; border-radius: 2px; overflow: hidden; margin-left: 2px;">
+                   <div id="user-meter-${uid}" style="position: absolute; bottom: 0; left: 0; width: 100%; height: 0%; background: linear-gradient(to top, #4ade80, #eab308, #f87171); transition: height 0.05s linear;"></div>
+                </div>
               </div>
               <button class="btn-delete-col" data-uid="${uid}">削除</button>
           </th>`;
@@ -837,7 +871,7 @@
       html += `</tbody></table></div>`;
       container.innerHTML = html;
 
-      // クロスポイントを押した際の処理
+      // 軽量なトグル反映 (押したマスのCSSだけを変えてローカルに保存する)
       container.querySelectorAll('.matrix-toggle').forEach(btn => {
         btn.onclick = (e) => {
           const uid = e.target.getAttribute('data-uid');
@@ -846,22 +880,21 @@
           
           if (assigned.includes(chid)) {
             assigned = assigned.filter(id => id !== chid);
-            e.target.classList.remove('active');
+            e.target.classList.remove('active'); 
           } else {
             assigned.push(chid);
-            e.target.classList.add('active');
+            e.target.classList.add('active'); 
           }
           
           state.userAssignments[uid] = assigned;
-          saveRoomState();
+          saveRoomState(); 
           
-          // ★修正ポイント: 変更した対象が「自分自身」だった場合、自分のメイン画面に即座に反映させる
           const myUid = els.joinUserIdInput.value || 'Anonymous';
           if (uid === myUid) {
              applyAssignments(assigned);
           }
-          
-          // ★修正ポイント: 自分や対象者だけでなく、他の管理者含めた全員に「権限が変わった」とブロードキャスト送信する
+
+          // 全端末にブロードキャスト（自分・他人問わず）
           Object.values(state.dataConns).forEach(conn => {
              if(conn && conn.open) {
                 conn.send({ type: 'assign-channels', channels: assigned, targetUid: uid });
@@ -876,7 +909,7 @@
           state.registeredUsers.push(uid);
           state.userAssignments[uid] = channels.map(c => c.id); 
           saveRoomState();
-          updateAdminMatrix();
+          buildAdminMatrix(); 
           
           Object.values(state.dataConns).forEach(conn => {
             if(conn && conn.open) conn.send({ type: 'update-registered', registered: state.registeredUsers });
@@ -891,7 +924,7 @@
              state.registeredUsers = state.registeredUsers.filter(u => u !== uid);
              delete state.userAssignments[uid];
              saveRoomState();
-             updateAdminMatrix();
+             buildAdminMatrix(); 
              
              Object.values(state.dataConns).forEach(conn => {
                if(conn && conn.open) conn.send({ type: 'update-registered', registered: state.registeredUsers });
@@ -927,7 +960,7 @@
           Object.values(state.dataConns).forEach(conn => {
             if(conn && conn.open) conn.send({ type: 'remove-channel', chId: chId });
           });
-          updateAdminMatrix();
+          buildAdminMatrix(); 
         };
       });
     }
@@ -989,7 +1022,7 @@
             const remoteSlot = parseInt(conn.peer.split('-s')[1]);
             if (state.mySlot > remoteSlot) {
               alert(`ユーザーID「${uid}」は現在他のオンライン端末で使用されています。別のIDで参加してください。`);
-              safeStorage.remove('yytalk_user_profile');
+              LocalProfile.clear();
               location.reload();
               return;
             } else {
@@ -1003,6 +1036,7 @@
              state.registeredUsers.push(uid);
              state.userAssignments[uid] = channels.map(c => c.id);
              saveRoomState();
+             if (state.isAdmin) buildAdminMatrix();
           }
           
           const amILowestSlot = Array.from(state.peers).every(p => parseInt(p.split('-s')[1]) > state.mySlot);
@@ -1011,12 +1045,11 @@
           }
           
           updateUserCount();
-          if(state.isAdmin) updateAdminMatrix();
         }
         else if (data.type === 'init-state') {
           resetAndApplyChannels(data.channels, data.assignments, data.registered);
           saveRoomState();
-          if(state.isAdmin) updateAdminMatrix();
+          if(state.isAdmin) buildAdminMatrix();
         }
         else if (data.type === 'update-ch-info') {
           channels = data.data;
@@ -1027,29 +1060,33 @@
             if(typeEl) typeEl.textContent = ch.type; 
           });
           saveRoomState();
-          if(state.isAdmin) updateAdminMatrix();
+          if(state.isAdmin) {
+             document.querySelectorAll('.admin-edit-name').forEach(input => {
+                const ch = channels.find(c => c.id === input.getAttribute('data-id'));
+                if(ch) input.value = ch.name;
+             });
+             document.querySelectorAll('.admin-edit-type').forEach(input => {
+                const ch = channels.find(c => c.id === input.getAttribute('data-id'));
+                if(ch) input.value = ch.type;
+             });
+          }
         }
         else if (data.type === 'update-registered') {
           state.registeredUsers = data.registered;
           saveRoomState();
-          if(state.isAdmin) updateAdminMatrix();
+          if(state.isAdmin) buildAdminMatrix();
         }
         else if (data.type === 'update-talk-states') {
           state.remoteTalkStates[conn.peer] = data.states;
           updateAudioRouting();
         }
         else if (data.type === 'assign-channels') {
-          // ★修正ポイント: 自分宛てに変更が飛んできた場合、または管理者権限を持たない一般メンバーの場合は即座にメインUIを更新する
           const myUid = els.joinUserIdInput.value || 'Anonymous';
           if (!state.isAdmin || data.targetUid === myUid) {
              applyAssignments(data.channels);
           }
-          
-          // 管理者なら、送られてきた他人の変更内容を自分のマトリックスにも同期させる
           if (state.isAdmin && data.targetUid) {
              state.userAssignments[data.targetUid] = data.channels;
-             
-             // 画面全体を再描画すると重いため、対象のマスのクラス（緑色）だけをスムーズに切り替える
              document.querySelectorAll(`.matrix-toggle[data-uid="${data.targetUid}"]`).forEach(btn => {
                if (data.channels.includes(btn.getAttribute('data-chid'))) {
                  btn.classList.add('active');
@@ -1083,12 +1120,12 @@
              applyAssignments(state.userAssignments[myUid]);
           }
           saveRoomState();
-          if(state.isAdmin) updateAdminMatrix();
+          if(state.isAdmin) buildAdminMatrix();
         }
         else if (data.type === 'remove-channel') {
           removeChannel(data.chId);
           saveRoomState();
-          if(state.isAdmin) updateAdminMatrix();
+          if(state.isAdmin) buildAdminMatrix();
         }
       });
 
@@ -1138,9 +1175,9 @@
             const uidSpan = th.querySelector('span[style*="font-weight:bold"]');
             if(uidSpan) {
                const uid = uidSpan.textContent;
-               const isOnline = Array.from(state.peers).some(p => state.users[p] === uid && state.dataConns[p] && state.dataConns[p].open);
+               const isPeerOnline = Array.from(state.peers).some(p => state.users[p] === uid && state.dataConns[p] && state.dataConns[p].open);
                const dot = th.querySelector('span:first-child');
-               if(dot) dot.style.color = isOnline ? 'var(--green)' : 'var(--text-sub)';
+               if(dot) dot.style.color = isPeerOnline ? 'var(--green)' : 'var(--text-sub)';
             }
          });
       }
@@ -1210,6 +1247,7 @@
       const myName = els.joinUserIdInput.value || 'Unknown';
       
       els.appTitle.textContent = `YY-Talk - ${roomId}${isAdmin ? ' (Admin)' : ''}`;
+      LocalProfile.set({ roomId, userId: myName, isAdmin });
       
       els.statusMsg.textContent = "データを読み込み中...";
       
@@ -1302,13 +1340,10 @@
       els.btnJoinAdmin.disabled = false;
 
       // 記憶しているユーザー名の復元
-      const savedProfile = safeStorage.get('yytalk_user_profile');
+      const savedProfile = LocalProfile.get();
       if (savedProfile) {
-        try {
-          const profile = JSON.parse(savedProfile);
-          els.hostIdInput.value = profile.roomId || '';
-          els.joinUserIdInput.value = profile.userId || '';
-        } catch(e){}
+        els.hostIdInput.value = savedProfile.roomId || '';
+        els.joinUserIdInput.value = savedProfile.userId || '';
       }
     });
 
@@ -1343,7 +1378,7 @@
     };
 
     document.getElementById('btn-stop').onclick = () => {
-      safeStorage.remove('yytalk_user_profile');
+      LocalProfile.clear();
       location.reload();
     };
 
