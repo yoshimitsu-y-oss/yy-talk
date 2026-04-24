@@ -63,9 +63,11 @@
     }
 
     @media (min-width: 600px) {
+      body { display: flex; justify-content: center; align-items: center; position: static; height: 100dvh; }
       .app-container {
         width: 96vw; max-width: 1800px; height: 94vh; max-height: 1200px; min-height: 600px;
-        border-radius: 20px; border: 8px solid #1e2128; overflow: hidden;
+        border-radius: 20px; border: 8px solid #1e2128; overflow: hidden; margin: 0 auto;
+        padding: 0; 
       }
     }
 
@@ -150,8 +152,7 @@
     }
     
     .header-left { display: flex; align-items: center; }
-    #app-logo { height: 26px; width: auto; margin-right: 5px; }
-    @media (min-width: 600px) { #app-logo { height: 32px; } }
+    #app-logo { height: 32px; width: auto; margin-right: 5px; }
     
     .header-right { display: flex; align-items: center; gap: 12px; color: var(--text-sub); font-size: 13px; font-weight: bold; }
     
@@ -172,6 +173,14 @@
       flex: 1; padding: 10px; border: none; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer;
       display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s;
       font-family: 'JetBrains Mono', monospace; position: relative; overflow: hidden;
+    }
+
+    /* ★ CSSによる斜線描画 (グレーアウトはさせない) */
+    .btn-action { position: relative; } 
+    .muted-slash::after {
+      content: ""; position: absolute; top: 15%; left: 15%; width: 70%; height: 70%;
+      background: linear-gradient(to bottom right, transparent 46%, currentColor 46%, currentColor 54%, transparent 54%);
+      pointer-events: none; opacity: 0.85; z-index: 5;
     }
 
     @keyframes pulse-green { 0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.6); } 70% { box-shadow: 0 0 0 10px rgba(74, 222, 128, 0); } 100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); } }
@@ -240,42 +249,30 @@
     .master-meter-container { height: 8px; width: 100%; background: #1c1d21; position: relative; flex-shrink: 0; }
     .master-meter-fill { height: 100%; width: 0%; transition: width 0.05s linear; background: linear-gradient(90deg, #4ade80 0%, #4ade80 60%, #eab308 80%, #f87171 100%); }
 
-    /* --- スマホ横向き (Landscape) の大幅最適化 --- */
+    /* --- ★ スマホ横向き (Landscape) の2列・薄型化最適化 --- */
     @media (orientation: landscape) and (max-height: 500px) {
-      /* アドレスバー避け */
       .header { padding: calc(env(safe-area-inset-top) + 2px) 15px 4px; border-bottom: 1px solid #1e2128; }
-      #app-logo { height: 20px; }
-      #header-room-name { font-size: 11px; margin-left: 5px; }
-      .header-right { gap: 6px; font-size: 11px; }
-      .btn-login-trigger { padding: 3px 8px; font-size: 11px; }
-      #btn-settings { padding: 3px; }
-      #btn-settings svg { width: 14px; height: 14px; }
-
-      .global-controls { padding: 4px 15px; border-bottom-width: 1px; gap: 6px; }
-      .btn-global { padding: 6px; font-size: 11px; gap: 3px; }
-      .btn-global svg { width: 14px; height: 14px; }
-
-      .channel-list-container { padding: 5px 15px; gap: 6px; }
-      /* 縦が狭いので多列化 */
-      #channel-list-wrap { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px; } 
-
-      .channel-card { border-radius: 6px; }
-      .main-controls { padding: 6px; }
-      .ch-info { padding: 0 4px; }
-      .ch-name { font-size: 13px; padding: 1px 4px; }
-      .ch-type { font-size: 9px; padding: 1px 3px; }
-      .btn-action { width: 38px; height: 38px; border-width: 1.5px; }
-      .btn-icon { width: 20px; height: 20px; }
-
-      /* 横向き時は邪魔な要素を隠してカードを極小化 */
-      .volume-panel, .btn-expand, .ch-meter-container, .channel-card::before, .channel-card::after { display: none !important; } 
+      #app-logo { height: 26px; } 
+      #header-room-name { font-size: 12px; margin-left: 8px; }
+      .header-right { gap: 8px; font-size: 12px; }
       
-      /* 代わりに背景色でON/OFFを表現 */
-      .channel-card.listen-on { background: rgba(74, 222, 128, 0.15); border: 1px solid var(--green); }
-      .channel-card.talk-on { background: rgba(220, 38, 38, 0.15); border: 1px solid var(--red); }
-      .channel-card.listen-on.talk-on { background: linear-gradient(135deg, rgba(74, 222, 128, 0.15) 0%, rgba(220, 38, 38, 0.15) 100%); border-color: #f87171; } 
+      /* マスターボタンを極限まで薄く */
+      .global-controls { padding: 4px 15px; border-bottom-width: 1px; gap: 10px; }
+      .btn-global { padding: 4px 10px; font-size: 12px; height: 34px; border-radius: 4px; }
+      .btn-global svg { width: 16px; height: 16px; }
 
-      .master-meter-container { height: 4px; }
+      /* チャンネルリストをそのまま2列に */
+      .channel-list-container { padding: 6px 15px; gap: 8px; }
+      #channel-list-wrap { grid-template-columns: 1fr 1fr; gap: 8px; } 
+
+      .channel-card { border-radius: 8px; }
+      .main-controls { padding: 8px 10px; }
+      .btn-action { width: 44px; height: 44px; border-width: 1.5px; }
+      .btn-icon { width: 22px; height: 22px; }
+      .ch-name { font-size: 14px; }
+      .btn-expand { padding: 2px 0 6px; font-size: 14px; }
+
+      .master-meter-container { height: 6px; }
     }
   </style>
 </head>
@@ -326,11 +323,13 @@
               <stop offset="100%" style="stop-color:#4ade80;stop-opacity:1" />
             </linearGradient>
           </defs>
-          <path d="M 10 15 L 22 32 L 22 48 M 34 15 L 22 32" stroke="url(#logo-grad)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-          <path d="M 45 15 L 57 32 L 57 48 M 69 15 L 57 32" stroke="url(#logo-grad)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-          <text x="85" y="42" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-weight="900" font-size="34" fill="var(--text-main)" letter-spacing="-1">Talk</text>
+          <path d="M 12 30 L 20 42 L 20 54 M 28 30 L 20 42" stroke="url(#logo-grad)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+          <path d="M 12 20 Q 20 12 28 20 M 6 12 Q 20 0 34 12" stroke="url(#logo-grad)" stroke-width="4" stroke-linecap="round" fill="none" />
+          <path d="M 42 30 L 50 42 L 50 54 M 58 30 L 50 42" stroke="url(#logo-grad)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+          <path d="M 42 20 Q 50 12 58 20 M 36 12 Q 50 0 64 12" stroke="url(#logo-grad)" stroke-width="4" stroke-linecap="round" fill="none" />
+          <text x="75" y="44" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-weight="900" font-size="34" fill="var(--text-main)" letter-spacing="-1">Talk</text>
         </svg>
-        <span id="header-room-name" style="margin-left: 5px; font-size: 13px; color: var(--text-sub); font-family: 'JetBrains Mono', monospace;"></span>
+        <span id="header-room-name" style="margin-left: 8px; font-size: 13px; color: var(--text-sub); font-family: 'JetBrains Mono', monospace;"></span>
       </div>
       <div class="header-right">
         <button id="btn-settings" class="btn-login-trigger admin-only"></button>
@@ -404,54 +403,29 @@
     };
     els.btnCloseAdmin.onclick = () => { els.adminOverlay.style.display = 'none'; };
 
-    // ★ 完全無欠な斜線アイコン (SVGに<line>を直接埋め込み、破綻させない)
-    const iconSpeaker = `<svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
-    const iconSpeakerOff = `<svg class="btn-icon" viewBox="0 0 24 24"><path fill="currentColor" opacity="0.4" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/><line x1="4" y1="4" x2="20" y2="20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
-    
-    const iconMic = `<svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>`;
-    const iconMicOff = `<svg class="btn-icon" viewBox="0 0 24 24"><path fill="currentColor" opacity="0.4" d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/><line x1="4" y1="4" x2="20" y2="20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
-    
+    // アイコン定義
+    const iconSpeaker = `<svg class="btn-icon" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
+    const iconMic = `<svg class="btn-icon" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>`;
     const iconSettings = `<svg class="btn-icon" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>`;
 
-    // 初期アイコンセット
-    els.globalSpkIcon.innerHTML = iconSpeakerOff;
-    els.globalMicIcon.innerHTML = iconMicOff;
+    // 初期化
+    els.globalSpkIcon.innerHTML = iconSpeaker;
+    els.globalMicIcon.innerHTML = iconMic;
 
-    // アイコンの同期更新関数 (SVGを丸ごと差し替え)
+    // ★ アイコンの同期更新関数 (グレーアウトなしで斜線クラスだけ付与)
     function updateChannelIcons() {
-      // マスターボタンのアイコン（常に斜線入りでOK。枠が光るかどうかで判別）
-      els.globalSpkIcon.innerHTML = iconSpeakerOff;
-      els.globalMicIcon.innerHTML = iconMicOff;
+      els.btnMasterSpk.classList.toggle('muted-slash', state.isMasterSpkMuted);
+      els.btnMasterMic.classList.toggle('muted-slash', state.isMasterMicMuted);
 
       channels.forEach(ch => {
         const lBtn = document.getElementById(`listen-${ch.id}`);
         const tBtn = document.getElementById(`talk-${ch.id}`);
-        
-        if (lBtn) {
-          // Master SPK Mute時は斜線アイコン、そうでなければ通常アイコン
-          lBtn.innerHTML = state.isMasterSpkMuted ? iconSpeakerOff : iconSpeaker;
-          // ミュート中はボタン自体をグレーダウン
-          if(state.isMasterSpkMuted) {
-            lBtn.style.color = "var(--text-sub)"; lBtn.style.borderColor = "var(--text-sub)";
-          } else {
-            lBtn.style.color = ""; lBtn.style.borderColor = "";
-          }
-        }
-        
-        if (tBtn) {
-          // Master MIC Mute時は斜線アイコン、そうでなければ通常アイコン
-          tBtn.innerHTML = state.isMasterMicMuted ? iconMicOff : iconMic;
-          // ミュート中はボタン自体をグレーダウン
-          if(state.isMasterMicMuted) {
-            tBtn.style.color = "var(--text-sub)"; tBtn.style.borderColor = "var(--text-sub)";
-          } else {
-            tBtn.style.color = ""; tBtn.style.borderColor = "";
-          }
-        }
+        if (lBtn) lBtn.classList.toggle('muted-slash', state.isMasterSpkMuted);
+        if (tBtn) tBtn.classList.toggle('muted-slash', state.isMasterMicMuted);
       });
     }
 
-    // --- ★ グローバルコントロール (SPK / MIC Mute) ---
+    // --- ★ グローバルコントロール ---
     function toggleMasterSpk() {
       state.isMasterSpkMuted = !state.isMasterSpkMuted;
       els.btnMasterSpk.classList.toggle('active', state.isMasterSpkMuted);
@@ -544,9 +518,6 @@
       const listenClass = state.listenStates[ch.id] ? 'listen-on' : '';
       const talkClass = state.talkStates[ch.id] ? 'talk-on' : '';
 
-      const curListenIcon = state.isMasterSpkMuted ? iconSpeakerOff : iconSpeaker;
-      const curTalkIcon = state.isMasterMicMuted ? iconMicOff : iconMic;
-
       const card = document.createElement('div');
       card.className = `channel-card ${listenClass} ${talkClass}`;
       card.id = `card-${ch.id}`;
@@ -563,12 +534,12 @@
           <svg class="vol-icon" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
         </div>
         <div class="main-controls">
-          <div class="btn-action btn-listen ${state.listenStates[ch.id] ? 'active latched' : ''}" id="listen-${ch.id}">${curListenIcon}</div>
+          <div class="btn-action btn-listen ${state.listenStates[ch.id] ? 'active latched' : ''} ${state.isMasterSpkMuted ? 'muted-slash' : ''}" id="listen-${ch.id}">${iconSpeaker}</div>
           <div class="ch-info">
             <div class="ch-name" id="name-${ch.id}">${ch.name}</div>
             <div class="ch-type" id="type-${ch.id}">${ch.type}</div>
           </div>
-          <div class="btn-action btn-talk ${state.talkStates[ch.id] ? 'active latched' : ''}" id="talk-${ch.id}">${curTalkIcon}</div>
+          <div class="btn-action btn-talk ${state.talkStates[ch.id] ? 'active latched' : ''} ${state.isMasterMicMuted ? 'muted-slash' : ''}" id="talk-${ch.id}">${iconMic}</div>
         </div>
         <div class="ch-meter-container"><div class="ch-meter-fill" id="ch-meter-fill-${ch.id}"></div></div>
         <div class="btn-expand" id="expand-${ch.id}">○ ○ ○</div>
@@ -593,10 +564,6 @@
       card.querySelector(`#expand-${ch.id}`).addEventListener('click', () => card.classList.toggle('expanded'));
       setupPTTButton(card.querySelector(`#listen-${ch.id}`), 'listen', ch.id);
       setupPTTButton(card.querySelector(`#talk-${ch.id}`), 'talk', ch.id);
-      
-      // CSSを更新
-      if(state.isMasterSpkMuted) document.getElementById(`listen-${ch.id}`).style.color = "var(--text-sub)";
-      if(state.isMasterMicMuted) document.getElementById(`talk-${ch.id}`).style.color = "var(--text-sub)";
     }
 
     function initChannelsDOM() {
@@ -796,7 +763,8 @@
           state.listenStates[channelId] = active; changed = true;
           if (card) { if(active) card.classList.add('listen-on'); else card.classList.remove('listen-on'); }
         }
-        updateAudioRouting(); updateChannelIcons();
+        updateAudioRouting(); 
+        updateChannelIcons();
         if (changed && type === 'talk') syncTalkStates();
       }
 
@@ -1095,7 +1063,7 @@
       const rawRoomId = els.hostIdInput.value.trim() || 'yytalk';
       const myName = els.joinUserIdInput.value.trim() || 'Unknown';
       state.roomId = rawRoomId; state.myUserId = myName; state.netRoomId = 'yytalk-pro-' + encodeURIComponent(rawRoomId).replace(/%/g, '-');
-      els.roomNameDisplay.textContent = ` - ${rawRoomId}${isAdmin ? ' (Admin)' : ''}`;
+      els.roomNameDisplay.textContent = `${rawRoomId}${isAdmin ? ' (Admin)' : ''}`;
       if (isAdmin) {
         els.btnSettings.style.display = 'flex'; 
         els.btnSettings.innerHTML = iconSettings;
