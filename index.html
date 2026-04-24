@@ -22,13 +22,6 @@
       }
       return origSetLocalDescription.apply(this, arguments);
     };
-
-    // ★ iOS Safariの横向き（バー被り）問題を解決する最強のハック
-    function fixViewportHeight() {
-      document.body.style.height = window.innerHeight + 'px';
-    }
-    window.addEventListener('resize', fixViewportHeight);
-    window.addEventListener('orientationchange', () => { setTimeout(fixViewportHeight, 100); });
   </script>
 
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
@@ -43,28 +36,30 @@
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     
-    /* ★ アプリ全体を画面に完全固定 (スクロールやバー被りを防ぐ) */
+    /* ★ レイアウト破綻・バー被り防止の最強ハック */
     html, body {
       margin: 0; padding: 0; width: 100%; height: 100%;
       position: fixed; inset: 0; overflow: hidden;
       background-color: #121418; color: var(--text-main);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      touch-action: none; /* バウンススクロール禁止 */
     }
 
     .app-container {
-      width: 100%; height: 100%; background-color: var(--bg-dark);
-      display: flex; flex-direction: column; position: relative; 
-      box-shadow: 0 20px 60px rgba(0,0,0,0.8); margin: 0 auto;
+      position: absolute; inset: 0; background-color: var(--bg-dark);
+      display: flex; flex-direction: column;
       padding-bottom: env(safe-area-inset-bottom);
       padding-left: env(safe-area-inset-left);
       padding-right: env(safe-area-inset-right);
     }
 
     @media (min-width: 600px) {
-      body { position: static; display: flex; justify-content: center; align-items: center; }
+      html, body { position: static; height: 100%; touch-action: auto; }
+      body { display: flex; justify-content: center; align-items: center; }
       .app-container {
+        position: relative; inset: auto;
         width: 96vw; max-width: 1800px; height: 94vh; max-height: 1200px; min-height: 600px;
-        border-radius: 20px; border: 8px solid #1e2128; overflow: hidden; margin: 0 auto; padding: 0; 
+        border-radius: 20px; border: 8px solid #1e2128; overflow: hidden; margin: 0 auto; padding: 0;
       }
     }
 
@@ -73,14 +68,19 @@
       align-items: center; justify-content: center; flex-direction: column;
       backdrop-filter: blur(4px); z-index: 1000; overflow-y: auto;
     }
-    @media (max-height: 700px) { .overlay-base { align-items: flex-start; padding: 20px 0; } }
+    @media (max-height: 700px) {
+      .overlay-base { align-items: flex-start; padding: 20px 0; }
+    }
 
     #login-overlay { z-index: 2000; }
     #audio-overlay { z-index: 1100; }
     
     .btn-green-solid { background: var(--green); color: #000; border: none; padding: 15px 30px; font-size: 18px; font-weight: bold; border-radius: 30px; cursor: pointer; }
 
-    .login-modal { background: var(--card-bg); padding: 25px 20px; border-radius: 12px; width: 90%; max-width: 340px; border: 1px solid #3a3c42; position: relative; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); margin: auto; }
+    .login-modal {
+      background: var(--card-bg); padding: 25px 20px; border-radius: 12px; width: 90%; max-width: 340px;
+      border: 1px solid #3a3c42; position: relative; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); margin: auto; 
+    }
     .login-modal .btn-close-login { position: absolute; top: 12px; right: 15px; background: transparent; border: none; color: #9ca3af; font-size: 28px; cursor: pointer; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; line-height: 1; z-index: 2010; font-weight: normal; }
     .login-modal .btn-close-login:hover { color: #ffffff; }
     .login-modal input { width: 100%; padding: 12px; background: #0a0b0d; border: 1px solid #3a3c42; color: #fff; border-radius: 8px; font-size: 16px; text-align: center;}
@@ -99,13 +99,21 @@
     .scroll-area { max-height: 75vh; overflow: auto; padding-right: 5px; scrollbar-width: none; }
     .scroll-area::-webkit-scrollbar { display: none; }
 
-    .admin-matrix-wrapper { width: 100%; overflow-x: auto; overscroll-behavior-x: none; -webkit-overflow-scrolling: touch; border-radius: 8px; background: #0a0b0d; border: 1px solid #3a3c42; position: relative; }
+    .admin-matrix-wrapper { 
+      width: 100%; overflow-x: auto; overscroll-behavior-x: none; -webkit-overflow-scrolling: touch;
+      border-radius: 8px; background: #0a0b0d; border: 1px solid #3a3c42; position: relative; 
+    }
     .admin-matrix { width: 100%; border-collapse: separate; border-spacing: 0; min-width: max-content; text-align: center; font-size: 13px; }
     .admin-matrix th, .admin-matrix td { border-bottom: 1px solid #3a3c42; border-right: 1px solid #3a3c42; padding: 6px; }
     .admin-matrix th { background-color: #1c1d21; color: var(--text-sub); font-weight: normal; position: sticky; top: 0; z-index: 5; border-top: 1px solid #3a3c42; }
     .admin-matrix tr td:first-child, .admin-matrix tr th:first-child { border-left: 1px solid #3a3c42; }
     
-    .diagonal-header { position: sticky; left: 0; z-index: 10 !important; min-width: 120px; min-height: 40px; background: linear-gradient(to top right, #1c1d21 49%, #3a3c42 49%, #3a3c42 51%, #1c1d21 51%); border-right: 2px solid #3a3c42 !important; box-shadow: 2px 0 5px rgba(0,0,0,0.4); transform: translate3d(0, 0, 0); }
+    .diagonal-header {
+      position: sticky; left: 0; z-index: 10 !important; min-width: 120px; min-height: 40px;
+      background: linear-gradient(to top right, #1c1d21 49%, #3a3c42 49%, #3a3c42 51%, #1c1d21 51%);
+      border-right: 2px solid #3a3c42 !important; box-shadow: 2px 0 5px rgba(0,0,0,0.4);
+      transform: translate3d(0, 0, 0);
+    }
     .diagonal-header .dh-member { position: absolute; top: 4px; right: 10px; font-weight: bold; color: var(--text-main); font-size: 11px; }
     .diagonal-header .dh-party { position: absolute; bottom: 4px; left: 10px; font-weight: bold; color: var(--text-main); font-size: 11px; }
     
@@ -113,7 +121,11 @@
     .matrix-user-header:hover { background: #2a2d35; }
     .matrix-user-header span.bulk-label { display: block; font-size: 9px; color: var(--text-sub); margin-top: 2px; }
 
-    .admin-matrix td.ch-cell { text-align: left; background-color: #0a0b0d; min-width: 120px; padding: 6px; position: sticky; left: 0; z-index: 9; border-right: 2px solid #3a3c42 !important; box-shadow: 2px 0 5px rgba(0,0,0,0.4); transform: translate3d(0, 0, 0); }
+    .admin-matrix td.ch-cell { 
+      text-align: left; background-color: #0a0b0d; min-width: 120px; padding: 6px; 
+      position: sticky; left: 0; z-index: 9; border-right: 2px solid #3a3c42 !important; box-shadow: 2px 0 5px rgba(0,0,0,0.4);
+      transform: translate3d(0, 0, 0);
+    }
     
     .matrix-toggle { width: 24px; height: 24px; border-radius: 50%; margin: 0 auto; background: #1c1d21; border: 2px solid #3a3c42; cursor: pointer; transition: 0.15s ease-out; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5); }
     .matrix-toggle.active { background: var(--green); border-color: var(--green); box-shadow: 0 0 8px rgba(74, 222, 128, 0.4); transform: scale(1.1); }
@@ -153,24 +165,25 @@
     .btn-global {
       flex: 1; padding: 10px; border: none; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer;
       display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s;
-      font-family: 'JetBrains Mono', monospace; position: relative;
+      font-family: 'JetBrains Mono', monospace; position: relative; overflow: hidden;
     }
 
-    /* ★ アイコン内のみの斜線描画制御 (SVG内部の .slash-line クラスをコントロール) */
+    /* ★ 斜線の表示制御 (色はグレーアウトさせない) */
     .slash-line { display: none; }
-    .muted-slash .slash-line { display: block; opacity: 0.8; }
-    .muted-slash { color: var(--text-sub) !important; border-color: var(--text-sub) !important; }
+    .muted-slash .slash-line { display: block; opacity: 1; }
 
     @keyframes pulse-green { 0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.6); } 70% { box-shadow: 0 0 0 10px rgba(74, 222, 128, 0); } 100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); } }
     @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.6); } 70% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); } 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); } }
 
+    /* ★ マスターボタンのアクティブ時文字色を黒に */
     .btn-master-spk { background: #1c1d21; color: var(--text-main); border: 1px solid #3a3c42; }
     .btn-master-spk.active { background: var(--green); color: #000; border-color: var(--green); animation: pulse-green 1.5s infinite; }
+    
     .btn-master-mic { background: #1c1d21; color: var(--text-main); border: 1px solid #3a3c42; }
-    .btn-master-mic.active { background: var(--red); color: #fff; border-color: var(--red); animation: pulse-red 1.5s infinite; }
+    .btn-master-mic.active { background: var(--red); color: #000; border-color: var(--red); animation: pulse-red 1.5s infinite; }
 
     /* --- チャンネルリスト --- */
-    .channel-list-container { flex: 1; overflow-y: auto; padding: 10px 15px 20px; display: flex; flex-direction: column; gap: 10px; scrollbar-width: none; }
+    .channel-list-container { flex: 1; overflow-y: auto; padding: 10px 15px 20px; display: flex; flex-direction: column; gap: 10px; scrollbar-width: none; touch-action: pan-y; }
     .channel-list-container::-webkit-scrollbar { display: none; }
     #channel-list-wrap { display: grid; grid-template-columns: 1fr; gap: 10px; }
     @media (min-width: 600px) { #channel-list-wrap { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 15px; } }
@@ -248,7 +261,7 @@
     }
   </style>
 </head>
-<body onload="fixViewportHeight()">
+<body>
 
   <div class="app-container">
     
@@ -311,14 +324,14 @@
     </div>
 
     <div class="global-controls">
-      <button id="btn-master-spk" class="btn-global btn-master-spk muted-slash">
+      <button id="btn-master-spk" class="btn-global btn-master-spk">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
           <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
           <line class="slash-line" x1="4" y1="4" x2="20" y2="20" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
         </svg>
         SPK MUTE
       </button>
-      <button id="btn-master-mic" class="btn-global btn-master-mic muted-slash">
+      <button id="btn-master-mic" class="btn-global btn-master-mic">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
           <line class="slash-line" x1="4" y1="4" x2="20" y2="20" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
@@ -382,12 +395,12 @@
     };
     els.btnCloseAdmin.onclick = () => { els.adminOverlay.style.display = 'none'; };
 
-    // ★ アイコンのSVG（中に斜線のlineを含める）
+    // アイコン定義
     const iconSpeaker = `<svg class="btn-icon" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/><line class="slash-line" x1="4" y1="4" x2="20" y2="20" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>`;
     const iconMic = `<svg class="btn-icon" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/><line class="slash-line" x1="4" y1="4" x2="20" y2="20" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>`;
     const iconSettings = `<svg class="btn-icon" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>`;
 
-    // ★ クラス操作だけで斜線の表示/非表示を切り替える
+    // ★ 斜線クラスの付け外し
     function updateChannelIcons() {
       els.btnMasterSpk.classList.toggle('muted-slash', state.isMasterSpkMuted);
       els.btnMasterMic.classList.toggle('muted-slash', state.isMasterMicMuted);
