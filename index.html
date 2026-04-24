@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>YY-Talk - PRO Matrix (Ultimate)</title>
+  <title>YY-Talk PRO Intercom</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -140,7 +140,7 @@
     }
     .matrix-toggle.active { background: var(--green); border-color: var(--green); box-shadow: 0 0 8px rgba(74, 222, 128, 0.4); transform: scale(1.1); }
     
-    /* 削除ボタンの修正（赤に戻す） */
+    /* 削除ボタンの修正 (赤) */
     .btn-delete-col, .btn-delete-row {
       background: var(--red); color: #fff; border: none; border-radius: 4px; cursor: pointer; 
       padding: 3px 6px; font-size: 10px; transition: all 0.2s; display: inline-block; margin-top: 4px; font-weight: bold;
@@ -148,22 +148,35 @@
     .btn-delete-row { margin-top: 0; }
     .btn-delete-col:hover, .btn-delete-row:hover { filter: brightness(1.2); }
 
+    /* Admin Edit Type input width fix (36px -> 48px) */
+    .admin-matrix td.ch-cell input.admin-edit-type { width: 48px; text-align:center; font-family:'JetBrains Mono', monospace; background:#1c1d21; border:1px solid #3a3c42; color:#fff; border-radius:4px; font-size:10px; padding:4px; }
+
     /* --- ヘッダー & グローバルコントロール --- */
     .header {
       display: flex; align-items: center; justify-content: space-between;
       padding: calc(env(safe-area-inset-top) + 12px) 15px 8px;
       background: var(--bg-dark); flex-shrink: 0;
     }
-    .header-left { display: flex; align-items: center; gap: 8px; color: var(--blue); font-weight: bold; font-size: 18px; }
+    
+    /* ロゴSVGスタイル */
+    .header-left { display: flex; align-items: center; }
+    #app-logo { height: 28px; width: auto; }
+    @media (min-width: 600px) { #app-logo { height: 32px; } }
+    
     .header-right { display: flex; align-items: center; gap: 12px; color: var(--text-sub); font-size: 13px; font-weight: bold; }
     
+    /* 歯車ボタン (btn-settings) スタイル */
     .btn-login-trigger {
+      display: flex; align-items: center; justify-content: center; /* アイコン中央揃え */
       background: transparent; border: 1.5px solid var(--text-sub); color: var(--text-sub);
       padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; transition: 0.2s;
     }
     .btn-login-trigger:active { background: var(--text-sub); color: var(--bg-dark); }
     .btn-login-trigger.online { border-color: var(--blue); color: var(--blue); }
-    .btn-admin-trigger { border-color: var(--green); color: var(--green); display: none; }
+    #btn-settings { padding: 6px; border-color: var(--text-sub); } /* アイコンボタン用パディング */
+    #btn-settings svg { width: 18px; height: 18px; fill: var(--text-sub); } /* アイコン色 */
+    #btn-settings.online svg { fill: var(--green); border-color: var(--green); } /* オンライン時は緑に */
+    #btn-settings.admin-only { display: none; } /* 初期状態は非表示 */
 
     .global-controls {
       display: flex; gap: 10px; padding: 5px 15px 10px; background: var(--bg-dark); border-bottom: 2px solid var(--green);
@@ -174,6 +187,21 @@
       font-family: 'JetBrains Mono', monospace;
     }
     
+    /* Icon Mute Strike-through CSS (イラスト破綻修正) */
+    .btn-action { position: relative; } /* pseudo-element placement用 */
+    .btn-action.muted::after {
+      content: "";
+      position: absolute;
+      top: 10%;
+      left: 10%;
+      width: 80%;
+      height: 80%;
+      background: linear-gradient(135deg, transparent 48%, currentColor 48%, currentColor 52%, transparent 52%);
+      pointer-events: none;
+    }
+    .btn-listen.muted { border-color: var(--text-sub); color: var(--text-sub); }
+    .btn-talk.muted { border-color: var(--text-sub); color: var(--text-sub); }
+
     /* SPK MUTE (左・緑) と MIC MUTE (右・赤) のアニメーション */
     @keyframes pulse-green { 0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.6); } 70% { box-shadow: 0 0 0 10px rgba(74, 222, 128, 0); } 100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); } }
     @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.6); } 70% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); } 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); } }
@@ -254,20 +282,44 @@
     .master-meter-container { height: 8px; width: 100%; background: #1c1d21; position: relative; flex-shrink: 0; }
     .master-meter-fill { height: 100%; width: 0%; transition: width 0.05s linear; background: linear-gradient(90deg, #4ade80 0%, #4ade80 60%, #eab308 80%, #f87171 100%); }
 
-    /* --- スマホ横向き最適化 --- */
-    @media (orientation: landscape) and (max-height: 600px) {
-      .app-container { height: 100dvh; max-height: none; border-radius: 0; border: none; }
-      .header { padding: 4px 15px; }
-      .global-controls { padding: 0 15px 5px; }
-      .channel-list-container { padding: 5px 10px; gap: 5px; }
-      .main-controls { padding: 5px 10px; }
-      .btn-action { width: 44px; height: 44px; }
-      .btn-icon { width: 20px; height: 20px; }
-      .ch-name { font-size: 14px; margin-bottom: 0; }
-      .btn-expand { padding: 2px 0; font-size: 12px; }
-      .login-modal { max-height: 95vh; overflow-y: auto; padding: 15px; }
-      .admin-modal { max-width: 100%; }
-      .scroll-area { max-height: calc(95vh - 80px); }
+    /* --- スマホ横向き大幅最適化 CSS --- */
+    @media (orientation: landscape) and (max-height: 500px) {
+      .app-container { height: 100dvh; }
+      .header { padding: 2px 10px; border-bottom: 1px solid #1e2128; }
+      #app-logo { height: 20px; }
+      #header-room-name { font-size: 11px; margin-left: 5px; }
+      .header-right { gap: 6px; font-size: 11px; }
+      .btn-login-trigger { padding: 3px 8px; font-size: 11px; }
+      #btn-settings { padding: 3px; }
+      #btn-settings svg { width: 14px; height: 14px; }
+
+      .global-controls { padding: 2px 10px 4px; border-bottom-width: 1px; gap: 6px; overscroll-behavior-x: none; }
+      .btn-global { padding: 5px; font-size: 11px; gap: 3px; }
+      .btn-global svg { width: 14px; height: 14px; }
+
+      .channel-list-container { padding: 4px; gap: 4px; }
+      #channel-list-wrap { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 4px; } /* 複数列 */
+
+      .channel-card { border-radius: 6px; }
+      .main-controls { padding: 4px; }
+      .ch-info { padding: 0 4px; }
+      .ch-name { font-size: 12px; padding: 1px 4px; }
+      .ch-type { font-size: 9px; padding: 1px 3px; }
+      .btn-action { width: 36px; height: 36px; border-width: 1.5px; }
+      .btn-icon { width: 18px; height: 18px; }
+
+      /* 横向き時は不要な要素を非表示 */
+      .volume-panel { display: none !important; }
+      .btn-expand { display: none !important; }
+      .ch-meter-container { display: none !important; }
+      .channel-card::before, .channel-card::after { display: none !important; } /* Talk/Listenインジケータ非表示 */
+      
+      /* 両方ONの時は赤枠にする */
+      .channel-card.listen-on { background: rgba(74, 222, 128, 0.15); border: 1px solid var(--green); }
+      .channel-card.talk-on { background: rgba(220, 38, 38, 0.15); border: 1px solid var(--red); }
+      .channel-card.listen-on.talk-on { background: linear-gradient(135deg, rgba(74, 222, 128, 0.15) 0%, rgba(220, 38, 38, 0.15) 100%); border-color: #f87171; } 
+
+      .master-meter-container { height: 6px; }
     }
   </style>
 </head>
@@ -310,9 +362,22 @@
     <audio id="dummy-audio" loop playsinline src="https://raw.githubusercontent.com/anars/blank-audio/master/250-milliseconds-of-silence.mp3"></audio>
 
     <div class="header">
-      <div class="header-left" id="app-title">YY-Talk</div>
+      <div class="header-left">
+        <svg id="app-logo" viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#4ade80;stop-opacity:1" />
+            </linearGradient>
+          </defs>
+          <path d="M 15 30 Q 25 10, 35 30 T 55 30" stroke="url(#logo-grad)" stroke-width="6" fill="none" stroke-linecap="round" />
+          <path d="M 65 30 Q 75 10, 85 30 T 105 30" stroke="url(#logo-grad)" stroke-width="6" fill="none" stroke-linecap="round" />
+          <text x="120" y="42" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-weight="900" font-size="36" fill="var(--text-main)" letter-spacing="-1">Talk</text>
+        </svg>
+        <span id="header-room-name" style="margin-left: 10px; font-size: 14px; color: var(--text-sub); font-family: 'JetBrains Mono', monospace;"></span>
+      </div>
       <div class="header-right">
-        <button id="btn-admin" class="btn-login-trigger btn-admin-trigger">管理</button>
+        <button id="btn-settings" class="btn-login-trigger admin-only"></button>
         <span id="status-role" style="color: var(--orange); font-family: 'JetBrains Mono', monospace;">Offline</span>
         <button id="btn-show-login" class="btn-login-trigger">Login</button>
       </div>
@@ -372,8 +437,9 @@
       statusMsg: document.getElementById('status-msg'), hostIdInput: document.getElementById('host-id'), joinUserIdInput: document.getElementById('join-userid'),
       myIdDisplay: document.getElementById('status-my-id'), roleDisplay: document.getElementById('status-role'), dummyAudio: document.getElementById('dummy-audio'),
       audioOverlay: document.getElementById('audio-overlay'), loginOverlay: document.getElementById('login-overlay'), btnLoginShow: document.getElementById('btn-show-login'),
-      masterMeterFill: document.getElementById('master-meter-fill'), appTitle: document.getElementById('app-title'),
-      adminOverlay: document.getElementById('admin-overlay'), btnAdmin: document.getElementById('btn-admin'), btnCloseAdmin: document.getElementById('btn-close-admin'),
+      masterMeterFill: document.getElementById('master-meter-fill'), 
+      roomNameDisplay: document.getElementById('header-room-name'), // appTitle 廃止
+      adminOverlay: document.getElementById('admin-overlay'), btnSettings: document.getElementById('btn-settings'), btnCloseAdmin: document.getElementById('btn-close-admin'),
       btnAddCh: document.getElementById('btn-add-ch'), chWrap: document.getElementById('channel-list-wrap'), btnJoinMember: document.getElementById('btn-join-member'), btnJoinAdmin: document.getElementById('btn-join-admin'),
       btnMasterSpk: document.getElementById('btn-master-spk'), btnMasterMic: document.getElementById('btn-master-mic')
     };
@@ -381,29 +447,31 @@
     els.btnLoginShow.onclick = () => { els.loginOverlay.style.display = 'flex'; };
     document.getElementById('btn-close-login').onclick = () => { els.loginOverlay.style.display = 'none'; };
     
-    els.btnAdmin.onclick = () => { 
+    els.btnSettings.onclick = () => { 
       if (!state.isAdmin) return;
       buildAdminMatrix();
       els.adminOverlay.style.display = 'flex'; 
     };
     els.btnCloseAdmin.onclick = () => { els.adminOverlay.style.display = 'none'; };
 
-    // アイコン定義 (通常 / 斜線)
+    // アイコン定義 (通常アイコン固定、Off廃止)
     const iconSpeaker = `<svg class="btn-icon" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
-    const iconSpeakerOff = `<svg class="btn-icon" viewBox="0 0 24 24"><path d="M16.5 12A4.5 4.5 0 0 0 14 8v1.88l2.45 2.45c.03-.1.05-.21.05-.33zM19 12c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>`;
     const iconMic = `<svg class="btn-icon" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>`;
-    const iconMicOff = `<svg class="btn-icon" viewBox="0 0 24 24"><path d="M19 11h-1.7c0 .74-.16 1.43-.43 2.05l1.23 1.23c.56-.98.9-2.09.9-3.28zm-4.02 3.28c-.91.73-2.03 1.2-3.28 1.41v2.06c1.69-.26 3.16-.97 4.31-1.95l-1.03-1.52zM4.27 3L3 4.27 9.33 10.4 9 11v6c0 1.66 1.34 3 3 3 1.23 0 2.29-.75 2.76-1.83l4.97 4.97 1.27-1.27L4.27 3zm6.66 11c-.51-.31-.93-.78-1.18-1.33L12 14.82v-3.82zM12 4c-1.66 0-3 1.34-3 3v.18l2-2V7c0-.55.45-1 1-1s1 .45 1 1v3.18l2-2V7c0-1.66-1.34-3-3-3z"/></svg>`;
+    // 歯車アイコン
+    const iconSettings = `<svg class="btn-icon" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>`;
 
-    // アイコンの同期更新関数 (マスターミュート状態にのみ連動)
+    // アイコンの同期更新関数 (イラスト破綻修正、CSS制御へ)
     function updateChannelIcons() {
       channels.forEach(ch => {
         const lBtn = document.getElementById(`listen-${ch.id}`);
         const tBtn = document.getElementById(`talk-${ch.id}`);
         if (lBtn) {
-          lBtn.innerHTML = state.isMasterSpkMuted ? iconSpeakerOff : iconSpeaker;
+          lBtn.innerHTML = iconSpeaker; // アイコンは固定
+          lBtn.classList.toggle('muted', state.isMasterSpkMuted); // CSSで斜線を制御
         }
         if (tBtn) {
-          tBtn.innerHTML = state.isMasterMicMuted ? iconMicOff : iconMic;
+          tBtn.innerHTML = iconMic; // アイコンは固定
+          tBtn.classList.toggle('muted', state.isMasterMicMuted); // CSSで斜線を制御
         }
       });
     }
@@ -413,14 +481,14 @@
       state.isMasterSpkMuted = !state.isMasterSpkMuted;
       els.btnMasterSpk.classList.toggle('active', state.isMasterSpkMuted);
       updateAudioRouting();
-      updateChannelIcons();
+      updateChannelIcons(); // アイコンCSS更新
     }
 
     function toggleMasterMic() {
       state.isMasterMicMuted = !state.isMasterMicMuted;
       els.btnMasterMic.classList.toggle('active', state.isMasterMicMuted);
       updateAudioRouting();
-      updateChannelIcons();
+      updateChannelIcons(); // アイコンCSS更新
     }
 
     els.btnMasterSpk.onclick = toggleMasterSpk;
@@ -501,9 +569,9 @@
       const listenClass = state.listenStates[ch.id] ? 'listen-on' : '';
       const talkClass = state.talkStates[ch.id] ? 'talk-on' : '';
 
-      // 初期アイコンの計算 (マスター状態に依存)
-      const curListenIcon = state.isMasterSpkMuted ? iconSpeakerOff : iconSpeaker;
-      const curTalkIcon = state.isMasterMicMuted ? iconMicOff : iconMic;
+      // 初期アイコンの計算 (通常アイコン固定)
+      const curListenIcon = iconSpeaker;
+      const curTalkIcon = iconMic;
 
       const card = document.createElement('div');
       card.className = `channel-card ${listenClass} ${talkClass}`;
@@ -532,6 +600,12 @@
         <div class="btn-expand" id="expand-${ch.id}">○ ○ ○</div>
       `;
       els.chWrap.appendChild(card);
+
+      // 初期ミュートCSS適用
+      const lBtn = card.querySelector(`#listen-${ch.id}`);
+      const tBtn = card.querySelector(`#talk-${ch.id}`);
+      if(state.isMasterSpkMuted) lBtn.classList.add('muted');
+      if(state.isMasterMicMuted) tBtn.classList.add('muted');
 
       const slider = card.querySelector(`#vol-${ch.id}`);
       const fill = card.querySelector(`#fill-${ch.id}`);
@@ -824,7 +898,7 @@
                  <div style="display:flex; gap:6px; align-items:center; justify-content:space-between; width:100%;">
                     <div style="display:flex; gap:4px; flex:1;">
                        <input type="text" class="admin-edit-name" data-id="${ch.id}" value="${ch.name}" style="flex:1; width:70px; background:#1c1d21; border:1px solid #3a3c42; color:#fff; border-radius:4px; font-size:13px; padding:4px 6px;">
-                       <input type="text" class="admin-edit-type" data-id="${ch.id}" value="${ch.type}" style="width:36px; text-align:center; font-family:'JetBrains Mono', monospace; background:#1c1d21; border:1px solid #3a3c42; color:#fff; border-radius:4px; font-size:10px; padding:4px;">
+                       <input type="text" class="admin-edit-type" data-id="${ch.id}" value="${ch.type}" style="width:48px; text-align:center; font-family:'JetBrains Mono', monospace; background:#1c1d21; border:1px solid #3a3c42; color:#fff; border-radius:4px; font-size:10px; padding:4px;">
                     </div>
                     <button class="btn-delete-row" data-id="${ch.id}">削除</button>
                  </div>
@@ -1043,14 +1117,23 @@
       btn.disabled = true; btn.textContent = "処理中..."; btn.style.opacity = "0.5";
       await new Promise(r => setTimeout(r, 50));
 
-      if (typeof Peer === 'undefined') { alert("通信サーバーのプログラムが読み込めませんでした。\nインターネット接続を確認するか、ページを再読み込みしてください。"); btn.disabled = false; btn.textContent = originalText; btn.style.opacity = "1"; return; }
+      if (typeof Peer === 'undefined') { alert("通信サーバーのプログラムが読み込めませんでした。\nインターネット接続を確認するか、ページを再読み込みしてください。"); btn.disabled = ralse; btn.textContent = originalText; btn.style.opacity = "1"; return; }
       if (!await initMedia()) { btn.disabled = false; btn.textContent = originalText; btn.style.opacity = "1"; els.statusMsg.textContent = "マイクが許可されませんでした"; return; }
       
-      state.isAdmin = isAdmin; els.btnAdmin.style.display = isAdmin ? 'block' : 'none';
+      state.isAdmin = isAdmin; 
       const rawRoomId = els.hostIdInput.value.trim() || 'yytalk';
       const myName = els.joinUserIdInput.value.trim() || 'Unknown';
       state.roomId = rawRoomId; state.myUserId = myName; state.netRoomId = 'yytalk-pro-' + encodeURIComponent(rawRoomId).replace(/%/g, '-');
-      els.appTitle.textContent = `YY-Talk - ${rawRoomId}${isAdmin ? ' (Admin)' : ''}`;
+      //ELS.appTitle 廃止、ルーム名表示
+      els.roomNameDisplay.textContent = ` - ${rawRoomId}${isAdmin ? ' (Admin)' : ''}`;
+      // 管理ボタン (歯車) の制御
+      if (isAdmin) {
+        els.btnSettings.style.display = 'flex'; // アイコンボタンなのでflex
+        els.btnSettings.innerHTML = iconSettings; // アイコンSVGをinnerHTMLで入れる
+      } else {
+        els.btnSettings.style.display = 'none';
+      }
+
       LocalProfile.set({ roomId: rawRoomId, userId: myName, isAdmin });
       
       els.statusMsg.textContent = "データを読み込み中..."; loadRoomState(state.roomId);
