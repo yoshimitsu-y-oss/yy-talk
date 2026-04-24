@@ -14,7 +14,7 @@
       alert("【システムエラー検知】\n" + message + "\n行: " + lineno);
     };
 
-    // 【究極の通信節約】Opus DTX (無音圧縮) の強制ハック
+    // Opus DTX (無音圧縮) の強制ハック
     const origSetLocalDescription = RTCPeerConnection.prototype.setLocalDescription;
     RTCPeerConnection.prototype.setLocalDescription = function(desc) {
       if (desc && (desc.type === 'offer' || desc.type === 'answer')) {
@@ -39,11 +39,8 @@
       margin: 0; padding: 0; background-color: #121418; color: var(--text-main);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       display: flex; justify-content: center; align-items: center;
-      height: 100dvh; overflow: hidden; transition: box-shadow 0.2s;
+      height: 100dvh; overflow: hidden;
     }
-
-    /* Master Mute時の警告（Tally表現） */
-    body.master-muted { box-shadow: inset 0 0 0 6px var(--alert); }
 
     .app-container {
       width: 100%; height: 100dvh; background-color: var(--bg-dark);
@@ -109,39 +106,38 @@
 
     .admin-matrix-wrapper { width: 100%; overflow-x: auto; border: 1px solid #3a3c42; border-radius: 8px; background: #0a0b0d; }
     .admin-matrix { width: 100%; border-collapse: collapse; min-width: max-content; text-align: center; font-size: 13px; }
-    .admin-matrix th, .admin-matrix td { border: 1px solid #3a3c42; padding: 10px; }
+    .admin-matrix th, .admin-matrix td { border: 1px solid #3a3c42; padding: 6px; }
     .admin-matrix th { background-color: #1c1d21; color: var(--text-sub); font-weight: normal; position: sticky; top: 0; z-index: 5; }
     
-    /* ★ マトリックスの左列固定 (Sticky) と 一括操作ボタン */
+    /* マトリックス左列固定 (スマホ対応で幅縮小) */
     .diagonal-header {
-      position: sticky; left: 0; z-index: 10 !important; min-width: 260px; min-height: 50px;
-      background: linear-gradient(to top right, #1c1d21 49.2%, #3a3c42 49.2%, #3a3c42 50.8%, #1c1d21 50.8%);
+      position: sticky; left: 0; z-index: 10 !important; min-width: 140px; min-height: 40px;
+      background: linear-gradient(to top right, #1c1d21 49%, #3a3c42 49%, #3a3c42 51%, #1c1d21 51%);
       border-right: 2px solid #3a3c42 !important; box-shadow: 2px 0 5px rgba(0,0,0,0.5);
     }
-    .diagonal-header .dh-member { position: absolute; top: 8px; right: 15px; font-weight: bold; color: var(--text-main); }
-    .diagonal-header .dh-party { position: absolute; bottom: 8px; left: 15px; font-weight: bold; color: var(--text-main); }
+    .diagonal-header .dh-member { position: absolute; top: 4px; right: 10px; font-weight: bold; color: var(--text-main); font-size: 12px; }
+    .diagonal-header .dh-party { position: absolute; bottom: 4px; left: 10px; font-weight: bold; color: var(--text-main); font-size: 12px; }
     
     .matrix-user-header { cursor: pointer; transition: background 0.2s; }
     .matrix-user-header:hover { background: #2a2d35; }
-    .matrix-user-header span.bulk-label { display: block; font-size: 10px; color: var(--text-sub); margin-top: 2px; }
+    .matrix-user-header span.bulk-label { display: block; font-size: 9px; color: var(--text-sub); margin-top: 2px; }
 
     .admin-matrix td.ch-cell { 
-      text-align: left; background-color: #0a0b0d; min-width: 260px; padding: 10px; 
+      text-align: left; background-color: #0a0b0d; min-width: 140px; padding: 6px; 
       position: sticky; left: 0; z-index: 9; border-right: 2px solid #3a3c42 !important; box-shadow: 2px 0 5px rgba(0,0,0,0.5);
     }
     
     .matrix-toggle {
-      width: 26px; height: 26px; border-radius: 50%; margin: 0 auto;
+      width: 24px; height: 24px; border-radius: 50%; margin: 0 auto;
       background: #1c1d21; border: 2px solid #3a3c42;
       cursor: pointer; transition: 0.15s ease-out; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
     }
-    .matrix-toggle.active { background: var(--green); border-color: var(--green); box-shadow: 0 0 10px rgba(74, 222, 128, 0.4); transform: scale(1.1); }
+    .matrix-toggle.active { background: var(--green); border-color: var(--green); box-shadow: 0 0 8px rgba(74, 222, 128, 0.4); transform: scale(1.1); }
     
     .btn-delete-col, .btn-delete-row {
       background: var(--red); color: #fff; border: none; border-radius: 4px; cursor: pointer; 
-      padding: 3px 8px; font-size: 10px; transition: all 0.2s; font-weight: bold; box-shadow: 0 0 5px rgba(220, 38, 38, 0.6);
+      padding: 3px 6px; font-size: 10px; transition: all 0.2s; font-weight: bold;
     }
-    .btn-delete-col:hover, .btn-delete-row:hover { box-shadow: 0 0 10px rgba(220, 38, 38, 0.9); filter: brightness(1.1); }
 
     /* --- ヘッダー & グローバルコントロール --- */
     .header {
@@ -165,15 +161,16 @@
     }
     .btn-global {
       flex: 1; padding: 10px; border: none; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center; gap: 5px; transition: 0.2s;
+      display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s;
       font-family: 'JetBrains Mono', monospace;
     }
-    .btn-master-mute { background: #1c1d21; color: var(--text-main); border: 1px solid #3a3c42; }
-    .btn-master-mute.active { background: var(--alert); color: #fff; border-color: var(--alert); animation: pulse-red 2s infinite; }
-    .btn-all-talk { background: #1c1d21; color: var(--text-main); border: 1px solid #3a3c42; }
-    .btn-all-talk.active { background: var(--red); color: #fff; border-color: var(--red); box-shadow: 0 0 15px rgba(220,38,38,0.5); }
-
-    @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+    
+    /* SPK MUTE (左・緑) と MIC MUTE (右・赤) */
+    .btn-master-spk { background: #1c1d21; color: var(--text-main); border: 1px solid #3a3c42; }
+    .btn-master-spk.active { background: var(--green); color: #000; border-color: var(--green); box-shadow: 0 0 12px rgba(74,222,128,0.5); }
+    
+    .btn-master-mic { background: #1c1d21; color: var(--text-main); border: 1px solid #3a3c42; }
+    .btn-master-mic.active { background: var(--red); color: #fff; border-color: var(--red); box-shadow: 0 0 12px rgba(220,38,38,0.5); }
 
     /* --- チャンネルリスト --- */
     .channel-list-container {
@@ -245,21 +242,6 @@
     .master-meter-container { height: 8px; width: 100%; background: #1c1d21; position: relative; flex-shrink: 0; }
     .master-meter-fill { height: 100%; width: 0%; transition: width 0.05s linear; background: linear-gradient(90deg, #4ade80 0%, #4ade80 60%, #eab308 80%, #f87171 100%); }
 
-    /* --- スマホ横向き最適化 --- */
-    @media (orientation: landscape) and (max-height: 600px) {
-      .app-container { height: 100dvh; max-height: none; border-radius: 0; border: none; }
-      .header { padding: 4px 15px; }
-      .global-controls { padding: 0 15px 5px; }
-      .channel-list-container { padding: 5px 10px; gap: 5px; }
-      .main-controls { padding: 5px 10px; }
-      .btn-action { width: 44px; height: 44px; }
-      .btn-icon { width: 20px; height: 20px; }
-      .ch-name { font-size: 14px; margin-bottom: 0; }
-      .btn-expand { padding: 2px 0; font-size: 12px; }
-      .login-modal { max-height: 95vh; overflow-y: auto; padding: 15px; }
-      .admin-modal { max-width: 100%; }
-      .scroll-area { max-height: calc(95vh - 80px); }
-    }
   </style>
 </head>
 <body>
@@ -310,13 +292,17 @@
     </div>
 
     <div class="global-controls">
-      <button id="btn-master-mute" class="btn-global btn-master-mute">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>
-        MASTER MUTE
+      <button id="btn-master-spk" class="btn-global btn-master-spk">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M16.5 12A4.5 4.5 0 0 0 14 8v1.88l2.45 2.45c.03-.1.05-.21.05-.33zM19 12c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
+        </svg>
+        SPK MUTE
       </button>
-      <button id="btn-all-talk" class="btn-global btn-all-talk">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
-        ALL TALK
+      <button id="btn-master-mic" class="btn-global btn-master-mic">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19 11h-1.7c0 .74-.16 1.43-.43 2.05l1.23 1.23c.56-.98.9-2.09.9-3.28zm-4.02 3.28c-.91.73-2.03 1.2-3.28 1.41v2.06c1.69-.26 3.16-.97 4.31-1.95l-1.03-1.52zM4.27 3L3 4.27 9.33 10.4 9 11v6c0 1.66 1.34 3 3 3 1.23 0 2.29-.75 2.76-1.83l4.97 4.97 1.27-1.27L4.27 3zm6.66 11c-.51-.31-.93-.78-1.18-1.33L12 14.82v-3.82zM12 4c-1.66 0-3 1.34-3 3v.18l2-2V7c0-.55.45-1 1-1s1 .45 1 1v3.18l2-2V7c0-1.66-1.34-3-3-3z"/>
+        </svg>
+        MIC MUTE
       </button>
     </div>
 
@@ -350,7 +336,7 @@
       peers: new Set(), users: {}, registeredUsers: [], userAssignments: {}, 
       dataConns: {}, mediaCalls: {}, talkStates: {}, listenStates: {}, channelVolumes: {}, remoteTalkStates: {}, channelNodes: {}, 
       isAdmin: false, audioEnabled: false,
-      isMasterMuted: false, isAllTalk: false // ★ 新規追加フラグ
+      isMasterSpkMuted: false, isMasterMicMuted: false
     };
 
     let channels = [];
@@ -362,7 +348,7 @@
       masterMeterFill: document.getElementById('master-meter-fill'), appTitle: document.getElementById('app-title'),
       adminOverlay: document.getElementById('admin-overlay'), btnAdmin: document.getElementById('btn-admin'), btnCloseAdmin: document.getElementById('btn-close-admin'),
       btnAddCh: document.getElementById('btn-add-ch'), chWrap: document.getElementById('channel-list-wrap'), btnJoinMember: document.getElementById('btn-join-member'), btnJoinAdmin: document.getElementById('btn-join-admin'),
-      btnMasterMute: document.getElementById('btn-master-mute'), btnAllTalk: document.getElementById('btn-all-talk')
+      btnMasterSpk: document.getElementById('btn-master-spk'), btnMasterMic: document.getElementById('btn-master-mic')
     };
 
     els.btnLoginShow.onclick = () => { els.loginOverlay.style.display = 'flex'; };
@@ -375,29 +361,49 @@
     };
     els.btnCloseAdmin.onclick = () => { els.adminOverlay.style.display = 'none'; };
 
-    // --- ★ グローバルコントロール制御 ---
-    function toggleMasterMute() {
-      state.isMasterMuted = !state.isMasterMuted;
-      els.btnMasterMute.classList.toggle('active', state.isMasterMuted);
-      document.body.classList.toggle('master-muted', state.isMasterMuted);
+    // --- ★ グローバルコントロール (SPK / MIC Mute) ---
+    function toggleMasterSpk() {
+      state.isMasterSpkMuted = !state.isMasterSpkMuted;
+      els.btnMasterSpk.classList.toggle('active', state.isMasterSpkMuted);
       updateAudioRouting();
-      els.dummyAudio.play().catch(()=>{}); // バックグラウンド維持
     }
 
-    function toggleAllTalk() {
-      state.isAllTalk = !state.isAllTalk;
-      els.btnAllTalk.classList.toggle('active', state.isAllTalk);
+    function toggleMasterMic() {
+      state.isMasterMicMuted = !state.isMasterMicMuted;
+      els.btnMasterMic.classList.toggle('active', state.isMasterMicMuted);
       updateAudioRouting();
-      syncTalkStates(); 
+      
+      // スマホのバックグラウンド権限維持用
+      if (els.dummyAudio.paused) {
+        els.dummyAudio.play().catch(()=>{});
+      }
     }
 
-    els.btnMasterMute.onclick = toggleMasterMute;
-    els.btnAllTalk.onclick = toggleAllTalk;
+    els.btnMasterSpk.onclick = toggleMasterSpk;
+    els.btnMasterMic.onclick = toggleMasterMic;
 
-    if ('mediaSession' in navigator) {
-      navigator.mediaSession.setActionHandler('play', toggleMasterMute);
-      navigator.mediaSession.setActionHandler('pause', toggleMasterMute);
+    // ★ イヤホンボタンのフック強化 (メタデータ追加でOSを騙す)
+    function setupMediaSession() {
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: 'YY-Talk (Active)',
+          artist: 'Intercom PRO',
+          album: 'Live Matrix',
+          artwork: [{ src: 'https://dummyimage.com/96x96/1c1d21/4ade80.png&text=YY', sizes: '96x96', type: 'image/png' }]
+        });
+        
+        // 全てのボタン操作にマイクミュート(MIC MUTE)を割り当てる
+        navigator.mediaSession.setActionHandler('play', toggleMasterMic);
+        navigator.mediaSession.setActionHandler('pause', toggleMasterMic);
+        navigator.mediaSession.setActionHandler('previoustrack', toggleMasterMic);
+        navigator.mediaSession.setActionHandler('nexttrack', toggleMasterMic);
+        navigator.mediaSession.setActionHandler('stop', () => {
+          toggleMasterMic();
+          els.dummyAudio.play().catch(()=>{}); // 完全に止めさせない
+        });
+      }
     }
+    setupMediaSession();
 
     const iconSpeaker = `<svg class="btn-icon" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
     const iconMic = `<svg class="btn-icon" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>`;
@@ -463,11 +469,8 @@
       }
       
       const defaultChannels = [
-        { id: 'ch1', name: 'ch1', type: 'PL' },
-        { id: 'ch2', name: 'ch2', type: 'PL' },
-        { id: 'ch3', name: 'ch3', type: 'PL' },
-        { id: 'ch4', name: 'ch4', type: 'PL' },
-        { id: 'ch5', name: 'ch5', type: 'PL' }
+        { id: 'ch1', name: 'ch1', type: 'PL' }, { id: 'ch2', name: 'ch2', type: 'PL' },
+        { id: 'ch3', name: 'ch3', type: 'PL' }, { id: 'ch4', name: 'ch4', type: 'PL' }, { id: 'ch5', name: 'ch5', type: 'PL' }
       ];
       resetAndApplyChannels(defaultChannels, {}, []);
     }
@@ -518,8 +521,7 @@
 
       slider.addEventListener('input', (e) => {
         const valStr = e.target.value + '%';
-        fill.style.width = valStr;
-        leftMeter.style.height = valStr;
+        fill.style.width = valStr; leftMeter.style.height = valStr;
         state.channelVolumes[ch.id] = (e.target.value / 100) * 3.0;
         updateAudioRouting(); 
       });
@@ -559,8 +561,7 @@
            call.chGains[newCh.id] = splitGain;
         }
       });
-      saveRoomState();
-      buildAdminMatrix(); 
+      saveRoomState(); buildAdminMatrix(); 
     };
 
     function removeChannel(chId) {
@@ -568,15 +569,9 @@
       const card = document.getElementById(`card-${chId}`);
       if(card) card.remove();
       
-      delete state.listenStates[chId];
-      delete state.talkStates[chId];
-      if (state.channelNodes[chId] && audioCtx) {
-        state.channelNodes[chId].masterGain.disconnect();
-        delete state.channelNodes[chId];
-      }
-      Object.keys(state.userAssignments).forEach(uid => {
-         state.userAssignments[uid] = state.userAssignments[uid].filter(id => id !== chId);
-      });
+      delete state.listenStates[chId]; delete state.talkStates[chId];
+      if (state.channelNodes[chId] && audioCtx) { state.channelNodes[chId].masterGain.disconnect(); delete state.channelNodes[chId]; }
+      Object.keys(state.userAssignments).forEach(uid => { state.userAssignments[uid] = state.userAssignments[uid].filter(id => id !== chId); });
       updateAudioRouting();
     }
 
@@ -585,35 +580,25 @@
     function initAudioContext() {
       if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        masterAnalyser = audioCtx.createAnalyser();
-        masterAnalyser.fftSize = 256;
-        masterAnalyser.connect(audioCtx.destination);
+        masterAnalyser = audioCtx.createAnalyser(); masterAnalyser.fftSize = 256; masterAnalyser.connect(audioCtx.destination);
         
         if (state.localStream) {
           const localSrc = audioCtx.createMediaStreamSource(state.localStream);
-          localMicAnalyser = audioCtx.createAnalyser();
-          localMicAnalyser.fftSize = 256;
-          localSrc.connect(localMicAnalyser);
+          localMicAnalyser = audioCtx.createAnalyser(); localMicAnalyser.fftSize = 256; localSrc.connect(localMicAnalyser);
         }
 
         startMeterDraw();
         channels.forEach(ch => setupChannelAudio(ch.id));
       }
       if(audioCtx.state === 'suspended') audioCtx.resume();
-
-      Object.values(state.mediaCalls).forEach(callData => {
-        if (!callData.source) setupPeerMixer(callData);
-      });
+      Object.values(state.mediaCalls).forEach(callData => { if (!callData.source) setupPeerMixer(callData); });
     }
 
     function setupChannelAudio(chId) {
       if (!audioCtx || state.channelNodes[chId]) return;
-      const analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 256;
-      const masterGain = audioCtx.createGain();
-      masterGain.gain.value = 0;
-      analyser.connect(masterGain);
-      masterGain.connect(masterAnalyser);
+      const analyser = audioCtx.createAnalyser(); analyser.fftSize = 256;
+      const masterGain = audioCtx.createGain(); masterGain.gain.value = 0;
+      analyser.connect(masterGain); masterGain.connect(masterAnalyser);
       state.channelNodes[chId] = { analyser, masterGain };
     }
 
@@ -622,15 +607,12 @@
       const source = audioCtx.createMediaStreamSource(callData.stream);
       callData.source = source;
       
-      const peerAnalyser = audioCtx.createAnalyser();
-      peerAnalyser.fftSize = 256;
-      source.connect(peerAnalyser);
-      callData.analyser = peerAnalyser;
+      const peerAnalyser = audioCtx.createAnalyser(); peerAnalyser.fftSize = 256;
+      source.connect(peerAnalyser); callData.analyser = peerAnalyser;
 
       callData.chGains = {};
       channels.forEach(ch => {
-        const splitGain = audioCtx.createGain();
-        splitGain.gain.value = 0;
+        const splitGain = audioCtx.createGain(); splitGain.gain.value = 0;
         source.connect(splitGain);
         if(state.channelNodes[ch.id]) splitGain.connect(state.channelNodes[ch.id].analyser);
         callData.chGains[ch.id] = splitGain;
@@ -638,7 +620,6 @@
       updateAudioRouting();
     }
 
-    // ★ 描画ループ最適化 (約30fpsに制限し、メインスレッドの負荷を軽減)
     let lastDrawTime = 0;
     function startMeterDraw() {
       const masterData = new Uint8Array(masterAnalyser.frequencyBinCount);
@@ -646,20 +627,17 @@
 
       function draw(timestamp) {
         requestAnimationFrame(draw);
-        if (timestamp - lastDrawTime < 30) return; // 30ms未満ならスキップ
+        if (timestamp - lastDrawTime < 30) return;
         lastDrawTime = timestamp;
         
         masterAnalyser.getByteFrequencyData(masterData);
-        let sum = 0;
-        for(let i=0; i<masterData.length; i++) sum += masterData[i];
-        let masterPercent = ((sum / masterData.length) / 255) * 100 * 2.0; 
-        els.masterMeterFill.style.width = Math.min(masterPercent, 100) + '%';
+        let sum = 0; for(let i=0; i<masterData.length; i++) sum += masterData[i];
+        els.masterMeterFill.style.width = Math.min(((sum / masterData.length) / 255) * 100 * 2.0, 100) + '%';
 
         let localPercent = 0;
         if (localMicAnalyser && localData) {
           localMicAnalyser.getByteFrequencyData(localData);
-          let lSum = 0;
-          for(let i=0; i<localData.length; i++) lSum += localData[i];
+          let lSum = 0; for(let i=0; i<localData.length; i++) lSum += localData[i];
           localPercent = ((lSum / localData.length) / 255) * 100 * 2.0;
         }
 
@@ -667,14 +645,10 @@
           if (state.channelNodes[ch.id]) {
             const chData = new Uint8Array(state.channelNodes[ch.id].analyser.frequencyBinCount);
             state.channelNodes[ch.id].analyser.getByteFrequencyData(chData);
-            let chSum = 0;
-            for(let i=0; i<chData.length; i++) chSum += chData[i];
+            let chSum = 0; for(let i=0; i<chData.length; i++) chSum += chData[i];
             let chPercent = ((chSum / chData.length) / 255) * 100 * 2.5;
             
-            if (state.talkStates[ch.id] || state.isAllTalk) {
-              chPercent = Math.max(chPercent, localPercent);
-            }
-            
+            if (state.talkStates[ch.id]) chPercent = Math.max(chPercent, localPercent);
             const meterEl = document.getElementById(`ch-meter-fill-${ch.id}`);
             if (meterEl) meterEl.style.width = Math.min(chPercent, 100) + '%';
           }
@@ -685,16 +659,14 @@
             const meterEl = document.getElementById(`user-meter-${uid}`);
             if (meterEl) {
               let maxVal = 0;
-              if (uid === state.myUserId) {
-                maxVal = localPercent;
-              } else {
+              if (uid === state.myUserId) { maxVal = localPercent; } 
+              else {
                 const peerId = Object.keys(state.users).find(p => state.users[p] === uid);
                 if (peerId && state.mediaCalls[peerId] && state.mediaCalls[peerId].analyser) {
                   const pAnalyser = state.mediaCalls[peerId].analyser;
                   const pData = new Uint8Array(pAnalyser.frequencyBinCount);
                   pAnalyser.getByteFrequencyData(pData);
-                  let pSum = 0;
-                  for(let i=0; i<pData.length; i++) pSum += pData[i];
+                  let pSum = 0; for(let i=0; i<pData.length; i++) pSum += pData[i];
                   maxVal = ((pSum / pData.length) / 255) * 100 * 2.0;
                 }
               }
@@ -707,10 +679,9 @@
     }
 
     function updateAudioRouting() {
-      // ★ Master Mute / All Talk の割り込み処理
+      // ★ MIC MUTE の制御
       let isLocalTalking = Object.values(state.talkStates).some(val => val === true);
-      if (state.isAllTalk) isLocalTalking = true;
-      if (state.isMasterMuted) isLocalTalking = false;
+      if (state.isMasterMicMuted) isLocalTalking = false;
 
       if (state.localStream) {
         state.localStream.getAudioTracks().forEach(t => t.enabled = isLocalTalking);
@@ -719,8 +690,8 @@
 
       channels.forEach(ch => {
         if (state.channelNodes[ch.id]) {
-          // Master Mute時は全てのスピーカーを0にする
-          const vol = (state.listenStates[ch.id] && !state.isMasterMuted) ? state.channelVolumes[ch.id] : 0;
+          // ★ SPK MUTE の制御
+          const vol = (state.listenStates[ch.id] && !state.isMasterSpkMuted) ? state.channelVolumes[ch.id] : 0;
           state.channelNodes[ch.id].masterGain.gain.setTargetAtTime(vol, audioCtx.currentTime, 0.05);
         }
       });
@@ -728,10 +699,9 @@
       for (const peerId in state.mediaCalls) {
         const callData = state.mediaCalls[peerId];
         const remoteTalk = state.remoteTalkStates[peerId] || {};
-
         channels.forEach(ch => {
           if (callData.chGains && callData.chGains[ch.id]) {
-            const isTalking = remoteTalk[ch.id] === true || remoteTalk['__ALL_TALK__'] === true;
+            const isTalking = remoteTalk[ch.id] === true;
             callData.chGains[ch.id].gain.setTargetAtTime(isTalking ? 1 : 0, audioCtx.currentTime, 0.05);
           }
         });
@@ -739,11 +709,8 @@
     }
 
     function syncTalkStates() {
-      const statesToSend = { ...state.talkStates, '__ALL_TALK__': state.isAllTalk };
-      const msg = { type: 'update-talk-states', states: statesToSend };
-      Object.values(state.dataConns).forEach(conn => {
-        if(conn && conn.open) conn.send(msg);
-      });
+      const msg = { type: 'update-talk-states', states: state.talkStates };
+      Object.values(state.dataConns).forEach(conn => { if(conn && conn.open) conn.send(msg); });
     }
 
     function setupPTTButton(btn, type, channelId) {
@@ -752,9 +719,7 @@
       const slideDir = type === 'listen' ? 1 : -1;
 
       function applyState(active) {
-        let changed = false;
-        const card = document.getElementById(`card-${channelId}`);
-        
+        let changed = false; const card = document.getElementById(`card-${channelId}`);
         if (type === 'talk' && state.talkStates[channelId] !== active) {
           state.talkStates[channelId] = active; changed = true;
           if (card) { if(active) card.classList.add('talk-on'); else card.classList.remove('talk-on'); }
@@ -763,90 +728,61 @@
           state.listenStates[channelId] = active; changed = true;
           if (card) { if(active) card.classList.add('listen-on'); else card.classList.remove('listen-on'); }
         }
-        updateAudioRouting();
-        if (changed && type === 'talk') syncTalkStates();
+        updateAudioRouting(); if (changed && type === 'talk') syncTalkStates();
       }
 
       btn.addEventListener('pointerdown', (e) => {
-        btn.setPointerCapture(e.pointerId);
-        isDown = true; startX = e.clientX; hasDragged = false;
-        els.dummyAudio.play().catch(()=>{});
+        btn.setPointerCapture(e.pointerId); isDown = true; startX = e.clientX; hasDragged = false; els.dummyAudio.play().catch(()=>{});
         if (!isLatched) { btn.classList.add('active'); applyState(true); }
       });
 
       btn.addEventListener('pointermove', (e) => {
-        if (!isDown) return;
-        const deltaX = e.clientX - startX;
+        if (!isDown) return; const deltaX = e.clientX - startX;
         if ((slideDir === 1 && deltaX > 0) || (slideDir === -1 && deltaX < 0)) {
-          e.preventDefault(); 
-          btn.style.transform = `translateX(${deltaX}px)`;
-          if (Math.abs(deltaX) > 30 && !isLatched) {
-            hasDragged = true; isLatched = true;
-            btn.classList.add('latched');
-            if (navigator.vibrate) navigator.vibrate(50);
-          }
+          e.preventDefault(); btn.style.transform = `translateX(${deltaX}px)`;
+          if (Math.abs(deltaX) > 30 && !isLatched) { hasDragged = true; isLatched = true; btn.classList.add('latched'); if (navigator.vibrate) navigator.vibrate(50); }
         }
       });
 
       const release = (e) => {
-        if (!isDown) return;
-        isDown = false; btn.style.transform = `translateX(0px)`;
+        if (!isDown) return; isDown = false; btn.style.transform = `translateX(0px)`;
         if (hasDragged) applyState(true);
         else {
           if (isLatched) { isLatched = false; btn.classList.remove('latched', 'active'); applyState(false); }
           else { btn.classList.remove('active'); applyState(false); }
         }
       };
-      btn.addEventListener('pointerup', release);
-      btn.addEventListener('pointercancel', release);
+      btn.addEventListener('pointerup', release); btn.addEventListener('pointercancel', release);
     }
 
-    function syncChannelInfo() {
-      Object.values(state.dataConns).forEach(conn => {
-        if(conn && conn.open) conn.send({ type: 'update-ch-info', data: channels });
-      });
-    }
+    function syncChannelInfo() { Object.values(state.dataConns).forEach(conn => { if(conn && conn.open) conn.send({ type: 'update-ch-info', data: channels }); }); }
 
     // ★ マトリックスの一括アサイン機能
     window.toggleAllUserAssignments = function(uid) {
       const allAssigned = channels.every(ch => state.userAssignments[uid] && state.userAssignments[uid].includes(ch.id));
-      if (allAssigned) {
-        state.userAssignments[uid] = []; // 全解除
-      } else {
-        state.userAssignments[uid] = channels.map(c => c.id); // 全許可
-      }
-      saveRoomState(); 
-      buildAdminMatrix();
+      if (allAssigned) state.userAssignments[uid] = []; else state.userAssignments[uid] = channels.map(c => c.id); 
+      saveRoomState(); buildAdminMatrix();
       
       const peerId = Object.keys(state.users).find(p => state.users[p] === uid && state.peers.has(p));
       if(peerId && state.dataConns[peerId]) state.dataConns[peerId].send({ type: 'assign-channels', channels: state.userAssignments[uid], targetUid: uid });
-      
       if (uid === state.myUserId) applyAssignments(state.userAssignments[uid]);
-      
-      Object.values(state.dataConns).forEach(conn => {
-         if(conn && conn.open) conn.send({ type: 'assign-channels', channels: state.userAssignments[uid], targetUid: uid });
-      });
+      Object.values(state.dataConns).forEach(conn => { if(conn && conn.open) conn.send({ type: 'assign-channels', channels: state.userAssignments[uid], targetUid: uid }); });
     };
 
     function buildAdminMatrix() {
       if (!state.isAdmin) return;
       const container = document.getElementById('admin-matrix-container');
       
-      let html = `
-      <div class="admin-matrix-wrapper">
-        <table class="admin-matrix">
-          <thead>
-            <tr>
+      let html = `<div class="admin-matrix-wrapper"><table class="admin-matrix"><thead><tr>
               <th class="diagonal-header">
-                 <span class="dh-member">メンバー</span>
-                 <span class="dh-party">パーティー</span>
+                 <span class="dh-member">メンバー</span><span class="dh-party">パーティー</span>
               </th>`;
 
       state.registeredUsers.forEach(uid => {
           const isOnline = Array.from(state.peers).some(p => state.users[p] === uid && state.dataConns[p] && state.dataConns[p].open);
           const statusColor = isOnline ? 'var(--green)' : 'var(--text-sub)';
           html += `<th class="matrix-user-header" onclick="toggleAllUserAssignments('${uid}')">
-              <div style="display:flex; align-items:center; justify-content:center; gap:5px; margin-bottom:4px;">
+              <div style="display:flex; align-items:center; justify-content:center; gap:5px; margin-bottom:2px;">
                 <span style="color:${statusColor}; font-size:10px;">●</span>
                 <span style="font-weight:bold; color:var(--text-main); font-family: 'JetBrains Mono', monospace;">${uid}</span>
                 <div style="position: relative; width: 4px; height: 14px; background: #0a0b0d; border-radius: 2px; overflow: hidden; margin-left: 2px;">
@@ -858,18 +794,14 @@
           </th>`;
       });
 
-      html += `<th><button id="btn-add-user" style="background:var(--blue); color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;">＋ 追加</button></th>
-            </tr>
-          </thead>
-          <tbody>`;
+      html += `<th><button id="btn-add-user" style="background:var(--blue); color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;">＋ 追加</button></th></tr></thead><tbody>`;
 
       channels.forEach(ch => {
-          html += `<tr>
-              <td class="ch-cell">
-                 <div style="display:flex; gap:8px; align-items:center; justify-content:space-between; width:100%;">
-                    <div style="display:flex; gap:5px; flex:1;">
-                       <input type="text" class="admin-edit-name" data-id="${ch.id}" value="${ch.name}" style="flex:1; width:80px; background:#1c1d21; border:1px solid #3a3c42; color:#fff; border-radius:4px; font-size:14px; padding:4px 8px;">
-                       <input type="text" class="admin-edit-type" data-id="${ch.id}" value="${ch.type}" style="width:40px; text-align:center; font-family:'JetBrains Mono', monospace; background:#1c1d21; border:1px solid #3a3c42; color:#fff; border-radius:4px; font-size:11px; padding:4px;">
+          html += `<tr><td class="ch-cell">
+                 <div style="display:flex; gap:6px; align-items:center; justify-content:space-between; width:100%;">
+                    <div style="display:flex; gap:4px; flex:1;">
+                       <input type="text" class="admin-edit-name" data-id="${ch.id}" value="${ch.name}" style="flex:1; width:70px; background:#1c1d21; border:1px solid #3a3c42; color:#fff; border-radius:4px; font-size:13px; padding:4px 6px;">
+                       <input type="text" class="admin-edit-type" data-id="${ch.id}" value="${ch.type}" style="width:36px; text-align:center; font-family:'JetBrains Mono', monospace; background:#1c1d21; border:1px solid #3a3c42; color:#fff; border-radius:4px; font-size:10px; padding:4px;">
                     </div>
                     <button class="btn-delete-row" data-id="${ch.id}">削除</button>
                  </div>
@@ -878,56 +810,29 @@
           state.registeredUsers.forEach(uid => {
               const isAssigned = (state.userAssignments[uid] || []).includes(ch.id);
               const activeClass = isAssigned ? 'active' : '';
-              html += `<td>
-                  <div class="matrix-toggle ${activeClass}" data-uid="${uid}" data-chid="${ch.id}"></div>
-              </td>`;
+              html += `<td><div class="matrix-toggle ${activeClass}" data-uid="${uid}" data-chid="${ch.id}"></div></td>`;
           });
           html += `<td></td></tr>`;
       });
-
-      html += `</tbody></table></div>`;
-      container.innerHTML = html;
+      html += `</tbody></table></div>`; container.innerHTML = html;
 
       container.querySelectorAll('.matrix-toggle').forEach(btn => {
         btn.onclick = (e) => {
-          const uid = e.target.getAttribute('data-uid');
-          const chid = e.target.getAttribute('data-chid');
+          const uid = e.target.getAttribute('data-uid'); const chid = e.target.getAttribute('data-chid');
           let assigned = state.userAssignments[uid] || [];
-          
-          if (assigned.includes(chid)) {
-            assigned = assigned.filter(id => id !== chid);
-            e.target.classList.remove('active'); 
-          } else {
-            assigned.push(chid);
-            e.target.classList.add('active'); 
-          }
-          
-          state.userAssignments[uid] = assigned;
-          saveRoomState(); 
-          
-          if (uid === state.myUserId) {
-             applyAssignments(assigned);
-          }
-
-          Object.values(state.dataConns).forEach(conn => {
-             if(conn && conn.open) {
-                conn.send({ type: 'assign-channels', channels: assigned, targetUid: uid });
-             }
-          });
+          if (assigned.includes(chid)) { assigned = assigned.filter(id => id !== chid); e.target.classList.remove('active'); } 
+          else { assigned.push(chid); e.target.classList.add('active'); }
+          state.userAssignments[uid] = assigned; saveRoomState(); 
+          if (uid === state.myUserId) applyAssignments(assigned);
+          Object.values(state.dataConns).forEach(conn => { if(conn && conn.open) conn.send({ type: 'assign-channels', channels: assigned, targetUid: uid }); });
         };
       });
 
       document.getElementById('btn-add-user').onclick = () => {
         const uid = prompt('事前登録するメンバーのユーザーIDを入力してください:');
         if (uid && uid.trim() !== '' && !state.registeredUsers.includes(uid)) {
-          state.registeredUsers.push(uid);
-          state.userAssignments[uid] = channels.map(c => c.id); 
-          saveRoomState();
-          buildAdminMatrix(); 
-          
-          Object.values(state.dataConns).forEach(conn => {
-            if(conn && conn.open) conn.send({ type: 'update-registered', registered: state.registeredUsers });
-          });
+          state.registeredUsers.push(uid); state.userAssignments[uid] = channels.map(c => c.id); saveRoomState(); buildAdminMatrix(); 
+          Object.values(state.dataConns).forEach(conn => { if(conn && conn.open) conn.send({ type: 'update-registered', registered: state.registeredUsers }); });
         }
       };
 
@@ -935,45 +840,29 @@
         btn.onclick = (e) => {
           const uid = e.target.getAttribute('data-uid');
           if(confirm(`ユーザー「${uid}」をリストから削除しますか？\n(設定も消去されます)`)) {
-             state.registeredUsers = state.registeredUsers.filter(u => u !== uid);
-             delete state.userAssignments[uid];
-             saveRoomState();
-             buildAdminMatrix(); 
-             
-             Object.values(state.dataConns).forEach(conn => {
-               if(conn && conn.open) conn.send({ type: 'update-registered', registered: state.registeredUsers });
-             });
+             state.registeredUsers = state.registeredUsers.filter(u => u !== uid); delete state.userAssignments[uid]; saveRoomState(); buildAdminMatrix(); 
+             Object.values(state.dataConns).forEach(conn => { if(conn && conn.open) conn.send({ type: 'update-registered', registered: state.registeredUsers }); });
           }
         };
       });
 
       container.querySelectorAll('.admin-edit-name, .admin-edit-type').forEach(input => {
         input.addEventListener('change', (e) => {
-          const chId = e.target.getAttribute('data-id');
-          const ch = channels.find(c => c.id === chId);
+          const chId = e.target.getAttribute('data-id'); const ch = channels.find(c => c.id === chId);
           if (e.target.classList.contains('admin-edit-name')) ch.name = e.target.value;
           if (e.target.classList.contains('admin-edit-type')) ch.type = e.target.value;
-
-          const nameEl = document.getElementById(`name-${chId}`);
-          const typeEl = document.getElementById(`type-${chId}`);
-          if (nameEl) nameEl.textContent = ch.name;
-          if (typeEl) typeEl.textContent = ch.type;
-
-          saveRoomState();
-          syncChannelInfo();
+          const nameEl = document.getElementById(`name-${chId}`); const typeEl = document.getElementById(`type-${chId}`);
+          if (nameEl) nameEl.textContent = ch.name; if (typeEl) typeEl.textContent = ch.type;
+          saveRoomState(); syncChannelInfo();
         });
       });
 
       container.querySelectorAll('.btn-delete-row').forEach(btn => {
         btn.onclick = (e) => {
-          const chId = e.target.getAttribute('data-id');
-          const ch = channels.find(c => c.id === chId);
+          const chId = e.target.getAttribute('data-id'); const ch = channels.find(c => c.id === chId);
           if(!confirm(`パーティー「${ch.name}」を削除しますか？`)) return;
-          removeChannel(chId);
-          saveRoomState();
-          Object.values(state.dataConns).forEach(conn => {
-            if(conn && conn.open) conn.send({ type: 'remove-channel', chId: chId });
-          });
+          removeChannel(chId); saveRoomState();
+          Object.values(state.dataConns).forEach(conn => { if(conn && conn.open) conn.send({ type: 'remove-channel', chId: chId }); });
           buildAdminMatrix(); 
         };
       });
@@ -984,22 +873,17 @@
       channels.forEach(ch => {
         const card = document.getElementById(`card-${ch.id}`);
         if(card) {
-          if(assignedIds.includes(ch.id)) {
-            card.style.display = 'flex';
-          } else {
-            card.style.display = 'none';
-            state.listenStates[ch.id] = false;
-            state.talkStates[ch.id] = false;
+          if(assignedIds.includes(ch.id)) { card.style.display = 'flex'; } 
+          else {
+            card.style.display = 'none'; state.listenStates[ch.id] = false; state.talkStates[ch.id] = false;
             card.classList.remove('listen-on', 'talk-on');
-            const lBtn = document.getElementById(`listen-${ch.id}`);
-            const tBtn = document.getElementById(`talk-${ch.id}`);
+            const lBtn = document.getElementById(`listen-${ch.id}`); const tBtn = document.getElementById(`talk-${ch.id}`);
             if(lBtn) { lBtn.classList.remove('active', 'latched'); lBtn.style.transform = 'translateX(0px)'; }
             if(tBtn) { tBtn.classList.remove('active', 'latched'); tBtn.style.transform = 'translateX(0px)'; }
           }
         }
       });
-      updateAudioRouting();
-      syncTalkStates();
+      updateAudioRouting(); syncTalkStates();
     }
 
     function setupDataConnection(conn) {
@@ -1007,184 +891,94 @@
       state.dataConns[conn.peer] = conn;
 
       const initData = () => {
-        state.peers.add(conn.peer);
-        updateUserCount();
-
+        state.peers.add(conn.peer); updateUserCount();
         conn.send({ type: 'hello', userId: state.myUserId, joinTime: state.joinTime });
         syncTalkStates(); 
-        
         const targetSlot = parseInt(conn.peer.split('-s')[1]);
-        if (state.mySlot > targetSlot) {
-            if (!state.mediaCalls[conn.peer]) {
-                const call = state.peer.call(conn.peer, state.localStream);
-                handleCall(call);
-            }
-        }
+        if (state.mySlot > targetSlot) { if (!state.mediaCalls[conn.peer]) { const call = state.peer.call(conn.peer, state.localStream); handleCall(call); } }
       };
 
-      if (conn.open) {
-          initData();
-      } else {
-          conn.on('open', initData);
-      }
+      if (conn.open) { initData(); } else { conn.on('open', initData); }
 
       conn.on('data', data => {
         if (data.type === 'hello') {
           const uid = data.userId || 'Anonymous';
-          
           if (uid !== 'Anonymous' && uid === state.myUserId) {
             const remoteSlot = parseInt(conn.peer.split('-s')[1]);
-            if (state.mySlot > remoteSlot) {
-              alert(`ユーザーID「${uid}」は現在他のオンライン端末で使用されています。別のIDで参加してください。`);
-              LocalProfile.clear();
-              location.reload();
-              return;
-            } else {
-              return; 
-            }
+            if (state.mySlot > remoteSlot) { alert(`ユーザーID「${uid}」は現在他のオンライン端末で使用されています。別のIDで参加してください。`); LocalProfile.clear(); location.reload(); return; } else { return; }
           }
-
           state.users[conn.peer] = uid;
-          
           if (uid !== 'Anonymous' && !state.registeredUsers.includes(uid)) {
-             state.registeredUsers.push(uid);
-             state.userAssignments[uid] = channels.map(c => c.id);
-             saveRoomState();
-             if (state.isAdmin) buildAdminMatrix();
+             state.registeredUsers.push(uid); state.userAssignments[uid] = channels.map(c => c.id); saveRoomState(); if (state.isAdmin) buildAdminMatrix();
           }
-          
           const amILowestSlot = Array.from(state.peers).every(p => parseInt(p.split('-s')[1]) > state.mySlot);
-          if(amILowestSlot) {
-            conn.send({ type: 'init-state', channels, assignments: state.userAssignments, registered: state.registeredUsers });
-          }
-          
+          if(amILowestSlot) { conn.send({ type: 'init-state', channels, assignments: state.userAssignments, registered: state.registeredUsers }); }
           updateUserCount();
         }
-        else if (data.type === 'init-state') {
-          resetAndApplyChannels(data.channels, data.assignments, data.registered);
-          saveRoomState();
-          if(state.isAdmin) buildAdminMatrix();
-        }
+        else if (data.type === 'init-state') { resetAndApplyChannels(data.channels, data.assignments, data.registered); saveRoomState(); if(state.isAdmin) buildAdminMatrix(); }
         else if (data.type === 'update-ch-info') {
           channels = data.data;
           channels.forEach((ch) => { 
-            const nameEl = document.getElementById(`name-${ch.id}`);
-            const typeEl = document.getElementById(`type-${ch.id}`);
-            if(nameEl) nameEl.textContent = ch.name; 
-            if(typeEl) typeEl.textContent = ch.type; 
+            const nameEl = document.getElementById(`name-${ch.id}`); const typeEl = document.getElementById(`type-${ch.id}`);
+            if(nameEl) nameEl.textContent = ch.name; if(typeEl) typeEl.textContent = ch.type; 
           });
           saveRoomState();
           if(state.isAdmin) {
-             document.querySelectorAll('.admin-edit-name').forEach(input => {
-                const ch = channels.find(c => c.id === input.getAttribute('data-id'));
-                if(ch) input.value = ch.name;
-             });
-             document.querySelectorAll('.admin-edit-type').forEach(input => {
-                const ch = channels.find(c => c.id === input.getAttribute('data-id'));
-                if(ch) input.value = ch.type;
-             });
+             document.querySelectorAll('.admin-edit-name').forEach(input => { const ch = channels.find(c => c.id === input.getAttribute('data-id')); if(ch) input.value = ch.name; });
+             document.querySelectorAll('.admin-edit-type').forEach(input => { const ch = channels.find(c => c.id === input.getAttribute('data-id')); if(ch) input.value = ch.type; });
           }
         }
-        else if (data.type === 'update-registered') {
-          state.registeredUsers = data.registered;
-          saveRoomState();
-          if(state.isAdmin) buildAdminMatrix();
-        }
-        else if (data.type === 'update-talk-states') {
-          state.remoteTalkStates[conn.peer] = data.states;
-          updateAudioRouting();
-        }
+        else if (data.type === 'update-registered') { state.registeredUsers = data.registered; saveRoomState(); if(state.isAdmin) buildAdminMatrix(); }
+        else if (data.type === 'update-talk-states') { state.remoteTalkStates[conn.peer] = data.states; updateAudioRouting(); }
         else if (data.type === 'assign-channels') {
-          if (data.targetUid === state.myUserId) {
-             applyAssignments(data.channels);
-          }
+          if (data.targetUid === state.myUserId) { applyAssignments(data.channels); }
           if (data.targetUid) {
              state.userAssignments[data.targetUid] = data.channels;
              if (state.isAdmin) {
                  document.querySelectorAll(`.matrix-toggle[data-uid="${data.targetUid}"]`).forEach(btn => {
-                   if (data.channels.includes(btn.getAttribute('data-chid'))) {
-                     btn.classList.add('active');
-                   } else {
-                     btn.classList.remove('active');
-                   }
+                   if (data.channels.includes(btn.getAttribute('data-chid'))) { btn.classList.add('active'); } else { btn.classList.remove('active'); }
                  });
              }
-          } else {
-             if (!state.isAdmin) applyAssignments(data.channels);
-          }
+          } else { if (!state.isAdmin) applyAssignments(data.channels); }
           saveRoomState();
         }
         else if (data.type === 'add-channel') {
-          channels.push(data.ch);
-          createChannelCard(data.ch);
-          setupChannelAudio(data.ch.id);
-          
+          channels.push(data.ch); createChannelCard(data.ch); setupChannelAudio(data.ch.id);
           Object.values(state.mediaCalls).forEach(call => {
             if (call.source && audioCtx) {
-               const splitGain = audioCtx.createGain();
-               splitGain.gain.value = 0;
-               call.source.connect(splitGain);
-               splitGain.connect(state.channelNodes[data.ch.id].analyser);
-               call.chGains[data.ch.id] = splitGain;
+               const splitGain = audioCtx.createGain(); splitGain.gain.value = 0; call.source.connect(splitGain); splitGain.connect(state.channelNodes[data.ch.id].analyser); call.chGains[data.ch.id] = splitGain;
             }
           });
-          
           if(data.registered) state.registeredUsers = data.registered;
           if(data.assignments) state.userAssignments = data.assignments;
-          
-          if(state.userAssignments && state.userAssignments[state.myUserId]) {
-             applyAssignments(state.userAssignments[state.myUserId]);
-          }
-          saveRoomState();
-          if(state.isAdmin) buildAdminMatrix();
+          if(state.userAssignments && state.userAssignments[state.myUserId]) { applyAssignments(state.userAssignments[state.myUserId]); }
+          saveRoomState(); if(state.isAdmin) buildAdminMatrix();
         }
-        else if (data.type === 'remove-channel') {
-          removeChannel(data.chId);
-          saveRoomState();
-          if(state.isAdmin) buildAdminMatrix();
-        }
+        else if (data.type === 'remove-channel') { removeChannel(data.chId); saveRoomState(); if(state.isAdmin) buildAdminMatrix(); }
       });
 
-      conn.on('close', () => removePeer(conn.peer));
-      conn.on('error', () => removePeer(conn.peer));
+      conn.on('close', () => removePeer(conn.peer)); conn.on('error', () => removePeer(conn.peer));
     }
 
     function removePeer(peerId) {
       if (state.dataConns[peerId] && state.dataConns[peerId].pending) return; 
-
-      if (state.dataConns[peerId]) {
-          try { state.dataConns[peerId].close(); } catch(e){}
-          delete state.dataConns[peerId];
-      }
-      state.peers.delete(peerId);
-      delete state.remoteTalkStates[peerId];
-      
+      if (state.dataConns[peerId]) { try { state.dataConns[peerId].close(); } catch(e){} delete state.dataConns[peerId]; }
+      state.peers.delete(peerId); delete state.remoteTalkStates[peerId];
       if (state.mediaCalls[peerId]) {
-        Object.values(state.mediaCalls[peerId].chGains || {}).forEach(gain => {
-           try{ gain.disconnect(); }catch(e){}
-        });
+        Object.values(state.mediaCalls[peerId].chGains || {}).forEach(gain => { try{ gain.disconnect(); }catch(e){} });
         try { state.mediaCalls[peerId].audioEl.pause(); state.mediaCalls[peerId].audioEl.srcObject = null; } catch(e){}
         delete state.mediaCalls[peerId];
       }
-      updateAudioRouting();
-      updateUserCount();
+      updateAudioRouting(); updateUserCount();
     }
 
     function updateUserCount() {
       const isOnline = state.mySlot > 0;
-      
       let activeCount = isOnline ? 1 : 0;
-      state.peers.forEach(p => {
-         if (state.dataConns[p] && state.dataConns[p].open) activeCount++;
-      });
-      
+      state.peers.forEach(p => { if (state.dataConns[p] && state.dataConns[p].open) activeCount++; });
       els.roleDisplay.textContent = `ACTIVE (${activeCount})`;
       els.roleDisplay.style.color = isOnline ? 'var(--blue)' : 'var(--orange)';
-      
-      if(isOnline) {
-        els.btnLoginShow.textContent = "Connected";
-        els.btnLoginShow.classList.add('online');
-      }
+      if(isOnline) { els.btnLoginShow.textContent = "Connected"; els.btnLoginShow.classList.add('online'); }
       
       if (state.isAdmin) {
          document.querySelectorAll('.admin-matrix th').forEach(th => {
@@ -1202,8 +996,7 @@
     const peerConfig = { 
       config: { 
         'iceServers': [
-          { urls: 'stun:stun.l.google.com:19302' },
-          { urls: "stun:stun.relay.metered.ca:80" },
+          { urls: 'stun:stun.l.google.com:19302' }, { urls: "stun:stun.relay.metered.ca:80" },
           { urls: "turn:global.relay.metered.ca:80", username: "cce7732b3cc3adfa6f13a545", credential: "l3ACe3V84yTvkBEd" },
           { urls: "turn:global.relay.metered.ca:80?transport=tcp", username: "cce7732b3cc3adfa6f13a545", credential: "l3ACe3V84yTvkBEd" },
           { urls: "turn:global.relay.metered.ca:443", username: "cce7732b3cc3adfa6f13a545", credential: "l3ACe3V84yTvkBEd" },
@@ -1215,112 +1008,54 @@
     async function initMedia() {
       try {
         els.statusMsg.textContent = "マイク起動中...";
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            alert("【警告】\nお使いのブラウザやアプリ環境ではマイク機能がサポートされていません。\n(HTTPS接続にするか、Safari/Chromeなどの通常ブラウザアプリで開き直してください)");
-            return false;
-        }
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { alert("【警告】\nお使いのブラウザやアプリ環境ではマイク機能がサポートされていません。\n(HTTPS接続にするか、Safari/Chromeなどの通常ブラウザアプリで開き直してください)"); return false; }
         state.localStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
-        state.audioEnabled = true;
-        initAudioContext(); 
-        return true;
-      } catch(e) {
-        alert("マイクへのアクセスがブロックされています。\n\n詳細: " + e.message); 
-        return false;
-      }
+        state.audioEnabled = true; initAudioContext(); return true;
+      } catch(e) { alert("マイクへのアクセスがブロックされています。\n\n詳細: " + e.message); return false; }
     }
 
     const joinNetwork = async function(isAdmin) {
       const btn = isAdmin ? els.btnJoinAdmin : els.btnJoinMember;
       const originalText = btn.textContent;
-      
-      btn.disabled = true;
-      btn.textContent = "処理中...";
-      btn.style.opacity = "0.5";
-      
+      btn.disabled = true; btn.textContent = "処理中..."; btn.style.opacity = "0.5";
       await new Promise(r => setTimeout(r, 50));
 
-      if (typeof Peer === 'undefined') {
-          alert("通信サーバーのプログラムが読み込めませんでした。\nインターネット接続を確認するか、ページを再読み込みしてください。");
-          btn.disabled = false; btn.textContent = originalText; btn.style.opacity = "1";
-          return;
-      }
-
-      if (!await initMedia()) {
-        btn.disabled = false; btn.textContent = originalText; btn.style.opacity = "1";
-        els.statusMsg.textContent = "マイクが許可されませんでした";
-        return;
-      }
+      if (typeof Peer === 'undefined') { alert("通信サーバーのプログラムが読み込めませんでした。\nインターネット接続を確認するか、ページを再読み込みしてください。"); btn.disabled = false; btn.textContent = originalText; btn.style.opacity = "1"; return; }
+      if (!await initMedia()) { btn.disabled = false; btn.textContent = originalText; btn.style.opacity = "1"; els.statusMsg.textContent = "マイクが許可されませんでした"; return; }
       
-      state.isAdmin = isAdmin;
-      els.btnAdmin.style.display = isAdmin ? 'block' : 'none';
-      
+      state.isAdmin = isAdmin; els.btnAdmin.style.display = isAdmin ? 'block' : 'none';
       const rawRoomId = els.hostIdInput.value.trim() || 'yytalk';
       const myName = els.joinUserIdInput.value.trim() || 'Unknown';
-      
-      state.roomId = rawRoomId;
-      state.myUserId = myName;
-      state.netRoomId = 'yytalk-pro-' + encodeURIComponent(rawRoomId).replace(/%/g, '-');
-      
+      state.roomId = rawRoomId; state.myUserId = myName; state.netRoomId = 'yytalk-pro-' + encodeURIComponent(rawRoomId).replace(/%/g, '-');
       els.appTitle.textContent = `YY-Talk - ${rawRoomId}${isAdmin ? ' (Admin)' : ''}`;
       LocalProfile.set({ roomId: rawRoomId, userId: myName, isAdmin });
       
-      els.statusMsg.textContent = "データを読み込み中...";
-      loadRoomState(state.roomId);
+      els.statusMsg.textContent = "データを読み込み中..."; loadRoomState(state.roomId);
+      els.statusMsg.textContent = "空きポートを検索中..."; btn.textContent = "サーバー接続中...";
       
-      els.statusMsg.textContent = "空きポートを検索中...";
-      btn.textContent = "サーバー接続中...";
-      
-      state.joinTime = Date.now();
-      let slot = 1;
-      const maxSlots = 30;
+      state.joinTime = Date.now(); let slot = 1; const maxSlots = 30;
       
       function tryConnectSlot() {
-        if (slot > maxSlots) {
-          alert("申し訳ありません、ルームが満員です（最大30人）。");
-          btn.disabled = false; btn.textContent = originalText; btn.style.opacity = "1";
-          els.statusMsg.textContent = "満員のため接続できませんでした";
-          return;
-        }
-        
+        if (slot > maxSlots) { alert("申し訳ありません、ルームが満員です（最大30人）。"); btn.disabled = false; btn.textContent = originalText; btn.style.opacity = "1"; els.statusMsg.textContent = "満員のため接続できませんでした"; return; }
         const tryId = `${state.netRoomId}-s${slot}`;
         state.peer = new Peer(tryId, peerConfig);
         
         state.peer.on('open', (id) => {
-          state.mySlot = slot;
-          els.myIdDisplay.textContent = `${myName} (Slot ${slot})`;
-          els.statusMsg.textContent = "接続完了。仲間を探しています...";
-          setTimeout(() => els.loginOverlay.style.display = 'none', 500);
-          
-          updateUserCount();
-          btn.disabled = false; btn.textContent = originalText; btn.style.opacity = "1";
+          state.mySlot = slot; els.myIdDisplay.textContent = `${myName} (Slot ${slot})`; els.statusMsg.textContent = "接続完了。仲間を探しています..."; setTimeout(() => els.loginOverlay.style.display = 'none', 500);
+          updateUserCount(); btn.disabled = false; btn.textContent = originalText; btn.style.opacity = "1";
           
           state.peer.on('connection', conn => setupDataConnection(conn));
           state.peer.on('call', call => { call.answer(state.localStream); handleCall(call); });
           
-          scanForPeers();
-          setInterval(() => scanForPeers(), 8000);
-          
-          setInterval(() => {
-             state.peers.forEach(p => {
-                if (state.dataConns[p] && !state.dataConns[p].open) removePeer(p);
-             });
-             updateUserCount();
-          }, 10000);
+          scanForPeers(); setInterval(() => scanForPeers(), 8000);
+          setInterval(() => { state.peers.forEach(p => { if (state.dataConns[p] && !state.dataConns[p].open) removePeer(p); }); updateUserCount(); }, 10000);
         });
         
         state.peer.on('error', (err) => {
           if (err.type === 'peer-unavailable') return;
-          
           if (state.mySlot === 0) {
-            if (err.type === 'unavailable-id') {
-              slot++; 
-              state.peer.destroy();
-              setTimeout(tryConnectSlot, 400); 
-            } else {
-              console.error(err);
-              els.statusMsg.textContent = "接続エラー: " + err.type;
-              btn.disabled = false; btn.textContent = originalText; btn.style.opacity = "1";
-            }
+            if (err.type === 'unavailable-id') { slot++; state.peer.destroy(); setTimeout(tryConnectSlot, 400); } 
+            else { console.error(err); els.statusMsg.textContent = "接続エラー: " + err.type; btn.disabled = false; btn.textContent = originalText; btn.style.opacity = "1"; }
           }
         });
       }
@@ -1333,7 +1068,7 @@
          if (!state.dataConns[targetId]) {
             const conn = state.peer.connect(targetId);
             conn.on('open', () => setupDataConnection(conn));
-            conn.on('error', () => { /* 相手がいなくても裏で無視する */ });
+            conn.on('error', () => {});
          }
        }
     }
@@ -1341,52 +1076,30 @@
     window.addEventListener('DOMContentLoaded', () => {
       els.btnJoinMember.addEventListener('click', () => joinNetwork(false));
       els.btnJoinAdmin.addEventListener('click', () => joinNetwork(true));
-      els.btnJoinMember.textContent = "メンバーとして参加";
-      els.btnJoinAdmin.textContent = "管理者として参加";
-      els.btnJoinMember.disabled = false;
-      els.btnJoinAdmin.disabled = false;
+      els.btnJoinMember.textContent = "メンバーとして参加"; els.btnJoinAdmin.textContent = "管理者として参加";
+      els.btnJoinMember.disabled = false; els.btnJoinAdmin.disabled = false;
 
       const savedProfile = LocalProfile.get();
-      if (savedProfile) {
-        els.hostIdInput.value = savedProfile.roomId || '';
-        els.joinUserIdInput.value = savedProfile.userId || '';
-      }
+      if (savedProfile) { els.hostIdInput.value = savedProfile.roomId || ''; els.joinUserIdInput.value = savedProfile.userId || ''; }
     });
 
     function handleCall(call) {
       call.on('stream', stream => {
         if (state.mediaCalls[call.peer]) return; 
-
-        const audioEl = new Audio();
-        audioEl.srcObject = stream;
-        audioEl.muted = true; 
-        audioEl.play().catch(()=>{});
-
-        const callData = { stream, audioEl };
-        state.mediaCalls[call.peer] = callData;
-
-        if (!state.audioEnabled) {
-          els.audioOverlay.style.display = 'flex';
-        } else {
-          setupPeerMixer(callData);
-        }
+        const audioEl = new Audio(); audioEl.srcObject = stream; audioEl.muted = true; audioEl.play().catch(()=>{});
+        const callData = { stream, audioEl }; state.mediaCalls[call.peer] = callData;
+        if (!state.audioEnabled) { els.audioOverlay.style.display = 'flex'; } else { setupPeerMixer(callData); }
         updateUserCount();
       });
-
       call.on('close', () => removePeer(call.peer));
     }
 
     document.getElementById('btn-enable-audio').onclick = () => {
-      els.dummyAudio.play().catch(()=>{}); 
-      els.audioOverlay.style.display = 'none';
-      state.audioEnabled = true;
-      initAudioContext(); 
+      els.dummyAudio.play().then(() => { setupMediaSession(); }).catch(()=>{}); 
+      els.audioOverlay.style.display = 'none'; state.audioEnabled = true; initAudioContext(); 
     };
 
-    document.getElementById('btn-stop').onclick = () => {
-      LocalProfile.clear();
-      location.reload();
-    };
+    document.getElementById('btn-stop').onclick = () => { LocalProfile.clear(); location.reload(); };
 
   </script>
 </body>
