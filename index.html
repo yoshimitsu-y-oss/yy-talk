@@ -3,11 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>YY-Talk - PRO Matrix</title>
+  <title>YY-Talk - PRO Matrix (Ultimate)</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
   
   <script>
     window.onerror = function(message, source, lineno) {
       alert("【システムエラー検知】\n" + message + "\n行: " + lineno);
+    };
+
+    // 【究極の通信節約】Opus DTX (無音圧縮) の強制ハック
+    const origSetLocalDescription = RTCPeerConnection.prototype.setLocalDescription;
+    RTCPeerConnection.prototype.setLocalDescription = function(desc) {
+      if (desc && (desc.type === 'offer' || desc.type === 'answer')) {
+        desc.sdp = desc.sdp.replace(/(a=fmtp:111.*)/g, '$1;usedtx=1');
+      }
+      return origSetLocalDescription.apply(this, arguments);
     };
   </script>
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
@@ -16,7 +29,7 @@
     :root {
       --bg-dark: #0a0b0d; --card-bg: #1c1d21; --card-bg-expanded: #24262b;
       --text-main: #ffffff; --text-sub: #7a7e85;
-      --green: #4ade80; --red: #dc2626;
+      --green: #4ade80; --red: #dc2626; --alert: #ef4444;
       --orange: #f97316; --blue: #3b82f6;
     }
 
@@ -26,8 +39,11 @@
       margin: 0; padding: 0; background-color: #121418; color: var(--text-main);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       display: flex; justify-content: center; align-items: center;
-      height: 100dvh; overflow: hidden;
+      height: 100dvh; overflow: hidden; transition: box-shadow 0.2s;
     }
+
+    /* Master Mute時の警告（Tally表現） */
+    body.master-muted { box-shadow: inset 0 0 0 6px var(--alert); }
 
     .app-container {
       width: 100%; height: 100dvh; background-color: var(--bg-dark);
@@ -82,7 +98,7 @@
     .btn-join-member { background: var(--orange); width: 100%; } 
     .btn-join-admin { background: transparent; border: 1.5px solid var(--blue) !important; color: var(--blue) !important; width: 100%; } 
     .btn-stop { background: var(--red); width: 100%; }
-    .status-text { font-size: 12px; color: var(--text-sub); text-align: center; margin-top: 5px;}
+    .status-text { font-size: 12px; color: var(--text-sub); text-align: center; margin-top: 5px; font-family: 'JetBrains Mono', monospace;}
 
     /* --- 管理画面 UI --- */
     .admin-modal { max-width: 95%; width: auto; min-width: 320px; }
@@ -96,14 +112,23 @@
     .admin-matrix th, .admin-matrix td { border: 1px solid #3a3c42; padding: 10px; }
     .admin-matrix th { background-color: #1c1d21; color: var(--text-sub); font-weight: normal; position: sticky; top: 0; z-index: 5; }
     
+    /* ★ マトリックスの左列固定 (Sticky) と 一括操作ボタン */
     .diagonal-header {
-      position: relative; min-width: 260px; min-height: 50px;
+      position: sticky; left: 0; z-index: 10 !important; min-width: 260px; min-height: 50px;
       background: linear-gradient(to top right, #1c1d21 49.2%, #3a3c42 49.2%, #3a3c42 50.8%, #1c1d21 50.8%);
+      border-right: 2px solid #3a3c42 !important; box-shadow: 2px 0 5px rgba(0,0,0,0.5);
     }
     .diagonal-header .dh-member { position: absolute; top: 8px; right: 15px; font-weight: bold; color: var(--text-main); }
     .diagonal-header .dh-party { position: absolute; bottom: 8px; left: 15px; font-weight: bold; color: var(--text-main); }
+    
+    .matrix-user-header { cursor: pointer; transition: background 0.2s; }
+    .matrix-user-header:hover { background: #2a2d35; }
+    .matrix-user-header span.bulk-label { display: block; font-size: 10px; color: var(--text-sub); margin-top: 2px; }
 
-    .admin-matrix td.ch-cell { text-align: left; background-color: #0a0b0d; min-width: 260px; padding: 10px; }
+    .admin-matrix td.ch-cell { 
+      text-align: left; background-color: #0a0b0d; min-width: 260px; padding: 10px; 
+      position: sticky; left: 0; z-index: 9; border-right: 2px solid #3a3c42 !important; box-shadow: 2px 0 5px rgba(0,0,0,0.5);
+    }
     
     .matrix-toggle {
       width: 26px; height: 26px; border-radius: 50%; margin: 0 auto;
@@ -118,11 +143,11 @@
     }
     .btn-delete-col:hover, .btn-delete-row:hover { box-shadow: 0 0 10px rgba(220, 38, 38, 0.9); filter: brightness(1.1); }
 
-    /* --- ヘッダー --- */
+    /* --- ヘッダー & グローバルコントロール --- */
     .header {
       display: flex; align-items: center; justify-content: space-between;
-      padding: calc(env(safe-area-inset-top) + 12px) 15px 12px;
-      background: var(--bg-dark); border-bottom: 2px solid var(--green); flex-shrink: 0;
+      padding: calc(env(safe-area-inset-top) + 12px) 15px 8px;
+      background: var(--bg-dark); flex-shrink: 0;
     }
     .header-left { display: flex; align-items: center; gap: 8px; color: var(--blue); font-weight: bold; font-size: 18px; }
     .header-right { display: flex; align-items: center; gap: 12px; color: var(--text-sub); font-size: 13px; font-weight: bold; }
@@ -134,6 +159,21 @@
     .btn-login-trigger:active { background: var(--text-sub); color: var(--bg-dark); }
     .btn-login-trigger.online { border-color: var(--blue); color: var(--blue); }
     .btn-admin-trigger { border-color: var(--green); color: var(--green); display: none; }
+
+    .global-controls {
+      display: flex; gap: 10px; padding: 5px 15px 10px; background: var(--bg-dark); border-bottom: 2px solid var(--green);
+    }
+    .btn-global {
+      flex: 1; padding: 10px; border: none; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 5px; transition: 0.2s;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .btn-master-mute { background: #1c1d21; color: var(--text-main); border: 1px solid #3a3c42; }
+    .btn-master-mute.active { background: var(--alert); color: #fff; border-color: var(--alert); animation: pulse-red 2s infinite; }
+    .btn-all-talk { background: #1c1d21; color: var(--text-main); border: 1px solid #3a3c42; }
+    .btn-all-talk.active { background: var(--red); color: #fff; border-color: var(--red); box-shadow: 0 0 15px rgba(220,38,38,0.5); }
+
+    @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
 
     /* --- チャンネルリスト --- */
     .channel-list-container {
@@ -156,7 +196,7 @@
       transition: opacity 0.3s ease; pointer-events: none; z-index: 0;
     }
     .channel-card::before { left: 0; background: linear-gradient(to right, rgba(74, 222, 128, 0.25) 0%, transparent 100%); }
-    .channel-card::after { right: 0; background: linear-gradient(to left, rgba(248, 113, 113, 0.25) 0%, transparent 100%); }
+    .channel-card::after { right: 0; background: linear-gradient(to left, rgba(220, 38, 38, 0.25) 0%, transparent 100%); }
     .channel-card.listen-on::before { opacity: 1; }
     .channel-card.talk-on::after { opacity: 1; }
     .channel-card > * { position: relative; z-index: 1; }
@@ -183,7 +223,7 @@
     .main-controls { display: flex; align-items: center; justify-content: space-between; padding: 15px; position: relative; }
     .ch-info { text-align: center; flex: 1; padding: 0 10px; }
     .ch-name { font-size: 16px; font-weight: 500; margin-bottom: 2px; display: inline-block; padding: 2px 6px; border-radius: 4px; }
-    .ch-type { font-size: 10px; color: var(--text-sub); display: inline-block; padding: 2px 6px; border-radius: 4px; pointer-events: auto; }
+    .ch-type { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-sub); display: inline-block; padding: 2px 6px; border-radius: 4px; pointer-events: auto; }
 
     .btn-action {
       width: 56px; height: 56px; border-radius: 50%; border: 2px solid;
@@ -209,6 +249,7 @@
     @media (orientation: landscape) and (max-height: 600px) {
       .app-container { height: 100dvh; max-height: none; border-radius: 0; border: none; }
       .header { padding: 4px 15px; }
+      .global-controls { padding: 0 15px 5px; }
       .channel-list-container { padding: 5px 10px; gap: 5px; }
       .main-controls { padding: 5px 10px; }
       .btn-action { width: 44px; height: 44px; }
@@ -263,9 +304,20 @@
       <div class="header-left" id="app-title">YY-Talk</div>
       <div class="header-right">
         <button id="btn-admin" class="btn-login-trigger btn-admin-trigger">管理</button>
-        <span id="status-role" style="color: var(--orange);">Offline</span>
+        <span id="status-role" style="color: var(--orange); font-family: 'JetBrains Mono', monospace;">Offline</span>
         <button id="btn-show-login" class="btn-login-trigger">Login</button>
       </div>
+    </div>
+
+    <div class="global-controls">
+      <button id="btn-master-mute" class="btn-global btn-master-mute">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>
+        MASTER MUTE
+      </button>
+      <button id="btn-all-talk" class="btn-global btn-all-talk">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+        ALL TALK
+      </button>
     </div>
 
     <div class="channel-list-container">
@@ -293,47 +345,24 @@
 
     const state = {
       peer: null, localStream: null,
-      mySlot: 0,
-      joinTime: 0, 
-      roomId: '',      
-      netRoomId: '',   
-      myUserId: '',    
-      peers: new Set(),
-      users: {},             
-      registeredUsers: [],   
-      userAssignments: {},   
-      dataConns: {},    
-      mediaCalls: {},   
-      talkStates: {},         
-      listenStates: {},       
-      channelVolumes: {},     
-      remoteTalkStates: {},   
-      channelNodes: {},       
-      isAdmin: false,
-      audioEnabled: false
+      mySlot: 0, joinTime: 0, 
+      roomId: '', netRoomId: '', myUserId: '', 
+      peers: new Set(), users: {}, registeredUsers: [], userAssignments: {}, 
+      dataConns: {}, mediaCalls: {}, talkStates: {}, listenStates: {}, channelVolumes: {}, remoteTalkStates: {}, channelNodes: {}, 
+      isAdmin: false, audioEnabled: false,
+      isMasterMuted: false, isAllTalk: false // ★ 新規追加フラグ
     };
 
     let channels = [];
 
     const els = {
-      statusMsg: document.getElementById('status-msg'),
-      hostIdInput: document.getElementById('host-id'),
-      joinUserIdInput: document.getElementById('join-userid'),
-      myIdDisplay: document.getElementById('status-my-id'),
-      roleDisplay: document.getElementById('status-role'),
-      dummyAudio: document.getElementById('dummy-audio'),
-      audioOverlay: document.getElementById('audio-overlay'),
-      loginOverlay: document.getElementById('login-overlay'),
-      btnLoginShow: document.getElementById('btn-show-login'),
-      masterMeterFill: document.getElementById('master-meter-fill'),
-      appTitle: document.getElementById('app-title'),
-      adminOverlay: document.getElementById('admin-overlay'),
-      btnAdmin: document.getElementById('btn-admin'),
-      btnCloseAdmin: document.getElementById('btn-close-admin'),
-      btnAddCh: document.getElementById('btn-add-ch'),
-      chWrap: document.getElementById('channel-list-wrap'),
-      btnJoinMember: document.getElementById('btn-join-member'),
-      btnJoinAdmin: document.getElementById('btn-join-admin')
+      statusMsg: document.getElementById('status-msg'), hostIdInput: document.getElementById('host-id'), joinUserIdInput: document.getElementById('join-userid'),
+      myIdDisplay: document.getElementById('status-my-id'), roleDisplay: document.getElementById('status-role'), dummyAudio: document.getElementById('dummy-audio'),
+      audioOverlay: document.getElementById('audio-overlay'), loginOverlay: document.getElementById('login-overlay'), btnLoginShow: document.getElementById('btn-show-login'),
+      masterMeterFill: document.getElementById('master-meter-fill'), appTitle: document.getElementById('app-title'),
+      adminOverlay: document.getElementById('admin-overlay'), btnAdmin: document.getElementById('btn-admin'), btnCloseAdmin: document.getElementById('btn-close-admin'),
+      btnAddCh: document.getElementById('btn-add-ch'), chWrap: document.getElementById('channel-list-wrap'), btnJoinMember: document.getElementById('btn-join-member'), btnJoinAdmin: document.getElementById('btn-join-admin'),
+      btnMasterMute: document.getElementById('btn-master-mute'), btnAllTalk: document.getElementById('btn-all-talk')
     };
 
     els.btnLoginShow.onclick = () => { els.loginOverlay.style.display = 'flex'; };
@@ -345,6 +374,30 @@
       els.adminOverlay.style.display = 'flex'; 
     };
     els.btnCloseAdmin.onclick = () => { els.adminOverlay.style.display = 'none'; };
+
+    // --- ★ グローバルコントロール制御 ---
+    function toggleMasterMute() {
+      state.isMasterMuted = !state.isMasterMuted;
+      els.btnMasterMute.classList.toggle('active', state.isMasterMuted);
+      document.body.classList.toggle('master-muted', state.isMasterMuted);
+      updateAudioRouting();
+      els.dummyAudio.play().catch(()=>{}); // バックグラウンド維持
+    }
+
+    function toggleAllTalk() {
+      state.isAllTalk = !state.isAllTalk;
+      els.btnAllTalk.classList.toggle('active', state.isAllTalk);
+      updateAudioRouting();
+      syncTalkStates(); 
+    }
+
+    els.btnMasterMute.onclick = toggleMasterMute;
+    els.btnAllTalk.onclick = toggleAllTalk;
+
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.setActionHandler('play', toggleMasterMute);
+      navigator.mediaSession.setActionHandler('pause', toggleMasterMute);
+    }
 
     const iconSpeaker = `<svg class="btn-icon" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
     const iconMic = `<svg class="btn-icon" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>`;
@@ -585,13 +638,16 @@
       updateAudioRouting();
     }
 
+    // ★ 描画ループ最適化 (約30fpsに制限し、メインスレッドの負荷を軽減)
+    let lastDrawTime = 0;
     function startMeterDraw() {
       const masterData = new Uint8Array(masterAnalyser.frequencyBinCount);
-      let localData = null;
-      if (localMicAnalyser) localData = new Uint8Array(localMicAnalyser.frequencyBinCount);
+      let localData = localMicAnalyser ? new Uint8Array(localMicAnalyser.frequencyBinCount) : null;
 
-      function draw() {
+      function draw(timestamp) {
         requestAnimationFrame(draw);
+        if (timestamp - lastDrawTime < 30) return; // 30ms未満ならスキップ
+        lastDrawTime = timestamp;
         
         masterAnalyser.getByteFrequencyData(masterData);
         let sum = 0;
@@ -615,7 +671,7 @@
             for(let i=0; i<chData.length; i++) chSum += chData[i];
             let chPercent = ((chSum / chData.length) / 255) * 100 * 2.5;
             
-            if (state.talkStates[ch.id]) {
+            if (state.talkStates[ch.id] || state.isAllTalk) {
               chPercent = Math.max(chPercent, localPercent);
             }
             
@@ -624,7 +680,6 @@
           }
         });
 
-        // 管理画面の縦型メーター描画
         if (state.isAdmin) {
           state.registeredUsers.forEach(uid => {
             const meterEl = document.getElementById(`user-meter-${uid}`);
@@ -648,19 +703,24 @@
           });
         }
       }
-      draw();
+      draw(0);
     }
 
     function updateAudioRouting() {
-      const isAnyTalkOn = Object.values(state.talkStates).some(val => val === true);
+      // ★ Master Mute / All Talk の割り込み処理
+      let isLocalTalking = Object.values(state.talkStates).some(val => val === true);
+      if (state.isAllTalk) isLocalTalking = true;
+      if (state.isMasterMuted) isLocalTalking = false;
+
       if (state.localStream) {
-        state.localStream.getAudioTracks().forEach(t => t.enabled = isAnyTalkOn);
+        state.localStream.getAudioTracks().forEach(t => t.enabled = isLocalTalking);
       }
       if (!audioCtx) return;
 
       channels.forEach(ch => {
         if (state.channelNodes[ch.id]) {
-          const vol = state.listenStates[ch.id] ? state.channelVolumes[ch.id] : 0;
+          // Master Mute時は全てのスピーカーを0にする
+          const vol = (state.listenStates[ch.id] && !state.isMasterMuted) ? state.channelVolumes[ch.id] : 0;
           state.channelNodes[ch.id].masterGain.gain.setTargetAtTime(vol, audioCtx.currentTime, 0.05);
         }
       });
@@ -671,7 +731,7 @@
 
         channels.forEach(ch => {
           if (callData.chGains && callData.chGains[ch.id]) {
-            const isTalking = remoteTalk[ch.id] === true;
+            const isTalking = remoteTalk[ch.id] === true || remoteTalk['__ALL_TALK__'] === true;
             callData.chGains[ch.id].gain.setTargetAtTime(isTalking ? 1 : 0, audioCtx.currentTime, 0.05);
           }
         });
@@ -679,7 +739,8 @@
     }
 
     function syncTalkStates() {
-      const msg = { type: 'update-talk-states', states: state.talkStates };
+      const statesToSend = { ...state.talkStates, '__ALL_TALK__': state.isAllTalk };
+      const msg = { type: 'update-talk-states', states: statesToSend };
       Object.values(state.dataConns).forEach(conn => {
         if(conn && conn.open) conn.send(msg);
       });
@@ -746,6 +807,27 @@
       });
     }
 
+    // ★ マトリックスの一括アサイン機能
+    window.toggleAllUserAssignments = function(uid) {
+      const allAssigned = channels.every(ch => state.userAssignments[uid] && state.userAssignments[uid].includes(ch.id));
+      if (allAssigned) {
+        state.userAssignments[uid] = []; // 全解除
+      } else {
+        state.userAssignments[uid] = channels.map(c => c.id); // 全許可
+      }
+      saveRoomState(); 
+      buildAdminMatrix();
+      
+      const peerId = Object.keys(state.users).find(p => state.users[p] === uid && state.peers.has(p));
+      if(peerId && state.dataConns[peerId]) state.dataConns[peerId].send({ type: 'assign-channels', channels: state.userAssignments[uid], targetUid: uid });
+      
+      if (uid === state.myUserId) applyAssignments(state.userAssignments[uid]);
+      
+      Object.values(state.dataConns).forEach(conn => {
+         if(conn && conn.open) conn.send({ type: 'assign-channels', channels: state.userAssignments[uid], targetUid: uid });
+      });
+    };
+
     function buildAdminMatrix() {
       if (!state.isAdmin) return;
       const container = document.getElementById('admin-matrix-container');
@@ -763,15 +845,16 @@
       state.registeredUsers.forEach(uid => {
           const isOnline = Array.from(state.peers).some(p => state.users[p] === uid && state.dataConns[p] && state.dataConns[p].open);
           const statusColor = isOnline ? 'var(--green)' : 'var(--text-sub)';
-          html += `<th>
+          html += `<th class="matrix-user-header" onclick="toggleAllUserAssignments('${uid}')">
               <div style="display:flex; align-items:center; justify-content:center; gap:5px; margin-bottom:4px;">
                 <span style="color:${statusColor}; font-size:10px;">●</span>
-                <span style="font-weight:bold; color:var(--text-main);">${uid}</span>
+                <span style="font-weight:bold; color:var(--text-main); font-family: 'JetBrains Mono', monospace;">${uid}</span>
                 <div style="position: relative; width: 4px; height: 14px; background: #0a0b0d; border-radius: 2px; overflow: hidden; margin-left: 2px;">
                    <div id="user-meter-${uid}" style="position: absolute; bottom: 0; left: 0; width: 100%; height: 0%; background: linear-gradient(to top, #4ade80, #eab308, #f87171); transition: height 0.05s linear;"></div>
                 </div>
               </div>
-              <button class="btn-delete-col" data-uid="${uid}">削除</button>
+              <span class="bulk-label">一括切替</span>
+              <button class="btn-delete-col" data-uid="${uid}" onclick="event.stopPropagation();">削除</button>
           </th>`;
       });
 
@@ -786,7 +869,7 @@
                  <div style="display:flex; gap:8px; align-items:center; justify-content:space-between; width:100%;">
                     <div style="display:flex; gap:5px; flex:1;">
                        <input type="text" class="admin-edit-name" data-id="${ch.id}" value="${ch.name}" style="flex:1; width:80px; background:#1c1d21; border:1px solid #3a3c42; color:#fff; border-radius:4px; font-size:14px; padding:4px 8px;">
-                       <input type="text" class="admin-edit-type" data-id="${ch.id}" value="${ch.type}" style="width:40px; text-align:center; background:#1c1d21; border:1px solid #3a3c42; color:#fff; border-radius:4px; font-size:12px; padding:4px;">
+                       <input type="text" class="admin-edit-type" data-id="${ch.id}" value="${ch.type}" style="width:40px; text-align:center; font-family:'JetBrains Mono', monospace; background:#1c1d21; border:1px solid #3a3c42; color:#fff; border-radius:4px; font-size:11px; padding:4px;">
                     </div>
                     <button class="btn-delete-row" data-id="${ch.id}">削除</button>
                  </div>
@@ -928,7 +1011,7 @@
         updateUserCount();
 
         conn.send({ type: 'hello', userId: state.myUserId, joinTime: state.joinTime });
-        conn.send({ type: 'update-talk-states', states: state.talkStates });
+        syncTalkStates(); 
         
         const targetSlot = parseInt(conn.peer.split('-s')[1]);
         if (state.mySlot > targetSlot) {
@@ -1012,14 +1095,11 @@
           updateAudioRouting();
         }
         else if (data.type === 'assign-channels') {
-          // ★修正ポイント: 自分宛ての変更だけをメイン画面に適用する
           if (data.targetUid === state.myUserId) {
              applyAssignments(data.channels);
           }
-          // 全員が内部データは更新する
           if (data.targetUid) {
              state.userAssignments[data.targetUid] = data.channels;
-             // 管理者ならマトリックス表の見た目も更新
              if (state.isAdmin) {
                  document.querySelectorAll(`.matrix-toggle[data-uid="${data.targetUid}"]`).forEach(btn => {
                    if (data.channels.includes(btn.getAttribute('data-chid'))) {
@@ -1030,7 +1110,6 @@
                  });
              }
           } else {
-             // 互換性フォールバック
              if (!state.isAdmin) applyAssignments(data.channels);
           }
           saveRoomState();
@@ -1099,7 +1178,6 @@
          if (state.dataConns[p] && state.dataConns[p].open) activeCount++;
       });
       
-      // ★ 右上の表示を ACTIVE (人数) に変更
       els.roleDisplay.textContent = `ACTIVE (${activeCount})`;
       els.roleDisplay.style.color = isOnline ? 'var(--blue)' : 'var(--orange)';
       
@@ -1163,16 +1241,12 @@
 
       if (typeof Peer === 'undefined') {
           alert("通信サーバーのプログラムが読み込めませんでした。\nインターネット接続を確認するか、ページを再読み込みしてください。");
-          btn.disabled = false;
-          btn.textContent = originalText;
-          btn.style.opacity = "1";
+          btn.disabled = false; btn.textContent = originalText; btn.style.opacity = "1";
           return;
       }
 
       if (!await initMedia()) {
-        btn.disabled = false;
-        btn.textContent = originalText;
-        btn.style.opacity = "1";
+        btn.disabled = false; btn.textContent = originalText; btn.style.opacity = "1";
         els.statusMsg.textContent = "マイクが許可されませんでした";
         return;
       }
@@ -1191,7 +1265,6 @@
       LocalProfile.set({ roomId: rawRoomId, userId: myName, isAdmin });
       
       els.statusMsg.textContent = "データを読み込み中...";
-      
       loadRoomState(state.roomId);
       
       els.statusMsg.textContent = "空きポートを検索中...";
@@ -1204,9 +1277,7 @@
       function tryConnectSlot() {
         if (slot > maxSlots) {
           alert("申し訳ありません、ルームが満員です（最大30人）。");
-          btn.disabled = false;
-          btn.textContent = originalText;
-          btn.style.opacity = "1";
+          btn.disabled = false; btn.textContent = originalText; btn.style.opacity = "1";
           els.statusMsg.textContent = "満員のため接続できませんでした";
           return;
         }
@@ -1221,9 +1292,7 @@
           setTimeout(() => els.loginOverlay.style.display = 'none', 500);
           
           updateUserCount();
-          btn.disabled = false;
-          btn.textContent = originalText;
-          btn.style.opacity = "1";
+          btn.disabled = false; btn.textContent = originalText; btn.style.opacity = "1";
           
           state.peer.on('connection', conn => setupDataConnection(conn));
           state.peer.on('call', call => { call.answer(state.localStream); handleCall(call); });
@@ -1250,9 +1319,7 @@
             } else {
               console.error(err);
               els.statusMsg.textContent = "接続エラー: " + err.type;
-              btn.disabled = false;
-              btn.textContent = originalText;
-              btn.style.opacity = "1";
+              btn.disabled = false; btn.textContent = originalText; btn.style.opacity = "1";
             }
           }
         });
@@ -1324,4 +1391,3 @@
   </script>
 </body>
 </html>
-
