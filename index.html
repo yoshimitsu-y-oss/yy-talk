@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>YY-Talk PRO - Perfect Drag & Landscape</title>
+  <title>YY-Talk PRO - Perfect PTT</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,9 +13,9 @@
   <script>
     window.onerror = function(message, source, lineno) {
       alert("【システムエラー検知】\n" + message + "\n行: " + lineno);
-      return false;
     };
 
+    // Opus DTX (無音時の通信量削減)
     const origSetLocalDescription = RTCPeerConnection.prototype.setLocalDescription;
     RTCPeerConnection.prototype.setLocalDescription = function(desc) {
       if (desc && (desc.type === 'offer' || desc.type === 'answer')) {
@@ -24,7 +24,6 @@
       return origSetLocalDescription.apply(this, arguments);
     };
 
-    // ★ 改善: 画面固定(fixed)をやめ、Visual Viewportで自然な最小高さを確保する
     function forceResize() {
       const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
       document.documentElement.style.minHeight = h + 'px';
@@ -66,7 +65,6 @@
     }
     input, select, textarea { -webkit-user-select: auto; user-select: auto; touch-action: auto; }
     
-    /* ★ fixedを廃止し、自然なスクロールとドラッグの座標を両立 */
     html, body {
       margin: 0; padding: 0; 
       width: 100%; 
@@ -145,7 +143,6 @@
     .btn-master-mic { background: #1c1d21; color: var(--text-main); border: 1px solid #3a3c42; }
     .btn-master-mic.active { background: var(--red); color: #000; border-color: var(--red); animation: pulse-red 1.5s infinite; }
 
-    /* チャンネルリスト */
     .channel-list-container { 
       flex: 1 1 auto; overflow-y: auto; padding: 10px 15px 20px; 
       display: flex; flex-direction: column; gap: 10px; scrollbar-width: none;
@@ -192,21 +189,30 @@
     .ch-meter-container { height: 4px; background: #0a0b0d; margin: 0 45px 0; border-radius: 2px; overflow: hidden; position: relative; opacity: 0.8; }
     .ch-meter-fill { height: 100%; width: 0%; transition: width 0.05s linear; background: linear-gradient(90deg, #4ade80 0%, #4ade80 60%, #eab308 80%, #f87171 100%); }
     
-    /* ★ 改善: 指に吸い付くドラッグデザイン（残像・座標ズレ防止） */
+    /* ★ 復元: ドラッグ＆ドロップ時の「指に吸い付く」デザイン */
     .btn-expand { display: inline-block; padding: 4px 40px; color: var(--text-sub); font-size: 14px; letter-spacing: 2px; cursor: grab; margin: 0 auto; border-radius: 20px; touch-action: none;}
     .btn-expand:active { cursor: grabbing; background-color: rgba(255,255,255,0.05); }
     
-    .sortable-ghost { opacity: 0.2 !important; background-color: #000 !important; border: 1px dashed #3a3c42 !important; }
-    .sortable-drag { cursor: grabbing !important; box-shadow: 0 30px 60px rgba(0,0,0,0.8) !important; transform: scale(1.05) !important; background-color: var(--card-bg-expanded) !important; border: 1px solid var(--text-sub) !important; opacity: 1 !important; z-index: 9999 !important; }
+    .sortable-ghost { 
+      opacity: 0.2 !important; 
+      background-color: #000 !important;
+    }
+    .sortable-drag { 
+      cursor: grabbing !important; 
+      box-shadow: 0 20px 40px rgba(0,0,0,0.8) !important; 
+      background-color: var(--card-bg-expanded) !important;
+      border: 1px solid #3a3c42 !important;
+      opacity: 1 !important;
+      z-index: 9999 !important;
+    }
 
     .master-meter-container { height: 8px; width: 100%; background: #1c1d21; position: relative; flex-shrink: 0; z-index: 10;}
     .master-meter-fill { height: 100%; width: 0%; transition: width 0.05s linear; background: linear-gradient(90deg, #4ade80 0%, #4ade80 60%, #eab308 80%, #f87171 100%); }
 
-    /* 横向き時のさらなるスリム化 */
     @media (orientation: landscape) and (max-height: 500px) {
       .header { padding: 4px 15px; border-bottom: 1px solid #1e2128; }
       #app-logo { height: 20px; } 
-      .global-controls { padding: 2px 15px; gap: 8px; }
+      .global-controls { padding: 4px 15px; gap: 8px; }
       .btn-global { padding: 4px 8px; font-size: 11px; height: 28px; }
       .channel-list-container { padding: 4px 15px; gap: 6px;}
       #channel-list-wrap { grid-template-columns: 1fr 1fr; gap: 6px; } 
@@ -465,12 +471,20 @@
       order.forEach(id => { const ch = channels?.find(c => c?.id === id); if (ch) createChannelCard(ch); });
     }
 
-    // ★ ドラッグ＆ドロップ: 座標のズレを防ぐため fallbackOnBody をオフにし、自然に浮かせる
+    // ★ 復元: ドラッグ＆ドロップ時の「指に吸い付く」デザイン
     window.addEventListener('DOMContentLoaded', () => {
+      forceResize();
       if (typeof Sortable !== 'undefined') {
         new Sortable(els.chWrap, {
-          animation: 200, handle: '.btn-expand', delay: 150, delayOnTouchOnly: true, touchStartThreshold: 5,
-          forceFallback: true, fallbackOnBody: false, fallbackClass: 'sortable-drag', ghostClass: 'sortable-ghost',
+          animation: 200,
+          handle: '.btn-expand',
+          delay: 150,
+          delayOnTouchOnly: true,
+          touchStartThreshold: 5,
+          forceFallback: true,
+          fallbackOnBody: true, // ★指に直接吸い付かせる
+          fallbackClass: 'sortable-drag',
+          ghostClass: 'sortable-ghost',
           onStart: function (evt) { if (navigator.vibrate) navigator.vibrate(50); },
           onEnd: function (evt) {
             let newOrder = []; els.chWrap.querySelectorAll('.channel-card').forEach(card => { newOrder.push(card.id.replace('card-', '')); });
@@ -478,6 +492,12 @@
           }
         });
       }
+      els.btnJoinMember.addEventListener('click', () => joinNetwork(false));
+      els.btnJoinAdmin.addEventListener('click', () => joinNetwork(true));
+      els.btnJoinMember.textContent = "メンバーとして参加"; els.btnJoinAdmin.textContent = "管理者として参加";
+      els.btnJoinMember.disabled = false; els.btnJoinAdmin.disabled = false;
+      const savedProfile = LocalProfile.get();
+      if (savedProfile) { els.hostIdInput.value = savedProfile.roomId || ''; els.joinUserIdInput.value = savedProfile.userId || ''; }
     });
 
     els.btnAddCh.onclick = () => {
@@ -615,7 +635,6 @@
       Object.values(state.dataConns || {}).forEach(conn => { if(conn?.open) conn.send(msg); });
     }
 
-    // ★ 改善: PTTの小気味良い挙動（150msでスッと戻る、強いゴム感、ON/OFFトグル完全対応）
     function setupPTTButton(btn, type, channelId) {
       if(!btn) return;
       let isDown = false, startX = 0;
@@ -645,7 +664,6 @@
         const targetDistance = 120; 
         let visualMoveX = deltaX;
         
-        // ★ 0.4乗で非線形な強いゴム感を表現
         if (Math.abs(deltaX) > 20) {
             const sign = Math.sign(deltaX);
             const over = Math.abs(deltaX) - 20;
@@ -655,7 +673,6 @@
         if (Math.abs(deltaX) > targetDistance && Math.sign(deltaX) === slideDir) {
           isDown = false; 
           btn.releasePointerCapture(e.pointerId);
-          // ★ 一瞬(0.15秒)でスッと定位置に戻る
           btn.style.transition = 'transform 0.15s ease-out'; 
           btn.style.transform = `translateX(0px)`;
           
@@ -907,16 +924,6 @@
     };
 
     function scanForPeers() { for (let i = 1; i < state.mySlot; i++) { const targetId = `${state.netRoomId}-s${i}`; if (!state.dataConns[targetId]) { const conn = state.peer.connect(targetId); conn.on('open', () => setupDataConnection(conn)); conn.on('error', () => {}); } } }
-
-    window.addEventListener('DOMContentLoaded', () => {
-      forceResize();
-      els.btnJoinMember.addEventListener('click', () => joinNetwork(false));
-      els.btnJoinAdmin.addEventListener('click', () => joinNetwork(true));
-      els.btnJoinMember.textContent = "メンバーとして参加"; els.btnJoinAdmin.textContent = "管理者として参加";
-      els.btnJoinMember.disabled = false; els.btnJoinAdmin.disabled = false;
-      const savedProfile = LocalProfile.get();
-      if (savedProfile) { els.hostIdInput.value = savedProfile.roomId || ''; els.joinUserIdInput.value = savedProfile.userId || ''; }
-    });
 
     function handleCall(call) {
       call.on('stream', stream => {
