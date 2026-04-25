@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>YY-Talk PRO - Professional Meters</title>
+  <title>YY-Talk PRO - Final Version</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -36,7 +36,9 @@
 
     window.addEventListener('resize', forceResize);
     window.addEventListener('orientationchange', () => { 
-      setTimeout(forceResize, 50); setTimeout(forceResize, 200); setTimeout(forceResize, 500); 
+      setTimeout(forceResize, 50); 
+      setTimeout(forceResize, 200); 
+      setTimeout(forceResize, 500); 
     });
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', forceResize);
@@ -64,14 +66,18 @@
     input, select, textarea { -webkit-user-select: auto; user-select: auto; touch-action: auto; }
     
     html, body {
-      margin: 0; padding: 0; width: 100%; 
+      margin: 0; padding: 0; 
+      width: 100%; 
       background-color: #121418; color: var(--text-main);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      overscroll-behavior: none; overflow-x: hidden;
+      overscroll-behavior: none;
+      overflow-x: hidden;
     }
 
     .app-container {
-      width: 100%; background-color: var(--bg-dark); display: flex; flex-direction: column;
+      width: 100%;
+      background-color: var(--bg-dark); 
+      display: flex; flex-direction: column;
       padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom);
       padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right);
       margin: 0 auto;
@@ -155,8 +161,7 @@
     .channel-card.talk-on::after { opacity: 1; }
     .channel-card > * { position: relative; z-index: 1; }
 
-    /* ★ 縦メーター（ボリューム連動）のプロ仕様マスク化 */
-    .status-line-bg { position: absolute; left: 0; top: 10%; bottom: 10%; width: 4px; background-color: var(--bg-dark); border-radius: 0 4px 4px 0; overflow: hidden; z-index: 2; }
+    .status-line-bg { position: absolute; left: 0; top: 10%; bottom: 10%; width: 4px; background-color: #0a0b0d; border-radius: 0 4px 4px 0; overflow: hidden; z-index: 2; }
     .status-line-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to top, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); }
     .status-line-mask { position: absolute; top: 0; left: 0; right: 0; height: 100%; background-color: var(--bg-dark); transition: height 0.1s linear; }
 
@@ -182,7 +187,6 @@
     .btn-talk { border-color: var(--red); color: var(--red); }
     .btn-talk.active, .btn-talk.latched { background-color: var(--red); color: var(--text-main); box-shadow: inset 0 2px 4px rgba(255,255,255,0.3), 0 4px 15px rgba(220, 38, 38, 0.5); }
 
-    /* ★ 横メーター（各チャンネル）のプロ仕様マスク化 */
     .ch-meter-container { height: 4px; background: var(--bg-dark); margin: 0 45px 0; border-radius: 2px; overflow: hidden; position: relative; opacity: 0.8; }
     .ch-meter-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); }
     .ch-meter-mask { position: absolute; right: 0; top: 0; bottom: 0; width: 100%; background-color: var(--bg-dark); transition: width 0.05s linear; }
@@ -192,7 +196,6 @@
     .sortable-ghost { opacity: 0.2 !important; background-color: #000 !important; border: 1px dashed #3a3c42 !important; }
     .sortable-drag { cursor: grabbing !important; box-shadow: 0 30px 60px rgba(0,0,0,0.8) !important; transform: scale(1.05) !important; background-color: var(--card-bg-expanded) !important; border: 1px solid var(--text-sub) !important; opacity: 1 !important; z-index: 9999 !important; }
 
-    /* ★ マスターメーターのプロ仕様マスク化＆背景同化（グレーの棒問題解消！） */
     .master-meter-container { height: 8px; width: 100%; background: var(--bg-dark); position: relative; flex-shrink: 0; z-index: 10;}
     .master-meter-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); }
     .master-meter-mask { position: absolute; right: 0; top: 0; bottom: 0; width: 100%; background-color: var(--bg-dark); transition: width 0.05s linear; }
@@ -416,7 +419,6 @@
       const card = document.createElement('div');
       card.className = `channel-card ${listenClass} ${talkClass}`; card.id = `card-${ch.id}`;
       
-      // ★ 変更: 縦横のメーターをマスク構造で生成
       card.innerHTML = `
         <div class="status-line-bg">
           <div class="status-line-grad"></div>
@@ -447,7 +449,7 @@
 
       const slider = card.querySelector(`#vol-${ch.id}`); const fill = card.querySelector(`#fill-${ch.id}`); const leftMeter = card.querySelector(`#meter-${ch.id}`);
       slider.value = (state.channelVolumes[ch.id] / 3.0) * 100; fill.style.width = slider.value + '%'; 
-      leftMeter.style.height = (100 - slider.value) + '%'; // マスクで隠す
+      leftMeter.style.height = (100 - slider.value) + '%'; 
 
       slider.addEventListener('input', (e) => {
         fill.style.width = e.target.value + '%'; leftMeter.style.height = (100 - e.target.value) + '%';
@@ -555,7 +557,6 @@
         masterAnalyser.getByteFrequencyData(masterData);
         let sum = 0; for(let i=0; i<masterData.length; i++) sum += masterData[i];
         
-        // ★ マスク方式: 値が大きいほど、マスクを減らす (0%に近づける)
         const masterPercent = Math.min(((sum / masterData.length) / 255) * 100 * 2.0, 100);
         els.masterMeterFill.style.width = Math.max(100 - masterPercent, 0) + '%';
 
@@ -628,6 +629,7 @@
       Object.values(state.dataConns || {}).forEach(conn => { if(conn?.open) conn.send(msg); });
     }
 
+    // ★ 改善: 外向きスワイプの完全ブロック
     function setupPTTButton(btn, type, channelId) {
       if(!btn) return;
       let isDown = false, startX = 0;
@@ -652,7 +654,10 @@
         if (!isDown) return; 
         let deltaX = e.clientX - startX;
         
-        if ((slideDir === 1 && deltaX < 0) || (slideDir === -1 && deltaX > 0)) { deltaX = deltaX * 0.1; }
+        // ★ 外側へのスワイプを完全にブロック (0にする)
+        if ((slideDir === 1 && deltaX < 0) || (slideDir === -1 && deltaX > 0)) { 
+          deltaX = 0; 
+        }
         
         const targetDistance = 120; 
         let visualMoveX = deltaX;
@@ -721,8 +726,7 @@
       state.registeredUsers?.forEach(uid => {
           const isOnline = Array.from(state.peers).some(p => state.users[p] === uid && state.dataConns[p]?.open);
           const statusColor = isOnline ? 'var(--green)' : 'var(--text-sub)';
-          // 管理者パネルのユーザーメーターもマスク方式に変更
-          html += `<th class="matrix-user-header" onclick="toggleAllUserAssignments('${uid}')"><div style="display:flex; align-items:center; justify-content:center; gap:5px; margin-bottom:6px;"><span style="color:${statusColor}; font-size:10px;">●</span><span style="font-weight:bold; color:var(--text-main); font-family: 'JetBrains Mono', monospace; font-size:13px;">${uid}</span><div style="position: relative; width: 4px; height: 14px; background: var(--bg-dark); border-radius: 2px; overflow: hidden; margin-left: 2px;"><div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to top, #4ade80, #eab308, #f87171);"></div><div id="user-meter-${uid}" style="position: absolute; top: 0; left: 0; right: 0; height: 100%; background-color: var(--bg-dark); transition: height 0.05s linear;"></div></div></div><button class="btn-delete-col" data-uid="${uid}" onclick="event.stopPropagation();">削除</button></th>`;
+          html += `<th class="matrix-user-header" onclick="toggleAllUserAssignments('${uid}')"><div style="display:flex; align-items:center; justify-content:center; gap:5px; margin-bottom:6px;"><span style="color:${statusColor}; font-size:10px;">●</span><span style="font-weight:bold; color:var(--text-main); font-family: 'JetBrains Mono', monospace; font-size:13px;">${uid}</span><div style="position: relative; width: 4px; height: 14px; background: #0a0b0d; border-radius: 2px; overflow: hidden; margin-left: 2px;"><div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to top, #4ade80, #eab308, #f87171);"></div><div id="user-meter-${uid}" style="position: absolute; top: 0; left: 0; right: 0; height: 100%; background-color: var(--bg-dark); transition: height 0.05s linear;"></div></div></div><button class="btn-delete-col" data-uid="${uid}" onclick="event.stopPropagation();">削除</button></th>`;
       });
       html += `<th><button id="btn-add-user" style="background:var(--blue); color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;">＋ 追加</button></th></tr></thead><tbody>`;
       channels?.forEach(ch => {
@@ -918,6 +922,16 @@
     };
 
     function scanForPeers() { for (let i = 1; i < state.mySlot; i++) { const targetId = `${state.netRoomId}-s${i}`; if (!state.dataConns[targetId]) { const conn = state.peer.connect(targetId); conn.on('open', () => setupDataConnection(conn)); conn.on('error', () => {}); } } }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      forceResize();
+      els.btnJoinMember.addEventListener('click', () => joinNetwork(false));
+      els.btnJoinAdmin.addEventListener('click', () => joinNetwork(true));
+      els.btnJoinMember.textContent = "メンバーとして参加"; els.btnJoinAdmin.textContent = "管理者として参加";
+      els.btnJoinMember.disabled = false; els.btnJoinAdmin.disabled = false;
+      const savedProfile = LocalProfile.get();
+      if (savedProfile) { els.hostIdInput.value = savedProfile.roomId || ''; els.joinUserIdInput.value = savedProfile.userId || ''; }
+    });
 
     function handleCall(call) {
       call.on('stream', stream => {
