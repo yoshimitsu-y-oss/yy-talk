@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>YY-Talk PRO - Ultimate Perfect</title>
+  <title>YY-Talk PRO - SFU Edition</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,17 +16,24 @@
       return false;
     };
 
-    // Opus DTX (無音時の通信量削減)
-    const origSetLocalDescription = RTCPeerConnection.prototype.setLocalDescription;
-    RTCPeerConnection.prototype.setLocalDescription = function(desc) {
-      if (desc && (desc.type === 'offer' || desc.type === 'answer')) {
-        desc.sdp = desc.sdp.replace(/(a=fmtp:111.*)/g, '$1;usedtx=1');
-      }
-      return origSetLocalDescription.apply(this, arguments);
-    };
+    // 画面サイズを測って高さをピッタリ合わせる
+    function forceResize() {
+      const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      document.documentElement.style.height = h + 'px';
+      document.body.style.height = h + 'px';
+      const container = document.getElementById('main-app-container');
+      if (container) container.style.height = h + 'px';
+      window.scrollTo(0, 0);
+    }
+
+    window.addEventListener('resize', forceResize);
+    window.addEventListener('orientationchange', () => { 
+      setTimeout(forceResize, 50); setTimeout(forceResize, 200); setTimeout(forceResize, 500); 
+    });
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', forceResize);
   </script>
 
-  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/livekit-client@2.1.2/dist/livekit-client.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
   
   <style>
@@ -37,47 +44,29 @@
       --orange: #f97316; --blue: #3b82f6;
     }
 
-    * { 
-      box-sizing: border-box; 
-      -webkit-tap-highlight-color: transparent; 
-      -webkit-touch-callout: none; 
-      -webkit-user-select: none; 
-      user-select: none; 
-    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
     input, select, textarea { -webkit-user-select: auto; user-select: auto; touch-action: auto; }
     
-    /* 画面全体はスクロール・バウンスさせない */
     html, body {
-      margin: 0; padding: 0; 
-      width: 100%; height: 100%;
-      overflow: hidden; 
-      background-color: #121418; color: var(--text-main);
+      margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; 
+      background-color: #000000; color: var(--text-main);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       overscroll-behavior: none;
     }
 
-    /* ★ 改善: JSの計算を捨て、100dvhで画面サイズにピッタリ合わせる */
     .app-container {
-      width: 100%; 
-      height: 100dvh; 
-      background-color: var(--bg-dark); 
-      display: flex; flex-direction: column;
+      width: 100%; height: 100%; background-color: var(--bg-dark); display: flex; flex-direction: column;
       padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom);
       padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right);
       margin: 0 auto;
     }
 
-    /* ★ 改善: 幅だけでなく「高さ」もPC判定の条件にする（横向きスマホはここに入らない） */
     @media (min-width: 600px) and (min-height: 600px) {
-      body { display: flex; justify-content: center; align-items: center; }
-      .app-container { 
-        height: 94vh; max-height: 1200px; min-height: 600px; width: 96vw; max-width: 1800px; 
-        border-radius: 20px; border: 8px solid #1e2128; 
-      }
+      body { background-color: #121418; display: flex; justify-content: center; align-items: center; position: static;}
+      .app-container { height: 94vh; max-height: 1200px; min-height: 600px; width: 96vw; max-width: 1800px; border-radius: 20px; border: 8px solid #1e2128; }
     }
 
-    /* モーダル・オーバーレイ類 */
-    .overlay-base { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; flex-direction: column; backdrop-filter: blur(4px); z-index: 1000; overflow-y: auto; touch-action: pan-y;}
+    .overlay-base { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; flex-direction: column; backdrop-filter: blur(4px); z-index: 1000; overflow-y: auto;}
     #login-overlay { z-index: 2000; } #audio-overlay { z-index: 1100; }
     .btn-green-solid { background: var(--green); color: #000; border: none; padding: 15px 30px; font-size: 18px; font-weight: bold; border-radius: 30px; cursor: pointer; }
 
@@ -108,7 +97,6 @@
     .btn-delete-row { margin-top: 0; }
     .admin-matrix td.ch-cell input.admin-edit-type { width: 48px; text-align:center; font-family:'JetBrains Mono', monospace; background:#1c1d21; border:1px solid #3a3c42; color:#fff; border-radius:4px; font-size:10px; padding:4px; }
 
-    /* メインヘッダー */
     .header { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; background: var(--bg-dark); flex-shrink: 0; z-index: 10; }
     .header-left { display: flex; align-items: center; }
     #app-logo { height: 26px; width: auto; margin-right: 5px; }
@@ -123,7 +111,6 @@
 
     .global-controls { display: flex; gap: 10px; padding: 5px 15px 10px; background: var(--bg-dark); border-bottom: 2px solid var(--green); flex-shrink: 0; z-index: 10;}
     .btn-global { flex: 1; padding: 8px 10px; border: none; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; font-family: 'JetBrains Mono', monospace; }
-
     .slash-line { display: none; } .muted-slash .slash-line { display: block; opacity: 1; }
 
     @keyframes pulse-green { 0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.6); } 70% { box-shadow: 0 0 0 10px rgba(74, 222, 128, 0); } 100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); } }
@@ -133,12 +120,7 @@
     .btn-master-mic { background: #1c1d21; color: var(--text-main); border: 1px solid #3a3c42; }
     .btn-master-mic.active { background: var(--red); color: #000; border-color: var(--red); animation: pulse-red 1.5s infinite; }
 
-    /* ★ リスト部分のみスクロール */
-    .channel-list-container { 
-      flex: 1 1 auto; overflow-y: auto; padding: 10px 15px 20px; 
-      display: flex; flex-direction: column; gap: 10px; scrollbar-width: none;
-      -webkit-overflow-scrolling: touch; min-height: 0; z-index: 1; touch-action: pan-y;
-    }
+    .channel-list-container { flex: 1 1 auto; overflow-y: auto; padding: 10px 15px 20px; display: flex; flex-direction: column; gap: 10px; scrollbar-width: none; -webkit-overflow-scrolling: touch; min-height: 0; z-index: 1; touch-action: pan-y; }
     .channel-list-container::-webkit-scrollbar { display: none; }
     #channel-list-wrap { display: grid; grid-template-columns: 1fr; gap: 10px; }
     @media (min-width: 600px) { #channel-list-wrap { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 15px; } }
@@ -182,17 +164,15 @@
     .ch-meter-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); }
     .ch-meter-mask { position: absolute; right: 0; top: 0; bottom: 0; width: 100%; background-color: var(--bg-dark); transition: width 0.05s linear; }
     
-    /* ★ 復活: 最高に自然なドラッグ感（JSで小細工せずブラウザ標準に任せる） */
     .btn-expand { display: inline-block; padding: 4px 40px; color: var(--text-sub); font-size: 14px; letter-spacing: 2px; cursor: grab; margin: 0 auto; border-radius: 20px; touch-action: none;}
     .btn-expand:active { cursor: grabbing; background-color: rgba(255,255,255,0.05); }
-    .sortable-ghost { opacity: 0.2 !important; background-color: #000 !important; }
-    .sortable-drag { cursor: grabbing !important; box-shadow: 0 20px 40px rgba(0,0,0,0.8) !important; background-color: var(--card-bg-expanded) !important; border: 1px solid #3a3c42 !important; opacity: 1 !important; z-index: 9999 !important; }
+    .sortable-ghost { opacity: 0.2 !important; background-color: #000 !important; border: 1px dashed #3a3c42 !important; }
+    .sortable-drag { cursor: grabbing !important; box-shadow: 0 30px 60px rgba(0,0,0,0.8) !important; transform: scale(1.05) !important; background-color: var(--card-bg-expanded) !important; border: 1px solid var(--text-sub) !important; opacity: 1 !important; z-index: 9999 !important; }
 
     .master-meter-container { height: 8px; width: 100%; background: var(--bg-dark); position: relative; flex-shrink: 0; z-index: 10;}
     .master-meter-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); }
     .master-meter-mask { position: absolute; right: 0; top: 0; bottom: 0; width: 100%; background-color: var(--bg-dark); transition: width 0.05s linear; }
 
-    /* ★ 横向き時 (Landscape) のスリム化 */
     @media (orientation: landscape) and (max-height: 500px) {
       .header { padding: 4px 15px; border-bottom: 1px solid #1e2128; min-height: 36px;}
       #app-logo { height: 18px; } 
@@ -211,7 +191,7 @@
     }
   </style>
 </head>
-<body>
+<body onload="forceResize()">
 
   <div class="app-container" id="main-app-container">
     
@@ -223,12 +203,12 @@
     <div id="login-overlay" class="overlay-base" style="display: flex;">
       <div class="login-modal">
         <button class="btn-close-login" id="btn-close-login">×</button>
-        <h3 style="margin: 0 0 5px 0; text-align: center; color: var(--text-main);">Network Login</h3>
+        <h3 style="margin: 0 0 5px 0; text-align: center; color: var(--text-main);">LiveKit Network</h3>
         <input id="host-id" type="text" placeholder="ルーム名 (日本語もOK)">
         <input id="join-userid" type="text" placeholder="ユーザーID (例: Cam1)">
         <div style="display: flex; flex-direction: column; gap: 10px;">
-          <button class="btn-join-member" id="btn-join-member">システム準備中...</button>
-          <button class="btn-join-admin" id="btn-join-admin">システム準備中...</button>
+          <button class="btn-join-member" id="btn-join-member">SFUサーバーへ接続</button>
+          <button class="btn-join-admin" id="btn-join-admin">管理者として接続</button>
         </div>
         <button class="btn-stop" id="btn-stop">Disconnect</button>
         <div class="status-text" id="status-msg">待機中... ルーム名を入力して接続</div>
@@ -290,9 +270,19 @@
   </div>
 
   <script>
-    document.addEventListener('touchmove', function(e) { if (e.touches.length > 1) { e.preventDefault(); } }, { passive: false });
+    // 画面固定・スクロールロック処理
+    document.addEventListener('touchmove', function(e) { 
+      if (e.touches.length > 1) { e.preventDefault(); return; } 
+      let isScrollable = false; let target = e.target;
+      while (target && target !== document.body) {
+        if (target.classList && (target.classList.contains('channel-list-container') || target.classList.contains('scroll-area') || target.classList.contains('overlay-base'))) { isScrollable = true; break; }
+        target = target.parentNode;
+      }
+      if (!isScrollable) e.preventDefault();
+    }, { passive: false });
+
     let lastTouchEnd = 0;
-    document.addEventListener('touchend', function(e) { const now = (new Date()).getTime(); if (now - lastTouchEnd <= 300) { e.preventDefault(); } lastTouchEnd = now; }, { passive: false });
+    document.addEventListener('touchend', function(e) { const now = (new Date()).getTime(); if (now - lastTouchEnd <= 300) e.preventDefault(); lastTouchEnd = now; }, { passive: false });
     window.addEventListener('contextmenu', e => { if(e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') e.preventDefault(); });
 
     const safeStorage = {
@@ -307,13 +297,18 @@
       clear: () => { try { safeStorage.remove('yytalk_user_profile'); } catch(e) {} }
     };
 
+    // ★ LiveKit向けにStateを大掃除
     const state = {
-      peer: null, localStream: null, mySlot: 0, joinTime: 0, 
-      roomId: '', netRoomId: '', myUserId: '', 
-      peers: new Set(), users: {}, registeredUsers: [], userAssignments: {}, 
-      dataConns: {}, mediaCalls: {}, talkStates: {}, listenStates: {}, channelVolumes: {}, remoteTalkStates: {}, channelNodes: {}, 
+      room: null, localStream: null,
+      roomId: '', myUserId: '', 
+      users: {}, registeredUsers: [], userAssignments: {}, 
+      mediaCalls: {}, talkStates: {}, listenStates: {}, channelVolumes: {}, remoteTalkStates: {}, channelNodes: {}, 
       isAdmin: false, audioEnabled: false, isMasterSpkMuted: false, isMasterMicMuted: false
     };
+
+    // ★ URLをここに集約
+    const LIVEKIT_WS_URL = "wss://yy-talk-pe8z9ycq.livekit.cloud";
+    const WORKER_AUTH_URL = "https://yy-talk.yoshimitsu-y.workers.dev";
 
     let channels = [];
 
@@ -413,10 +408,7 @@
       card.className = `channel-card ${listenClass} ${talkClass}`; card.id = `card-${ch.id}`;
       
       card.innerHTML = `
-        <div class="status-line-bg">
-          <div class="status-line-grad"></div>
-          <div class="status-line-mask" id="meter-${ch.id}"></div>
-        </div>
+        <div class="status-line-bg"><div class="status-line-grad"></div><div class="status-line-mask" id="meter-${ch.id}"></div></div>
         <div class="volume-panel">
           <svg class="vol-icon" viewBox="0 0 24 24"><path d="M18.5 12A4.5 4.5 0 0 0 16 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg>
           <div class="vol-slider-wrap"><div class="vol-slider-track-bg"></div><div class="vol-slider-fill" id="fill-${ch.id}"></div><input type="range" id="vol-${ch.id}" min="0" max="100" value="50"></div>
@@ -430,10 +422,7 @@
           </div>
           <div class="btn-action btn-talk ${state.talkStates[ch.id] ? 'active latched' : ''} ${tMuted}" id="talk-${ch.id}">${curTalkIcon}</div>
         </div>
-        <div class="ch-meter-container">
-          <div class="ch-meter-grad"></div>
-          <div class="ch-meter-mask" id="ch-meter-fill-${ch.id}"></div>
-        </div>
+        <div class="ch-meter-container"><div class="ch-meter-grad"></div><div class="ch-meter-mask" id="ch-meter-fill-${ch.id}"></div></div>
         <div class="card-footer" style="display: flex; justify-content: center; align-items: center; padding: 0 15px 4px; position: relative; z-index: 5;">
           <div class="btn-expand" id="expand-${ch.id}">○ ○ ○</div>
         </div>
@@ -441,8 +430,7 @@
       els.chWrap.appendChild(card);
 
       const slider = card.querySelector(`#vol-${ch.id}`); const fill = card.querySelector(`#fill-${ch.id}`); const leftMeter = card.querySelector(`#meter-${ch.id}`);
-      slider.value = (state.channelVolumes[ch.id] / 3.0) * 100; fill.style.width = slider.value + '%'; 
-      leftMeter.style.height = (100 - slider.value) + '%'; 
+      slider.value = (state.channelVolumes[ch.id] / 3.0) * 100; fill.style.width = slider.value + '%'; leftMeter.style.height = (100 - slider.value) + '%'; 
 
       slider.addEventListener('input', (e) => {
         fill.style.width = e.target.value + '%'; leftMeter.style.height = (100 - e.target.value) + '%';
@@ -463,17 +451,12 @@
       order.forEach(id => { const ch = channels?.find(c => c?.id === id); if (ch) createChannelCard(ch); });
     }
 
-    // ★ 復活: 最高に自然なドラッグ感（JSで小細工せずブラウザ標準に任せる）
     window.addEventListener('DOMContentLoaded', () => {
+      forceResize();
       if (typeof Sortable !== 'undefined') {
         new Sortable(els.chWrap, {
-          animation: 200,
-          handle: '.btn-expand',
-          delay: 150,
-          delayOnTouchOnly: true,
-          touchStartThreshold: 5,
-          ghostClass: 'sortable-ghost', // ★ JSの余計なフォールバックを削除し、ブラウザネイティブのドラッグ機能（最高に吸い付く動き）を使用
-          dragClass: 'sortable-drag',
+          animation: 200, handle: '.btn-expand', delay: 150, delayOnTouchOnly: true, touchStartThreshold: 5,
+          forceFallback: true, fallbackOnBody: true, fallbackClass: 'sortable-drag', ghostClass: 'sortable-ghost',
           onStart: function (evt) { if (navigator.vibrate) navigator.vibrate(50); },
           onEnd: function (evt) {
             let newOrder = []; els.chWrap.querySelectorAll('.channel-card').forEach(card => { newOrder.push(card.id.replace('card-', '')); });
@@ -481,21 +464,26 @@
           }
         });
       }
-      
       els.btnJoinMember.onclick = () => joinNetwork(false);
       els.btnJoinAdmin.onclick = () => joinNetwork(true);
-      
-      els.btnJoinMember.textContent = "メンバーとして参加"; els.btnJoinAdmin.textContent = "管理者として参加";
-      els.btnJoinMember.disabled = false; els.btnJoinAdmin.disabled = false;
       const savedProfile = LocalProfile.get();
       if (savedProfile) { els.hostIdInput.value = savedProfile.roomId || ''; els.joinUserIdInput.value = savedProfile.userId || ''; }
     });
+
+    // ★ LiveKit向けデータ送信処理 (全ユーザーへ一斉送信)
+    function sendData(payload) {
+      if (state.room && state.room.localParticipant) {
+        const str = JSON.stringify(payload);
+        const encoder = new TextEncoder();
+        state.room.localParticipant.publishData(encoder.encode(str), LivekitClient.DataPacket_Kind.RELIABLE);
+      }
+    }
 
     els.btnAddCh.onclick = () => {
       const id = 'ch' + Date.now(); const newCh = { id, name: 'New PL', type: 'PL' }; channels.push(newCh);
       initChannelsDOM(); setupChannelAudio(newCh.id);
       state.registeredUsers?.forEach(uid => { if (!state.userAssignments[uid]) state.userAssignments[uid] = []; state.userAssignments[uid].push(id); });
-      Object.values(state.dataConns || {}).forEach(conn => { if(conn?.open) conn.send({ type: 'add-channel', ch: newCh, assignments: state.userAssignments, registered: state.registeredUsers }); });
+      sendData({ type: 'add-channel', ch: newCh, assignments: state.userAssignments, registered: state.registeredUsers });
       Object.values(state.mediaCalls || {}).forEach(call => {
         if (call?.source && audioCtx) { const splitGain = audioCtx.createGain(); splitGain.gain.value = 0; call.source.connect(splitGain); splitGain.connect(state.channelNodes[newCh.id].analyser); call.chGains[newCh.id] = splitGain; }
       });
@@ -587,9 +575,9 @@
               let maxVal = 0;
               if (uid === state.myUserId) { maxVal = localPercent; } 
               else {
-                const peerId = Object.keys(state.users || {}).find(p => state.users[p] === uid);
-                if (peerId && state.mediaCalls[peerId] && state.mediaCalls[peerId].analyser) {
-                  const pAnalyser = state.mediaCalls[peerId].analyser; const pData = new Uint8Array(pAnalyser.frequencyBinCount); pAnalyser.getByteFrequencyData(pData);
+                const callInfo = state.mediaCalls[uid]; // SFUでは identity = uid
+                if (callInfo && callInfo.analyser) {
+                  const pAnalyser = callInfo.analyser; const pData = new Uint8Array(pAnalyser.frequencyBinCount); pAnalyser.getByteFrequencyData(pData);
                   let pSum = 0; for(let i=0; i<pData.length; i++) pSum += pData[i]; maxVal = ((pSum / pData.length) / 255) * 100 * 2.0;
                 }
               }
@@ -625,16 +613,12 @@
     }
 
     function syncTalkStates() {
-      const msg = { type: 'update-talk-states', states: state.talkStates };
-      Object.values(state.dataConns || {}).forEach(conn => { if(conn?.open) conn.send(msg); });
+      sendData({ type: 'update-talk-states', states: state.talkStates });
     }
 
     function setupPTTButton(btn, type, channelId) {
       if(!btn) return;
-      let isDown = false, startX = 0;
-      let isLatched = btn.classList.contains('latched'); 
-      const slideDir = type === 'listen' ? 1 : -1;
-
+      let isDown = false, startX = 0; let isLatched = btn.classList.contains('latched'); const slideDir = type === 'listen' ? 1 : -1;
       function applyState(active) {
         let changed = false; const card = document.getElementById(`card-${channelId}`);
         if (type === 'talk' && state.talkStates[channelId] !== active) { state.talkStates[channelId] = active; changed = true; if (card) { if(active) card.classList.add('talk-on'); else card.classList.remove('talk-on'); } }
@@ -652,33 +636,13 @@
       btn.addEventListener('pointermove', (e) => {
         if (!isDown) return; 
         let deltaX = e.clientX - startX;
-        
         if ((slideDir === 1 && deltaX < 0) || (slideDir === -1 && deltaX > 0)) { deltaX = 0; }
-        
-        const targetDistance = 120; 
-        let visualMoveX = deltaX;
-        
-        if (Math.abs(deltaX) > 20) {
-            const sign = Math.sign(deltaX);
-            const over = Math.abs(deltaX) - 20;
-            visualMoveX = sign * (20 + Math.pow(over, 0.4) * 15);
-        }
-
+        const targetDistance = 120; let visualMoveX = deltaX;
+        if (Math.abs(deltaX) > 20) { const sign = Math.sign(deltaX); const over = Math.abs(deltaX) - 20; visualMoveX = sign * (20 + Math.pow(over, 0.4) * 15); }
         if (Math.abs(deltaX) > targetDistance && Math.sign(deltaX) === slideDir) {
-          isDown = false; 
-          btn.releasePointerCapture(e.pointerId);
-          btn.style.transition = 'transform 0.15s ease-out'; 
-          btn.style.transform = `translateX(0px)`;
-          
-          if (isLatched) {
-            isLatched = false; btn.classList.remove('latched', 'active');
-            if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
-            applyState(false);
-          } else {
-            isLatched = true; btn.classList.add('latched');
-            if (navigator.vibrate) navigator.vibrate(50);
-            applyState(true);
-          }
+          isDown = false; btn.releasePointerCapture(e.pointerId); btn.style.transition = 'transform 0.15s ease-out'; btn.style.transform = `translateX(0px)`;
+          if (isLatched) { isLatched = false; btn.classList.remove('latched', 'active'); if (navigator.vibrate) navigator.vibrate([30, 50, 30]); applyState(false);
+          } else { isLatched = true; btn.classList.add('latched'); if (navigator.vibrate) navigator.vibrate(50); applyState(true); }
           return;
         }
         btn.style.transform = `translateX(${visualMoveX}px)`;
@@ -686,32 +650,27 @@
       
       const release = (e) => {
         if (!isDown) return; 
-        isDown = false; 
-        btn.style.transition = 'transform 0.15s ease-out'; 
-        btn.style.transform = `translateX(0px)`;
-        
+        isDown = false; btn.style.transition = 'transform 0.15s ease-out'; btn.style.transform = `translateX(0px)`;
         if (Math.abs(e.clientX - startX) < 5) {
           if (isLatched) { isLatched = false; btn.classList.remove('latched', 'active'); applyState(false); }
           else { btn.classList.remove('active'); applyState(false); }
         } else {
-          if (isLatched) {} else { btn.classList.remove('active'); applyState(false); }
+          if (!isLatched) { btn.classList.remove('active'); applyState(false); }
         }
       };
       
       btn.addEventListener('pointerup', release); btn.addEventListener('pointercancel', release);
     }
 
-    function syncChannelInfo() { Object.values(state.dataConns || {}).forEach(conn => { if(conn?.open) conn.send({ type: 'update-ch-info', data: channels }); }); }
+    function syncChannelInfo() { sendData({ type: 'update-ch-info', data: channels }); }
 
     window.toggleAllUserAssignments = function(uid) {
       if(!confirm(`ユーザー「${uid}」の全パーティーを一括でオン/オフしますか？`)) return;
       const allAssigned = channels?.every(ch => state.userAssignments[uid] && state.userAssignments[uid].includes(ch.id));
       if (allAssigned) state.userAssignments[uid] = []; else state.userAssignments[uid] = channels?.map(c => c.id) || []; 
       saveRoomState(); buildAdminMatrix();
-      const peerId = Object.keys(state.users || {}).find(p => state.users[p] === uid && state.peers.has(p));
-      if(peerId && state.dataConns[peerId]) state.dataConns[peerId].send({ type: 'assign-channels', channels: state.userAssignments[uid], targetUid: uid });
+      sendData({ type: 'assign-channels', channels: state.userAssignments[uid], targetUid: uid });
       if (uid === state.myUserId) applyAssignments(state.userAssignments[uid]);
-      Object.values(state.dataConns || {}).forEach(conn => { if(conn?.open) conn.send({ type: 'assign-channels', channels: state.userAssignments[uid], targetUid: uid }); });
     };
 
     function buildAdminMatrix() {
@@ -720,7 +679,8 @@
       if(!container) return;
       let html = `<div class="admin-matrix-wrapper"><table class="admin-matrix"><thead><tr><th class="diagonal-header"><span class="dh-member">メンバー</span><span class="dh-party">パーティー</span></th>`;
       state.registeredUsers?.forEach(uid => {
-          const isOnline = Array.from(state.peers).some(p => state.users[p] === uid && state.dataConns[p]?.open);
+          // LiveKitの参加者リストからオンライン判定
+          const isOnline = uid === state.myUserId || (state.room && state.room.participants.has(uid));
           const statusColor = isOnline ? 'var(--green)' : 'var(--text-sub)';
           html += `<th class="matrix-user-header" onclick="toggleAllUserAssignments('${uid}')"><div style="display:flex; align-items:center; justify-content:center; gap:5px; margin-bottom:6px;"><span style="color:${statusColor}; font-size:10px;">●</span><span style="font-weight:bold; color:var(--text-main); font-family: 'JetBrains Mono', monospace; font-size:13px;">${uid}</span><div style="position: relative; width: 4px; height: 14px; background: #0a0b0d; border-radius: 2px; overflow: hidden; margin-left: 2px;"><div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to top, #4ade80, #eab308, #f87171);"></div><div id="user-meter-${uid}" style="position: absolute; top: 0; left: 0; right: 0; height: 100%; background-color: var(--bg-dark); transition: height 0.05s linear;"></div></div></div><button class="btn-delete-col" data-uid="${uid}" onclick="event.stopPropagation();">削除</button></th>`;
       });
@@ -738,7 +698,7 @@
           const uid = e.target.getAttribute('data-uid'); const chid = e.target.getAttribute('data-chid'); let assigned = state.userAssignments[uid] || [];
           if (assigned.includes(chid)) { assigned = assigned.filter(id => id !== chid); e.target.classList.remove('active'); } else { assigned.push(chid); e.target.classList.add('active'); }
           state.userAssignments[uid] = assigned; saveRoomState(); if (uid === state.myUserId) applyAssignments(assigned);
-          Object.values(state.dataConns || {}).forEach(conn => { if(conn?.open) conn.send({ type: 'assign-channels', channels: assigned, targetUid: uid }); });
+          sendData({ type: 'assign-channels', channels: assigned, targetUid: uid });
         };
       });
 
@@ -746,14 +706,14 @@
       if(btnAddUser) {
         btnAddUser.onclick = () => {
           const uid = prompt('事前登録するメンバーのユーザーIDを入力してください:');
-          if (uid && uid.trim() !== '' && !state.registeredUsers.includes(uid)) { state.registeredUsers.push(uid); state.userAssignments[uid] = channels?.map(c => c.id) || []; saveRoomState(); buildAdminMatrix(); Object.values(state.dataConns || {}).forEach(conn => { if(conn?.open) conn.send({ type: 'update-registered', registered: state.registeredUsers }); }); }
+          if (uid && uid.trim() !== '' && !state.registeredUsers.includes(uid)) { state.registeredUsers.push(uid); state.userAssignments[uid] = channels?.map(c => c.id) || []; saveRoomState(); buildAdminMatrix(); sendData({ type: 'update-registered', registered: state.registeredUsers }); }
         };
       }
 
       container.querySelectorAll('.btn-delete-col').forEach(btn => {
         btn.onclick = (e) => {
           const uid = e.target.getAttribute('data-uid');
-          if(confirm(`ユーザー「${uid}」をリストから削除しますか？\n(設定も消去されます)`)) { state.registeredUsers = state.registeredUsers.filter(u => u !== uid); delete state.userAssignments[uid]; saveRoomState(); buildAdminMatrix(); Object.values(state.dataConns || {}).forEach(conn => { if(conn?.open) conn.send({ type: 'update-registered', registered: state.registeredUsers }); }); }
+          if(confirm(`ユーザー「${uid}」をリストから削除しますか？\n(設定も消去されます)`)) { state.registeredUsers = state.registeredUsers.filter(u => u !== uid); delete state.userAssignments[uid]; saveRoomState(); buildAdminMatrix(); sendData({ type: 'update-registered', registered: state.registeredUsers }); }
         };
       });
 
@@ -772,7 +732,7 @@
         btn.onclick = (e) => {
           const chId = e.target.getAttribute('data-id'); const ch = channels?.find(c => c?.id === chId);
           if(!ch || !confirm(`パーティー「${ch.name}」を削除しますか？`)) return; removeChannel(chId); saveRoomState();
-          Object.values(state.dataConns || {}).forEach(conn => { if(conn?.open) conn.send({ type: 'remove-channel', chId: chId }); }); buildAdminMatrix(); 
+          sendData({ type: 'remove-channel', chId: chId }); buildAdminMatrix(); 
         };
       });
     }
@@ -795,27 +755,13 @@
       updateAudioRouting(); updateChannelIcons(); syncTalkStates();
     }
 
-    function setupDataConnection(conn) {
-      if (state.dataConns[conn.peer]?.open) return; state.dataConns[conn.peer] = conn;
-
-      const initData = () => {
-        state.peers.add(conn.peer); updateUserCount(); conn.send({ type: 'hello', userId: state.myUserId, joinTime: state.joinTime }); syncTalkStates(); 
-        const targetSlot = parseInt(conn.peer.split('-s')[1]);
-        if (state.mySlot > targetSlot) { if (!state.mediaCalls[conn.peer]) { const call = state.peer.call(conn.peer, state.localStream); handleCall(call); } }
-      };
-
-      if (conn.open) { initData(); } else { conn.on('open', initData); }
-
-      conn.on('data', data => {
+    // ★ LiveKitからのデータ受信処理
+    function handleNetworkData(data, senderId) {
         if (!data) return;
         if (data.type === 'hello') {
-          const uid = data.userId || 'Anonymous';
-          if (uid !== 'Anonymous' && uid === state.myUserId) { const remoteSlot = parseInt(conn.peer.split('-s')[1]); if (state.mySlot > remoteSlot) { alert(`ユーザーID「${uid}」は現在他のオンライン端末で使用されています。別のIDで参加してください。`); LocalProfile.clear(); location.reload(); return; } else { return; } }
-          state.users[conn.peer] = uid;
-          if (uid !== 'Anonymous' && !state.registeredUsers.includes(uid)) { state.registeredUsers.push(uid); state.userAssignments[uid] = channels?.map(c => c.id) || []; saveRoomState(); if (state.isAdmin) buildAdminMatrix(); }
-          const amILowestSlot = Array.from(state.peers).every(p => parseInt(p.split('-s')[1]) > state.mySlot);
-          if(amILowestSlot) { conn.send({ type: 'init-state', channels, assignments: state.userAssignments, registered: state.registeredUsers }); }
-          updateUserCount();
+          if (senderId !== state.myUserId && !state.registeredUsers.includes(senderId)) { state.registeredUsers.push(senderId); state.userAssignments[senderId] = channels?.map(c => c.id) || []; saveRoomState(); if (state.isAdmin) buildAdminMatrix(); }
+          // 管理者が部屋の最新状態を配る
+          if(state.isAdmin) { sendData({ type: 'init-state', channels, assignments: state.userAssignments, registered: state.registeredUsers }); }
         }
         else if (data.type === 'init-state') { resetAndApplyChannels(data.channels, data.assignments, data.registered); saveRoomState(); if(state.isAdmin) buildAdminMatrix(); }
         else if (data.type === 'update-ch-info') {
@@ -825,7 +771,7 @@
           if(state.isAdmin) { document.querySelectorAll('.admin-edit-name').forEach(input => { const ch = channels.find(c => c?.id === input.getAttribute('data-id')); if(ch) input.value = ch.name; }); document.querySelectorAll('.admin-edit-type').forEach(input => { const ch = channels.find(c => c?.id === input.getAttribute('data-id')); if(ch) input.value = ch.type; }); }
         }
         else if (data.type === 'update-registered') { state.registeredUsers = data.registered || []; saveRoomState(); if(state.isAdmin) buildAdminMatrix(); }
-        else if (data.type === 'update-talk-states') { state.remoteTalkStates[conn.peer] = data.states || {}; updateAudioRouting(); }
+        else if (data.type === 'update-talk-states') { state.remoteTalkStates[senderId] = data.states || {}; updateAudioRouting(); }
         else if (data.type === 'assign-channels') {
           if (data.targetUid === state.myUserId) { applyAssignments(data.channels); }
           if (data.targetUid) { state.userAssignments[data.targetUid] = data.channels || []; if (state.isAdmin) { document.querySelectorAll(`.matrix-toggle[data-uid="${data.targetUid}"]`).forEach(btn => { if ((data.channels||[]).includes(btn.getAttribute('data-chid'))) { btn.classList.add('active'); } else { btn.classList.remove('active'); } }); } } else { if (!state.isAdmin) applyAssignments(data.channels); }
@@ -839,104 +785,100 @@
           saveRoomState(); if(state.isAdmin) buildAdminMatrix();
         }
         else if (data.type === 'remove-channel') { if(data.chId) removeChannel(data.chId); saveRoomState(); if(state.isAdmin) buildAdminMatrix(); }
-      });
-
-      conn.on('close', () => removePeer(conn.peer)); conn.on('error', () => removePeer(conn.peer));
     }
 
     function removePeer(peerId) {
-      if (state.dataConns[peerId] && state.dataConns[peerId].pending) return; 
-      if (state.dataConns[peerId]) { try { state.dataConns[peerId].close(); } catch(e){} delete state.dataConns[peerId]; }
-      state.peers.delete(peerId); delete state.remoteTalkStates[peerId];
+      delete state.remoteTalkStates[peerId];
       if (state.mediaCalls[peerId]) { Object.values(state.mediaCalls[peerId].chGains || {}).forEach(gain => { try{ gain?.disconnect(); }catch(e){} }); try { state.mediaCalls[peerId].audioEl.pause(); state.mediaCalls[peerId].audioEl.srcObject = null; } catch(e){} delete state.mediaCalls[peerId]; }
       updateAudioRouting(); updateUserCount();
     }
 
     function updateUserCount() {
-      const isOnline = state.mySlot > 0; let activeCount = isOnline ? 1 : 0;
-      state.peers.forEach(p => { if (state.dataConns[p]?.open) activeCount++; });
-      els.roleDisplay.textContent = `ACTIVE (${activeCount})`; els.roleDisplay.style.color = isOnline ? 'var(--blue)' : 'var(--orange)';
-      if(isOnline) { els.btnLoginShow.textContent = "Connected"; els.btnLoginShow.classList.add('online'); }
-      if (state.isAdmin) { document.querySelectorAll('.admin-matrix th').forEach(th => { const uidSpan = th.querySelector('span[style*="font-weight:bold"]'); if(uidSpan) { const uid = uidSpan.textContent; const isPeerOnline = Array.from(state.peers).some(p => state.users[p] === uid && state.dataConns[p]?.open); const dot = th.querySelector('span:first-child'); if(dot) dot.style.color = isPeerOnline ? 'var(--green)' : 'var(--text-sub)'; } }); }
+      if(!state.room) return;
+      const activeCount = state.room.participants.size + 1; // +1 for local
+      els.roleDisplay.textContent = `ACTIVE (${activeCount})`; els.roleDisplay.style.color = 'var(--blue)';
+      els.btnLoginShow.textContent = "Connected"; els.btnLoginShow.classList.add('online');
+      if (state.isAdmin) { document.querySelectorAll('.admin-matrix th').forEach(th => { const uidSpan = th.querySelector('span[style*="font-weight:bold"]'); if(uidSpan) { const uid = uidSpan.textContent; const isPeerOnline = uid === state.myUserId || state.room.participants.has(uid); const dot = th.querySelector('span:first-child'); if(dot) dot.style.color = isPeerOnline ? 'var(--green)' : 'var(--text-sub)'; } }); }
     }
 
-    const peerConfig = { config: { 'iceServers': [ { urls: 'stun:stun.l.google.com:19302' }, { urls: "stun:stun.relay.metered.ca:80" }, { urls: "turn:global.relay.metered.ca:80", username: "cce7732b3cc3adfa6f13a545", credential: "l3ACe3V84yTvkBEd" }, { urls: "turn:global.relay.metered.ca:80?transport=tcp", username: "cce7732b3cc3adfa6f13a545", credential: "l3ACe3V84yTvkBEd" }, { urls: "turn:global.relay.metered.ca:443", username: "cce7732b3cc3adfa6f13a545", credential: "l3ACe3V84yTvkBEd" }, { urls: "turns:global.relay.metered.ca:443?transport=tcp", username: "cce7732b3cc3adfa6f13a545", credential: "l3ACe3V84yTvkBEd" } ] } };
-
-    async function initMedia() {
-      try {
-        els.statusMsg.textContent = "マイク起動中...";
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { alert("【警告】\nお使いのブラウザやアプリ環境ではマイク機能がサポートされていません。\n(HTTPS接続にするか、Safari/Chromeなどの通常ブラウザアプリで開き直してください)"); return false; }
-        state.localStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
-        state.audioEnabled = true; initAudioContext(); return true;
-      } catch(e) { alert("マイクへのアクセスがブロックされています。\n\n詳細: " + e.message); return false; }
-    }
-
+    // ★ LiveKit Cloud 接続システムの大黒柱
     const joinNetwork = async function(isAdmin) {
-      const btn = isAdmin ? els.btnJoinAdmin : els.btnJoinMember; 
-      if (btn.disabled) return; 
-
       if (isAdmin) {
         const pass = prompt("管理者パスワードを入力してください (ヒント: tmax)");
-        if (pass !== "tmax") { 
-          if(pass !== null) alert("パスワードが違います。"); 
-          return; 
-        }
+        if (pass !== "tmax") { if(pass !== null) alert("パスワードが違います。"); return; }
       }
 
-      const originalText = btn.textContent;
-      els.btnJoinMember.disabled = true; els.btnJoinAdmin.disabled = true;
-      btn.textContent = "処理中..."; btn.style.opacity = "0.5";
+      const btn = isAdmin ? els.btnJoinAdmin : els.btnJoinMember; const originalText = btn.textContent;
+      els.btnJoinMember.disabled = true; els.btnJoinAdmin.disabled = true; btn.textContent = "認証中..."; btn.style.opacity = "0.5";
       
-      await new Promise(r => setTimeout(r, 50));
-
-      if (typeof Peer === 'undefined') { alert("通信サーバーのプログラムが読み込めませんでした。\nインターネット接続を確認するか、ページを再読み込みしてください。"); els.btnJoinMember.disabled = false; els.btnJoinAdmin.disabled = false; btn.textContent = originalText; btn.style.opacity = "1"; return; }
-      if (!await initMedia()) { els.btnJoinMember.disabled = false; els.btnJoinAdmin.disabled = false; btn.textContent = originalText; btn.style.opacity = "1"; els.statusMsg.textContent = "マイクが許可されませんでした"; return; }
-      
-      state.isAdmin = isAdmin; 
       const rawRoomId = els.hostIdInput.value.trim() || 'yytalk'; const myName = els.joinUserIdInput.value.trim() || 'Unknown';
-      state.roomId = rawRoomId; state.myUserId = myName; state.netRoomId = 'yytalk-pro-' + encodeURIComponent(rawRoomId).replace(/%/g, '-');
+      state.roomId = rawRoomId; state.myUserId = myName; state.isAdmin = isAdmin;
       els.roomNameDisplay.textContent = `${rawRoomId}${isAdmin ? ' (Admin)' : ''}`;
       if (isAdmin) { els.btnSettings.style.display = 'flex'; els.btnSettings.innerHTML = iconSettings; } else { els.btnSettings.style.display = 'none'; }
       LocalProfile.set({ roomId: rawRoomId, userId: myName, isAdmin });
       
-      els.statusMsg.textContent = "データを読み込み中..."; loadRoomState(state.roomId);
-      els.statusMsg.textContent = "空きポートを検索中..."; btn.textContent = "サーバー接続中...";
-      
-      state.joinTime = Date.now(); let slot = 1; const maxSlots = 30;
-      
-      function tryConnectSlot() {
-        if (slot > maxSlots) { alert("申し訳ありません、ルームが満員です（最大30人）。"); els.btnJoinMember.disabled = false; els.btnJoinAdmin.disabled = false; btn.textContent = originalText; btn.style.opacity = "1"; els.statusMsg.textContent = "満員のため接続できませんでした"; return; }
-        const tryId = `${state.netRoomId}-s${slot}`; state.peer = new Peer(tryId, peerConfig);
-        
-        state.peer.on('open', (id) => {
-          state.mySlot = slot; els.myIdDisplay.textContent = `${myName} (Slot ${slot})`; els.statusMsg.textContent = "接続完了。仲間を探しています..."; setTimeout(() => els.loginOverlay.style.display = 'none', 500);
-          updateUserCount(); els.btnJoinMember.disabled = false; els.btnJoinAdmin.disabled = false; btn.textContent = originalText; btn.style.opacity = "1";
-          state.peer.on('connection', conn => setupDataConnection(conn));
-          state.peer.on('call', call => { call.answer(state.localStream); handleCall(call); });
-          scanForPeers(); setInterval(() => scanForPeers(), 8000);
-          setInterval(() => { state.peers.forEach(p => { if (state.dataConns[p] && !state.dataConns[p].open) removePeer(p); }); updateUserCount(); }, 10000);
-        });
-        
-        state.peer.on('error', (err) => {
-          if (err.type === 'peer-unavailable') return;
-          if (state.mySlot === 0) { if (err.type === 'unavailable-id') { slot++; state.peer.destroy(); setTimeout(tryConnectSlot, 400); } else { console.error(err); els.statusMsg.textContent = "接続エラー: " + err.type; els.btnJoinMember.disabled = false; els.btnJoinAdmin.disabled = false; btn.textContent = originalText; btn.style.opacity = "1"; } }
-        });
+      loadRoomState(state.roomId);
+
+      // 1. パスポート(Token)の取得
+      let token = "";
+      try {
+        const res = await fetch(`${WORKER_AUTH_URL}/?room=${encodeURIComponent(rawRoomId)}&user=${encodeURIComponent(myName)}`);
+        if (!res.ok) throw new Error("認証に失敗しました");
+        const data = await res.json();
+        token = data.token;
+      } catch (e) {
+        alert("パスポート発行エラー: " + e.message + "\nCloudflare WorkersのURLを確認してください。");
+        els.btnJoinMember.disabled = false; els.btnJoinAdmin.disabled = false; btn.textContent = originalText; btn.style.opacity = "1";
+        return;
       }
-      tryConnectSlot();
-    };
 
-    function scanForPeers() { for (let i = 1; i < state.mySlot; i++) { const targetId = `${state.netRoomId}-s${i}`; if (!state.dataConns[targetId]) { const conn = state.peer.connect(targetId); conn.on('open', () => setupDataConnection(conn)); conn.on('error', () => {}); } } }
+      btn.textContent = "SFU接続中...";
 
-    function handleCall(call) {
-      call.on('stream', stream => {
-        if (state.mediaCalls[call.peer]) return; 
-        const audioEl = new Audio(); audioEl.srcObject = stream; audioEl.muted = true; audioEl.play().catch(()=>{});
-        const callData = { stream, audioEl }; state.mediaCalls[call.peer] = callData;
-        if (!state.audioEnabled) { els.audioOverlay.style.display = 'flex'; } else { setupPeerMixer(callData); }
-        updateUserCount();
+      // 2. LiveKit Roomの作成とイベント登録
+      const room = new LivekitClient.Room({ adaptiveStream: false, dynacast: false });
+      state.room = room;
+
+      room.on(LivekitClient.RoomEvent.TrackSubscribed, (track, publication, participant) => {
+        if (track.kind === LivekitClient.Track.Kind.Audio) {
+          const stream = new MediaStream([track.mediaStreamTrack]);
+          const audioEl = new Audio(); audioEl.srcObject = stream; audioEl.muted = true; audioEl.play().catch(()=>{});
+          const callData = { stream, audioEl }; state.mediaCalls[participant.identity] = callData;
+          if (audioCtx) setupPeerMixer(callData);
+          updateUserCount();
+        }
       });
-      call.on('close', () => removePeer(call.peer));
-    }
+
+      room.on(LivekitClient.RoomEvent.TrackUnsubscribed, (track, publication, participant) => { removePeer(participant.identity); });
+      room.on(LivekitClient.RoomEvent.ParticipantDisconnected, (participant) => { removePeer(participant.identity); });
+      room.on(LivekitClient.RoomEvent.ParticipantConnected, (participant) => { updateUserCount(); sendData({ type: 'hello', userId: state.myUserId }); syncTalkStates(); });
+      
+      room.on(LivekitClient.RoomEvent.DataReceived, (payload, participant) => {
+         try { const data = JSON.parse(new TextDecoder().decode(payload)); handleNetworkData(data, participant.identity); } catch(e){}
+      });
+
+      // 3. SFUサーバーへ接続！
+      try {
+        await room.connect(LIVEKIT_WS_URL, token);
+        els.statusMsg.textContent = "マイク設定中...";
+        
+        // ローカルマイクの準備とWeb Audio APIへの接続
+        await room.localParticipant.setMicrophoneEnabled(true, { echoCancellation: true, noiseSuppression: true });
+        const localTrackPub = room.localParticipant.getTrackPublication(LivekitClient.Track.Source.Microphone);
+        if (localTrackPub && localTrackPub.track) {
+           state.localStream = new MediaStream([localTrackPub.track.mediaStreamTrack]);
+           state.audioEnabled = true;
+           initAudioContext();
+        }
+
+        els.myIdDisplay.textContent = `${myName} (SFU)`; els.loginOverlay.style.display = 'none';
+        updateUserCount();
+        sendData({ type: 'hello', userId: state.myUserId }); syncTalkStates();
+
+      } catch (e) {
+        alert("SFUサーバー接続エラー: " + e.message);
+        els.btnJoinMember.disabled = false; els.btnJoinAdmin.disabled = false; btn.textContent = originalText; btn.style.opacity = "1";
+      }
+    };
 
     document.getElementById('btn-enable-audio').onclick = () => { els.audioOverlay.style.display = 'none'; state.audioEnabled = true; initAudioContext(); };
     document.getElementById('btn-stop').onclick = () => { LocalProfile.clear(); location.reload(); };
