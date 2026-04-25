@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>YY-Talk PRO - Final Compact</title>
+  <title>YY-Talk PRO - Final Polished</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -44,20 +44,20 @@
     }
     input, select, textarea { -webkit-user-select: auto; user-select: auto; }
     
-    /* ★ はみ出し防止: JS計算を廃止し、最新の固定レイアウトを適用 */
+    /* ★ はみ出し防止の最終奥義: position:fixed で四隅を強制ピン留め */
     html, body {
-      margin: 0; padding: 0; width: 100vw; height: 100dvh;
+      margin: 0; padding: 0; 
+      width: 100%; height: 100%;
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
       overflow: hidden; background-color: #121418; color: var(--text-main);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       overscroll-behavior: none;
-      position: fixed; top: 0; left: 0; /* ブラウザスクロールを完全無効化 */
     }
 
     .app-container {
       position: absolute; top: 0; left: 0; right: 0; bottom: 0;
       background-color: var(--bg-dark);
       display: flex; flex-direction: column;
-      /* セーフエリア(ノッチ等)の余白をここで一括吸収 */
       padding-top: env(safe-area-inset-top);
       padding-bottom: env(safe-area-inset-bottom);
       padding-left: env(safe-area-inset-left);
@@ -112,8 +112,8 @@
     .btn-delete-row { margin-top: 0; }
     .admin-matrix td.ch-cell input.admin-edit-type { width: 48px; text-align:center; font-family:'JetBrains Mono', monospace; background:#1c1d21; border:1px solid #3a3c42; color:#fff; border-radius:4px; font-size:10px; padding:4px; }
 
-    /* メインヘッダー (Paddingを固定値に変更) */
-    .header { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; background: var(--bg-dark); flex-shrink: 0; }
+    /* メインヘッダー */
+    .header { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; background: var(--bg-dark); flex-shrink: 0; z-index: 10; }
     .header-left { display: flex; align-items: center; }
     #app-logo { height: 26px; width: auto; margin-right: 5px; }
     @media (min-width: 600px) { #app-logo { height: 32px; } }
@@ -125,7 +125,7 @@
     #btn-settings.online svg { fill: var(--green); border-color: var(--green); }
     #btn-settings.admin-only { display: none; }
 
-    .global-controls { display: flex; gap: 10px; padding: 5px 15px 10px; background: var(--bg-dark); border-bottom: 2px solid var(--green); flex-shrink: 0; }
+    .global-controls { display: flex; gap: 10px; padding: 5px 15px 10px; background: var(--bg-dark); border-bottom: 2px solid var(--green); flex-shrink: 0; z-index: 10;}
     .btn-global { flex: 1; padding: 8px 10px; border: none; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; font-family: 'JetBrains Mono', monospace; }
 
     .slash-line { display: none; }
@@ -142,13 +142,13 @@
     .channel-list-container { 
       flex: 1 1 auto; overflow-y: auto; padding: 10px 15px 20px; 
       display: flex; flex-direction: column; gap: 10px; scrollbar-width: none;
-      -webkit-overflow-scrolling: touch; min-height: 0; 
+      -webkit-overflow-scrolling: touch; min-height: 0; z-index: 1;
     }
     .channel-list-container::-webkit-scrollbar { display: none; }
     #channel-list-wrap { display: grid; grid-template-columns: 1fr; gap: 10px; }
     @media (min-width: 600px) { #channel-list-wrap { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 15px; } }
 
-    /* ★ 改善: カードの極限コンパクト化 */
+    /* チャンネルカード */
     .channel-card { background-color: var(--card-bg); border-radius: 8px; position: relative; overflow: hidden; display: flex; flex-direction: column; transition: background 0.3s ease; }
     .channel-card.expanded { background-color: var(--card-bg-expanded); }
     .channel-card::before, .channel-card::after { content: ""; position: absolute; top: 0; bottom: 0; width: 50%; opacity: 0; transition: opacity 0.3s ease; pointer-events: none; z-index: 0; }
@@ -187,18 +187,33 @@
     .ch-meter-container { height: 4px; background: #0a0b0d; margin: 0 45px 0; border-radius: 2px; overflow: hidden; position: relative; opacity: 0.8; }
     .ch-meter-fill { height: 100%; width: 0%; transition: width 0.05s linear; background: linear-gradient(90deg, #4ade80 0%, #4ade80 60%, #eab308 80%, #f87171 100%); }
     
-    /* 「○ ○ ○」ボタンを極限まで薄く */
+    /* ★ 改善: 浮遊感のあるドラッグデザイン */
     .btn-expand { display: inline-block; padding: 4px 30px; color: var(--text-sub); font-size: 14px; letter-spacing: 2px; cursor: grab; margin: 0 auto; border-radius: 20px;}
     .btn-expand:active { cursor: grabbing; background-color: rgba(255,255,255,0.05); }
-    .sortable-ghost { opacity: 0.4; background-color: #2a2d35 !important; }
-    .sortable-drag { cursor: grabbing !important; box-shadow: 0 20px 40px rgba(0,0,0,0.8) !important; transform: scale(1.02); }
+    
+    /* SortableJS のゴースト（元の位置に残る薄い枠） */
+    .sortable-ghost { 
+      opacity: 0.3 !important; 
+      background-color: #0a0b0d !important;
+      border: 1px dashed #3a3c42 !important;
+    }
+    /* ドラッグ中（指にくっついているカード）をフワッと浮かす */
+    .sortable-drag { 
+      cursor: grabbing !important; 
+      box-shadow: 0 30px 60px rgba(0,0,0,1) !important; 
+      transform: scale(1.04) !important; 
+      background-color: #24262b !important;
+      border: 1px solid var(--text-sub) !important;
+      opacity: 1 !important;
+      z-index: 9999 !important;
+    }
 
-    .master-meter-container { height: 8px; width: 100%; background: #1c1d21; position: relative; flex-shrink: 0; }
+    .master-meter-container { height: 8px; width: 100%; background: #1c1d21; position: relative; flex-shrink: 0; z-index: 10;}
     .master-meter-fill { height: 100%; width: 0%; transition: width 0.05s linear; background: linear-gradient(90deg, #4ade80 0%, #4ade80 60%, #eab308 80%, #f87171 100%); }
 
-    /* ★ 横向き時 (Landscape) の超スリム化 */
+    /* 横向き時のさらなるスリム化 */
     @media (orientation: landscape) and (max-height: 500px) {
-      .header { padding: 4px 15px; border-bottom: 1px solid #1e2128; }
+      .header { padding: 2px 15px; border-bottom: 1px solid #1e2128; }
       #app-logo { height: 20px; } 
       .global-controls { padding: 2px 15px; gap: 8px; }
       .btn-global { padding: 4px 8px; font-size: 11px; height: 28px; }
@@ -468,6 +483,7 @@
       order.forEach(id => { const ch = channels.find(c => c.id === id); if (ch) createChannelCard(ch); });
     }
 
+    // ★ 改善: ドラッグ＆ドロップ時にカードがフワッと浮く極上の操作感
     window.addEventListener('DOMContentLoaded', () => {
       if (typeof Sortable !== 'undefined') {
         new Sortable(els.chWrap, {
@@ -476,8 +492,9 @@
           delay: 150,
           delayOnTouchOnly: true,
           touchStartThreshold: 5,
+          forceFallback: true, // スマホ環境でカスタムデザイン(浮遊感)を強制適用する
+          fallbackClass: 'sortable-drag',
           ghostClass: 'sortable-ghost',
-          dragClass: 'sortable-drag',
           onStart: function (evt) { if (navigator.vibrate) navigator.vibrate(50); },
           onEnd: function (evt) {
             let newOrder = [];
@@ -626,9 +643,10 @@
       Object.values(state.dataConns).forEach(conn => { if(conn && conn.open) conn.send(msg); });
     }
 
+    // ★ 改善: PTTボタンの自動スナップ(一定量スワイプで指を離してもロック化)
     function setupPTTButton(btn, type, channelId) {
       if(!btn) return;
-      let isDown = false, startX = 0, hasDragged = false;
+      let isDown = false, startX = 0;
       let isLatched = btn.classList.contains('latched'); 
       const slideDir = type === 'listen' ? 1 : -1;
 
@@ -641,26 +659,56 @@
       }
 
       btn.addEventListener('pointerdown', (e) => {
-        btn.setPointerCapture(e.pointerId); isDown = true; startX = e.clientX; hasDragged = false; els.dummyAudio.play().catch(()=>{});
+        btn.setPointerCapture(e.pointerId); isDown = true; startX = e.clientX; els.dummyAudio.play().catch(()=>{});
         if (!isLatched) { btn.classList.add('active'); applyState(true); }
       });
+      
       btn.addEventListener('pointermove', (e) => {
-        if (!isDown) return; const deltaX = e.clientX - startX;
+        if (!isDown) return; 
+        const deltaX = e.clientX - startX;
         if ((slideDir === 1 && deltaX > 0) || (slideDir === -1 && deltaX < 0)) {
-          e.preventDefault(); btn.style.transform = `translateX(${deltaX}px)`;
-          if (Math.abs(deltaX) > 30 && !isLatched) { hasDragged = true; isLatched = true; btn.classList.add('latched'); if (navigator.vibrate) navigator.vibrate(50); }
+          e.preventDefault(); 
+          
+          // 一定距離(35px)スワイプしたら自動的にロックしてスナップさせる
+          if (Math.abs(deltaX) > 35) {
+            isDown = false; // ドラッグ終了
+            btn.releasePointerCapture(e.pointerId);
+            btn.style.transform = `translateX(0px)`; // 定位置に戻す
+            
+            if (!isLatched) {
+              isLatched = true;
+              btn.classList.add('latched');
+              if (navigator.vibrate) navigator.vibrate(50);
+              applyState(true);
+            }
+            return;
+          }
+          
+          btn.style.transform = `translateX(${deltaX}px)`;
         }
       });
+      
       const release = (e) => {
-        if (!isDown) return; isDown = false; btn.style.transform = `translateX(0px)`;
-        if (hasDragged) applyState(true); else { if (isLatched) { isLatched = false; btn.classList.remove('latched', 'active'); applyState(false); } else { btn.classList.remove('active'); applyState(false); } }
+        if (!isDown) return; 
+        isDown = false; 
+        btn.style.transform = `translateX(0px)`;
+        
+        if (Math.abs(e.clientX - startX) < 5) {
+          // クリック扱い
+          if (isLatched) { isLatched = false; btn.classList.remove('latched', 'active'); applyState(false); }
+          else { btn.classList.remove('active'); applyState(false); }
+        } else {
+          // スワイプ途中で離した場合
+          if (isLatched) { /* 既にロック済みならそのまま */ }
+          else { btn.classList.remove('active'); applyState(false); }
+        }
       };
+      
       btn.addEventListener('pointerup', release); btn.addEventListener('pointercancel', release);
     }
 
     function syncChannelInfo() { Object.values(state.dataConns).forEach(conn => { if(conn && conn.open) conn.send({ type: 'update-ch-info', data: channels }); }); }
 
-    // ★ 改善: 一括オン/オフ時の確認ポップアップ
     window.toggleAllUserAssignments = function(uid) {
       if(!confirm(`ユーザー「${uid}」の全パーティーを一括でオン/オフしますか？`)) return;
 
