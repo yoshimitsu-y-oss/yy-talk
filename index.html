@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>YY-Talk PRO Intercom</title>
+  <title>YY-Talk PRO - Final Base Station</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,6 +14,7 @@
       alert("【システムエラー検知】\n" + message + "\n行: " + lineno);
     };
 
+    // Opus DTX (無音時の通信量削減)
     const origSetLocalDescription = RTCPeerConnection.prototype.setLocalDescription;
     RTCPeerConnection.prototype.setLocalDescription = function(desc) {
       if (desc && (desc.type === 'offer' || desc.type === 'answer')) {
@@ -21,17 +22,10 @@
       }
       return origSetLocalDescription.apply(this, arguments);
     };
-
-    // ★ iOS Safariのサイズ計算バグを無効化する最強スクリプト
-    function fixViewportHeight() {
-      document.documentElement.style.height = window.innerHeight + 'px';
-      document.body.style.height = window.innerHeight + 'px';
-    }
-    window.addEventListener('resize', fixViewportHeight);
-    window.addEventListener('orientationchange', () => { setTimeout(fixViewportHeight, 100); });
   </script>
 
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
   
   <style>
     :root {
@@ -41,21 +35,20 @@
       --orange: #f97316; --blue: #3b82f6;
     }
 
-    /* ★ 改善3: 長押し時の文字選択、虫眼鏡、メニューを完全ブロック */
+    /* 長押し時の文字選択、虫眼鏡、メニューを完全ブロック */
     * { 
       box-sizing: border-box; 
       -webkit-tap-highlight-color: transparent; 
-      -webkit-touch-callout: none; /* iOS Safari コールアウトメニュー禁止 */
-      -webkit-user-select: none; /* iOS Safari 文字選択禁止 */
-      user-select: none; /* 標準 文字選択禁止 */
+      -webkit-touch-callout: none; 
+      -webkit-user-select: none; 
+      user-select: none; 
     }
-    /* ただし入力フォームだけは文字入力できるように許可 */
     input, select, textarea {
       -webkit-user-select: auto;
       user-select: auto;
     }
     
-    /* ★ スクロールバグ・めり込み防止の土台 */
+    /* 画面のスクロール・めり込み防止 */
     html, body {
       margin: 0; padding: 0; width: 100%; height: 100%;
       overflow: hidden; background-color: #121418; color: var(--text-main);
@@ -63,10 +56,12 @@
       overscroll-behavior: none;
     }
 
-    /* ★ 画面四隅に完全ピン留め */
+    /* ★ 改善: 安全領域(Safe Area)を確保し、上が隠れるのを防ぐ */
     .app-container {
       position: absolute; inset: 0; background-color: var(--bg-dark);
       display: flex; flex-direction: column;
+      height: 100dvh; /* 最新の動的ビューポートを使用 */
+      padding-top: env(safe-area-inset-top);
       padding-bottom: env(safe-area-inset-bottom);
       padding-left: env(safe-area-inset-left);
       padding-right: env(safe-area-inset-right);
@@ -75,103 +70,88 @@
     @media (min-width: 600px) {
       html, body { position: static; display: flex; justify-content: center; align-items: center; }
       .app-container {
-        position: relative; inset: auto;
+        position: relative; inset: auto; padding: 0;
         width: 96vw; max-width: 1800px; height: 94vh; max-height: 1200px; min-height: 600px;
-        border-radius: 20px; border: 8px solid #1e2128; overflow: hidden; margin: 0 auto; padding: 0;
+        border-radius: 20px; border: 8px solid #1e2128; overflow: hidden; margin: 0 auto;
       }
     }
 
+    /* モーダル・オーバーレイ類 */
     .overlay-base { position: absolute; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; flex-direction: column; backdrop-filter: blur(4px); z-index: 1000; overflow-y: auto; }
     @media (max-height: 700px) { .overlay-base { align-items: flex-start; padding: 20px 0; } }
 
     #login-overlay { z-index: 2000; }
     #audio-overlay { z-index: 1100; }
-    
     .btn-green-solid { background: var(--green); color: #000; border: none; padding: 15px 30px; font-size: 18px; font-weight: bold; border-radius: 30px; cursor: pointer; }
 
+    /* ログイン画面 */
     .login-modal { background: var(--card-bg); padding: 25px 20px; border-radius: 12px; width: 90%; max-width: 340px; border: 1px solid #3a3c42; position: relative; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); margin: auto; }
-    .login-modal .btn-close-login { position: absolute; top: 12px; right: 15px; background: transparent; border: none; color: #9ca3af; font-size: 28px; cursor: pointer; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; line-height: 1; z-index: 2010; font-weight: normal; }
-    .login-modal .btn-close-login:hover { color: #ffffff; }
+    .login-modal .btn-close-login { position: absolute; top: 12px; right: 15px; background: transparent; border: none; color: #9ca3af; font-size: 28px; cursor: pointer; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; z-index: 2010; font-weight: normal; }
     .login-modal input { width: 100%; padding: 12px; background: #0a0b0d; border: 1px solid #3a3c42; color: #fff; border-radius: 8px; font-size: 16px; text-align: center;}
-    .login-modal button:not(.btn-close-login) { padding: 14px; border: none; border-radius: 8px; font-weight: bold; color: #000; cursor: pointer; font-size: 15px; transition: opacity 0.2s; position: relative; z-index: 2001; }
+    .login-modal button:not(.btn-close-login) { padding: 14px; border: none; border-radius: 8px; font-weight: bold; color: #000; cursor: pointer; font-size: 15px; z-index: 2001; }
     .login-modal button:not(.btn-close-login):disabled { opacity: 0.5; cursor: not-allowed; }
-    
     .btn-join-member { background: var(--orange); width: 100%; } 
     .btn-join-admin { background: transparent; border: 1.5px solid var(--blue) !important; color: var(--blue) !important; width: 100%; } 
     .btn-stop { background: var(--red); width: 100%; }
     .status-text { font-size: 12px; color: var(--text-sub); text-align: center; margin-top: 5px; font-family: 'JetBrains Mono', monospace;}
 
+    /* パッチパネル (管理者) */
     .admin-modal { max-width: 95%; width: auto; min-width: 320px; }
     @media (min-width: 800px) { .admin-modal { max-width: 1200px; } }
-    
     .scroll-area { max-height: 75vh; overflow: auto; padding-right: 5px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
     .scroll-area::-webkit-scrollbar { display: none; }
-
     .admin-matrix-wrapper { width: 100%; overflow-x: auto; overscroll-behavior-x: none; -webkit-overflow-scrolling: touch; border-radius: 8px; background: #0a0b0d; border: 1px solid #3a3c42; position: relative; }
     .admin-matrix { width: 100%; border-collapse: separate; border-spacing: 0; min-width: max-content; text-align: center; font-size: 13px; }
     .admin-matrix th, .admin-matrix td { border-bottom: 1px solid #3a3c42; border-right: 1px solid #3a3c42; padding: 6px; }
     .admin-matrix th { background-color: #1c1d21; color: var(--text-sub); font-weight: normal; position: sticky; top: 0; z-index: 5; border-top: 1px solid #3a3c42; }
-    .admin-matrix tr td:first-child, .admin-matrix tr th:first-child { border-left: 1px solid #3a3c42; }
-    
-    .diagonal-header { position: sticky; left: 0; z-index: 10 !important; min-width: 120px; min-height: 40px; background: linear-gradient(to top right, #1c1d21 49%, #3a3c42 49%, #3a3c42 51%, #1c1d21 51%); border-right: 2px solid #3a3c42 !important; box-shadow: 2px 0 5px rgba(0,0,0,0.4); transform: translate3d(0, 0, 0); }
+    .diagonal-header { position: sticky; left: 0; z-index: 10 !important; min-width: 120px; min-height: 40px; background: linear-gradient(to top right, #1c1d21 49%, #3a3c42 49%, #3a3c42 51%, #1c1d21 51%); border-right: 2px solid #3a3c42 !important; box-shadow: 2px 0 5px rgba(0,0,0,0.4); }
     .diagonal-header .dh-member { position: absolute; top: 4px; right: 10px; font-weight: bold; color: var(--text-main); font-size: 11px; }
     .diagonal-header .dh-party { position: absolute; bottom: 4px; left: 10px; font-weight: bold; color: var(--text-main); font-size: 11px; }
-    
     .matrix-user-header { cursor: pointer; transition: background 0.2s; }
-    .matrix-user-header:hover { background: #2a2d35; }
-    .matrix-user-header span.bulk-label { display: block; font-size: 9px; color: var(--text-sub); margin-top: 2px; }
-
-    .admin-matrix td.ch-cell { text-align: left; background-color: #0a0b0d; min-width: 120px; padding: 6px; position: sticky; left: 0; z-index: 9; border-right: 2px solid #3a3c42 !important; box-shadow: 2px 0 5px rgba(0,0,0,0.4); transform: translate3d(0, 0, 0); }
-    
+    .admin-matrix td.ch-cell { text-align: left; background-color: #0a0b0d; min-width: 120px; padding: 6px; position: sticky; left: 0; z-index: 9; border-right: 2px solid #3a3c42 !important; box-shadow: 2px 0 5px rgba(0,0,0,0.4); }
     .matrix-toggle { width: 24px; height: 24px; border-radius: 50%; margin: 0 auto; background: #1c1d21; border: 2px solid #3a3c42; cursor: pointer; transition: 0.15s ease-out; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5); }
     .matrix-toggle.active { background: var(--green); border-color: var(--green); box-shadow: 0 0 8px rgba(74, 222, 128, 0.4); transform: scale(1.1); }
-    
     .btn-delete-col, .btn-delete-row { background: var(--red); color: #fff; border: none; border-radius: 4px; cursor: pointer; padding: 3px 6px; font-size: 10px; transition: all 0.2s; display: inline-block; margin-top: 4px; font-weight: bold; }
     .btn-delete-row { margin-top: 0; }
-    .btn-delete-col:hover, .btn-delete-row:hover { filter: brightness(1.2); }
     .admin-matrix td.ch-cell input.admin-edit-type { width: 48px; text-align:center; font-family:'JetBrains Mono', monospace; background:#1c1d21; border:1px solid #3a3c42; color:#fff; border-radius:4px; font-size:10px; padding:4px; }
 
-    .header { display: flex; align-items: center; justify-content: space-between; padding: calc(env(safe-area-inset-top) + 12px) 15px 8px; background: var(--bg-dark); flex-shrink: 0; }
+    /* メインヘッダー */
+    .header { display: flex; align-items: center; justify-content: space-between; padding: 12px 15px 8px; background: var(--bg-dark); flex-shrink: 0; }
     .header-left { display: flex; align-items: center; }
     #app-logo { height: 26px; width: auto; margin-right: 5px; }
     @media (min-width: 600px) { #app-logo { height: 32px; } }
     .header-right { display: flex; align-items: center; gap: 12px; color: var(--text-sub); font-size: 13px; font-weight: bold; }
-    
     .btn-login-trigger { display: flex; align-items: center; justify-content: center; background: transparent; border: 1.5px solid var(--text-sub); color: var(--text-sub); padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; transition: 0.2s; }
-    .btn-login-trigger:active { background: var(--text-sub); color: var(--bg-dark); }
     .btn-login-trigger.online { border-color: var(--blue); color: var(--blue); }
     #btn-settings { padding: 6px; border-color: var(--text-sub); }
     #btn-settings svg { width: 18px; height: 18px; fill: var(--text-sub); }
-    #btn-settings.online svg { fill: var(--green); border-color: var(--green); }
     #btn-settings.admin-only { display: none; }
 
     .global-controls { display: flex; gap: 10px; padding: 5px 15px 10px; background: var(--bg-dark); border-bottom: 2px solid var(--green); flex-shrink: 0; }
-    .btn-global { flex: 1; padding: 10px; border: none; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s; font-family: 'JetBrains Mono', monospace; position: relative; }
+    .btn-global { flex: 1; padding: 10px; border: none; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; font-family: 'JetBrains Mono', monospace; }
 
     .slash-line { display: none; }
     .muted-slash .slash-line { display: block; opacity: 1; }
 
     @keyframes pulse-green { 0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.6); } 70% { box-shadow: 0 0 0 10px rgba(74, 222, 128, 0); } 100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); } }
     @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.6); } 70% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); } 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); } }
-
     .btn-master-spk { background: #1c1d21; color: var(--text-main); border: 1px solid #3a3c42; }
     .btn-master-spk.active { background: var(--green); color: #000; border-color: var(--green); animation: pulse-green 1.5s infinite; }
     .btn-master-mic { background: #1c1d21; color: var(--text-main); border: 1px solid #3a3c42; }
     .btn-master-mic.active { background: var(--red); color: #000; border-color: var(--red); animation: pulse-red 1.5s infinite; }
 
-    /* --- スクロールバグ修正: チャンネルリストコンテナ --- */
+    /* チャンネルリスト領域 */
     .channel-list-container { 
       flex: 1 1 auto; overflow-y: auto; padding: 10px 15px 20px; 
       display: flex; flex-direction: column; gap: 10px; scrollbar-width: none;
       -webkit-overflow-scrolling: touch; 
-      min-height: 0; /* ★ Safari Flexboxスクロールの必須ハック */
+      min-height: 0; 
     }
     .channel-list-container::-webkit-scrollbar { display: none; }
-    
-    /* ★ 改善1: 横向き2列グリッドの最適化 */
     #channel-list-wrap { display: grid; grid-template-columns: 1fr; gap: 10px; }
     @media (min-width: 600px) { #channel-list-wrap { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 15px; } }
 
+    /* チャンネルカード */
     .channel-card { background-color: var(--card-bg); border-radius: 10px; position: relative; overflow: hidden; display: flex; flex-direction: column; transition: background 0.3s ease; }
     .channel-card.expanded { background-color: var(--card-bg-expanded); }
     .channel-card::before, .channel-card::after { content: ""; position: absolute; top: 0; bottom: 0; width: 50%; opacity: 0; transition: opacity 0.3s ease; pointer-events: none; z-index: 0; }
@@ -199,7 +179,7 @@
     .ch-name { font-size: 16px; font-weight: 500; margin-bottom: 2px; display: inline-block; padding: 2px 6px; border-radius: 4px; }
     .ch-type { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-sub); display: inline-block; padding: 2px 6px; border-radius: 4px; pointer-events: auto; }
 
-    .btn-action { width: 56px; height: 56px; border-radius: 50%; border: 2px solid; display: flex; align-items: center; justify-content: center; background: #1c1d21; touch-action: none; z-index: 10; user-select: none; box-shadow: 0 4px 8px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.05); transition: background-color 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, color 0.2s ease; cursor: pointer;}
+    .btn-action { width: 56px; height: 56px; border-radius: 50%; border: 2px solid; display: flex; align-items: center; justify-content: center; background: #1c1d21; touch-action: none; z-index: 10; user-select: none; box-shadow: 0 4px 8px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.05); transition: background-color 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, color 0.2s ease; cursor: pointer; }
     .btn-icon { width: 26px; height: 26px; fill: currentColor; pointer-events: none; }
     .btn-listen { border-color: var(--green); color: var(--green); }
     .btn-listen.active, .btn-listen.latched { background-color: var(--green); color: var(--bg-dark); box-shadow: inset 0 2px 4px rgba(255,255,255,0.4), 0 4px 15px rgba(74, 222, 128, 0.5); }
@@ -209,38 +189,35 @@
     .ch-meter-container { height: 4px; background: #0a0b0d; margin: 0 45px 0; border-radius: 2px; overflow: hidden; position: relative; opacity: 0.8; }
     .ch-meter-fill { height: 100%; width: 0%; transition: width 0.05s linear; background: linear-gradient(90deg, #4ade80 0%, #4ade80 60%, #eab308 80%, #f87171 100%); }
     
+    /* ★ ドラッグ＆ドロップ時のデザイン */
+    .btn-expand { text-align: center; padding: 6px 0 8px; color: var(--text-sub); font-size: 16px; letter-spacing: 2px; cursor: grab; }
+    .btn-expand:active { cursor: grabbing; }
+    .sortable-ghost { opacity: 0.4; background-color: #2a2d35 !important; }
+    .sortable-drag { cursor: grabbing !important; box-shadow: 0 20px 40px rgba(0,0,0,0.8) !important; transform: scale(1.02); }
+
     .master-meter-container { height: 8px; width: 100%; background: #1c1d21; position: relative; flex-shrink: 0; }
     .master-meter-fill { height: 100%; width: 0%; transition: width 0.05s linear; background: linear-gradient(90deg, #4ade80 0%, #4ade80 60%, #eab308 80%, #f87171 100%); }
 
-    /* --- スマホ横向き (Landscape) の2列・薄型化最適化 --- */
+    /* --- ★ スマホ横向き (Landscape) の完全最適化 --- */
     @media (orientation: landscape) and (max-height: 500px) {
-      .header { padding: calc(max(env(safe-area-inset-top), 2px)) 15px 4px; border-bottom: 1px solid #1e2128; }
+      .header { padding: 4px 15px; border-bottom: 1px solid #1e2128; }
       #app-logo { height: 26px; } 
-      #header-room-name { font-size: 12px; margin-left: 8px; }
-      .header-right { gap: 8px; font-size: 12px; }
+      .global-controls { padding: 4px 15px; gap: 10px; }
+      .btn-global { padding: 4px 10px; font-size: 12px; height: 34px; }
       
-      .global-controls { padding: 4px 15px; border-bottom-width: 1px; gap: 10px; }
-      .btn-global { padding: 4px 10px; font-size: 12px; height: 34px; border-radius: 4px; }
-      .btn-global svg { width: 16px; height: 16px; }
+      .channel-list-container { padding: 6px 15px; }
+      #channel-list-wrap { grid-template-columns: 1fr 1fr; gap: 10px; } 
 
-      .channel-list-container { padding: 6px 15px; gap: 8px; }
-      #channel-list-wrap { grid-template-columns: 1fr 1fr; gap: 8px; } 
-
-      .channel-card { border-radius: 8px; }
       .main-controls { padding: 8px 10px; }
       .btn-action { width: 44px; height: 44px; border-width: 1.5px; }
       .btn-icon { width: 22px; height: 22px; }
       .ch-name { font-size: 14px; }
-      
-      .card-footer { padding: 0 10px 4px !important; }
-      .btn-sort { padding: 4px 12px !important; font-size: 10px !important; }
-      .btn-expand { padding: 2px 0 4px !important; font-size: 14px !important; }
-      
+      .btn-expand { padding: 2px 0 6px; font-size: 14px; }
       .master-meter-container { height: 6px; }
     }
   </style>
 </head>
-<body onload="fixViewportHeight()">
+<body>
 
   <div class="app-container">
     
@@ -303,12 +280,8 @@
     </div>
 
     <div class="global-controls">
-      <button id="btn-master-spk" class="btn-global btn-master-spk">
-        <span id="global-spk-icon"></span> SPK MUTE
-      </button>
-      <button id="btn-master-mic" class="btn-global btn-master-mic">
-        <span id="global-mic-icon"></span> MIC MUTE
-      </button>
+      <button id="btn-master-spk" class="btn-global btn-master-spk"><span id="global-spk-icon"></span> SPK MUTE</button>
+      <button id="btn-master-mic" class="btn-global btn-master-mic"><span id="global-mic-icon"></span> MIC MUTE</button>
     </div>
 
     <div class="channel-list-container">
@@ -323,26 +296,18 @@
 
   <script>
     // ==========================================
-    // ★ 改善4: ブラウザの拡大・縮小・右クリックメニューを完全ブロック
+    // ピンチイン拡大の完全ブロック
     // ==========================================
-    document.addEventListener('touchmove', function(e) { 
-      if (e.touches.length > 1) { e.preventDefault(); } 
-    }, { passive: false });
-    
+    document.addEventListener('touchmove', function(e) { if (e.touches.length > 1) { e.preventDefault(); } }, { passive: false });
     let lastTouchEnd = 0;
     document.addEventListener('touchend', function(e) { 
       const now = (new Date()).getTime(); 
-      if (now - lastTouchEnd <= 300) { e.preventDefault(); } 
-      lastTouchEnd = now; 
+      if (now - lastTouchEnd <= 300) { e.preventDefault(); } lastTouchEnd = now; 
     }, { passive: false });
-    
-    window.addEventListener('contextmenu', e => { 
-      if(e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') e.preventDefault(); 
-    });
-
+    window.addEventListener('contextmenu', e => { if(e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') e.preventDefault(); });
 
     // ==========================================
-    // ストレージと状態管理
+    // ストレージ・データ管理
     // ==========================================
     const safeStorage = {
       get: (key) => { try { return localStorage.getItem(key); } catch(e) { return null; } },
@@ -357,13 +322,11 @@
     };
 
     const state = {
-      peer: null, localStream: null,
-      mySlot: 0, joinTime: 0, 
+      peer: null, localStream: null, mySlot: 0, joinTime: 0, 
       roomId: '', netRoomId: '', myUserId: '', 
       peers: new Set(), users: {}, registeredUsers: [], userAssignments: {}, 
       dataConns: {}, mediaCalls: {}, talkStates: {}, listenStates: {}, channelVolumes: {}, remoteTalkStates: {}, channelNodes: {}, 
-      isAdmin: false, audioEnabled: false,
-      isMasterSpkMuted: false, isMasterMicMuted: false
+      isAdmin: false, audioEnabled: false, isMasterSpkMuted: false, isMasterMicMuted: false
     };
 
     let channels = [];
@@ -381,59 +344,30 @@
 
     els.btnLoginShow.onclick = () => { els.loginOverlay.style.display = 'flex'; };
     document.getElementById('btn-close-login').onclick = () => { els.loginOverlay.style.display = 'none'; };
-    
-    els.btnSettings.onclick = () => { 
-      if (!state.isAdmin) return;
-      buildAdminMatrix();
-      els.adminOverlay.style.display = 'flex'; 
-    };
+    els.btnSettings.onclick = () => { if (!state.isAdmin) return; buildAdminMatrix(); els.adminOverlay.style.display = 'flex'; };
     els.btnCloseAdmin.onclick = () => { els.adminOverlay.style.display = 'none'; };
 
     const iconSpeaker = `<svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
     const iconSpeakerOff = `<svg class="btn-icon" viewBox="0 0 24 24"><path fill="currentColor" opacity="0.4" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/><line x1="4" y1="4" x2="20" y2="20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
-    
     const iconMic = `<svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>`;
     const iconMicOff = `<svg class="btn-icon" viewBox="0 0 24 24"><path fill="currentColor" opacity="0.4" d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/><line x1="4" y1="4" x2="20" y2="20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
-    
     const iconSettings = `<svg class="btn-icon" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>`;
 
-    els.globalSpkIcon.innerHTML = iconSpeakerOff; 
-    els.globalMicIcon.innerHTML = iconMicOff;
+    els.globalSpkIcon.innerHTML = iconSpeakerOff; els.globalMicIcon.innerHTML = iconMicOff;
 
     function updateChannelIcons() {
-      els.globalSpkIcon.innerHTML = state.isMasterSpkMuted ? iconSpeakerOff : iconSpeakerOff;
+      els.globalSpkIcon.innerHTML = state.isMasterSpkMuted ? iconSpeakerOff : iconSpeakerOff; 
       els.globalMicIcon.innerHTML = state.isMasterMicMuted ? iconMicOff : iconMicOff;
-
       channels.forEach(ch => {
-        const lBtn = document.getElementById(`listen-${ch.id}`);
-        const tBtn = document.getElementById(`talk-${ch.id}`);
-        if (lBtn) {
-          lBtn.innerHTML = state.isMasterSpkMuted ? iconSpeakerOff : iconSpeaker;
-          lBtn.classList.toggle('muted-slash', state.isMasterSpkMuted);
-        }
-        if (tBtn) {
-          tBtn.innerHTML = state.isMasterMicMuted ? iconMicOff : iconMic;
-          tBtn.classList.toggle('muted-slash', state.isMasterMicMuted);
-        }
+        const lBtn = document.getElementById(`listen-${ch.id}`); const tBtn = document.getElementById(`talk-${ch.id}`);
+        if (lBtn) { lBtn.innerHTML = state.isMasterSpkMuted ? iconSpeakerOff : iconSpeaker; lBtn.classList.toggle('muted-slash', state.isMasterSpkMuted); }
+        if (tBtn) { tBtn.innerHTML = state.isMasterMicMuted ? iconMicOff : iconMic; tBtn.classList.toggle('muted-slash', state.isMasterMicMuted); }
       });
     }
 
-    function toggleMasterSpk() {
-      state.isMasterSpkMuted = !state.isMasterSpkMuted;
-      els.btnMasterSpk.classList.toggle('active', state.isMasterSpkMuted);
-      updateAudioRouting();
-      updateChannelIcons();
-    }
-
-    function toggleMasterMic() {
-      state.isMasterMicMuted = !state.isMasterMicMuted;
-      els.btnMasterMic.classList.toggle('active', state.isMasterMicMuted);
-      updateAudioRouting();
-      updateChannelIcons();
-    }
-
-    els.btnMasterSpk.onclick = toggleMasterSpk;
-    els.btnMasterMic.onclick = toggleMasterMic;
+    function toggleMasterSpk() { state.isMasterSpkMuted = !state.isMasterSpkMuted; els.btnMasterSpk.classList.toggle('active', state.isMasterSpkMuted); updateAudioRouting(); updateChannelIcons(); }
+    function toggleMasterMic() { state.isMasterMicMuted = !state.isMasterMicMuted; els.btnMasterMic.classList.toggle('active', state.isMasterMicMuted); updateAudioRouting(); updateChannelIcons(); }
+    els.btnMasterSpk.onclick = toggleMasterSpk; els.btnMasterMic.onclick = toggleMasterMic;
 
     function saveRoomState() {
       if(!state.roomId) return;
@@ -441,66 +375,63 @@
       safeStorage.set('yytalk_room_' + state.roomId, JSON.stringify(data));
     }
 
-    // ==========================================
-    // ★ 改善2: チャンネルUIとメンバー主導の自由な並び替え
-    // ==========================================
-    window.moveChannel = function(chId, direction) {
-      // 現在の順番をローカルストレージから取得（無ければ現在のchannels順）
-      let order = JSON.parse(safeStorage.get('yytalk-ch-order')) || channels.map(c => c.id);
-      
-      const idx = order.indexOf(chId);
-      if (idx < 0) return;
-      const newIdx = idx + direction;
-      
-      // 範囲外なら何もしない
-      if (newIdx < 0 || newIdx >= order.length) return;
-      
-      // 要素を入れ替え
-      const temp = order[idx];
-      order[idx] = order[newIdx];
-      order[newIdx] = temp;
-      
-      // 保存して再描画
-      safeStorage.set('yytalk-ch-order', JSON.stringify(order));
-      initChannelsDOM();
-      
-      // 再描画後にアサイン状態（表示/非表示）を適用し直す
-      if (state.userAssignments && state.myUserId) {
-        applyAssignments(state.userAssignments[state.myUserId] || channels.map(c=>c.id));
-      } else {
-        applyAssignments(channels.map(c=>c.id)); 
+    function resetAndApplyChannels(newChannels, newAssignments, newRegistered) {
+        if (audioCtx) {
+           Object.values(state.channelNodes).forEach(node => { try { node.masterGain.disconnect(); } catch(e){} });
+           Object.values(state.mediaCalls).forEach(call => { Object.values(call.chGains || {}).forEach(g => { try { g.disconnect(); } catch(e){} }); call.chGains = {}; });
+        }
+        state.channelNodes = {}; channels = newChannels;
+        if (newAssignments) state.userAssignments = newAssignments;
+        if (newRegistered) { state.registeredUsers = newRegistered; } else { state.registeredUsers = Object.keys(state.userAssignments || {}); }
+        initChannelsDOM();
+        
+        if (audioCtx) {
+           channels.forEach(ch => setupChannelAudio(ch.id));
+           Object.values(state.mediaCalls).forEach(call => {
+              if (call.source) {
+                  channels.forEach(ch => {
+                      const splitGain = audioCtx.createGain(); splitGain.gain.value = 0; call.source.connect(splitGain);
+                      if(state.channelNodes[ch.id]) splitGain.connect(state.channelNodes[ch.id].analyser);
+                      call.chGains[ch.id] = splitGain;
+                  });
+              }
+           });
+        }
+        if (state.userAssignments && state.myUserId) { applyAssignments(state.userAssignments[state.myUserId] || channels.map(c=>c.id)); } else { applyAssignments(channels.map(c=>c.id)); }
+        updateAudioRouting(); updateChannelIcons();
+    }
+
+    function loadRoomState(roomId) {
+      const saved = safeStorage.get('yytalk_room_' + roomId);
+      if (saved) {
+        try { const parsed = JSON.parse(saved); if (parsed.channels && parsed.channels.length > 0) { resetAndApplyChannels(parsed.channels, parsed.userAssignments, parsed.registeredUsers); return; } } catch(e){}
       }
-    };
+      const defaultChannels = [
+        { id: 'ch1', name: 'TEST', type: 'local' }, { id: 'ch2', name: 'VE', type: 'PL' },
+        { id: 'ch3', name: 'CA', type: 'PL' }, { id: 'ch4', name: 'AUD', type: 'PL' }, { id: 'ch5', name: 'WL-CAM', type: 'PL' }
+      ];
+      resetAndApplyChannels(defaultChannels, {}, []);
+    }
 
     function createChannelCard(ch) {
       if(state.listenStates[ch.id] === undefined) state.listenStates[ch.id] = false;
       if(state.talkStates[ch.id] === undefined) state.talkStates[ch.id] = false;
       if(state.channelVolumes[ch.id] === undefined) state.channelVolumes[ch.id] = 1.5;
 
-      const listenClass = state.listenStates[ch.id] ? 'listen-on' : '';
-      const talkClass = state.talkStates[ch.id] ? 'talk-on' : '';
-      const curListenIcon = state.isMasterSpkMuted ? iconSpeakerOff : iconSpeaker;
-      const curTalkIcon = state.isMasterMicMuted ? iconMicOff : iconMic;
-      const lMuted = state.isMasterSpkMuted ? 'muted-slash' : '';
-      const tMuted = state.isMasterMicMuted ? 'muted-slash' : '';
+      const listenClass = state.listenStates[ch.id] ? 'listen-on' : ''; const talkClass = state.talkStates[ch.id] ? 'talk-on' : '';
+      const curListenIcon = state.isMasterSpkMuted ? iconSpeakerOff : iconSpeaker; const curTalkIcon = state.isMasterMicMuted ? iconMicOff : iconMic;
+      const lMuted = state.isMasterSpkMuted ? 'muted-slash' : ''; const tMuted = state.isMasterMicMuted ? 'muted-slash' : '';
 
       const card = document.createElement('div');
-      card.className = `channel-card ${listenClass} ${talkClass}`;
-      card.id = `card-${ch.id}`;
+      card.className = `channel-card ${listenClass} ${talkClass}`; card.id = `card-${ch.id}`;
       
       card.innerHTML = `
         <div class="status-line-bg"><div class="status-line-fill" id="meter-${ch.id}"></div></div>
-        
         <div class="volume-panel">
           <svg class="vol-icon" viewBox="0 0 24 24"><path d="M18.5 12A4.5 4.5 0 0 0 16 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg>
-          <div class="vol-slider-wrap">
-            <div class="vol-slider-track-bg"></div>
-            <div class="vol-slider-fill" id="fill-${ch.id}"></div>
-            <input type="range" id="vol-${ch.id}" min="0" max="100" value="50">
-          </div>
+          <div class="vol-slider-wrap"><div class="vol-slider-track-bg"></div><div class="vol-slider-fill" id="fill-${ch.id}"></div><input type="range" id="vol-${ch.id}" min="0" max="100" value="50"></div>
           <svg class="vol-icon" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
         </div>
-        
         <div class="main-controls">
           <div class="btn-action btn-listen ${state.listenStates[ch.id] ? 'active latched' : ''} ${lMuted}" id="listen-${ch.id}">${curListenIcon}</div>
           <div class="ch-info">
@@ -509,32 +440,22 @@
           </div>
           <div class="btn-action btn-talk ${state.talkStates[ch.id] ? 'active latched' : ''} ${tMuted}" id="talk-${ch.id}">${curTalkIcon}</div>
         </div>
-        
         <div class="ch-meter-container"><div class="ch-meter-fill" id="ch-meter-fill-${ch.id}"></div></div>
-        
-        <div class="card-footer" style="display: flex; justify-content: space-between; align-items: center; padding: 0 15px 8px; position: relative; z-index: 5;">
-          <div class="btn-sort" onclick="moveChannel('${ch.id}', -1)" style="cursor: pointer; padding: 5px 20px; background: #2a2d35; border-radius: 6px; font-size: 14px; font-weight:bold; color: var(--text-sub);">▲</div>
-          <div class="btn-expand" id="expand-${ch.id}" style="text-align: center; padding: 6px 0; color: var(--text-sub); font-size: 16px; letter-spacing: 2px; cursor: pointer; flex: 1;">○ ○ ○</div>
-          <div class="btn-sort" onclick="moveChannel('${ch.id}', 1)" style="cursor: pointer; padding: 5px 20px; background: #2a2d35; border-radius: 6px; font-size: 14px; font-weight:bold; color: var(--text-sub);">▼</div>
+        <div class="card-footer" style="display: flex; justify-content: center; align-items: center; padding: 0 15px 8px; position: relative; z-index: 5;">
+          <div class="btn-expand" id="expand-${ch.id}" style="flex: 1;">○ ○ ○</div>
         </div>
       `;
       els.chWrap.appendChild(card);
 
-      const slider = card.querySelector(`#vol-${ch.id}`);
-      const fill = card.querySelector(`#fill-${ch.id}`);
-      const leftMeter = card.querySelector(`#meter-${ch.id}`);
-      
-      slider.value = (state.channelVolumes[ch.id] / 3.0) * 100;
-      fill.style.width = slider.value + '%';
-      leftMeter.style.height = slider.value + '%';
+      const slider = card.querySelector(`#vol-${ch.id}`); const fill = card.querySelector(`#fill-${ch.id}`); const leftMeter = card.querySelector(`#meter-${ch.id}`);
+      slider.value = (state.channelVolumes[ch.id] / 3.0) * 100; fill.style.width = slider.value + '%'; leftMeter.style.height = slider.value + '%';
 
       slider.addEventListener('input', (e) => {
-        const valStr = e.target.value + '%';
-        fill.style.width = valStr; leftMeter.style.height = valStr;
-        state.channelVolumes[ch.id] = (e.target.value / 100) * 3.0;
-        updateAudioRouting(); 
+        const valStr = e.target.value + '%'; fill.style.width = valStr; leftMeter.style.height = valStr;
+        state.channelVolumes[ch.id] = (e.target.value / 100) * 3.0; updateAudioRouting(); 
       });
 
+      // タップでボリューム展開
       card.querySelector(`#expand-${ch.id}`).addEventListener('click', () => card.classList.toggle('expanded'));
       setupPTTButton(card.querySelector(`#listen-${ch.id}`), 'listen', ch.id);
       setupPTTButton(card.querySelector(`#talk-${ch.id}`), 'talk', ch.id);
@@ -542,143 +463,70 @@
 
     function initChannelsDOM() {
       els.chWrap.innerHTML = '';
-      
-      // ★ 保存された順番を取得、足りないチャンネルがあれば末尾に追加
       let order = JSON.parse(safeStorage.get('yytalk-ch-order')) || [];
       channels.forEach(ch => { if (!order.includes(ch.id)) order.push(ch.id); });
       order = order.filter(id => channels.some(c => c.id === id));
       safeStorage.set('yytalk-ch-order', JSON.stringify(order));
-
-      // ★ 順番通りにカードを生成
-      order.forEach(id => {
-        const ch = channels.find(c => c.id === id);
-        if (ch) createChannelCard(ch);
-      });
+      order.forEach(id => { const ch = channels.find(c => c.id === id); if (ch) createChannelCard(ch); });
     }
 
-    function resetAndApplyChannels(newChannels, newAssignments, newRegistered) {
-        if (audioCtx) {
-           Object.values(state.channelNodes).forEach(node => { try { node.masterGain.disconnect(); } catch(e){} });
-           Object.values(state.mediaCalls).forEach(call => {
-               Object.values(call.chGains || {}).forEach(g => { try { g.disconnect(); } catch(e){} });
-               call.chGains = {};
-           });
-        }
-        state.channelNodes = {};
-        channels = newChannels;
-        
-        if (newAssignments) state.userAssignments = newAssignments;
-        if (newRegistered) {
-           state.registeredUsers = newRegistered;
-        } else {
-           state.registeredUsers = Object.keys(state.userAssignments || {});
-        }
-        
-        initChannelsDOM();
-        
-        if (audioCtx) {
-           channels.forEach(ch => setupChannelAudio(ch.id));
-           Object.values(state.mediaCalls).forEach(call => {
-              if (call.source) {
-                  channels.forEach(ch => {
-                      const splitGain = audioCtx.createGain();
-                      splitGain.gain.value = 0;
-                      call.source.connect(splitGain);
-                      if(state.channelNodes[ch.id]) splitGain.connect(state.channelNodes[ch.id].analyser);
-                      call.chGains[ch.id] = splitGain;
-                  });
-              }
-           });
-        }
-        
-        if (state.userAssignments && state.myUserId) {
-           applyAssignments(state.userAssignments[state.myUserId] || channels.map(c=>c.id));
-        } else {
-           applyAssignments(channels.map(c=>c.id)); 
-        }
-        updateAudioRouting();
-        updateChannelIcons();
-    }
-
-    function loadRoomState(roomId) {
-      const saved = safeStorage.get('yytalk_room_' + roomId);
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (parsed.channels && parsed.channels.length > 0) {
-             resetAndApplyChannels(parsed.channels, parsed.userAssignments, parsed.registeredUsers);
-             return;
+    // ==========================================
+    // ★ ドラッグ＆ドロップ初期化 (SortableJS)
+    // ==========================================
+    window.addEventListener('DOMContentLoaded', () => {
+      if (typeof Sortable !== 'undefined') {
+        new Sortable(els.chWrap, {
+          animation: 200,
+          handle: '.btn-expand', // ○ ○ ○ が取っ手
+          delay: 150,            // 誤動作防止: 長押し0.15秒で発動
+          delayOnTouchOnly: true,
+          touchStartThreshold: 5,
+          ghostClass: 'sortable-ghost',
+          dragClass: 'sortable-drag',
+          onStart: function (evt) { if (navigator.vibrate) navigator.vibrate(50); },
+          onEnd: function (evt) {
+            let newOrder = [];
+            els.chWrap.querySelectorAll('.channel-card').forEach(card => {
+              newOrder.push(card.id.replace('card-', ''));
+            });
+            safeStorage.set('yytalk-ch-order', JSON.stringify(newOrder));
+            if (navigator.vibrate) navigator.vibrate(50);
           }
-        } catch(e){}
+        });
       }
-      const defaultChannels = [
-        { id: 'ch1', name: 'ch1', type: 'PL' }, { id: 'ch2', name: 'ch2', type: 'PL' },
-        { id: 'ch3', name: 'ch3', type: 'PL' }, { id: 'ch4', name: 'ch4', type: 'PL' }, { id: 'ch5', name: 'ch5', type: 'PL' }
-      ];
-      resetAndApplyChannels(defaultChannels, {}, []);
-    }
+    });
 
     els.btnAddCh.onclick = () => {
-      const id = 'ch' + Date.now();
-      const newCh = { id, name: 'New PL', type: 'PL' };
-      channels.push(newCh);
-      
-      // 新しいチャンネルを描画（末尾に追加）
-      initChannelsDOM(); 
-      setupChannelAudio(newCh.id);
-      
-      state.registeredUsers.forEach(uid => {
-          if (!state.userAssignments[uid]) state.userAssignments[uid] = [];
-          state.userAssignments[uid].push(id);
-      });
-      
-      Object.values(state.dataConns).forEach(conn => {
-        if(conn && conn.open) conn.send({ type: 'add-channel', ch: newCh, assignments: state.userAssignments, registered: state.registeredUsers });
-      });
-      
+      const id = 'ch' + Date.now(); const newCh = { id, name: 'New PL', type: 'PL' }; channels.push(newCh);
+      initChannelsDOM(); setupChannelAudio(newCh.id);
+      state.registeredUsers.forEach(uid => { if (!state.userAssignments[uid]) state.userAssignments[uid] = []; state.userAssignments[uid].push(id); });
+      Object.values(state.dataConns).forEach(conn => { if(conn && conn.open) conn.send({ type: 'add-channel', ch: newCh, assignments: state.userAssignments, registered: state.registeredUsers }); });
       Object.values(state.mediaCalls).forEach(call => {
-        if (call.source && audioCtx) {
-           const splitGain = audioCtx.createGain();
-           splitGain.gain.value = 0;
-           call.source.connect(splitGain);
-           splitGain.connect(state.channelNodes[newCh.id].analyser);
-           call.chGains[newCh.id] = splitGain;
-        }
+        if (call.source && audioCtx) { const splitGain = audioCtx.createGain(); splitGain.gain.value = 0; call.source.connect(splitGain); splitGain.connect(state.channelNodes[newCh.id].analyser); call.chGains[newCh.id] = splitGain; }
       });
-      saveRoomState(); buildAdminMatrix(); 
-      if (state.userAssignments && state.myUserId) {
-        applyAssignments(state.userAssignments[state.myUserId] || channels.map(c=>c.id));
-      }
+      saveRoomState(); buildAdminMatrix(); if (state.userAssignments && state.myUserId) { applyAssignments(state.userAssignments[state.myUserId] || channels.map(c=>c.id)); }
     };
 
     function removeChannel(chId) {
-      channels = channels.filter(c => c.id !== chId);
-      const card = document.getElementById(`card-${chId}`);
-      if(card) card.remove();
-      
+      channels = channels.filter(c => c.id !== chId); const card = document.getElementById(`card-${chId}`); if(card) card.remove();
       delete state.listenStates[chId]; delete state.talkStates[chId];
       if (state.channelNodes[chId] && audioCtx) { state.channelNodes[chId].masterGain.disconnect(); delete state.channelNodes[chId]; }
       Object.keys(state.userAssignments).forEach(uid => { state.userAssignments[uid] = state.userAssignments[uid].filter(id => id !== chId); });
       updateAudioRouting(); updateChannelIcons();
+      // 順番データからも削除
+      let order = JSON.parse(safeStorage.get('yytalk-ch-order')) || [];
+      order = order.filter(id => id !== chId);
+      safeStorage.set('yytalk-ch-order', JSON.stringify(order));
     }
 
-    // ==========================================
-    // オーディオコンテキスト
-    // ==========================================
     let audioCtx, masterAnalyser, localMicAnalyser;
 
     function initAudioContext() {
       if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         masterAnalyser = audioCtx.createAnalyser(); masterAnalyser.fftSize = 256; masterAnalyser.connect(audioCtx.destination);
-        
-        if (state.localStream) {
-          const localSrc = audioCtx.createMediaStreamSource(state.localStream);
-          localMicAnalyser = audioCtx.createAnalyser(); localMicAnalyser.fftSize = 256; localSrc.connect(localMicAnalyser);
-        }
-
-        startMeterDraw();
-        channels.forEach(ch => setupChannelAudio(ch.id));
+        if (state.localStream) { const localSrc = audioCtx.createMediaStreamSource(state.localStream); localMicAnalyser = audioCtx.createAnalyser(); localMicAnalyser.fftSize = 256; localSrc.connect(localMicAnalyser); }
+        startMeterDraw(); channels.forEach(ch => setupChannelAudio(ch.id));
       }
       if(audioCtx.state === 'suspended') audioCtx.resume();
       Object.values(state.mediaCalls).forEach(callData => { if (!callData.source) setupPeerMixer(callData); });
@@ -694,16 +542,11 @@
 
     function setupPeerMixer(callData) {
       if(!audioCtx || !callData.stream) return;
-      const source = audioCtx.createMediaStreamSource(callData.stream);
-      callData.source = source;
-      
-      const peerAnalyser = audioCtx.createAnalyser(); peerAnalyser.fftSize = 256;
-      source.connect(peerAnalyser); callData.analyser = peerAnalyser;
-
+      const source = audioCtx.createMediaStreamSource(callData.stream); callData.source = source;
+      const peerAnalyser = audioCtx.createAnalyser(); peerAnalyser.fftSize = 256; source.connect(peerAnalyser); callData.analyser = peerAnalyser;
       callData.chGains = {};
       channels.forEach(ch => {
-        const splitGain = audioCtx.createGain(); splitGain.gain.value = 0;
-        source.connect(splitGain);
+        const splitGain = audioCtx.createGain(); splitGain.gain.value = 0; source.connect(splitGain);
         if(state.channelNodes[ch.id]) splitGain.connect(state.channelNodes[ch.id].analyser);
         callData.chGains[ch.id] = splitGain;
       });
@@ -717,8 +560,7 @@
 
       function draw(timestamp) {
         requestAnimationFrame(draw);
-        if (timestamp - lastDrawTime < 30) return;
-        lastDrawTime = timestamp;
+        if (timestamp - lastDrawTime < 30) return; lastDrawTime = timestamp;
         
         masterAnalyser.getByteFrequencyData(masterData);
         let sum = 0; for(let i=0; i<masterData.length; i++) sum += masterData[i];
@@ -737,7 +579,6 @@
             state.channelNodes[ch.id].analyser.getByteFrequencyData(chData);
             let chSum = 0; for(let i=0; i<chData.length; i++) chSum += chData[i];
             let chPercent = ((chSum / chData.length) / 255) * 100 * 2.5;
-            
             if (state.talkStates[ch.id]) chPercent = Math.max(chPercent, localPercent);
             const meterEl = document.getElementById(`ch-meter-fill-${ch.id}`);
             if (meterEl) meterEl.style.width = Math.min(chPercent, 100) + '%';
@@ -753,11 +594,8 @@
               else {
                 const peerId = Object.keys(state.users).find(p => state.users[p] === uid);
                 if (peerId && state.mediaCalls[peerId] && state.mediaCalls[peerId].analyser) {
-                  const pAnalyser = state.mediaCalls[peerId].analyser;
-                  const pData = new Uint8Array(pAnalyser.frequencyBinCount);
-                  pAnalyser.getByteFrequencyData(pData);
-                  let pSum = 0; for(let i=0; i<pData.length; i++) pSum += pData[i];
-                  maxVal = ((pSum / pData.length) / 255) * 100 * 2.0;
+                  const pAnalyser = state.mediaCalls[peerId].analyser; const pData = new Uint8Array(pAnalyser.frequencyBinCount); pAnalyser.getByteFrequencyData(pData);
+                  let pSum = 0; for(let i=0; i<pData.length; i++) pSum += pData[i]; maxVal = ((pSum / pData.length) / 255) * 100 * 2.0;
                 }
               }
               meterEl.style.height = Math.min(maxVal, 100) + '%';
@@ -771,10 +609,7 @@
     function updateAudioRouting() {
       let isLocalTalking = Object.values(state.talkStates).some(val => val === true);
       if (state.isMasterMicMuted) isLocalTalking = false;
-
-      if (state.localStream) {
-        state.localStream.getAudioTracks().forEach(t => t.enabled = isLocalTalking);
-      }
+      if (state.localStream) { state.localStream.getAudioTracks().forEach(t => t.enabled = isLocalTalking); }
       if (!audioCtx) return;
 
       channels.forEach(ch => {
@@ -785,12 +620,10 @@
       });
 
       for (const peerId in state.mediaCalls) {
-        const callData = state.mediaCalls[peerId];
-        const remoteTalk = state.remoteTalkStates[peerId] || {};
+        const callData = state.mediaCalls[peerId]; const remoteTalk = state.remoteTalkStates[peerId] || {};
         channels.forEach(ch => {
           if (callData.chGains && callData.chGains[ch.id]) {
-            const isTalking = remoteTalk[ch.id] === true;
-            callData.chGains[ch.id].gain.setTargetAtTime(isTalking ? 1 : 0, audioCtx.currentTime, 0.05);
+            const isTalking = remoteTalk[ch.id] === true; callData.chGains[ch.id].gain.setTargetAtTime(isTalking ? 1 : 0, audioCtx.currentTime, 0.05);
           }
         });
       }
@@ -809,16 +642,9 @@
 
       function applyState(active) {
         let changed = false; const card = document.getElementById(`card-${channelId}`);
-        if (type === 'talk' && state.talkStates[channelId] !== active) {
-          state.talkStates[channelId] = active; changed = true;
-          if (card) { if(active) card.classList.add('talk-on'); else card.classList.remove('talk-on'); }
-        }
-        if (type === 'listen' && state.listenStates[channelId] !== active) {
-          state.listenStates[channelId] = active; changed = true;
-          if (card) { if(active) card.classList.add('listen-on'); else card.classList.remove('listen-on'); }
-        }
-        updateAudioRouting(); 
-        updateChannelIcons();
+        if (type === 'talk' && state.talkStates[channelId] !== active) { state.talkStates[channelId] = active; changed = true; if (card) { if(active) card.classList.add('talk-on'); else card.classList.remove('talk-on'); } }
+        if (type === 'listen' && state.listenStates[channelId] !== active) { state.listenStates[channelId] = active; changed = true; if (card) { if(active) card.classList.add('listen-on'); else card.classList.remove('listen-on'); } }
+        updateAudioRouting(); updateChannelIcons();
         if (changed && type === 'talk') syncTalkStates();
       }
 
@@ -826,7 +652,6 @@
         btn.setPointerCapture(e.pointerId); isDown = true; startX = e.clientX; hasDragged = false; els.dummyAudio.play().catch(()=>{});
         if (!isLatched) { btn.classList.add('active'); applyState(true); }
       });
-
       btn.addEventListener('pointermove', (e) => {
         if (!isDown) return; const deltaX = e.clientX - startX;
         if ((slideDir === 1 && deltaX > 0) || (slideDir === -1 && deltaX < 0)) {
@@ -834,14 +659,9 @@
           if (Math.abs(deltaX) > 30 && !isLatched) { hasDragged = true; isLatched = true; btn.classList.add('latched'); if (navigator.vibrate) navigator.vibrate(50); }
         }
       });
-
       const release = (e) => {
         if (!isDown) return; isDown = false; btn.style.transform = `translateX(0px)`;
-        if (hasDragged) applyState(true);
-        else {
-          if (isLatched) { isLatched = false; btn.classList.remove('latched', 'active'); applyState(false); }
-          else { btn.classList.remove('active'); applyState(false); }
-        }
+        if (hasDragged) applyState(true); else { if (isLatched) { isLatched = false; btn.classList.remove('latched', 'active'); applyState(false); } else { btn.classList.remove('active'); applyState(false); } }
       };
       btn.addEventListener('pointerup', release); btn.addEventListener('pointercancel', release);
     }
@@ -852,7 +672,6 @@
       const allAssigned = channels.every(ch => state.userAssignments[uid] && state.userAssignments[uid].includes(ch.id));
       if (allAssigned) state.userAssignments[uid] = []; else state.userAssignments[uid] = channels.map(c => c.id); 
       saveRoomState(); buildAdminMatrix();
-      
       const peerId = Object.keys(state.users).find(p => state.users[p] === uid && state.peers.has(p));
       if(peerId && state.dataConns[peerId]) state.dataConns[peerId].send({ type: 'assign-channels', channels: state.userAssignments[uid], targetUid: uid });
       if (uid === state.myUserId) applyAssignments(state.userAssignments[uid]);
@@ -862,85 +681,45 @@
     function buildAdminMatrix() {
       if (!state.isAdmin) return;
       const container = document.getElementById('admin-matrix-container');
-      
-      let html = `<div class="admin-matrix-wrapper"><table class="admin-matrix"><thead><tr>
-              <th class="diagonal-header">
-                 <span class="dh-member">メンバー</span><span class="dh-party">パーティー</span>
-              </th>`;
-
+      let html = `<div class="admin-matrix-wrapper"><table class="admin-matrix"><thead><tr><th class="diagonal-header"><span class="dh-member">メンバー</span><span class="dh-party">パーティー</span></th>`;
       state.registeredUsers.forEach(uid => {
           const isOnline = Array.from(state.peers).some(p => state.users[p] === uid && state.dataConns[p] && state.dataConns[p].open);
           const statusColor = isOnline ? 'var(--green)' : 'var(--text-sub)';
-          html += `<th class="matrix-user-header" onclick="toggleAllUserAssignments('${uid}')">
-              <div style="display:flex; align-items:center; justify-content:center; gap:5px; margin-bottom:2px;">
-                <span style="color:${statusColor}; font-size:10px;">●</span>
-                <span style="font-weight:bold; color:var(--text-main); font-family: 'JetBrains Mono', monospace;">${uid}</span>
-                <div style="position: relative; width: 4px; height: 14px; background: #0a0b0d; border-radius: 2px; overflow: hidden; margin-left: 2px;">
-                   <div id="user-meter-${uid}" style="position: absolute; bottom: 0; left: 0; width: 100%; height: 0%; background: linear-gradient(to top, #4ade80, #eab308, #f87171); transition: height 0.05s linear;"></div>
-                </div>
-              </div>
-              <span class="bulk-label">一括切替</span>
-              <button class="btn-delete-col" data-uid="${uid}" onclick="event.stopPropagation();">削除</button>
-          </th>`;
+          html += `<th class="matrix-user-header" onclick="toggleAllUserAssignments('${uid}')"><div style="display:flex; align-items:center; justify-content:center; gap:5px; margin-bottom:2px;"><span style="color:${statusColor}; font-size:10px;">●</span><span style="font-weight:bold; color:var(--text-main); font-family: 'JetBrains Mono', monospace;">${uid}</span><div style="position: relative; width: 4px; height: 14px; background: #0a0b0d; border-radius: 2px; overflow: hidden; margin-left: 2px;"><div id="user-meter-${uid}" style="position: absolute; bottom: 0; left: 0; width: 100%; height: 0%; background: linear-gradient(to top, #4ade80, #eab308, #f87171); transition: height 0.05s linear;"></div></div></div><span class="bulk-label">一括切替</span><button class="btn-delete-col" data-uid="${uid}" onclick="event.stopPropagation();">削除</button></th>`;
       });
-
       html += `<th><button id="btn-add-user" style="background:var(--blue); color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;">＋ 追加</button></th></tr></thead><tbody>`;
-
       channels.forEach(ch => {
-          html += `<tr><td class="ch-cell">
-                 <div style="display:flex; gap:6px; align-items:center; justify-content:space-between; width:100%;">
-                    <div style="display:flex; gap:4px; flex:1;">
-                       <input type="text" class="admin-edit-name" data-id="${ch.id}" value="${ch.name}" style="flex:1; width:70px; background:#1c1d21; border:1px solid #3a3c42; color:#fff; border-radius:4px; font-size:13px; padding:4px 6px;">
-                       <input type="text" class="admin-edit-type" data-id="${ch.id}" value="${ch.type}" style="width:48px; text-align:center; font-family:'JetBrains Mono', monospace; background:#1c1d21; border:1px solid #3a3c42; color:#fff; border-radius:4px; font-size:10px; padding:4px;">
-                    </div>
-                    <button class="btn-delete-row" data-id="${ch.id}">削除</button>
-                 </div>
-              </td>`;
-
-          state.registeredUsers.forEach(uid => {
-              const isAssigned = (state.userAssignments[uid] || []).includes(ch.id);
-              const activeClass = isAssigned ? 'active' : '';
-              html += `<td><div class="matrix-toggle ${activeClass}" data-uid="${uid}" data-chid="${ch.id}"></div></td>`;
-          });
+          html += `<tr><td class="ch-cell"><div style="display:flex; gap:6px; align-items:center; justify-content:space-between; width:100%;"><div style="display:flex; gap:4px; flex:1;"><input type="text" class="admin-edit-name" data-id="${ch.id}" value="${ch.name}" style="flex:1; width:70px; background:#1c1d21; border:1px solid #3a3c42; color:#fff; border-radius:4px; font-size:13px; padding:4px 6px;"><input type="text" class="admin-edit-type" data-id="${ch.id}" value="${ch.type}" style="width:48px; text-align:center; font-family:'JetBrains Mono', monospace; background:#1c1d21; border:1px solid #3a3c42; color:#fff; border-radius:4px; font-size:10px; padding:4px;"></div><button class="btn-delete-row" data-id="${ch.id}">削除</button></div></td>`;
+          state.registeredUsers.forEach(uid => { const isAssigned = (state.userAssignments[uid] || []).includes(ch.id); const activeClass = isAssigned ? 'active' : ''; html += `<td><div class="matrix-toggle ${activeClass}" data-uid="${uid}" data-chid="${ch.id}"></div></td>`; });
           html += `<td></td></tr>`;
       });
       html += `</tbody></table></div>`; container.innerHTML = html;
 
       container.querySelectorAll('.matrix-toggle').forEach(btn => {
         btn.onclick = (e) => {
-          const uid = e.target.getAttribute('data-uid'); const chid = e.target.getAttribute('data-chid');
-          let assigned = state.userAssignments[uid] || [];
-          if (assigned.includes(chid)) { assigned = assigned.filter(id => id !== chid); e.target.classList.remove('active'); } 
-          else { assigned.push(chid); e.target.classList.add('active'); }
-          state.userAssignments[uid] = assigned; saveRoomState(); 
-          if (uid === state.myUserId) applyAssignments(assigned);
+          const uid = e.target.getAttribute('data-uid'); const chid = e.target.getAttribute('data-chid'); let assigned = state.userAssignments[uid] || [];
+          if (assigned.includes(chid)) { assigned = assigned.filter(id => id !== chid); e.target.classList.remove('active'); } else { assigned.push(chid); e.target.classList.add('active'); }
+          state.userAssignments[uid] = assigned; saveRoomState(); if (uid === state.myUserId) applyAssignments(assigned);
           Object.values(state.dataConns).forEach(conn => { if(conn && conn.open) conn.send({ type: 'assign-channels', channels: assigned, targetUid: uid }); });
         };
       });
 
       document.getElementById('btn-add-user').onclick = () => {
         const uid = prompt('事前登録するメンバーのユーザーIDを入力してください:');
-        if (uid && uid.trim() !== '' && !state.registeredUsers.includes(uid)) {
-          state.registeredUsers.push(uid); state.userAssignments[uid] = channels.map(c => c.id); saveRoomState(); buildAdminMatrix(); 
-          Object.values(state.dataConns).forEach(conn => { if(conn && conn.open) conn.send({ type: 'update-registered', registered: state.registeredUsers }); });
-        }
+        if (uid && uid.trim() !== '' && !state.registeredUsers.includes(uid)) { state.registeredUsers.push(uid); state.userAssignments[uid] = channels.map(c => c.id); saveRoomState(); buildAdminMatrix(); Object.values(state.dataConns).forEach(conn => { if(conn && conn.open) conn.send({ type: 'update-registered', registered: state.registeredUsers }); }); }
       };
 
       container.querySelectorAll('.btn-delete-col').forEach(btn => {
         btn.onclick = (e) => {
           const uid = e.target.getAttribute('data-uid');
-          if(confirm(`ユーザー「${uid}」をリストから削除しますか？\n(設定も消去されます)`)) {
-             state.registeredUsers = state.registeredUsers.filter(u => u !== uid); delete state.userAssignments[uid]; saveRoomState(); buildAdminMatrix(); 
-             Object.values(state.dataConns).forEach(conn => { if(conn && conn.open) conn.send({ type: 'update-registered', registered: state.registeredUsers }); });
-          }
+          if(confirm(`ユーザー「${uid}」をリストから削除しますか？\n(設定も消去されます)`)) { state.registeredUsers = state.registeredUsers.filter(u => u !== uid); delete state.userAssignments[uid]; saveRoomState(); buildAdminMatrix(); Object.values(state.dataConns).forEach(conn => { if(conn && conn.open) conn.send({ type: 'update-registered', registered: state.registeredUsers }); }); }
         };
       });
 
       container.querySelectorAll('.admin-edit-name, .admin-edit-type').forEach(input => {
         input.addEventListener('change', (e) => {
           const chId = e.target.getAttribute('data-id'); const ch = channels.find(c => c.id === chId);
-          if (e.target.classList.contains('admin-edit-name')) ch.name = e.target.value;
-          if (e.target.classList.contains('admin-edit-type')) ch.type = e.target.value;
+          if (e.target.classList.contains('admin-edit-name')) ch.name = e.target.value; if (e.target.classList.contains('admin-edit-type')) ch.type = e.target.value;
           const nameEl = document.getElementById(`name-${chId}`); const typeEl = document.getElementById(`type-${chId}`);
           if (nameEl) nameEl.textContent = ch.name; if (typeEl) typeEl.textContent = ch.type;
           saveRoomState(); syncChannelInfo();
@@ -950,10 +729,8 @@
       container.querySelectorAll('.btn-delete-row').forEach(btn => {
         btn.onclick = (e) => {
           const chId = e.target.getAttribute('data-id'); const ch = channels.find(c => c.id === chId);
-          if(!confirm(`パーティー「${ch.name}」を削除しますか？`)) return;
-          removeChannel(chId); saveRoomState();
-          Object.values(state.dataConns).forEach(conn => { if(conn && conn.open) conn.send({ type: 'remove-channel', chId: chId }); });
-          buildAdminMatrix(); 
+          if(!confirm(`パーティー「${ch.name}」を削除しますか？`)) return; removeChannel(chId); saveRoomState();
+          Object.values(state.dataConns).forEach(conn => { if(conn && conn.open) conn.send({ type: 'remove-channel', chId: chId }); }); buildAdminMatrix(); 
         };
       });
     }
@@ -965,8 +742,7 @@
         if(card) {
           if(assignedIds.includes(ch.id)) { card.style.display = 'flex'; } 
           else {
-            card.style.display = 'none'; state.listenStates[ch.id] = false; state.talkStates[ch.id] = false;
-            card.classList.remove('listen-on', 'talk-on');
+            card.style.display = 'none'; state.listenStates[ch.id] = false; state.talkStates[ch.id] = false; card.classList.remove('listen-on', 'talk-on');
             const lBtn = document.getElementById(`listen-${ch.id}`); const tBtn = document.getElementById(`talk-${ch.id}`);
             if(lBtn) { lBtn.classList.remove('active', 'latched'); lBtn.style.transform = 'translateX(0px)'; }
             if(tBtn) { tBtn.classList.remove('active', 'latched'); tBtn.style.transform = 'translateX(0px)'; }
@@ -977,13 +753,10 @@
     }
 
     function setupDataConnection(conn) {
-      if (state.dataConns[conn.peer] && state.dataConns[conn.peer].open) return; 
-      state.dataConns[conn.peer] = conn;
+      if (state.dataConns[conn.peer] && state.dataConns[conn.peer].open) return; state.dataConns[conn.peer] = conn;
 
       const initData = () => {
-        state.peers.add(conn.peer); updateUserCount();
-        conn.send({ type: 'hello', userId: state.myUserId, joinTime: state.joinTime });
-        syncTalkStates(); 
+        state.peers.add(conn.peer); updateUserCount(); conn.send({ type: 'hello', userId: state.myUserId, joinTime: state.joinTime }); syncTalkStates(); 
         const targetSlot = parseInt(conn.peer.split('-s')[1]);
         if (state.mySlot > targetSlot) { if (!state.mediaCalls[conn.peer]) { const call = state.peer.call(conn.peer, state.localStream); handleCall(call); } }
       };
@@ -993,14 +766,9 @@
       conn.on('data', data => {
         if (data.type === 'hello') {
           const uid = data.userId || 'Anonymous';
-          if (uid !== 'Anonymous' && uid === state.myUserId) {
-            const remoteSlot = parseInt(conn.peer.split('-s')[1]);
-            if (state.mySlot > remoteSlot) { alert(`ユーザーID「${uid}」は現在他のオンライン端末で使用されています。別のIDで参加してください。`); LocalProfile.clear(); location.reload(); return; } else { return; }
-          }
+          if (uid !== 'Anonymous' && uid === state.myUserId) { const remoteSlot = parseInt(conn.peer.split('-s')[1]); if (state.mySlot > remoteSlot) { alert(`ユーザーID「${uid}」は現在他のオンライン端末で使用されています。別のIDで参加してください。`); LocalProfile.clear(); location.reload(); return; } else { return; } }
           state.users[conn.peer] = uid;
-          if (uid !== 'Anonymous' && !state.registeredUsers.includes(uid)) {
-             state.registeredUsers.push(uid); state.userAssignments[uid] = channels.map(c => c.id); saveRoomState(); if (state.isAdmin) buildAdminMatrix();
-          }
+          if (uid !== 'Anonymous' && !state.registeredUsers.includes(uid)) { state.registeredUsers.push(uid); state.userAssignments[uid] = channels.map(c => c.id); saveRoomState(); if (state.isAdmin) buildAdminMatrix(); }
           const amILowestSlot = Array.from(state.peers).every(p => parseInt(p.split('-s')[1]) > state.mySlot);
           if(amILowestSlot) { conn.send({ type: 'init-state', channels, assignments: state.userAssignments, registered: state.registeredUsers }); }
           updateUserCount();
@@ -1008,41 +776,21 @@
         else if (data.type === 'init-state') { resetAndApplyChannels(data.channels, data.assignments, data.registered); saveRoomState(); if(state.isAdmin) buildAdminMatrix(); }
         else if (data.type === 'update-ch-info') {
           channels = data.data;
-          channels.forEach((ch) => { 
-            const nameEl = document.getElementById(`name-${ch.id}`); const typeEl = document.getElementById(`type-${ch.id}`);
-            if(nameEl) nameEl.textContent = ch.name; if(typeEl) typeEl.textContent = ch.type; 
-          });
+          channels.forEach((ch) => { const nameEl = document.getElementById(`name-${ch.id}`); const typeEl = document.getElementById(`type-${ch.id}`); if(nameEl) nameEl.textContent = ch.name; if(typeEl) typeEl.textContent = ch.type; });
           saveRoomState();
-          if(state.isAdmin) {
-             document.querySelectorAll('.admin-edit-name').forEach(input => { const ch = channels.find(c => c.id === input.getAttribute('data-id')); if(ch) input.value = ch.name; });
-             document.querySelectorAll('.admin-edit-type').forEach(input => { const ch = channels.find(c => c.id === input.getAttribute('data-id')); if(ch) input.value = ch.type; });
-          }
+          if(state.isAdmin) { document.querySelectorAll('.admin-edit-name').forEach(input => { const ch = channels.find(c => c.id === input.getAttribute('data-id')); if(ch) input.value = ch.name; }); document.querySelectorAll('.admin-edit-type').forEach(input => { const ch = channels.find(c => c.id === input.getAttribute('data-id')); if(ch) input.value = ch.type; }); }
         }
         else if (data.type === 'update-registered') { state.registeredUsers = data.registered; saveRoomState(); if(state.isAdmin) buildAdminMatrix(); }
         else if (data.type === 'update-talk-states') { state.remoteTalkStates[conn.peer] = data.states; updateAudioRouting(); }
         else if (data.type === 'assign-channels') {
           if (data.targetUid === state.myUserId) { applyAssignments(data.channels); }
-          if (data.targetUid) {
-             state.userAssignments[data.targetUid] = data.channels;
-             if (state.isAdmin) {
-                 document.querySelectorAll(`.matrix-toggle[data-uid="${data.targetUid}"]`).forEach(btn => {
-                   if (data.channels.includes(btn.getAttribute('data-chid'))) { btn.classList.add('active'); } else { btn.classList.remove('active'); }
-                 });
-             }
-          } else { if (!state.isAdmin) applyAssignments(data.channels); }
+          if (data.targetUid) { state.userAssignments[data.targetUid] = data.channels; if (state.isAdmin) { document.querySelectorAll(`.matrix-toggle[data-uid="${data.targetUid}"]`).forEach(btn => { if (data.channels.includes(btn.getAttribute('data-chid'))) { btn.classList.add('active'); } else { btn.classList.remove('active'); } }); } } else { if (!state.isAdmin) applyAssignments(data.channels); }
           saveRoomState();
         }
         else if (data.type === 'add-channel') {
-          channels.push(data.ch); 
-          initChannelsDOM(); // ★追加時の再描画
-          setupChannelAudio(data.ch.id);
-          Object.values(state.mediaCalls).forEach(call => {
-            if (call.source && audioCtx) {
-               const splitGain = audioCtx.createGain(); splitGain.gain.value = 0; call.source.connect(splitGain); splitGain.connect(state.channelNodes[data.ch.id].analyser); call.chGains[data.ch.id] = splitGain;
-            }
-          });
-          if(data.registered) state.registeredUsers = data.registered;
-          if(data.assignments) state.userAssignments = data.assignments;
+          channels.push(data.ch); initChannelsDOM(); setupChannelAudio(data.ch.id);
+          Object.values(state.mediaCalls).forEach(call => { if (call.source && audioCtx) { const splitGain = audioCtx.createGain(); splitGain.gain.value = 0; call.source.connect(splitGain); splitGain.connect(state.channelNodes[data.ch.id].analyser); call.chGains[data.ch.id] = splitGain; } });
+          if(data.registered) state.registeredUsers = data.registered; if(data.assignments) state.userAssignments = data.assignments;
           if(state.userAssignments && state.userAssignments[state.myUserId]) { applyAssignments(state.userAssignments[state.myUserId]); }
           saveRoomState(); if(state.isAdmin) buildAdminMatrix();
         }
@@ -1056,46 +804,19 @@
       if (state.dataConns[peerId] && state.dataConns[peerId].pending) return; 
       if (state.dataConns[peerId]) { try { state.dataConns[peerId].close(); } catch(e){} delete state.dataConns[peerId]; }
       state.peers.delete(peerId); delete state.remoteTalkStates[peerId];
-      if (state.mediaCalls[peerId]) {
-        Object.values(state.mediaCalls[peerId].chGains || {}).forEach(gain => { try{ gain.disconnect(); }catch(e){} });
-        try { state.mediaCalls[peerId].audioEl.pause(); state.mediaCalls[peerId].audioEl.srcObject = null; } catch(e){}
-        delete state.mediaCalls[peerId];
-      }
+      if (state.mediaCalls[peerId]) { Object.values(state.mediaCalls[peerId].chGains || {}).forEach(gain => { try{ gain.disconnect(); }catch(e){} }); try { state.mediaCalls[peerId].audioEl.pause(); state.mediaCalls[peerId].audioEl.srcObject = null; } catch(e){} delete state.mediaCalls[peerId]; }
       updateAudioRouting(); updateUserCount();
     }
 
     function updateUserCount() {
-      const isOnline = state.mySlot > 0;
-      let activeCount = isOnline ? 1 : 0;
+      const isOnline = state.mySlot > 0; let activeCount = isOnline ? 1 : 0;
       state.peers.forEach(p => { if (state.dataConns[p] && state.dataConns[p].open) activeCount++; });
-      els.roleDisplay.textContent = `ACTIVE (${activeCount})`;
-      els.roleDisplay.style.color = isOnline ? 'var(--blue)' : 'var(--orange)';
+      els.roleDisplay.textContent = `ACTIVE (${activeCount})`; els.roleDisplay.style.color = isOnline ? 'var(--blue)' : 'var(--orange)';
       if(isOnline) { els.btnLoginShow.textContent = "Connected"; els.btnLoginShow.classList.add('online'); }
-      
-      if (state.isAdmin) {
-         document.querySelectorAll('.admin-matrix th').forEach(th => {
-            const uidSpan = th.querySelector('span[style*="font-weight:bold"]');
-            if(uidSpan) {
-               const uid = uidSpan.textContent;
-               const isPeerOnline = Array.from(state.peers).some(p => state.users[p] === uid && state.dataConns[p] && state.dataConns[p].open);
-               const dot = th.querySelector('span:first-child');
-               if(dot) dot.style.color = isPeerOnline ? 'var(--green)' : 'var(--text-sub)';
-            }
-         });
-      }
+      if (state.isAdmin) { document.querySelectorAll('.admin-matrix th').forEach(th => { const uidSpan = th.querySelector('span[style*="font-weight:bold"]'); if(uidSpan) { const uid = uidSpan.textContent; const isPeerOnline = Array.from(state.peers).some(p => state.users[p] === uid && state.dataConns[p] && state.dataConns[p].open); const dot = th.querySelector('span:first-child'); if(dot) dot.style.color = isPeerOnline ? 'var(--green)' : 'var(--text-sub)'; } }); }
     }
 
-    const peerConfig = { 
-      config: { 
-        'iceServers': [
-          { urls: 'stun:stun.l.google.com:19302' }, { urls: "stun:stun.relay.metered.ca:80" },
-          { urls: "turn:global.relay.metered.ca:80", username: "cce7732b3cc3adfa6f13a545", credential: "l3ACe3V84yTvkBEd" },
-          { urls: "turn:global.relay.metered.ca:80?transport=tcp", username: "cce7732b3cc3adfa6f13a545", credential: "l3ACe3V84yTvkBEd" },
-          { urls: "turn:global.relay.metered.ca:443", username: "cce7732b3cc3adfa6f13a545", credential: "l3ACe3V84yTvkBEd" },
-          { urls: "turns:global.relay.metered.ca:443?transport=tcp", username: "cce7732b3cc3adfa6f13a545", credential: "l3ACe3V84yTvkBEd" }
-        ] 
-      } 
-    };
+    const peerConfig = { config: { 'iceServers': [ { urls: 'stun:stun.l.google.com:19302' }, { urls: "stun:stun.relay.metered.ca:80" }, { urls: "turn:global.relay.metered.ca:80", username: "cce7732b3cc3adfa6f13a545", credential: "l3ACe3V84yTvkBEd" }, { urls: "turn:global.relay.metered.ca:80?transport=tcp", username: "cce7732b3cc3adfa6f13a545", credential: "l3ACe3V84yTvkBEd" }, { urls: "turn:global.relay.metered.ca:443", username: "cce7732b3cc3adfa6f13a545", credential: "l3ACe3V84yTvkBEd" }, { urls: "turns:global.relay.metered.ca:443?transport=tcp", username: "cce7732b3cc3adfa6f13a545", credential: "l3ACe3V84yTvkBEd" } ] } };
 
     async function initMedia() {
       try {
@@ -1107,14 +828,12 @@
     }
 
     const joinNetwork = async function(isAdmin) {
-      // ★ 改善5: パスワードロック
       if (isAdmin) {
         const pass = prompt("管理者パスワードを入力してください (ヒント: tmax)");
         if (pass !== "tmax") { alert("パスワードが違います。"); return; }
       }
 
-      const btn = isAdmin ? els.btnJoinAdmin : els.btnJoinMember;
-      const originalText = btn.textContent;
+      const btn = isAdmin ? els.btnJoinAdmin : els.btnJoinMember; const originalText = btn.textContent;
       btn.disabled = true; btn.textContent = "処理中..."; btn.style.opacity = "0.5";
       await new Promise(r => setTimeout(r, 50));
 
@@ -1122,17 +841,10 @@
       if (!await initMedia()) { btn.disabled = false; btn.textContent = originalText; btn.style.opacity = "1"; els.statusMsg.textContent = "マイクが許可されませんでした"; return; }
       
       state.isAdmin = isAdmin; 
-      const rawRoomId = els.hostIdInput.value.trim() || 'yytalk';
-      const myName = els.joinUserIdInput.value.trim() || 'Unknown';
+      const rawRoomId = els.hostIdInput.value.trim() || 'yytalk'; const myName = els.joinUserIdInput.value.trim() || 'Unknown';
       state.roomId = rawRoomId; state.myUserId = myName; state.netRoomId = 'yytalk-pro-' + encodeURIComponent(rawRoomId).replace(/%/g, '-');
       els.roomNameDisplay.textContent = `${rawRoomId}${isAdmin ? ' (Admin)' : ''}`;
-      if (isAdmin) {
-        els.btnSettings.style.display = 'flex'; 
-        els.btnSettings.innerHTML = iconSettings;
-      } else {
-        els.btnSettings.style.display = 'none';
-      }
-
+      if (isAdmin) { els.btnSettings.style.display = 'flex'; els.btnSettings.innerHTML = iconSettings; } else { els.btnSettings.style.display = 'none'; }
       LocalProfile.set({ roomId: rawRoomId, userId: myName, isAdmin });
       
       els.statusMsg.textContent = "データを読み込み中..."; loadRoomState(state.roomId);
@@ -1142,48 +854,32 @@
       
       function tryConnectSlot() {
         if (slot > maxSlots) { alert("申し訳ありません、ルームが満員です（最大30人）。"); btn.disabled = false; btn.textContent = originalText; btn.style.opacity = "1"; els.statusMsg.textContent = "満員のため接続できませんでした"; return; }
-        const tryId = `${state.netRoomId}-s${slot}`;
-        state.peer = new Peer(tryId, peerConfig);
+        const tryId = `${state.netRoomId}-s${slot}`; state.peer = new Peer(tryId, peerConfig);
         
         state.peer.on('open', (id) => {
           state.mySlot = slot; els.myIdDisplay.textContent = `${myName} (Slot ${slot})`; els.statusMsg.textContent = "接続完了。仲間を探しています..."; setTimeout(() => els.loginOverlay.style.display = 'none', 500);
           updateUserCount(); btn.disabled = false; btn.textContent = originalText; btn.style.opacity = "1";
-          
           state.peer.on('connection', conn => setupDataConnection(conn));
           state.peer.on('call', call => { call.answer(state.localStream); handleCall(call); });
-          
           scanForPeers(); setInterval(() => scanForPeers(), 8000);
           setInterval(() => { state.peers.forEach(p => { if (state.dataConns[p] && !state.dataConns[p].open) removePeer(p); }); updateUserCount(); }, 10000);
         });
         
         state.peer.on('error', (err) => {
           if (err.type === 'peer-unavailable') return;
-          if (state.mySlot === 0) {
-            if (err.type === 'unavailable-id') { slot++; state.peer.destroy(); setTimeout(tryConnectSlot, 400); } 
-            else { console.error(err); els.statusMsg.textContent = "接続エラー: " + err.type; btn.disabled = false; btn.textContent = originalText; btn.style.opacity = "1"; }
-          }
+          if (state.mySlot === 0) { if (err.type === 'unavailable-id') { slot++; state.peer.destroy(); setTimeout(tryConnectSlot, 400); } else { console.error(err); els.statusMsg.textContent = "接続エラー: " + err.type; btn.disabled = false; btn.textContent = originalText; btn.style.opacity = "1"; } }
         });
       }
       tryConnectSlot();
     };
 
-    function scanForPeers() {
-       for (let i = 1; i < state.mySlot; i++) {
-         const targetId = `${state.netRoomId}-s${i}`;
-         if (!state.dataConns[targetId]) {
-            const conn = state.peer.connect(targetId);
-            conn.on('open', () => setupDataConnection(conn));
-            conn.on('error', () => {});
-         }
-       }
-    }
+    function scanForPeers() { for (let i = 1; i < state.mySlot; i++) { const targetId = `${state.netRoomId}-s${i}`; if (!state.dataConns[targetId]) { const conn = state.peer.connect(targetId); conn.on('open', () => setupDataConnection(conn)); conn.on('error', () => {}); } } }
 
     window.addEventListener('DOMContentLoaded', () => {
       els.btnJoinMember.addEventListener('click', () => joinNetwork(false));
       els.btnJoinAdmin.addEventListener('click', () => joinNetwork(true));
       els.btnJoinMember.textContent = "メンバーとして参加"; els.btnJoinAdmin.textContent = "管理者として参加";
       els.btnJoinMember.disabled = false; els.btnJoinAdmin.disabled = false;
-
       const savedProfile = LocalProfile.get();
       if (savedProfile) { els.hostIdInput.value = savedProfile.roomId || ''; els.joinUserIdInput.value = savedProfile.userId || ''; }
     });
@@ -1199,12 +895,8 @@
       call.on('close', () => removePeer(call.peer));
     }
 
-    document.getElementById('btn-enable-audio').onclick = () => {
-      els.audioOverlay.style.display = 'none'; state.audioEnabled = true; initAudioContext(); 
-    };
-
+    document.getElementById('btn-enable-audio').onclick = () => { els.audioOverlay.style.display = 'none'; state.audioEnabled = true; initAudioContext(); };
     document.getElementById('btn-stop').onclick = () => { LocalProfile.clear(); location.reload(); };
-
   </script>
 </body>
 </html>
