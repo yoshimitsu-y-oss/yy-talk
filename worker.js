@@ -11,6 +11,7 @@ export default {
       return new Response(null, { headers: corsHeaders });
     }
 
+    
     // 2. URLから「ルーム名」と「ユーザー名」を受け取る
     const url = new URL(request.url);
     const room = url.searchParams.get("room");
