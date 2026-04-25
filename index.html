@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>YY-Talk PRO - Ultimate Polish</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>YY-Talk PRO - Ultimate Feeling</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -21,6 +22,26 @@
       }
       return origSetLocalDescription.apply(this, arguments);
     };
+
+    // ★ 改善4: 横向き時の「画面はみ出し」をピクセル単位で完全封殺するスクリプト
+    function forceResize() {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const container = document.getElementById('main-app-container');
+      if (container) {
+        container.style.width = w + 'px';
+        container.style.height = h + 'px';
+      }
+      document.body.style.width = w + 'px';
+      document.body.style.height = h + 'px';
+      window.scrollTo(0, 0);
+    }
+    window.addEventListener('resize', forceResize);
+    window.addEventListener('orientationchange', () => { 
+      setTimeout(forceResize, 50); 
+      setTimeout(forceResize, 200); 
+      setTimeout(forceResize, 500); 
+    });
   </script>
 
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
@@ -41,57 +62,52 @@
       -webkit-user-select: none; 
       user-select: none; 
     }
-    input, select, textarea { -webkit-user-select: auto; user-select: auto; }
+    input, select, textarea { -webkit-user-select: auto; user-select: auto; touch-action: auto; }
     
-    /* ★ 改善1: はみ出し防止の究極形（CSSだけでSafe Areaの内側に完全固定） */
+    /* 画面全体のスクロールやバウンスを完全に殺す */
     html, body {
-      margin: 0; padding: 0; width: 100%; height: 100%;
-      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      margin: 0; padding: 0; 
+      position: fixed; top: 0; left: 0;
       overflow: hidden; background-color: #121418; color: var(--text-main);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       overscroll-behavior: none;
+      touch-action: none; /* デフォルトでスワイプアクションを禁止 */
     }
 
+    /* コンテナ: JSでサイズ指定され、セーフエリアのみPaddingで吸収 */
     .app-container {
-      position: absolute; 
-      /* OSが申告するセーフエリアの境界線にコンテナの四隅を直接バインドする */
-      top: env(safe-area-inset-top, 0px);
-      bottom: env(safe-area-inset-bottom, 0px);
-      left: env(safe-area-inset-left, 0px);
-      right: env(safe-area-inset-right, 0px);
+      position: absolute; top: 0; left: 0;
       background-color: var(--bg-dark);
       display: flex; flex-direction: column;
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
     }
 
     @media (min-width: 600px) {
-      html, body { position: static; display: flex; justify-content: center; align-items: center; }
+      html, body { position: static; display: flex; justify-content: center; align-items: center; touch-action: auto; }
       .app-container {
         position: relative; inset: auto; padding: 0;
-        width: 96vw; max-width: 1800px; height: 94vh; max-height: 1200px; min-height: 600px;
+        width: 96vw !important; max-width: 1800px !important; height: 94vh !important; max-height: 1200px; min-height: 600px;
         border-radius: 20px; border: 8px solid #1e2128; overflow: hidden; margin: 0 auto;
       }
     }
 
-    /* モーダル・オーバーレイ類 */
-    .overlay-base { position: absolute; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; flex-direction: column; backdrop-filter: blur(4px); z-index: 1000; overflow-y: auto; }
-    @media (max-height: 700px) { .overlay-base { align-items: flex-start; padding: 20px 0; } }
-
+    .overlay-base { position: absolute; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; flex-direction: column; backdrop-filter: blur(4px); z-index: 1000; overflow-y: auto; touch-action: pan-y;}
     #login-overlay { z-index: 2000; }
     #audio-overlay { z-index: 1100; }
     .btn-green-solid { background: var(--green); color: #000; border: none; padding: 15px 30px; font-size: 18px; font-weight: bold; border-radius: 30px; cursor: pointer; }
 
-    /* ログイン画面 */
+    /* ログイン画面 & パッチパネル省略 (前回のまま) */
     .login-modal { background: var(--card-bg); padding: 25px 20px; border-radius: 12px; width: 90%; max-width: 340px; border: 1px solid #3a3c42; position: relative; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); margin: auto; }
     .login-modal .btn-close-login { position: absolute; top: 12px; right: 15px; background: transparent; border: none; color: #9ca3af; font-size: 28px; cursor: pointer; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; z-index: 2010; font-weight: normal; }
     .login-modal input { width: 100%; padding: 12px; background: #0a0b0d; border: 1px solid #3a3c42; color: #fff; border-radius: 8px; font-size: 16px; text-align: center;}
     .login-modal button:not(.btn-close-login) { padding: 14px; border: none; border-radius: 8px; font-weight: bold; color: #000; cursor: pointer; font-size: 15px; z-index: 2001; }
     .login-modal button:not(.btn-close-login):disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-join-member { background: var(--orange); width: 100%; } 
-    .btn-join-admin { background: transparent; border: 1.5px solid var(--blue) !important; color: var(--blue) !important; width: 100%; } 
-    .btn-stop { background: var(--red); width: 100%; }
+    .btn-join-member { background: var(--orange); width: 100%; } .btn-join-admin { background: transparent; border: 1.5px solid var(--blue) !important; color: var(--blue) !important; width: 100%; } .btn-stop { background: var(--red); width: 100%; }
     .status-text { font-size: 12px; color: var(--text-sub); text-align: center; margin-top: 5px; font-family: 'JetBrains Mono', monospace;}
 
-    /* パッチパネル */
     .admin-modal { max-width: 95%; width: auto; min-width: 320px; }
     @media (min-width: 800px) { .admin-modal { max-width: 1200px; } }
     .scroll-area { max-height: 75vh; overflow: auto; padding-right: 5px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
@@ -137,11 +153,12 @@
     .btn-master-mic { background: #1c1d21; color: var(--text-main); border: 1px solid #3a3c42; }
     .btn-master-mic.active { background: var(--red); color: #000; border-color: var(--red); animation: pulse-red 1.5s infinite; }
 
-    /* チャンネルリスト領域 */
+    /* ★ チャンネルリスト（スクロール許可エリア） */
     .channel-list-container { 
       flex: 1 1 auto; overflow-y: auto; padding: 10px 15px 20px; 
       display: flex; flex-direction: column; gap: 10px; scrollbar-width: none;
       -webkit-overflow-scrolling: touch; min-height: 0; z-index: 1;
+      touch-action: pan-y; /* 縦スクロールのみ許可 */
     }
     .channel-list-container::-webkit-scrollbar { display: none; }
     #channel-list-wrap { display: grid; grid-template-columns: 1fr; gap: 10px; }
@@ -163,12 +180,12 @@
     .volume-panel { display: none; padding: 5px 20px; align-items: center; gap: 10px; }
     .channel-card.expanded .volume-panel { display: flex; }
     .vol-icon { width: 14px; height: 14px; fill: var(--text-sub); flex-shrink: 0; }
-    .vol-slider-wrap { flex: 1; position: relative; display: flex; align-items: center; }
+    .vol-slider-wrap { flex: 1; position: relative; display: flex; align-items: center; touch-action: pan-x; }
     .vol-slider-track-bg { position: absolute; left: 0; right: 0; height: 4px; background: #3a3c42; border-radius: 2px; z-index: 1; }
     .vol-slider-fill { position: absolute; left: 0; height: 4px; background: var(--orange); border-radius: 2px; z-index: 2; width: 50%; pointer-events: none; }
-    input[type=range] { width: 100%; -webkit-appearance: none; background: transparent; height: 24px; position: relative; z-index: 3; margin: 0; outline: none; }
-    input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 24px; background: transparent; border: none; }
-    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #ffffff; box-shadow: 0 0 8px rgba(0,0,0,0.6); cursor: pointer; margin-top: 4px; }
+    input[type=range] { width: 100%; -webkit-appearance: none; background: transparent; height: 30px; position: relative; z-index: 3; margin: 0; outline: none; }
+    input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 30px; background: transparent; border: none; }
+    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 18px; width: 18px; border-radius: 50%; background: #ffffff; box-shadow: 0 0 8px rgba(0,0,0,0.6); cursor: pointer; margin-top: 6px; }
 
     .main-controls { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; position: relative; }
     .ch-info { text-align: center; flex: 1; padding: 0 5px; }
@@ -185,25 +202,19 @@
     .ch-meter-container { height: 4px; background: #0a0b0d; margin: 0 45px 0; border-radius: 2px; overflow: hidden; position: relative; opacity: 0.8; }
     .ch-meter-fill { height: 100%; width: 0%; transition: width 0.05s linear; background: linear-gradient(90deg, #4ade80 0%, #4ade80 60%, #eab308 80%, #f87171 100%); }
     
-    /* ★ 改善2: ドラッグ＆ドロップ時の「指に吸い付く」デザイン */
-    .btn-expand { 
-      display: inline-block; padding: 4px 30px; color: var(--text-sub); 
-      font-size: 14px; letter-spacing: 2px; cursor: grab; margin: 0 auto; border-radius: 20px;
-      touch-action: none; /* スクロールとの競合を完全に防ぐ */
-    }
+    /* ★ 改善1: 吸い付くドラッグデザイン */
+    .btn-expand { display: inline-block; padding: 4px 40px; color: var(--text-sub); font-size: 14px; letter-spacing: 2px; cursor: grab; margin: 0 auto; border-radius: 20px; touch-action: none;}
     .btn-expand:active { cursor: grabbing; background-color: rgba(255,255,255,0.05); }
     
     .sortable-ghost { 
-      opacity: 0.3 !important; 
-      background-color: #0a0b0d !important;
-      border: 1px dashed #3a3c42 !important;
+      opacity: 0.2 !important; 
+      background-color: #000 !important;
     }
     .sortable-drag { 
       cursor: grabbing !important; 
-      box-shadow: 0 30px 60px rgba(0,0,0,0.8) !important; 
-      transform: scale(1.05) !important; 
-      background-color: #24262b !important;
-      border: 1px solid var(--text-sub) !important;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.8) !important; 
+      background-color: var(--card-bg-expanded) !important;
+      border: 1px solid #3a3c42 !important;
       opacity: 1 !important;
       z-index: 9999 !important;
     }
@@ -213,7 +224,7 @@
 
     /* 横向き時のさらなるスリム化 */
     @media (orientation: landscape) and (max-height: 500px) {
-      .header { padding: 2px 15px; border-bottom: 1px solid #1e2128; }
+      .header { padding: 4px 15px; border-bottom: 1px solid #1e2128; }
       #app-logo { height: 20px; } 
       .global-controls { padding: 2px 15px; gap: 8px; }
       .btn-global { padding: 4px 8px; font-size: 11px; height: 28px; }
@@ -228,15 +239,15 @@
       .ch-type { font-size: 9px; }
       
       .card-footer { padding: 0 10px 2px !important; }
-      .btn-expand { padding: 2px 20px !important; font-size: 12px !important; }
+      .btn-expand { padding: 2px 30px !important; font-size: 12px !important; }
       
       .master-meter-container { height: 6px; }
     }
   </style>
 </head>
-<body>
+<body onload="forceResize()">
 
-  <div class="app-container">
+  <div class="app-container" id="main-app-container">
     
     <div id="audio-overlay" class="overlay-base">
       <p style="font-weight:bold; margin-bottom:20px; font-size: 18px;">通話に参加しますか？</p>
@@ -482,27 +493,25 @@
       order.forEach(id => { const ch = channels.find(c => c.id === id); if (ch) createChannelCard(ch); });
     }
 
-    // ★ 改善3: 指にピッタリ吸い付く完全なドラッグ＆ドロップ
+    // ★ 改善2: ドラッグ＆ドロップの残像バグをなくし、スッと吸い付くように
     window.addEventListener('DOMContentLoaded', () => {
       if (typeof Sortable !== 'undefined') {
         new Sortable(els.chWrap, {
-          animation: 200,
+          animation: 250,
           handle: '.btn-expand',
           delay: 150,
           delayOnTouchOnly: true,
           touchStartThreshold: 5,
-          forceFallback: true,
-          fallbackOnBody: true, // ★指に直接吸い付かせてズレをなくす
-          fallbackClass: 'sortable-drag',
           ghostClass: 'sortable-ghost',
-          onStart: function (evt) { if (navigator.vibrate) navigator.vibrate(50); },
+          dragClass: 'sortable-drag',
+          onStart: function (evt) { if (navigator.vibrate) navigator.vibrate(30); },
           onEnd: function (evt) {
             let newOrder = [];
             els.chWrap.querySelectorAll('.channel-card').forEach(card => {
               newOrder.push(card.id.replace('card-', ''));
             });
             safeStorage.set('yytalk-ch-order', JSON.stringify(newOrder));
-            if (navigator.vibrate) navigator.vibrate(50);
+            if (navigator.vibrate) navigator.vibrate(30);
           }
         });
       }
@@ -513,9 +522,6 @@
       initChannelsDOM(); setupChannelAudio(newCh.id);
       state.registeredUsers.forEach(uid => { if (!state.userAssignments[uid]) state.userAssignments[uid] = []; state.userAssignments[uid].push(id); });
       Object.values(state.dataConns).forEach(conn => { if(conn && conn.open) conn.send({ type: 'add-channel', ch: newCh, assignments: state.userAssignments, registered: state.registeredUsers }); });
-      Object.values(state.mediaCalls).forEach(call => {
-        if (call.source && audioCtx) { const splitGain = audioCtx.createGain(); splitGain.gain.value = 0; call.source.connect(splitGain); splitGain.connect(state.channelNodes[newCh.id].analyser); call.chGains[newCh.id] = splitGain; }
-      });
       saveRoomState(); buildAdminMatrix(); if (state.userAssignments && state.myUserId) { applyAssignments(state.userAssignments[state.myUserId] || channels.map(c=>c.id)); }
     };
 
@@ -643,7 +649,7 @@
       Object.values(state.dataConns).forEach(conn => { if(conn && conn.open) conn.send(msg); });
     }
 
-    // ★ 改善2: PTTスワイプ距離の延長(80px)と移動限界(100px)の設定
+    // ★ 改善1: PTTスワイプの完璧な挙動 (距離延長、ゴム感、ON/OFF両対応)
     function setupPTTButton(btn, type, channelId) {
       if(!btn) return;
       let isDown = false, startX = 0;
@@ -660,6 +666,7 @@
 
       btn.addEventListener('pointerdown', (e) => {
         btn.setPointerCapture(e.pointerId); isDown = true; startX = e.clientX; els.dummyAudio.play().catch(()=>{});
+        btn.style.transition = 'none'; // 引っ張る時はアニメーションを切る
         if (!isLatched) { btn.classList.add('active'); applyState(true); }
       });
       
@@ -667,40 +674,60 @@
         if (!isDown) return; 
         let deltaX = e.clientX - startX;
         
-        if ((slideDir === 1 && deltaX > 0) || (slideDir === -1 && deltaX < 0)) {
-          e.preventDefault(); 
-          
-          // ★ 80px移動したら自動的にロック
-          if (Math.abs(deltaX) > 80) {
-            isDown = false; 
-            btn.releasePointerCapture(e.pointerId);
-            btn.style.transform = `translateX(0px)`;
-            
-            if (!isLatched) {
-              isLatched = true;
-              btn.classList.add('latched');
-              if (navigator.vibrate) navigator.vibrate(50);
-              applyState(true);
-            }
-            return;
-          }
-          
-          // ★ 移動できる限界を100pxに制限
-          const moveX = slideDir === 1 ? Math.min(deltaX, 100) : Math.max(deltaX, -100);
-          btn.style.transform = `translateX(${moveX}px)`;
+        // 逆方向のスワイプは重くする（引っ張れないように）
+        if ((slideDir === 1 && deltaX < 0) || (slideDir === -1 && deltaX > 0)) {
+          deltaX = deltaX * 0.2;
         }
+
+        const targetDistance = 120; // ★ロックするまでの距離（カード中央付近）
+        let visualMoveX = deltaX;
+        
+        // ★ゴムのような非線形な引き心地（強く引くほど重くなる）
+        if (Math.abs(deltaX) > 20) {
+            const sign = Math.sign(deltaX);
+            const over = Math.abs(deltaX) - 20;
+            visualMoveX = sign * (20 + Math.pow(over, 0.75) * 3); 
+        }
+
+        // 目標距離を超えたらON/OFFを切り替えて手を離させる
+        if (Math.abs(deltaX) > targetDistance && Math.sign(deltaX) === slideDir) {
+          isDown = false; 
+          btn.releasePointerCapture(e.pointerId);
+          btn.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'; // ポヨンと戻る
+          btn.style.transform = `translateX(0px)`;
+          
+          if (isLatched) {
+            // ★オンの状態でスワイプしたらオフにする
+            isLatched = false;
+            btn.classList.remove('latched', 'active');
+            if (navigator.vibrate) navigator.vibrate([30, 50, 30]); // カチカチッという感触
+            applyState(false);
+          } else {
+            // ★オフの状態でスワイプしたらオンにする
+            isLatched = true;
+            btn.classList.add('latched');
+            if (navigator.vibrate) navigator.vibrate(50);
+            applyState(true);
+          }
+          return;
+        }
+        
+        btn.style.transform = `translateX(${visualMoveX}px)`;
       });
       
       const release = (e) => {
         if (!isDown) return; 
         isDown = false; 
+        btn.style.transition = 'transform 0.2s ease-out';
         btn.style.transform = `translateX(0px)`;
         
         if (Math.abs(e.clientX - startX) < 5) {
+          // 単純なタップだった場合
           if (isLatched) { isLatched = false; btn.classList.remove('latched', 'active'); applyState(false); }
           else { btn.classList.remove('active'); applyState(false); }
         } else {
-          if (isLatched) { /* 既にロック済み */ }
+          // スワイプの途中で指を離した場合
+          if (isLatched) { /* 既にロック済みならそのまま維持 */ }
           else { btn.classList.remove('active'); applyState(false); }
         }
       };
@@ -712,7 +739,6 @@
 
     window.toggleAllUserAssignments = function(uid) {
       if(!confirm(`ユーザー「${uid}」の全パーティーを一括でオン/オフしますか？`)) return;
-
       const allAssigned = channels.every(ch => state.userAssignments[uid] && state.userAssignments[uid].includes(ch.id));
       if (allAssigned) state.userAssignments[uid] = []; else state.userAssignments[uid] = channels.map(c => c.id); 
       saveRoomState(); buildAdminMatrix();
@@ -920,6 +946,7 @@
     function scanForPeers() { for (let i = 1; i < state.mySlot; i++) { const targetId = `${state.netRoomId}-s${i}`; if (!state.dataConns[targetId]) { const conn = state.peer.connect(targetId); conn.on('open', () => setupDataConnection(conn)); conn.on('error', () => {}); } } }
 
     window.addEventListener('DOMContentLoaded', () => {
+      forceResize();
       els.btnJoinMember.addEventListener('click', () => joinNetwork(false));
       els.btnJoinAdmin.addEventListener('click', () => joinNetwork(true));
       els.btnJoinMember.textContent = "メンバーとして参加"; els.btnJoinAdmin.textContent = "管理者として参加";
