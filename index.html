@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>YY-Talk PRO - Final Fixed</title>
+  <title>YY-Talk PRO - Final Compact</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,18 +22,6 @@
       }
       return origSetLocalDescription.apply(this, arguments);
     };
-
-    // ★ 改善: iOSの「横向き時に下がはみ出るバグ」を完全封印するスクリプト
-    function fixViewportHeight() {
-      let vh = window.innerHeight * 0.01;
-      document.documentElement.style.setProperty('--vh', `${vh}px`);
-      window.scrollTo(0, 0); // アドレスバーを強制リセット
-    }
-    window.addEventListener('resize', fixViewportHeight);
-    window.addEventListener('orientationchange', () => { 
-      setTimeout(fixViewportHeight, 50); 
-      setTimeout(fixViewportHeight, 200); 
-    });
   </script>
 
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
@@ -56,22 +44,20 @@
     }
     input, select, textarea { -webkit-user-select: auto; user-select: auto; }
     
-    /* ★ はみ出し防止: fixedで四隅を完全固定し、動的vhを使用 */
+    /* ★ はみ出し防止: JS計算を廃止し、最新の固定レイアウトを適用 */
     html, body {
-      margin: 0; padding: 0; width: 100%; 
-      height: 100vh; /* フォールバック */
-      height: calc(var(--vh, 1vh) * 100);
+      margin: 0; padding: 0; width: 100vw; height: 100dvh;
       overflow: hidden; background-color: #121418; color: var(--text-main);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       overscroll-behavior: none;
-      position: fixed; top: 0; left: 0;
+      position: fixed; top: 0; left: 0; /* ブラウザスクロールを完全無効化 */
     }
 
     .app-container {
       position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-      height: 100%;
       background-color: var(--bg-dark);
       display: flex; flex-direction: column;
+      /* セーフエリア(ノッチ等)の余白をここで一括吸収 */
       padding-top: env(safe-area-inset-top);
       padding-bottom: env(safe-area-inset-bottom);
       padding-left: env(safe-area-inset-left);
@@ -82,11 +68,12 @@
       html, body { position: static; display: flex; justify-content: center; align-items: center; }
       .app-container {
         position: relative; inset: auto; padding: 0;
-        width: 96vw; max-width: 1800px; height: 94vh !important; max-height: 1200px; min-height: 600px;
+        width: 96vw; max-width: 1800px; height: 94vh; max-height: 1200px; min-height: 600px;
         border-radius: 20px; border: 8px solid #1e2128; overflow: hidden; margin: 0 auto;
       }
     }
 
+    /* モーダル・オーバーレイ類 */
     .overlay-base { position: absolute; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; flex-direction: column; backdrop-filter: blur(4px); z-index: 1000; overflow-y: auto; }
     @media (max-height: 700px) { .overlay-base { align-items: flex-start; padding: 20px 0; } }
 
@@ -94,6 +81,7 @@
     #audio-overlay { z-index: 1100; }
     .btn-green-solid { background: var(--green); color: #000; border: none; padding: 15px 30px; font-size: 18px; font-weight: bold; border-radius: 30px; cursor: pointer; }
 
+    /* ログイン画面 */
     .login-modal { background: var(--card-bg); padding: 25px 20px; border-radius: 12px; width: 90%; max-width: 340px; border: 1px solid #3a3c42; position: relative; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); margin: auto; }
     .login-modal .btn-close-login { position: absolute; top: 12px; right: 15px; background: transparent; border: none; color: #9ca3af; font-size: 28px; cursor: pointer; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; z-index: 2010; font-weight: normal; }
     .login-modal input { width: 100%; padding: 12px; background: #0a0b0d; border: 1px solid #3a3c42; color: #fff; border-radius: 8px; font-size: 16px; text-align: center;}
@@ -104,6 +92,7 @@
     .btn-stop { background: var(--red); width: 100%; }
     .status-text { font-size: 12px; color: var(--text-sub); text-align: center; margin-top: 5px; font-family: 'JetBrains Mono', monospace;}
 
+    /* パッチパネル (管理者) */
     .admin-modal { max-width: 95%; width: auto; min-width: 320px; }
     @media (min-width: 800px) { .admin-modal { max-width: 1200px; } }
     .scroll-area { max-height: 75vh; overflow: auto; padding-right: 5px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
@@ -119,13 +108,12 @@
     .admin-matrix td.ch-cell { text-align: left; background-color: #0a0b0d; min-width: 120px; padding: 6px; position: sticky; left: 0; z-index: 9; border-right: 2px solid #3a3c42 !important; box-shadow: 2px 0 5px rgba(0,0,0,0.4); }
     .matrix-toggle { width: 24px; height: 24px; border-radius: 50%; margin: 0 auto; background: #1c1d21; border: 2px solid #3a3c42; cursor: pointer; transition: 0.15s ease-out; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5); }
     .matrix-toggle.active { background: var(--green); border-color: var(--green); box-shadow: 0 0 8px rgba(74, 222, 128, 0.4); transform: scale(1.1); }
-    
-    /* ★ 削除ボタンのUIを元の美しいスクショに修正 */
     .btn-delete-col, .btn-delete-row { background: var(--red); color: #fff; border: none; border-radius: 6px; cursor: pointer; padding: 6px 12px; font-size: 11px; transition: all 0.2s; display: inline-block; font-weight: bold; }
     .btn-delete-row { margin-top: 0; }
     .admin-matrix td.ch-cell input.admin-edit-type { width: 48px; text-align:center; font-family:'JetBrains Mono', monospace; background:#1c1d21; border:1px solid #3a3c42; color:#fff; border-radius:4px; font-size:10px; padding:4px; }
 
-    .header { display: flex; align-items: center; justify-content: space-between; padding: 12px 15px 8px; background: var(--bg-dark); flex-shrink: 0; }
+    /* メインヘッダー (Paddingを固定値に変更) */
+    .header { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; background: var(--bg-dark); flex-shrink: 0; }
     .header-left { display: flex; align-items: center; }
     #app-logo { height: 26px; width: auto; margin-right: 5px; }
     @media (min-width: 600px) { #app-logo { height: 32px; } }
@@ -138,7 +126,7 @@
     #btn-settings.admin-only { display: none; }
 
     .global-controls { display: flex; gap: 10px; padding: 5px 15px 10px; background: var(--bg-dark); border-bottom: 2px solid var(--green); flex-shrink: 0; }
-    .btn-global { flex: 1; padding: 10px; border: none; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; font-family: 'JetBrains Mono', monospace; }
+    .btn-global { flex: 1; padding: 8px 10px; border: none; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; font-family: 'JetBrains Mono', monospace; }
 
     .slash-line { display: none; }
     .muted-slash .slash-line { display: block; opacity: 1; }
@@ -150,6 +138,7 @@
     .btn-master-mic { background: #1c1d21; color: var(--text-main); border: 1px solid #3a3c42; }
     .btn-master-mic.active { background: var(--red); color: #000; border-color: var(--red); animation: pulse-red 1.5s infinite; }
 
+    /* チャンネルリスト領域 */
     .channel-list-container { 
       flex: 1 1 auto; overflow-y: auto; padding: 10px 15px 20px; 
       display: flex; flex-direction: column; gap: 10px; scrollbar-width: none;
@@ -159,7 +148,8 @@
     #channel-list-wrap { display: grid; grid-template-columns: 1fr; gap: 10px; }
     @media (min-width: 600px) { #channel-list-wrap { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 15px; } }
 
-    .channel-card { background-color: var(--card-bg); border-radius: 10px; position: relative; overflow: hidden; display: flex; flex-direction: column; transition: background 0.3s ease; }
+    /* ★ 改善: カードの極限コンパクト化 */
+    .channel-card { background-color: var(--card-bg); border-radius: 8px; position: relative; overflow: hidden; display: flex; flex-direction: column; transition: background 0.3s ease; }
     .channel-card.expanded { background-color: var(--card-bg-expanded); }
     .channel-card::before, .channel-card::after { content: ""; position: absolute; top: 0; bottom: 0; width: 50%; opacity: 0; transition: opacity 0.3s ease; pointer-events: none; z-index: 0; }
     .channel-card::before { left: 0; background: linear-gradient(to right, rgba(74, 222, 128, 0.25) 0%, transparent 100%); }
@@ -171,7 +161,7 @@
     .status-line-bg { position: absolute; left: 0; top: 10%; bottom: 10%; width: 4px; background-color: #0a0b0d; border-radius: 0 4px 4px 0; overflow: hidden; z-index: 2; }
     .status-line-fill { position: absolute; bottom: 0; left: 0; right: 0; height: 50%; transition: height 0.1s; background: linear-gradient(to top, #4ade80 0%, #4ade80 40%, #eab308 75%, #f87171 100%); }
 
-    .volume-panel { display: none; padding: 10px 20px 5px; align-items: center; gap: 15px; }
+    .volume-panel { display: none; padding: 5px 20px; align-items: center; gap: 10px; }
     .channel-card.expanded .volume-panel { display: flex; }
     .vol-icon { width: 14px; height: 14px; fill: var(--text-sub); flex-shrink: 0; }
     .vol-slider-wrap { flex: 1; position: relative; display: flex; align-items: center; }
@@ -179,15 +169,16 @@
     .vol-slider-fill { position: absolute; left: 0; height: 4px; background: var(--orange); border-radius: 2px; z-index: 2; width: 50%; pointer-events: none; }
     input[type=range] { width: 100%; -webkit-appearance: none; background: transparent; height: 24px; position: relative; z-index: 3; margin: 0; outline: none; }
     input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 24px; background: transparent; border: none; }
-    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 18px; width: 18px; border-radius: 50%; background: #ffffff; box-shadow: 0 0 8px rgba(0,0,0,0.6); cursor: pointer; margin-top: 3px; }
+    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #ffffff; box-shadow: 0 0 8px rgba(0,0,0,0.6); cursor: pointer; margin-top: 4px; }
 
-    .main-controls { display: flex; align-items: center; justify-content: space-between; padding: 15px; position: relative; }
-    .ch-info { text-align: center; flex: 1; padding: 0 10px; }
-    .ch-name { font-size: 16px; font-weight: 500; margin-bottom: 2px; display: inline-block; padding: 2px 6px; border-radius: 4px; }
-    .ch-type { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-sub); display: inline-block; padding: 2px 6px; border-radius: 4px; pointer-events: auto; }
+    /* メインコントロールの余白削減 */
+    .main-controls { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; position: relative; }
+    .ch-info { text-align: center; flex: 1; padding: 0 5px; }
+    .ch-name { font-size: 15px; font-weight: 500; margin-bottom: 0px; display: inline-block; padding: 2px 6px; border-radius: 4px; }
+    .ch-type { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-sub); display: inline-block; padding: 0px 6px; border-radius: 4px; pointer-events: auto; }
 
-    .btn-action { width: 56px; height: 56px; border-radius: 50%; border: 2px solid; display: flex; align-items: center; justify-content: center; background: #1c1d21; touch-action: none; z-index: 10; user-select: none; box-shadow: 0 4px 8px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.05); transition: background-color 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, color 0.2s ease; cursor: pointer; }
-    .btn-icon { width: 26px; height: 26px; fill: currentColor; pointer-events: none; }
+    .btn-action { width: 50px; height: 50px; border-radius: 50%; border: 2px solid; display: flex; align-items: center; justify-content: center; background: #1c1d21; touch-action: none; z-index: 10; user-select: none; box-shadow: 0 4px 8px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.05); transition: background-color 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, color 0.2s ease; cursor: pointer; }
+    .btn-icon { width: 24px; height: 24px; fill: currentColor; pointer-events: none; }
     .btn-listen { border-color: var(--green); color: var(--green); }
     .btn-listen.active, .btn-listen.latched { background-color: var(--green); color: var(--bg-dark); box-shadow: inset 0 2px 4px rgba(255,255,255,0.4), 0 4px 15px rgba(74, 222, 128, 0.5); }
     .btn-talk { border-color: var(--red); color: var(--red); }
@@ -196,7 +187,8 @@
     .ch-meter-container { height: 4px; background: #0a0b0d; margin: 0 45px 0; border-radius: 2px; overflow: hidden; position: relative; opacity: 0.8; }
     .ch-meter-fill { height: 100%; width: 0%; transition: width 0.05s linear; background: linear-gradient(90deg, #4ade80 0%, #4ade80 60%, #eab308 80%, #f87171 100%); }
     
-    .btn-expand { display: inline-block; padding: 10px 30px; color: var(--text-sub); font-size: 16px; letter-spacing: 2px; cursor: grab; margin: 0 auto; border-radius: 20px;}
+    /* 「○ ○ ○」ボタンを極限まで薄く */
+    .btn-expand { display: inline-block; padding: 4px 30px; color: var(--text-sub); font-size: 14px; letter-spacing: 2px; cursor: grab; margin: 0 auto; border-radius: 20px;}
     .btn-expand:active { cursor: grabbing; background-color: rgba(255,255,255,0.05); }
     .sortable-ghost { opacity: 0.4; background-color: #2a2d35 !important; }
     .sortable-drag { cursor: grabbing !important; box-shadow: 0 20px 40px rgba(0,0,0,0.8) !important; transform: scale(1.02); }
@@ -204,29 +196,30 @@
     .master-meter-container { height: 8px; width: 100%; background: #1c1d21; position: relative; flex-shrink: 0; }
     .master-meter-fill { height: 100%; width: 0%; transition: width 0.05s linear; background: linear-gradient(90deg, #4ade80 0%, #4ade80 60%, #eab308 80%, #f87171 100%); }
 
-    /* ★ 横向き時 (Landscape) でも絶対にはみ出さないための調整 */
+    /* ★ 横向き時 (Landscape) の超スリム化 */
     @media (orientation: landscape) and (max-height: 500px) {
       .header { padding: 4px 15px; border-bottom: 1px solid #1e2128; }
-      #app-logo { height: 26px; } 
-      .global-controls { padding: 4px 15px; gap: 10px; }
-      .btn-global { padding: 4px 10px; font-size: 12px; height: 34px; }
+      #app-logo { height: 20px; } 
+      .global-controls { padding: 2px 15px; gap: 8px; }
+      .btn-global { padding: 4px 8px; font-size: 11px; height: 28px; }
       
-      .channel-list-container { padding: 6px 15px; gap: 6px;}
-      #channel-list-wrap { grid-template-columns: 1fr 1fr; gap: 8px; } 
+      .channel-list-container { padding: 4px 15px; gap: 6px;}
+      #channel-list-wrap { grid-template-columns: 1fr 1fr; gap: 6px; } 
 
-      .main-controls { padding: 8px 10px; }
-      .btn-action { width: 44px; height: 44px; border-width: 1.5px; }
-      .btn-icon { width: 22px; height: 22px; }
-      .ch-name { font-size: 14px; }
+      .main-controls { padding: 4px 10px; }
+      .btn-action { width: 40px; height: 40px; border-width: 1.5px; }
+      .btn-icon { width: 20px; height: 20px; }
+      .ch-name { font-size: 13px; }
+      .ch-type { font-size: 9px; }
       
-      .card-footer { padding: 0 10px 4px !important; }
-      .btn-expand { padding: 5px 20px !important; font-size: 14px !important; }
+      .card-footer { padding: 0 10px 2px !important; }
+      .btn-expand { padding: 2px 20px !important; font-size: 12px !important; }
       
       .master-meter-container { height: 6px; }
     }
   </style>
 </head>
-<body onload="fixViewportHeight()">
+<body>
 
   <div class="app-container">
     
@@ -447,7 +440,7 @@
         </div>
         <div class="ch-meter-container"><div class="ch-meter-fill" id="ch-meter-fill-${ch.id}"></div></div>
         
-        <div class="card-footer" style="display: flex; justify-content: center; align-items: center; padding: 0 15px 8px; position: relative; z-index: 5;">
+        <div class="card-footer" style="display: flex; justify-content: center; align-items: center; padding: 0 15px 4px; position: relative; z-index: 5;">
           <div class="btn-expand" id="expand-${ch.id}">○ ○ ○</div>
         </div>
       `;
@@ -461,7 +454,6 @@
         state.channelVolumes[ch.id] = (e.target.value / 100) * 3.0; updateAudioRouting(); 
       });
 
-      // タップでボリューム展開
       card.querySelector(`#expand-${ch.id}`).addEventListener('click', () => card.classList.toggle('expanded'));
       setupPTTButton(card.querySelector(`#listen-${ch.id}`), 'listen', ch.id);
       setupPTTButton(card.querySelector(`#talk-${ch.id}`), 'talk', ch.id);
@@ -476,13 +468,12 @@
       order.forEach(id => { const ch = channels.find(c => c.id === id); if (ch) createChannelCard(ch); });
     }
 
-    // ★ ドラッグ＆ドロップ初期化 (SortableJS)
     window.addEventListener('DOMContentLoaded', () => {
       if (typeof Sortable !== 'undefined') {
         new Sortable(els.chWrap, {
           animation: 200,
-          handle: '.btn-expand', // ○ ○ ○ が取っ手
-          delay: 150,            // 誤動作防止: 長押し0.15秒で発動
+          handle: '.btn-expand',
+          delay: 150,
           delayOnTouchOnly: true,
           touchStartThreshold: 5,
           ghostClass: 'sortable-ghost',
@@ -669,7 +660,10 @@
 
     function syncChannelInfo() { Object.values(state.dataConns).forEach(conn => { if(conn && conn.open) conn.send({ type: 'update-ch-info', data: channels }); }); }
 
+    // ★ 改善: 一括オン/オフ時の確認ポップアップ
     window.toggleAllUserAssignments = function(uid) {
+      if(!confirm(`ユーザー「${uid}」の全パーティーを一括でオン/オフしますか？`)) return;
+
       const allAssigned = channels.every(ch => state.userAssignments[uid] && state.userAssignments[uid].includes(ch.id));
       if (allAssigned) state.userAssignments[uid] = []; else state.userAssignments[uid] = channels.map(c => c.id); 
       saveRoomState(); buildAdminMatrix();
@@ -679,7 +673,6 @@
       Object.values(state.dataConns).forEach(conn => { if(conn && conn.open) conn.send({ type: 'assign-channels', channels: state.userAssignments[uid], targetUid: uid }); });
     };
 
-    // ★ 改善: パッチパネルUI崩れの修正
     function buildAdminMatrix() {
       if (!state.isAdmin) return;
       const container = document.getElementById('admin-matrix-container');
@@ -687,7 +680,6 @@
       state.registeredUsers.forEach(uid => {
           const isOnline = Array.from(state.peers).some(p => state.users[p] === uid && state.dataConns[p] && state.dataConns[p].open);
           const statusColor = isOnline ? 'var(--green)' : 'var(--text-sub)';
-          // "一括切替"というテキストラベルを外し、シンプルに整えました
           html += `<th class="matrix-user-header" onclick="toggleAllUserAssignments('${uid}')"><div style="display:flex; align-items:center; justify-content:center; gap:5px; margin-bottom:6px;"><span style="color:${statusColor}; font-size:10px;">●</span><span style="font-weight:bold; color:var(--text-main); font-family: 'JetBrains Mono', monospace; font-size:13px;">${uid}</span><div style="position: relative; width: 4px; height: 14px; background: #0a0b0d; border-radius: 2px; overflow: hidden; margin-left: 2px;"><div id="user-meter-${uid}" style="position: absolute; bottom: 0; left: 0; width: 100%; height: 0%; background: linear-gradient(to top, #4ade80, #eab308, #f87171); transition: height 0.05s linear;"></div></div></div><button class="btn-delete-col" data-uid="${uid}" onclick="event.stopPropagation();">削除</button></th>`;
       });
       html += `<th><button id="btn-add-user" style="background:var(--blue); color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;">＋ 追加</button></th></tr></thead><tbody>`;
