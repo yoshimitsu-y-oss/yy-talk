@@ -4,17 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>YY-Talk PRO - Safemode</title>
+  <title>YY-Talk PRO - Perfect Viewport</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
   
   <script>
-    // ★ 改善: エラーの原因を詳細に表示する強力なエラーキャッチャー
-    window.onerror = function(message, source, lineno, colno, error) {
-      alert("【システムエラー検知】\n" + message + "\n行: " + lineno + "\n詳細: " + (error ? error.message : "なし"));
-      return false; 
+    window.onerror = function(message, source, lineno) {
+      alert("【システムエラー検知】\n" + message + "\n行: " + lineno);
+      return false;
     };
 
     const origSetLocalDescription = RTCPeerConnection.prototype.setLocalDescription;
@@ -46,27 +45,45 @@
     }
     input, select, textarea { -webkit-user-select: auto; user-select: auto; touch-action: auto; }
     
+    /* ★ 基本: スマホ縦向き用の画面固定 */
     html, body {
       margin: 0; padding: 0; 
       width: 100%; height: 100%;
-      background-color: #121418; color: var(--text-main);
+      position: fixed; top: 0; left: 0;
+      overflow: hidden; background-color: #121418; color: var(--text-main);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      overscroll-behavior: none; overflow-x: hidden; overflow-y: auto;
+      overscroll-behavior: none;
     }
 
     .app-container {
-      width: 100%; height: 100dvh; min-height: 380px; 
+      width: 100%; height: 100dvh; 
       background-color: var(--bg-dark); display: flex; flex-direction: column;
       padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom);
       padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right);
       margin: 0 auto;
     }
 
-    @media (min-width: 600px) {
-      body { display: flex; justify-content: center; align-items: center; }
+    /* ★ 修正: PC判定を「幅も高さも十分にある」場合のみに厳格化（横向きスマホをPCと誤認させない） */
+    @media (min-width: 600px) and (min-height: 600px) {
+      html, body { position: static; display: flex; justify-content: center; align-items: center; overflow: auto; }
       .app-container { height: 94vh; max-height: 1200px; min-height: 600px; width: 96vw; max-width: 1800px; border-radius: 20px; border: 8px solid #1e2128; }
     }
 
+    /* ★ 修正: スマホ横向き時は「画面固定を解除して縦スクロールを許可」する */
+    @media (orientation: landscape) and (max-height: 500px) {
+      html, body {
+        position: static; /* ピン留め解除 */
+        overflow-y: auto; /* 縦スクロール許可 */
+        height: auto;
+      }
+      .app-container {
+        position: relative;
+        height: auto;
+        min-height: 100dvh;
+      }
+    }
+
+    /* モーダル類 */
     .overlay-base { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; flex-direction: column; backdrop-filter: blur(4px); z-index: 1000; overflow-y: auto; touch-action: pan-y;}
     #login-overlay { z-index: 2000; } #audio-overlay { z-index: 1100; }
     .btn-green-solid { background: var(--green); color: #000; border: none; padding: 15px 30px; font-size: 18px; font-weight: bold; border-radius: 30px; cursor: pointer; }
@@ -158,7 +175,7 @@
     .ch-name { font-size: 15px; font-weight: 500; margin-bottom: 0px; display: inline-block; padding: 2px 6px; border-radius: 4px; }
     .ch-type { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-sub); display: inline-block; padding: 0px 6px; border-radius: 4px; pointer-events: auto; }
 
-    .btn-action { width: 50px; height: 50px; border-radius: 50%; border: 2px solid; display: flex; align-items: center; justify-content: center; background: #1c1d21; touch-action: none; z-index: 10; user-select: none; box-shadow: 0 4px 8px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.05); cursor: pointer; }
+    .btn-action { width: 50px; height: 50px; border-radius: 50%; border: 2px solid; display: flex; align-items: center; justify-content: center; background: #1c1d21; touch-action: none; z-index: 10; user-select: none; box-shadow: 0 4px 8px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.05); transition: background-color 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, color 0.2s ease; cursor: pointer; }
     .btn-icon { width: 24px; height: 24px; fill: currentColor; pointer-events: none; }
     .btn-listen { border-color: var(--green); color: var(--green); }
     .btn-listen.active, .btn-listen.latched { background-color: var(--green); color: var(--bg-dark); box-shadow: inset 0 2px 4px rgba(255,255,255,0.4), 0 4px 15px rgba(74, 222, 128, 0.5); }
@@ -176,10 +193,11 @@
     .master-meter-container { height: 8px; width: 100%; background: #1c1d21; position: relative; flex-shrink: 0; z-index: 10;}
     .master-meter-fill { height: 100%; width: 0%; transition: width 0.05s linear; background: linear-gradient(90deg, #4ade80 0%, #4ade80 60%, #eab308 80%, #f87171 100%); }
 
+    /* 横向き時のスクロールを阻害しないためのスリム化 */
     @media (orientation: landscape) and (max-height: 500px) {
-      .header { padding: 2px 15px; border-bottom: 1px solid #1e2128; }
+      .header { padding: 4px 15px; border-bottom: 1px solid #1e2128; }
       #app-logo { height: 20px; } 
-      .global-controls { padding: 2px 15px; gap: 8px; }
+      .global-controls { padding: 4px 15px; gap: 8px; }
       .btn-global { padding: 4px 8px; font-size: 11px; height: 28px; }
       .channel-list-container { padding: 4px 15px; gap: 6px;}
       #channel-list-wrap { grid-template-columns: 1fr 1fr; gap: 6px; } 
@@ -587,7 +605,7 @@
       Object.values(state.dataConns || {}).forEach(conn => { if(conn?.open) conn.send(msg); });
     }
 
-    // ★ 改善: PTTのゴム感強化、距離延長、バウンド無効化、ON/OFF両対応
+    // ★ 改善: PTTの挙動（バウンド無効化、ON/OFF両対応）
     function setupPTTButton(btn, type, channelId) {
       if(!btn) return;
       let isDown = false, startX = 0;
@@ -612,28 +630,30 @@
         if (!isDown) return; 
         let deltaX = e.clientX - startX;
         
-        if ((slideDir === 1 && deltaX < 0) || (slideDir === -1 && deltaX > 0)) { deltaX = deltaX * 0.1; } // 逆方向は重くする
+        if ((slideDir === 1 && deltaX < 0) || (slideDir === -1 && deltaX > 0)) { deltaX = deltaX * 0.1; }
         
-        const targetDistance = 120; // ★ 中央付近まで距離を延長
+        const targetDistance = 120; 
         let visualMoveX = deltaX;
         
         if (Math.abs(deltaX) > 20) {
             const sign = Math.sign(deltaX);
             const over = Math.abs(deltaX) - 20;
-            visualMoveX = sign * (20 + Math.pow(over, 0.4) * 15); // ★ 平方根を使った強めのゴム感
+            visualMoveX = sign * (20 + Math.pow(over, 0.4) * 15);
         }
 
         if (Math.abs(deltaX) > targetDistance && Math.sign(deltaX) === slideDir) {
           isDown = false; 
           btn.releasePointerCapture(e.pointerId);
-          btn.style.transition = 'transform 0.15s ease-out'; // ★ スッと直線的に戻る（バウンドなし）
+          btn.style.transition = 'transform 0.15s ease-out'; // ★ バウンドせずにスッと戻る
           btn.style.transform = `translateX(0px)`;
           
           if (isLatched) {
+            // ★ オンからスワイプでオフにする
             isLatched = false; btn.classList.remove('latched', 'active');
             if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
             applyState(false);
           } else {
+            // ★ オフからスワイプでオンにする
             isLatched = true; btn.classList.add('latched');
             if (navigator.vibrate) navigator.vibrate(50);
             applyState(true);
@@ -646,7 +666,7 @@
       const release = (e) => {
         if (!isDown) return; 
         isDown = false; 
-        btn.style.transition = 'transform 0.15s ease-out'; // ★ スッと直線的に戻る
+        btn.style.transition = 'transform 0.15s ease-out'; // ★ バウンドせずにスッと戻る
         btn.style.transform = `translateX(0px)`;
         
         if (Math.abs(e.clientX - startX) < 5) {
