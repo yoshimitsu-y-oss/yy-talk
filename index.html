@@ -16,6 +16,7 @@
       return false;
     };
 
+    // Opus DTX (無音時の通信量削減)
     const origSetLocalDescription = RTCPeerConnection.prototype.setLocalDescription;
     RTCPeerConnection.prototype.setLocalDescription = function(desc) {
       if (desc && (desc.type === 'offer' || desc.type === 'answer')) {
@@ -56,20 +57,20 @@
     
     html, body {
       margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; 
-      background-color: #000000; color: var(--text-main);
+      background-color: #121418; color: var(--text-main);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       overscroll-behavior: none;
     }
 
     .app-container {
-      width: 100%; height: 100%; background-color: var(--bg-dark); display: flex; flex-direction: column;
+      width: 100%; height: 100dvh; background-color: var(--bg-dark); display: flex; flex-direction: column;
       padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom);
       padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right);
       margin: 0 auto;
     }
 
     @media (min-width: 600px) and (min-height: 600px) {
-      body { background-color: #121418; display: flex; justify-content: center; align-items: center; position: static;}
+      body { display: flex; justify-content: center; align-items: center; position: static;}
       .app-container { height: 94vh; max-height: 1200px; min-height: 600px; width: 96vw; max-width: 1800px; border-radius: 20px; border: 8px solid #1e2128; }
     }
 
@@ -171,10 +172,11 @@
     .ch-meter-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); }
     .ch-meter-mask { position: absolute; right: 0; top: 0; bottom: 0; width: 100%; background-color: var(--bg-dark); transition: width 0.05s linear; }
     
+    /* ★ 復活: 最高に自然なドラッグ感（ブラウザネイティブ） */
     .btn-expand { display: inline-block; padding: 4px 40px; color: var(--text-sub); font-size: 14px; letter-spacing: 2px; cursor: grab; margin: 0 auto; border-radius: 20px; touch-action: none;}
     .btn-expand:active { cursor: grabbing; background-color: rgba(255,255,255,0.05); }
-    .sortable-ghost { opacity: 0.2 !important; background-color: #000 !important; border: 1px dashed #3a3c42 !important; }
-    .sortable-drag { cursor: grabbing !important; box-shadow: 0 30px 60px rgba(0,0,0,0.8) !important; transform: scale(1.05) !important; background-color: var(--card-bg-expanded) !important; border: 1px solid var(--text-sub) !important; opacity: 1 !important; z-index: 9999 !important; }
+    .sortable-ghost { opacity: 0.2 !important; background-color: #000 !important; }
+    .sortable-drag { cursor: grabbing !important; box-shadow: 0 20px 40px rgba(0,0,0,0.8) !important; background-color: var(--card-bg-expanded) !important; border: 1px solid #3a3c42 !important; opacity: 1 !important; z-index: 9999 !important; }
 
     .master-meter-container { height: 8px; width: 100%; background: var(--bg-dark); position: relative; flex-shrink: 0; z-index: 10;}
     .master-meter-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); }
@@ -210,11 +212,11 @@
     <div id="login-overlay" class="overlay-base" style="display: flex;">
       <div class="login-modal">
         <button class="btn-close-login" id="btn-close-login">×</button>
-        <h3 style="margin: 0 0 5px 0; text-align: center; color: var(--text-main);">LiveKit Network</h3>
+        <h3 style="margin: 0 0 5px 0; text-align: center; color: var(--text-main);">Network Login</h3>
         <input id="host-id" type="text" placeholder="ルーム名 (日本語もOK)">
         <input id="join-userid" type="text" placeholder="ユーザーID (例: Cam1)">
         <div style="display: flex; flex-direction: column; gap: 10px;">
-          <button class="btn-join-member" id="btn-join-member">SFUサーバーへ接続</button>
+          <button class="btn-join-member" id="btn-join-member">メンバーとして接続</button>
           <button class="btn-join-admin" id="btn-join-admin">管理者として接続</button>
         </div>
         <button class="btn-stop" id="btn-stop">Disconnect</button>
@@ -277,19 +279,9 @@
   </div>
 
   <script>
-    // 画面固定・スクロールロック処理
-    document.addEventListener('touchmove', function(e) { 
-      if (e.touches.length > 1) { e.preventDefault(); return; } 
-      let isScrollable = false; let target = e.target;
-      while (target && target !== document.body) {
-        if (target.classList && (target.classList.contains('channel-list-container') || target.classList.contains('scroll-area') || target.classList.contains('overlay-base'))) { isScrollable = true; break; }
-        target = target.parentNode;
-      }
-      if (!isScrollable) e.preventDefault();
-    }, { passive: false });
-
+    document.addEventListener('touchmove', function(e) { if (e.touches.length > 1) { e.preventDefault(); } }, { passive: false });
     let lastTouchEnd = 0;
-    document.addEventListener('touchend', function(e) { const now = (new Date()).getTime(); if (now - lastTouchEnd <= 300) e.preventDefault(); lastTouchEnd = now; }, { passive: false });
+    document.addEventListener('touchend', function(e) { const now = (new Date()).getTime(); if (now - lastTouchEnd <= 300) { e.preventDefault(); } lastTouchEnd = now; }, { passive: false });
     window.addEventListener('contextmenu', e => { if(e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') e.preventDefault(); });
 
     const safeStorage = {
@@ -304,7 +296,7 @@
       clear: () => { try { safeStorage.remove('yytalk_user_profile'); } catch(e) {} }
     };
 
-    // State
+    // ★ LiveKit向け State
     const state = {
       room: null, localStream: null,
       roomId: '', myUserId: '', 
@@ -313,6 +305,7 @@
       isAdmin: false, audioEnabled: false, isMasterSpkMuted: false, isMasterMicMuted: false
     };
 
+    // ★ SFU 接続情報
     const LIVEKIT_WS_URL = "wss://yy-talk-pe8z9ycq.livekit.cloud";
     const WORKER_AUTH_URL = "https://yy-talk.yoshimitsu-y.workers.dev";
 
@@ -457,12 +450,18 @@
       order.forEach(id => { const ch = channels?.find(c => c?.id === id); if (ch) createChannelCard(ch); });
     }
 
+    // ★ ご指定の「ブラウザネイティブの自然なドラッグ設定」に完全復元！
     window.addEventListener('DOMContentLoaded', () => {
       forceResize();
       if (typeof Sortable !== 'undefined') {
         new Sortable(els.chWrap, {
-          animation: 200, handle: '.btn-expand', delay: 150, delayOnTouchOnly: true, touchStartThreshold: 5,
-          forceFallback: true, fallbackOnBody: true, fallbackClass: 'sortable-drag', ghostClass: 'sortable-ghost',
+          animation: 200,
+          handle: '.btn-expand',
+          delay: 150,
+          delayOnTouchOnly: true,
+          touchStartThreshold: 5,
+          ghostClass: 'sortable-ghost',
+          dragClass: 'sortable-drag',
           onStart: function (evt) { if (navigator.vibrate) navigator.vibrate(50); },
           onEnd: function (evt) {
             let newOrder = []; els.chWrap.querySelectorAll('.channel-card').forEach(card => { newOrder.push(card.id.replace('card-', '')); });
@@ -470,13 +469,15 @@
           }
         });
       }
+      
       els.btnJoinMember.onclick = () => joinNetwork(false);
       els.btnJoinAdmin.onclick = () => joinNetwork(true);
+      
       const savedProfile = LocalProfile.get();
       if (savedProfile) { els.hostIdInput.value = savedProfile.roomId || ''; els.joinUserIdInput.value = savedProfile.userId || ''; }
     });
 
-    // ★ データをLiveKitの全参加者へ送信
+    // ★ LiveKit向けデータ送信処理
     function sendData(payload) {
       if (state.room && state.room.localParticipant) {
         const str = JSON.stringify(payload);
@@ -685,7 +686,7 @@
       if(!container) return;
       let html = `<div class="admin-matrix-wrapper"><table class="admin-matrix"><thead><tr><th class="diagonal-header"><span class="dh-member">メンバー</span><span class="dh-party">パーティー</span></th>`;
       state.registeredUsers?.forEach(uid => {
-          // ★修正: remoteParticipantsの判定
+          // ★LiveKit仕様の人数・接続判定に修正完了
           const isOnline = uid === state.myUserId || (state.room && state.room.remoteParticipants.has(uid));
           const statusColor = isOnline ? 'var(--green)' : 'var(--text-sub)';
           html += `<th class="matrix-user-header" onclick="toggleAllUserAssignments('${uid}')"><div style="display:flex; align-items:center; justify-content:center; gap:5px; margin-bottom:6px;"><span style="color:${statusColor}; font-size:10px;">●</span><span style="font-weight:bold; color:var(--text-main); font-family: 'JetBrains Mono', monospace; font-size:13px;">${uid}</span><div style="position: relative; width: 4px; height: 14px; background: #0a0b0d; border-radius: 2px; overflow: hidden; margin-left: 2px;"><div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to top, #4ade80, #eab308, #f87171);"></div><div id="user-meter-${uid}" style="position: absolute; top: 0; left: 0; right: 0; height: 100%; background-color: var(--bg-dark); transition: height 0.05s linear;"></div></div></div><button class="btn-delete-col" data-uid="${uid}" onclick="event.stopPropagation();">削除</button></th>`;
@@ -797,10 +798,10 @@
       updateAudioRouting(); updateUserCount();
     }
 
-    // ★修正: remoteParticipantsのsizeでカウント
+    // ★ LiveKit仕様の人数カウントに修正完了
     function updateUserCount() {
       if(!state.room) return;
-      const activeCount = state.room.remoteParticipants.size + 1; // +1 for local
+      const activeCount = state.room.remoteParticipants.size + 1; // 自分を入れるため +1
       els.roleDisplay.textContent = `ACTIVE (${activeCount})`; els.roleDisplay.style.color = 'var(--blue)';
       els.btnLoginShow.textContent = "Connected"; els.btnLoginShow.classList.add('online');
       if (state.isAdmin) { document.querySelectorAll('.admin-matrix th').forEach(th => { const uidSpan = th.querySelector('span[style*="font-weight:bold"]'); if(uidSpan) { const uid = uidSpan.textContent; const isPeerOnline = uid === state.myUserId || state.room.remoteParticipants.has(uid); const dot = th.querySelector('span:first-child'); if(dot) dot.style.color = isPeerOnline ? 'var(--green)' : 'var(--text-sub)'; } }); }
@@ -844,7 +845,7 @@
         return;
       }
 
-      btn.textContent = "SFU接続中...";
+      btn.textContent = "接続中...";
 
       const room = new LivekitClient.Room({ adaptiveStream: false, dynacast: false });
       state.room = room;
@@ -879,7 +880,7 @@
            initAudioContext();
         }
 
-        els.myIdDisplay.textContent = `${myName} (SFU)`; els.loginOverlay.style.display = 'none';
+        els.myIdDisplay.textContent = `${myName}`; els.loginOverlay.style.display = 'none';
         updateUserCount();
         sendData({ type: 'hello', userId: state.myUserId }); syncTalkStates();
 
