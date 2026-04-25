@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>YY-Talk PRO - Perfect Coexistence</title>
+  <title>YY-Talk PRO - Ultimate Coexistence</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,8 +24,27 @@
       return origSetLocalDescription.apply(this, arguments);
     };
 
-    // ★ バグの元凶だったJSの高さ強制計算（forceResize）は全削除しました！
-    // 代わりに最新のCSS（100dvh）に全てを任せます。
+    // ★ 画面サイズを測って高さをピッタリ合わせる（fixedは使わない）
+    function forceResize() {
+      const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      document.documentElement.style.height = h + 'px';
+      document.body.style.height = h + 'px';
+      const container = document.getElementById('main-app-container');
+      if (container) {
+        container.style.height = h + 'px';
+      }
+      window.scrollTo(0, 0);
+    }
+
+    window.addEventListener('resize', forceResize);
+    window.addEventListener('orientationchange', () => { 
+      setTimeout(forceResize, 50); 
+      setTimeout(forceResize, 200); 
+      setTimeout(forceResize, 500); 
+    });
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', forceResize);
+    }
   </script>
 
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
@@ -48,22 +67,19 @@
     }
     input, select, textarea { -webkit-user-select: auto; user-select: auto; touch-action: auto; }
     
-    /* ★ 改善: 画面全体は【絶対固定】。これによりドラッグが完璧に指に吸い付きます */
+    /* ★ position: fixed を廃止。これでドラッグ座標が狂わず指に吸い付く */
     html, body {
       margin: 0; padding: 0; 
       width: 100%; height: 100%;
-      position: fixed; top: 0; left: 0; right: 0; bottom: 0; /* 四隅をピン留め */
-      overflow: hidden; /* 全体のスクロールを完全に禁止 */
-      background-color: #0a0b0d; color: var(--text-main);
+      overflow: hidden; 
+      background-color: #000000; 
+      color: var(--text-main);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       overscroll-behavior: none;
-      touch-action: none;
     }
 
-    /* ★ 改善: コンテナの高さを最新の「100dvh」で指定し、Safe Areaに対応 */
     .app-container {
-      width: 100%;
-      height: 100dvh; /* アドレスバーの開閉にも自動追従する最新の高さ単位 */
+      width: 100%; height: 100%;
       background-color: var(--bg-dark); 
       display: flex; flex-direction: column;
       padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom);
@@ -72,12 +88,15 @@
     }
 
     @media (min-width: 600px) and (min-height: 600px) {
-      body { display: flex; justify-content: center; align-items: center; position: static; touch-action: auto;}
-      .app-container { height: 94vh; max-height: 1200px; min-height: 600px; width: 96vw; max-width: 1800px; border-radius: 20px; border: 8px solid #1e2128; position: relative;}
+      body { background-color: #121418; display: flex; justify-content: center; align-items: center; position: static;}
+      .app-container { 
+        height: 94vh; max-height: 1200px; min-height: 600px; width: 96vw; max-width: 1800px; 
+        border-radius: 20px; border: 8px solid #1e2128; 
+      }
     }
 
     /* モーダル・オーバーレイ類 */
-    .overlay-base { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; flex-direction: column; backdrop-filter: blur(4px); z-index: 1000; overflow-y: auto; touch-action: pan-y;}
+    .overlay-base { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; flex-direction: column; backdrop-filter: blur(4px); z-index: 1000; overflow-y: auto;}
     #login-overlay { z-index: 2000; } #audio-overlay { z-index: 1100; }
     .btn-green-solid { background: var(--green); color: #000; border: none; padding: 15px 30px; font-size: 18px; font-weight: bold; border-radius: 30px; cursor: pointer; }
 
@@ -133,12 +152,12 @@
     .btn-master-mic { background: #1c1d21; color: var(--text-main); border: 1px solid #3a3c42; }
     .btn-master-mic.active { background: var(--red); color: #000; border-color: var(--red); animation: pulse-red 1.5s infinite; }
 
-    /* ★ 改善: リスト領域のみ独立してスクロール可能に！ これで横向きでも溢れずスクロールできる */
+    /* ★ チャンネルリスト（ここだけがスクロールする） */
     .channel-list-container { 
       flex: 1 1 auto; overflow-y: auto; padding: 10px 15px 20px; 
       display: flex; flex-direction: column; gap: 10px; scrollbar-width: none;
       -webkit-overflow-scrolling: touch; min-height: 0; z-index: 1; 
-      touch-action: pan-y; /* 縦スクロールのみ許可 */
+      touch-action: pan-y;
     }
     .channel-list-container::-webkit-scrollbar { display: none; }
     #channel-list-wrap { display: grid; grid-template-columns: 1fr; gap: 10px; }
@@ -183,7 +202,7 @@
     .ch-meter-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); }
     .ch-meter-mask { position: absolute; right: 0; top: 0; bottom: 0; width: 100%; background-color: var(--bg-dark); transition: width 0.05s linear; }
     
-    /* ★ 大復活: カードが指にピッタリ吸い付いて浮遊する最高の設定 */
+    /* ★ 復活: 指にピッタリ吸い付くドラッグデザイン */
     .btn-expand { display: inline-block; padding: 4px 40px; color: var(--text-sub); font-size: 14px; letter-spacing: 2px; cursor: grab; margin: 0 auto; border-radius: 20px; touch-action: none;}
     .btn-expand:active { cursor: grabbing; background-color: rgba(255,255,255,0.05); }
     
@@ -202,26 +221,30 @@
     .master-meter-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); }
     .master-meter-mask { position: absolute; right: 0; top: 0; bottom: 0; width: 100%; background-color: var(--bg-dark); transition: width 0.05s linear; }
 
-    /* 横向き時（コンパクト化） */
+    /* 横向き時のさらなるスリム化 */
     @media (orientation: landscape) and (max-height: 500px) {
       .header { padding: 4px 15px; border-bottom: 1px solid #1e2128; min-height: 36px;}
       #app-logo { height: 18px; } 
-      .global-controls { padding: 4px 15px; gap: 8px; min-height: 36px;}
+      .global-controls { padding: 2px 15px 4px; gap: 8px; min-height: 36px;}
       .btn-global { padding: 4px 8px; font-size: 11px; height: 28px; }
+      
       .channel-list-container { padding: 4px 15px 10px; gap: 6px;}
       #channel-list-wrap { grid-template-columns: 1fr 1fr; gap: 6px; } 
+
       .main-controls { padding: 4px 10px; }
       .btn-action { width: 38px; height: 38px; border-width: 1.5px; }
       .btn-icon { width: 18px; height: 18px; }
       .ch-name { font-size: 13px; }
       .ch-type { font-size: 9px; }
+      
       .card-footer { padding: 0 10px 2px !important; }
       .btn-expand { padding: 2px 30px !important; font-size: 12px !important; }
+      
       .master-meter-container { height: 6px; }
     }
   </style>
 </head>
-<body>
+<body onload="forceResize()">
 
   <div class="app-container" id="main-app-container">
     
@@ -300,7 +323,25 @@
   </div>
 
   <script>
-    document.addEventListener('touchmove', function(e) { if (e.touches.length > 1) { e.preventDefault(); } }, { passive: false });
+    // ★ 改善: JSによる「全体スクロールの無効化」。これにより画面が固定されつつドラッグは吸い付く
+    document.addEventListener('touchmove', function(e) { 
+      if (e.touches.length > 1) { e.preventDefault(); return; } 
+      
+      let isScrollable = false;
+      let target = e.target;
+      while (target && target !== document.body) {
+        if (target.classList && (target.classList.contains('channel-list-container') || target.classList.contains('scroll-area') || target.classList.contains('overlay-base'))) {
+          isScrollable = true;
+          break;
+        }
+        target = target.parentNode;
+      }
+      // スクロール可能エリア以外のスワイプはキャンセルして画面を固定する
+      if (!isScrollable) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+
     let lastTouchEnd = 0;
     document.addEventListener('touchend', function(e) { const now = (new Date()).getTime(); if (now - lastTouchEnd <= 300) { e.preventDefault(); } lastTouchEnd = now; }, { passive: false });
     window.addEventListener('contextmenu', e => { if(e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') e.preventDefault(); });
@@ -473,8 +514,9 @@
       order.forEach(id => { const ch = channels?.find(c => c?.id === id); if (ch) createChannelCard(ch); });
     }
 
-    // ★ 復活: 指に吸い付くドラッグ（bodyに固定して座標を完全に一致させる）
+    // ★ 復活: 指に直接吸い付く完璧なドラッグ設定
     window.addEventListener('DOMContentLoaded', () => {
+      forceResize();
       if (typeof Sortable !== 'undefined') {
         new Sortable(els.chWrap, {
           animation: 200,
@@ -641,6 +683,7 @@
       Object.values(state.dataConns || {}).forEach(conn => { if(conn?.open) conn.send(msg); });
     }
 
+    // ★ PTTスワイプの完璧な挙動 (距離延長、ゴム感、ON/OFF両対応、バウンドなし)
     function setupPTTButton(btn, type, channelId) {
       if(!btn) return;
       let isDown = false, startX = 0;
@@ -665,26 +708,29 @@
         if (!isDown) return; 
         let deltaX = e.clientX - startX;
         
+        // ★ 外向きのスワイプは完全に無効化
         if ((slideDir === 1 && deltaX < 0) || (slideDir === -1 && deltaX > 0)) { deltaX = 0; }
-        
+
         const targetDistance = 120; 
         let visualMoveX = deltaX;
         
+        // ★ ゴムのような非線形な引き心地
         if (Math.abs(deltaX) > 20) {
             const sign = Math.sign(deltaX);
             const over = Math.abs(deltaX) - 20;
-            visualMoveX = sign * (20 + Math.pow(over, 0.4) * 15);
+            visualMoveX = sign * (20 + Math.pow(over, 0.4) * 15); 
         }
 
+        // 目標距離を超えたらON/OFFを切り替えて手を離させる
         if (Math.abs(deltaX) > targetDistance && Math.sign(deltaX) === slideDir) {
           isDown = false; 
           btn.releasePointerCapture(e.pointerId);
-          btn.style.transition = 'transform 0.15s ease-out'; 
+          btn.style.transition = 'transform 0.15s ease-out'; // ★ スッと素早く戻る
           btn.style.transform = `translateX(0px)`;
           
           if (isLatched) {
             isLatched = false; btn.classList.remove('latched', 'active');
-            if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
+            if (navigator.vibrate) navigator.vibrate([30, 50, 30]); 
             applyState(false);
           } else {
             isLatched = true; btn.classList.add('latched');
@@ -693,20 +739,22 @@
           }
           return;
         }
+        
         btn.style.transform = `translateX(${visualMoveX}px)`;
       });
       
       const release = (e) => {
         if (!isDown) return; 
         isDown = false; 
-        btn.style.transition = 'transform 0.15s ease-out'; 
+        btn.style.transition = 'transform 0.15s ease-out'; // ★ スッと素早く戻る
         btn.style.transform = `translateX(0px)`;
         
         if (Math.abs(e.clientX - startX) < 5) {
           if (isLatched) { isLatched = false; btn.classList.remove('latched', 'active'); applyState(false); }
           else { btn.classList.remove('active'); applyState(false); }
         } else {
-          if (isLatched) {} else { btn.classList.remove('active'); applyState(false); }
+          if (isLatched) {  }
+          else { btn.classList.remove('active'); applyState(false); }
         }
       };
       
