@@ -16,7 +16,6 @@
       return false;
     };
 
-    // Opus DTX (無音時の通信量削減)
     const origSetLocalDescription = RTCPeerConnection.prototype.setLocalDescription;
     RTCPeerConnection.prototype.setLocalDescription = function(desc) {
       if (desc && (desc.type === 'offer' || desc.type === 'answer')) {
@@ -87,7 +86,6 @@
     .btn-join-member { background: var(--orange); width: 100%; } .btn-join-admin { background: transparent; border: 1.5px solid var(--blue) !important; color: var(--blue) !important; width: 100%; } .btn-stop { background: var(--red); width: 100%; }
     .status-text { font-size: 12px; color: var(--text-sub); text-align: center; margin-top: 5px; font-family: 'JetBrains Mono', monospace;}
 
-    /* ヘッダー */
     .header { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; background: var(--bg-dark); flex-shrink: 0; z-index: 100; }
     .header-left { display: flex; align-items: center; }
     #app-logo { height: 26px; width: auto; margin-right: 5px; }
@@ -114,7 +112,6 @@
     .status-badge.online { border-color: var(--blue); color: var(--blue); }
     #status-role { font-size: 11px; font-family: 'JetBrains Mono', monospace; font-weight: bold; color: var(--orange); margin-right: 2px;}
 
-    /* モニターエリア */
     .monitor-section {
       width: 100%; background: #000;
       display: none; flex-direction: column; align-items: center;
@@ -129,7 +126,6 @@
     .video-dummy-text { color: #555; font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: bold; z-index: 1;}
     .video-wrapper video { width: 100%; height: 100%; object-fit: contain; background: #000; position: absolute; inset: 0; z-index: 5;}
 
-    /* パッチパネル＆マルチオーディオ共通 */
     .admin-modal { max-width: 95%; width: auto; min-width: 320px; }
     @media (min-width: 800px) { .admin-modal { max-width: 1200px; } }
     .scroll-area { max-height: 75vh; overflow: auto; padding-right: 5px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
@@ -149,7 +145,6 @@
     .setting-group input:focus, .setting-group select:focus { outline: none; border-color: var(--blue); }
     .setting-group select:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    /* マトリックス系 */
     .admin-matrix-wrapper { width: 100%; overflow-x: auto; overscroll-behavior-x: none; -webkit-overflow-scrolling: touch; border-radius: 8px; background: #0a0b0d; border: 1px solid var(--border-color); position: relative; }
     .admin-matrix { width: 100%; border-collapse: separate; border-spacing: 0; min-width: max-content; text-align: center; font-size: 13px; }
     .admin-matrix th, .admin-matrix td { border-bottom: 1px solid var(--border-color); border-right: 1px solid var(--border-color); padding: 6px; }
@@ -213,7 +208,6 @@
       padding: 10px 15px; border-radius: 8px; border: 1px solid var(--border-color);
     }
 
-    /* グローバル & チャンネルリスト */
     .global-controls { display: flex; gap: 10px; padding: 5px 15px 10px; background: var(--bg-dark); border-bottom: 2px solid var(--green); flex-shrink: 0; z-index: 10;}
     .btn-global { flex: 1; padding: 8px 10px; border: none; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; font-family: 'JetBrains Mono', monospace; }
     .slash-line { display: none; } .muted-slash .slash-line { display: block; opacity: 1; }
@@ -355,16 +349,16 @@
             <select id="multi-audio-source" style="flex: 1; width: auto; max-width: 260px;">
               <option value="off">OFF</option>
             </select>
-            <input type="number" id="multi-audio-ch-target" value="16" min="2" max="32" style="width: 50px; padding: 4px;" title="強制要求チャンネル数">
+            <input type="number" id="multi-audio-ch-target" value="64" min="2" max="128" style="width: 50px; padding: 4px;" title="要求するチャンネル数">
             <span style="font-size: 11px; color: var(--text-sub); margin-right: 5px;">ch</span>
-            <button id="btn-start-multi-audio" style="background: var(--blue); color: #fff; border: none; padding: 0 15px; height: 27px; border-radius: 4px; cursor: pointer; font-weight: bold; font-family: 'JetBrains Mono', monospace;">CONNECT</button>
+            <button id="btn-start-multi-audio" style="background: var(--alert); color: #fff; border: none; padding: 0 15px; height: 27px; border-radius: 4px; cursor: pointer; font-weight: bold; font-family: 'JetBrains Mono', monospace;">FORCE CONNECT</button>
           </div>
         </div>
 
         <div class="scroll-area">
           <div id="multi-audio-channels-container" style="display: flex; flex-direction: column; gap: 10px;">
             <div style="text-align: center; color: var(--text-sub); font-size: 12px; padding: 20px 0;">
-              デバイスと要求ch数を選択し [CONNECT] を押してください
+              デバイスと要求ch数を選択し [FORCE CONNECT] を押してください
             </div>
           </div>
         </div>
@@ -490,7 +484,6 @@
     els.btnLoginShow.onclick = () => { els.loginOverlay.style.display = 'flex'; };
     document.getElementById('btn-close-login').onclick = () => { els.loginOverlay.style.display = 'none'; };
     
-    // モニター表示切替
     els.btnToggleMonitor.onclick = () => {
       const isActive = els.btnToggleMonitor.classList.toggle('active');
       if (isActive) els.monitorSection.classList.add('show');
@@ -498,7 +491,6 @@
       forceResize();
     };
 
-    // パッチパネル開閉
     els.btnSettings.onclick = () => { 
       if (!state.isAdmin) return; 
       els.adminOverlay.style.display = 'flex'; 
@@ -511,7 +503,6 @@
       els.btnSettings.classList.remove('active');
     };
 
-    // マルチオーディオパネル開閉
     els.btnMultiAudio.onclick = async () => {
       if (!state.isAdmin) return;
       els.multiAudioOverlay.style.display = 'flex';
@@ -540,30 +531,105 @@
       } catch (e) { console.warn('オーディオデバイス取得エラー', e); }
     }
 
+    // ★★★ 限界突破！ カスタムオーディオエンジン (AudioWorklet) のコード ★★★
+    // ブラウザの32chスプリッター制限を完全に無視し、Float32Arrayから直接音声を引っこ抜くC++ライクなコアロジックです。
+    const multiAudioWorkletCode = `
+      class MultiAudioProcessor extends AudioWorkletProcessor {
+        constructor() {
+          super();
+          this.levels = [];
+          this.listenMask = [];
+          this.frameCount = 0;
+          this.port.onmessage = (e) => {
+            if (e.data.type === 'mask') {
+              this.listenMask = e.data.mask;
+            }
+          };
+        }
+        process(inputs, outputs) {
+          const input = inputs[0];
+          const output = outputs[0];
+          if (!input || input.length === 0) return true;
+
+          const channelCount = input.length;
+          if (this.levels.length !== channelCount) {
+             this.levels = new Array(channelCount).fill(0);
+             if (this.listenMask.length !== channelCount) {
+                 this.listenMask = new Array(channelCount).fill(false);
+             }
+          }
+
+          // 全チャンネルのピークレベルを直接計算 (64chでも128chでも処理可能)
+          for (let ch = 0; ch < channelCount; ch++) {
+            const data = input[ch];
+            let peak = 0;
+            if (data) {
+              for (let i = 0; i < data.length; i++) {
+                const val = Math.abs(data[i]);
+                if(val > peak) peak = val;
+              }
+            }
+            this.levels[ch] = Math.max(peak, this.levels[ch] * 0.90); // スムーズな減衰
+          }
+
+          // ユーザーが聴きたいチャンネルだけをStereo Out(2ch)にダウンミックスして出力
+          if (output && output.length >= 2) {
+             const outL = output[0];
+             const outR = output[1];
+             for (let i = 0; i < outL.length; i++) {
+               let mix = 0;
+               for(let ch = 0; ch < channelCount; ch++) {
+                 if(this.listenMask[ch] && input[ch]) {
+                    mix += input[ch][i];
+                 }
+               }
+               outL[i] = mix;
+               outR[i] = mix;
+             }
+          }
+
+          // メインスレッド（UI）をフリーズさせないよう、約30fpsでメーターデータを送信
+          this.frameCount += input[0].length;
+          if (this.frameCount >= 48000 / 30) { 
+            this.port.postMessage({ type: 'meters', levels: this.levels, channelCount: channelCount });
+            this.frameCount = 0;
+          }
+
+          return true;
+        }
+      }
+      registerProcessor('multi-audio-processor', MultiAudioProcessor);
+    `;
+
     let multiAudioCtx = null;
     let multiAudioStream = null;
-    let multiAudioNodes = [];
+    let multiAudioWorkletNode = null;
+    let multiAudioWorkletUrl = null;
+    let isMultiUiBuilt = false;
+    let multiAudioMaskArray = [];
 
-    // ★ マルチチャンネルオーディオ取得（超強行突破モード）
+    // ★ マルチチャンネル取得ロジック
     els.btnStartMultiAudio.onclick = async () => {
       const deviceId = els.multiAudioSource.value;
-      const targetCh = parseInt(document.getElementById('multi-audio-ch-target').value, 10) || 16;
+      const targetCh = parseInt(document.getElementById('multi-audio-ch-target').value, 10) || 64;
 
       if (deviceId === 'off') {
         stopMultiAudioMonitor();
-        els.multiAudioChannelsContainer.innerHTML = '<div style="text-align: center; color: var(--text-sub); font-size: 12px; padding: 20px 0;">デバイスと要求ch数を選択し [CONNECT] を押してください</div>';
+        els.multiAudioChannelsContainer.innerHTML = '<div style="text-align: center; color: var(--text-sub); font-size: 12px; padding: 20px 0;">デバイスと要求ch数を選択し [FORCE CONNECT] を押してください</div>';
         return;
       }
 
       stopMultiAudioMonitor();
       els.btnStartMultiAudio.textContent = '読込中...';
-      els.multiAudioChannelsContainer.innerHTML = `<div style="text-align: center; color: var(--orange); font-size: 12px; padding: 20px 0;">[ ${targetCh} ch ] での強制取得を試行中...</div>`;
+      els.multiAudioChannelsContainer.innerHTML = `<div style="text-align: center; color: var(--alert); font-size: 13px; font-weight: bold; padding: 20px 0;">[ ${targetCh} ch ] での強制取得を試行中...</div>`;
+      isMultiUiBuilt = false;
 
       try {
+        // ★ 制約解除＆強制要求
         let constraints = {
           audio: { 
             deviceId: { exact: deviceId }, 
-            channelCount: { exact: targetCh }, // 強制ポイント
+            channelCount: { exact: targetCh }, // 絶対指定！
             echoCancellation: false,
             noiseSuppression: false,
             autoGainControl: false,
@@ -579,70 +645,87 @@
           multiAudioStream = await navigator.mediaDevices.getUserMedia(constraints);
         }
 
-        if (!multiAudioCtx) multiAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (!multiAudioCtx) {
+          multiAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
         if (multiAudioCtx.state === 'suspended') multiAudioCtx.resume();
+
+        // ワークレット(カスタムエンジン)をロード
+        if (!multiAudioWorkletUrl) {
+          const blob = new Blob([multiAudioWorkletCode], { type: 'application/javascript' });
+          multiAudioWorkletUrl = URL.createObjectURL(blob);
+          await multiAudioCtx.audioWorklet.addModule(multiAudioWorkletUrl);
+        }
 
         const source = multiAudioCtx.createMediaStreamSource(multiAudioStream);
         
-        const actualChannelCount = source.channelCount || multiAudioStream.getAudioTracks()[0].getSettings().channelCount || 2;
-        console.log(`要求CH: ${targetCh} => 実際の取得CH: ${actualChannelCount} channels`);
+        // 取得成功したらWorkletNodeを作成（出力はモニター用のステレオ2ch）
+        multiAudioWorkletNode = new AudioWorkletNode(multiAudioCtx, 'multi-audio-processor', {
+           outputChannelCount: [2]
+        });
 
-        if (actualChannelCount < targetCh) {
-           alert(`【警告】\n${targetCh}chを要求しましたが、OSまたはブラウザの制限により ${actualChannelCount}ch までしか取得できませんでした。\n\n※OSのオーディオ設定(Audio MIDI設定など)のフォーマットを確認してください。`);
-        }
+        // 接続
+        source.connect(multiAudioWorkletNode);
+        multiAudioWorkletNode.connect(multiAudioCtx.destination);
 
-        const splitter = multiAudioCtx.createChannelSplitter(actualChannelCount);
-        source.connect(splitter);
+        // ★ カスタムエンジンから送られてくる全チャンネルのメーターデータをUIに反映
+        multiAudioWorkletNode.port.onmessage = (e) => {
+          if (e.data.type === 'meters') {
+            const levels = e.data.levels;
+            const actualChannelCount = e.data.channelCount;
+            
+            // 初回データ受信時にUIを動的生成（何チャンネル来ても対応）
+            if (!isMultiUiBuilt || multiAudioMaskArray.length !== actualChannelCount) {
+              console.log(`ブラウザが認識したチャンネル数: ${actualChannelCount} ch`);
+              if (actualChannelCount < targetCh) {
+                console.warn(`要求 ${targetCh}ch に対し、実際は ${actualChannelCount}ch のみ取得されました。OSのAudioMIDI設定を確認してください。`);
+              }
 
-        els.multiAudioChannelsContainer.innerHTML = '';
-        multiAudioNodes = [];
+              els.multiAudioChannelsContainer.innerHTML = '';
+              multiAudioMaskArray = new Array(actualChannelCount).fill(false);
+              
+              for (let i = 0; i < actualChannelCount; i++) {
+                const row = document.createElement('div');
+                row.className = 'multi-ch-row';
+                row.innerHTML = `
+                  <div style="font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: bold; color: var(--orange); width: 45px; flex-shrink: 0;">CH ${i + 1}</div>
+                  <div class="circle-btn remote-spk-btn" id="multi-spk-${i}" style="flex-shrink: 0;">
+                    <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                  </div>
+                  <div style="flex: 1; height: 10px; background: #000; border-radius: 5px; overflow: hidden; position: relative; box-shadow: inset 0 0 3px rgba(0,0,0,0.8);">
+                    <div id="multi-meter-${i}" style="position: absolute; left: 0; top: 0; bottom: 0; width: 0%; background: linear-gradient(90deg, #22c55e, #eab308, #ef4444); transition: width 0.05s linear;"></div>
+                  </div>
+                `;
+                els.multiAudioChannelsContainer.appendChild(row);
 
-        for (let i = 0; i < actualChannelCount; i++) {
-          const analyser = multiAudioCtx.createAnalyser();
-          analyser.fftSize = 256;
-          
-          const gain = multiAudioCtx.createGain();
-          gain.gain.value = 0; 
-          
-          splitter.connect(analyser, i, 0);
-          analyser.connect(gain);
-          gain.connect(multiAudioCtx.destination);
-
-          multiAudioNodes.push({ analyser, gain, isListening: false });
-
-          const row = document.createElement('div');
-          row.className = 'multi-ch-row';
-          row.innerHTML = `
-            <div style="font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: bold; color: var(--orange); width: 45px; flex-shrink: 0;">CH ${i + 1}</div>
-            <div class="circle-btn remote-spk-btn" id="multi-spk-${i}" style="flex-shrink: 0;">
-              <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
-            </div>
-            <div style="flex: 1; height: 10px; background: #000; border-radius: 5px; overflow: hidden; position: relative; box-shadow: inset 0 0 3px rgba(0,0,0,0.8);">
-              <div id="multi-meter-${i}" style="position: absolute; left: 0; top: 0; bottom: 0; width: 0%; background: linear-gradient(90deg, #22c55e, #eab308, #ef4444); transition: width 0.05s linear;"></div>
-            </div>
-          `;
-          els.multiAudioChannelsContainer.appendChild(row);
-
-          const spkBtn = row.querySelector(`#multi-spk-${i}`);
-          spkBtn.onclick = () => {
-            const node = multiAudioNodes[i];
-            node.isListening = !node.isListening;
-            if (node.isListening) {
-              spkBtn.classList.add('active');
-              node.gain.gain.setTargetAtTime(1, multiAudioCtx.currentTime, 0.05);
-            } else {
-              spkBtn.classList.remove('active');
-              node.gain.gain.setTargetAtTime(0, multiAudioCtx.currentTime, 0.05);
+                const spkBtn = row.querySelector(`#multi-spk-${i}`);
+                spkBtn.onclick = () => {
+                  multiAudioMaskArray[i] = !multiAudioMaskArray[i];
+                  if (multiAudioMaskArray[i]) spkBtn.classList.add('active');
+                  else spkBtn.classList.remove('active');
+                  
+                  // カスタムエンジンに「このchの音を出して！」と命令
+                  multiAudioWorkletNode.port.postMessage({ type: 'mask', mask: multiAudioMaskArray });
+                };
+              }
+              isMultiUiBuilt = true;
             }
-          };
-        }
+
+            // メーターの幅を更新
+            for (let i = 0; i < actualChannelCount; i++) {
+              const meterEl = document.getElementById(`multi-meter-${i}`);
+              if (meterEl) meterEl.style.width = Math.min(levels[i] * 100, 100) + '%';
+            }
+          }
+        };
+
         els.btnStartMultiAudio.textContent = 'CONNECTED';
       } catch (err) {
         console.error("マルチオーディオ取得エラー:", err);
-        alert(`デバイスの取得に失敗しました。\n(OSが ${targetCh}ch の出力を許可していない可能性があります)\n\n詳細: ` + err.message);
+        alert(`デバイスの取得に失敗しました。\n(OSが ${targetCh}ch の出力をブラウザに許可していない可能性があります)\n\n詳細: ` + err.message);
         els.multiAudioSource.value = 'off';
         els.btnStartMultiAudio.textContent = 'CONNECT';
-        els.multiAudioChannelsContainer.innerHTML = '<div style="text-align: center; color: var(--text-sub); font-size: 12px; padding: 20px 0;">デバイスと要求ch数を選択し [CONNECT] を押してください</div>';
+        els.multiAudioChannelsContainer.innerHTML = '<div style="text-align: center; color: var(--text-sub); font-size: 12px; padding: 20px 0;">デバイスと要求ch数を選択し [FORCE CONNECT] を押してください</div>';
       }
     };
 
@@ -651,11 +734,12 @@
         multiAudioStream.getTracks().forEach(t => t.stop());
         multiAudioStream = null;
       }
-      if (multiAudioCtx) {
-        multiAudioNodes.forEach(node => { try { node.gain.disconnect(); } catch(e){} });
+      if (multiAudioWorkletNode) {
+        multiAudioWorkletNode.disconnect();
+        multiAudioWorkletNode = null;
       }
-      multiAudioNodes = [];
-      els.btnStartMultiAudio.textContent = 'CONNECT';
+      isMultiUiBuilt = false;
+      els.btnStartMultiAudio.textContent = 'FORCE CONNECT';
     }
 
     els.editMonitorTitle.addEventListener('input', (e) => {
@@ -1057,18 +1141,6 @@
             if (meterEl) meterEl.style.width = Math.max(100 - Math.min(chPercent, 100), 0) + '%';
           }
         });
-
-        if (multiAudioNodes.length > 0) {
-          multiAudioNodes.forEach((node, i) => {
-            const data = new Uint8Array(node.analyser.frequencyBinCount);
-            node.analyser.getByteFrequencyData(data);
-            let sum = 0; 
-            for(let j=0; j<data.length; j++) sum += data[j];
-            let percent = ((sum / data.length) / 255) * 100 * 2.0;
-            const meterEl = document.getElementById(`multi-meter-${i}`);
-            if (meterEl) meterEl.style.width = Math.min(percent, 100) + '%';
-          });
-        }
 
         if (state.isAdmin) {
           state.registeredUsers?.forEach(uid => {
