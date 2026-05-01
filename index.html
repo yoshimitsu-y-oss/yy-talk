@@ -199,7 +199,7 @@
     .remote-mic-btn { border: 1.5px solid var(--red); color: var(--red); }
     .remote-mic-btn.active { background-color: var(--red); color: #fff; box-shadow: inset 0 2px 4px rgba(255,255,255,0.3), 0 0 10px rgba(220, 38, 38, 0.5); }
 
-    /* ★ 16chルーター用 行スタイル */
+    /* ★ 32chデマルチプレクサ用 行スタイル */
     .router-row {
       display: flex; align-items: center; gap: 10px; background: #15161a;
       padding: 10px 15px; border-radius: 8px; border: 1px solid var(--border-color);
@@ -207,13 +207,13 @@
     }
     .router-sel {
       background: #1c1d21; border: 1px solid var(--border-color); color: #fff;
-      border-radius: 4px; font-size: 11px; padding: 4px; width: 150px; text-overflow: ellipsis;
+      border-radius: 4px; font-size: 11px; padding: 4px; width: 160px; text-overflow: ellipsis;
     }
     .router-sel:focus { outline: none; border-color: var(--orange); }
     .btn-router-conn {
       background: #2a2c33; color: var(--text-main); border: 1px solid #444;
       padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px;
-      transition: all 0.2s;
+      transition: all 0.2s; min-width: 60px; text-align: center;
     }
     .btn-router-conn.active {
       background: var(--orange); color: #000; border-color: var(--orange);
@@ -362,15 +362,27 @@
     <div id="multi-audio-overlay" class="overlay-base">
       <div class="login-modal admin-modal" style="max-width: 800px; width: 95%;">
         <button class="btn-close-login" id="btn-close-multi-audio">×</button>
-        <h3 style="margin: 0 0 15px 0; color: var(--text-main); text-align: center;">16CH オーディオルーター</h3>
-        
+        <h3 style="margin: 0 0 10px 0; color: var(--text-main); text-align: center;">32CH デマルチプレクサ</h3>
         <div style="text-align: center; color: var(--text-sub); font-size: 11px; margin-bottom: 15px;">
-          IN(仮想デバイス) と OUT を選択し、CONNボタンで個別にルーティングします。
+          32ch入力(マスター)を内部で2chずつ16系統に分割し、指定の出力デバイスに直接ルーティングします。
+        </div>
+        
+        <div class="admin-settings-row" style="margin-bottom: 15px; padding: 10px 15px;">
+          <div class="setting-group" style="flex-direction: row; gap: 10px; width: 100%; align-items: center; justify-content: center;">
+            <span style="font-size: 12px; font-weight: bold; color: var(--orange);">MASTER IN (32ch):</span>
+            <select id="master-multi-in" style="flex: 1; width: auto; max-width: 300px; height: 27px; background: #1c1d21; border: 1px solid var(--border-color); color: #fff; border-radius: 4px; font-size: 12px; padding: 0 6px;">
+              <option value="off">OFF</option>
+            </select>
+            <button id="btn-start-multi-audio" style="background: var(--blue); color: #fff; border: none; padding: 0 15px; height: 27px; border-radius: 4px; cursor: pointer; font-weight: bold; font-family: 'JetBrains Mono', monospace;">CONNECT</button>
+          </div>
         </div>
 
-        <div class="scroll-area" style="max-height: 60vh;">
+        <div class="scroll-area" style="max-height: 55vh;">
           <div id="router-channels-container" style="display: flex; flex-direction: column; gap: 8px;">
+            <div style="text-align: center; color: var(--text-sub); font-size: 12px; padding: 20px 0;">
+              マスターデバイスを選択し [CONNECT] を押してください
             </div>
+          </div>
         </div>
       </div>
     </div>
@@ -397,7 +409,7 @@
       <div class="header-right">
         <span id="status-role" style="display: none;"></span>
 
-        <button id="btn-multi-audio" class="btn-header-icon admin-only" title="16CH ルーター">
+        <button id="btn-multi-audio" class="btn-header-icon admin-only" title="32CH ルーター">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 2v20M17 5v14M7 9v6M22 10v4M2 11v2"/>
           </svg>
@@ -488,6 +500,7 @@
       monitorVideoWrapper: document.getElementById('monitor-video-wrapper'), mainMonitorSourceText: document.getElementById('main-monitor-source-text'),
       btnMultiAudio: document.getElementById('btn-multi-audio'), multiAudioOverlay: document.getElementById('multi-audio-overlay'),
       btnCloseMultiAudio: document.getElementById('btn-close-multi-audio'),
+      masterMultiIn: document.getElementById('master-multi-in'), btnStartMultiAudio: document.getElementById('btn-start-multi-audio'),
       routerContainer: document.getElementById('router-channels-container')
     };
 
@@ -513,19 +526,33 @@
       els.btnSettings.classList.remove('active');
     };
 
-    // ★ 16系統ルーターパネルの構築
+    // ★ 32CH デマルチプレクサのロジック
     const NUM_ROUTERS = 16;
     let routerState = []; 
     let routerAudioCtx = null;
+    let masterAudioStream = null;
+    let cachedOutOptions = '<option value="default">OUT: DEFAULT</option>';
 
     els.btnMultiAudio.onclick = async () => {
       if (!state.isAdmin) return;
       els.multiAudioOverlay.style.display = 'flex';
       els.btnMultiAudio.classList.add('active');
       
-      if(routerState.length === 0) {
-        await initRouterUI();
-      }
+      // 入出力デバイスのリストを取得してキャッシュ
+      try {
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const inputs = devices.filter(d => d.kind === 'audioinput');
+        const outputs = devices.filter(d => d.kind === 'audiooutput');
+
+        let inOptions = '<option value="off">OFF</option>';
+        inputs.forEach((d, i) => { inOptions += `<option value="${d.deviceId}">${d.label || 'Input '+i}</option>`; });
+        els.masterMultiIn.innerHTML = inOptions;
+
+        cachedOutOptions = '<option value="default">OUT: DEFAULT</option>';
+        outputs.forEach((d, i) => { cachedOutOptions += `<option value="${d.deviceId}">${d.label || 'Output '+i}</option>`; });
+
+      } catch(e) { console.warn('デバイスリスト取得エラー', e); }
     };
     
     els.btnCloseMultiAudio.onclick = () => {
@@ -533,33 +560,81 @@
       els.btnMultiAudio.classList.remove('active');
     };
 
-    async function initRouterUI() {
-      els.routerContainer.innerHTML = '<div style="color:#aaa; text-align:center;">デバイス取得中...</div>';
-      
-      try {
-        // 出力デバイスも取得するために一度ダミーで許可要求
-        await navigator.mediaDevices.getUserMedia({ audio: true });
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const inputs = devices.filter(d => d.kind === 'audioinput');
-        const outputs = devices.filter(d => d.kind === 'audiooutput');
+    // マスター接続ボタン処理
+    els.btnStartMultiAudio.onclick = async () => {
+      const masterInId = els.masterMultiIn.value;
 
-        let inOptions = '<option value="off">IN: OFF</option>';
-        inputs.forEach((d, i) => { inOptions += `<option value="${d.deviceId}">${d.label || 'Input '+i}</option>`; });
+      if (masterInId === 'off') {
+        stopRouterMonitor();
+        els.routerContainer.innerHTML = '<div style="text-align: center; color: var(--text-sub); font-size: 12px; padding: 20px 0;">マスターデバイスを選択し [CONNECT] を押してください</div>';
+        return;
+      }
+
+      stopRouterMonitor();
+      els.btnStartMultiAudio.textContent = '読込中...';
+      els.routerContainer.innerHTML = '<div style="text-align: center; color: var(--orange); font-size: 12px; padding: 20px 0;">32chストリームを確保中...</div>';
+
+      try {
+        // ★ Web Audio APIの限界値である32chを要求し、エコーキャンセル等を切る
+        masterAudioStream = await navigator.mediaDevices.getUserMedia({
+          audio: { 
+            deviceId: { exact: masterInId },
+            channelCount: { exact: 32 },
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false
+          }
+        });
+
+        if(!routerAudioCtx) {
+          routerAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (routerAudioCtx.state === 'suspended') routerAudioCtx.resume();
+
+        const source = routerAudioCtx.createMediaStreamSource(masterAudioStream);
         
-        let outOptions = '<option value="default">OUT: DEFAULT</option>';
-        outputs.forEach((d, i) => { outOptions += `<option value="${d.deviceId}">${d.label || 'Output '+i}</option>`; });
+        // Splitterの仕様に合わせて最大32でスプリット
+        const channelCount = Math.min(source.channelCount || 32, 32); 
+        const splitter = routerAudioCtx.createChannelSplitter(channelCount);
+        source.connect(splitter);
 
         els.routerContainer.innerHTML = '';
         routerState = [];
 
+        // 16系統(2chペア)分のルーティングUIとノードを生成
         for (let i = 0; i < NUM_ROUTERS; i++) {
+          // LとRを結合するMergerを作成
+          const merger = routerAudioCtx.createChannelMerger(2);
+          
+          // チャンネル数が足りている場合のみ配線
+          if ((i * 2) < channelCount) {
+             splitter.connect(merger, i * 2, 0); // L
+          }
+          if ((i * 2 + 1) < channelCount) {
+             splitter.connect(merger, i * 2 + 1, 1); // R
+          }
+
+          // 出力用のMediaStreamを作る
+          const dest = routerAudioCtx.createMediaStreamDestination();
+          merger.connect(dest);
+
+          // メーター監視用のアナライザー
+          const analyser = routerAudioCtx.createAnalyser();
+          analyser.fftSize = 256;
+          merger.connect(analyser);
+
+          // 再生用のaudioタグ（初期状態はミュート）
+          const audioEl = new Audio();
+          audioEl.srcObject = dest.stream;
+          audioEl.muted = true;
+          audioEl.play().catch(e => console.warn('自動再生ブロック', e));
+
           const row = document.createElement('div');
           row.className = 'router-row';
           row.innerHTML = `
-            <div style="width: 50px; color: var(--orange); font-weight: bold; font-size:12px; font-family: 'JetBrains Mono', monospace;">PAIR ${i+1}</div>
-            <select id="router-in-${i}" class="router-sel">${inOptions}</select>
+            <div style="width: 70px; color: var(--orange); font-weight: bold; font-size:11px; font-family: 'JetBrains Mono', monospace;">CH ${i*2+1}-${i*2+2}</div>
             <span style="color: #666; font-size:10px;">▶</span>
-            <select id="router-out-${i}" class="router-sel">${outOptions}</select>
+            <select id="router-out-${i}" class="router-sel">${cachedOutOptions}</select>
             <button id="router-btn-${i}" class="btn-router-conn">CONN</button>
             <div class="router-meter-bg"><div id="router-meter-${i}" class="router-meter-fill"></div></div>
           `;
@@ -567,94 +642,59 @@
 
           routerState.push({
             isActive: false,
-            stream: null,
-            audioEl: null,
-            analyser: null,
-            sourceNode: null
+            merger: merger,
+            dest: dest,
+            audioEl: audioEl,
+            analyser: analyser
           });
 
+          // 各行の接続ボタン処理
           const btn = document.getElementById(`router-btn-${i}`);
           btn.onclick = () => toggleRoute(i);
         }
         
-        if(!routerAudioCtx) {
-          routerAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-          startRouterMeterDraw();
-        }
+        startRouterMeterDraw();
+        els.btnStartMultiAudio.textContent = 'CONNECTED';
 
-      } catch(e) {
-        console.warn(e);
-        els.routerContainer.innerHTML = '<div style="color:red; text-align:center;">デバイスの取得に失敗しました</div>';
+      } catch(err) {
+        console.error("32ch取得エラー:", err);
+        alert(`マスターデバイスの取得に失敗しました。\n(OSやデバイスが 32ch の出力をブラウザに許可していない可能性があります)\n\n詳細: ` + err.message);
+        els.masterMultiIn.value = 'off';
+        els.btnStartMultiAudio.textContent = 'CONNECT';
+        els.routerContainer.innerHTML = '<div style="text-align: center; color: var(--text-sub); font-size: 12px; padding: 20px 0;">マスターデバイスを選択し [CONNECT] を押してください</div>';
       }
-    }
+    };
 
     async function toggleRoute(index) {
       const s = routerState[index];
       const btn = document.getElementById(`router-btn-${index}`);
-      const inSel = document.getElementById(`router-in-${index}`);
       const outSel = document.getElementById(`router-out-${index}`);
 
       if (s.isActive) {
-        // 切断処理
-        if(s.stream) s.stream.getTracks().forEach(t => t.stop());
-        if(s.audioEl) { s.audioEl.pause(); s.audioEl.srcObject = null; }
-        if(s.sourceNode) s.sourceNode.disconnect();
+        // ミュートして切断状態にする
+        s.audioEl.muted = true;
         s.isActive = false;
         btn.classList.remove('active');
-        inSel.disabled = false;
         outSel.disabled = false;
-        document.getElementById(`router-meter-${index}`).style.width = '0%';
         return;
       }
 
-      // 接続処理
-      const inId = inSel.value;
       const outId = outSel.value;
-
-      if (inId === 'off') return;
-
       btn.textContent = '...';
-      inSel.disabled = true;
       outSel.disabled = true;
 
       try {
-        if (routerAudioCtx.state === 'suspended') routerAudioCtx.resume();
-
-        // エコーキャンセル等をオフにして生の2chを取得
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: { 
-            deviceId: { exact: inId },
-            echoCancellation: false,
-            noiseSuppression: false,
-            autoGainControl: false
-          }
-        });
-
-        // 出力用オーディオ要素の作成（ブラウザ内部でスルー出力）
-        const audioEl = new Audio();
-        audioEl.srcObject = stream;
-        
         // setSinkIdで指定した出力先へルーティング
-        if (outId !== 'default' && typeof audioEl.setSinkId === 'function') {
+        if (outId !== 'default' && typeof s.audioEl.setSinkId === 'function') {
           try {
-            await audioEl.setSinkId(outId);
+            await s.audioEl.setSinkId(outId);
           } catch(err) {
             console.warn(`出力先 ${outId} へのルーティングに失敗しました`, err);
-            // 失敗した場合はデフォルトから出る
           }
         }
-        audioEl.play().catch(e => console.warn('自動再生ブロック', e));
-
-        // メーター用
-        const source = routerAudioCtx.createMediaStreamSource(stream);
-        const analyser = routerAudioCtx.createAnalyser();
-        analyser.fftSize = 256;
-        source.connect(analyser); // analyserで止める（出力はAudioタグで行うため）
-
-        s.stream = stream;
-        s.audioEl = audioEl;
-        s.sourceNode = source;
-        s.analyser = analyser;
+        
+        // ミュート解除して音を出す
+        s.audioEl.muted = false;
         s.isActive = true;
 
         btn.classList.add('active');
@@ -662,27 +702,40 @@
 
       } catch(e) {
         console.error("Routing error:", e);
-        alert(`Pair ${index+1} の接続に失敗しました。\n` + e.message);
+        alert(`Pair ${index+1} の出力設定に失敗しました。\n` + e.message);
         btn.textContent = 'CONN';
-        inSel.disabled = false;
         outSel.disabled = false;
       }
+    }
+
+    function stopRouterMonitor() {
+      if (masterAudioStream) {
+        masterAudioStream.getTracks().forEach(t => t.stop());
+        masterAudioStream = null;
+      }
+      routerState.forEach(s => {
+        if(s.audioEl) { s.audioEl.pause(); s.audioEl.srcObject = null; }
+        if(s.merger) s.merger.disconnect();
+      });
+      routerState = [];
+      els.btnStartMultiAudio.textContent = 'CONNECT';
     }
 
     function startRouterMeterDraw() {
       function draw() {
         requestAnimationFrame(draw);
-        if(!routerState) return;
+        if(routerState.length === 0) return;
         
         for(let i=0; i<NUM_ROUTERS; i++) {
           const s = routerState[i];
-          if(s && s.isActive && s.analyser) {
+          if(s && s.analyser) {
             const data = new Uint8Array(s.analyser.frequencyBinCount);
             s.analyser.getByteFrequencyData(data);
             let sum = 0; 
             for(let j=0; j<data.length; j++) sum += data[j];
             let percent = ((sum / data.length) / 255) * 100 * 2.0;
             const meterEl = document.getElementById(`router-meter-${i}`);
+            // CONNされているかに関わらずメーターは振らせる
             if(meterEl) meterEl.style.width = Math.min(percent, 100) + '%';
           }
         }
