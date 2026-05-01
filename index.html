@@ -482,7 +482,6 @@
       editMonitorTitle: document.getElementById('edit-monitor-title'), editMonitorSource: document.getElementById('edit-monitor-source'),
       mainMonitorTitle: document.getElementById('main-monitor-title'), 
       monitorVideoWrapper: document.getElementById('monitor-video-wrapper'), mainMonitorSourceText: document.getElementById('main-monitor-source-text'),
-      // ★ 追加: マルチオーディオ用
       btnMultiAudio: document.getElementById('btn-multi-audio'), multiAudioOverlay: document.getElementById('multi-audio-overlay'),
       btnCloseMultiAudio: document.getElementById('btn-close-multi-audio'), multiAudioSource: document.getElementById('multi-audio-source'),
       btnStartMultiAudio: document.getElementById('btn-start-multi-audio'), multiAudioChannelsContainer: document.getElementById('multi-audio-channels-container')
@@ -491,7 +490,6 @@
     els.btnLoginShow.onclick = () => { els.loginOverlay.style.display = 'flex'; };
     document.getElementById('btn-close-login').onclick = () => { els.loginOverlay.style.display = 'none'; };
     
-    // モニター表示切替
     els.btnToggleMonitor.onclick = () => {
       const isActive = els.btnToggleMonitor.classList.toggle('active');
       if (isActive) els.monitorSection.classList.add('show');
@@ -499,7 +497,6 @@
       forceResize();
     };
 
-    // パッチパネル開閉
     els.btnSettings.onclick = () => { 
       if (!state.isAdmin) return; 
       els.adminOverlay.style.display = 'flex'; 
@@ -512,7 +509,6 @@
       els.btnSettings.classList.remove('active');
     };
 
-    // ★ マルチオーディオパネル開閉 ＆ オーディオデバイス取得
     els.btnMultiAudio.onclick = async () => {
       if (!state.isAdmin) return;
       els.multiAudioOverlay.style.display = 'flex';
@@ -541,7 +537,6 @@
       } catch (e) { console.warn('オーディオデバイス取得エラー', e); }
     }
 
-    // ★ マルチチャンネル監視ロジック
     let multiAudioCtx = null;
     let multiAudioStream = null;
     let multiAudioNodes = [];
@@ -558,7 +553,6 @@
       els.btnStartMultiAudio.textContent = '読込中...';
 
       try {
-        // 可能な限り多チャンネルを要求
         multiAudioStream = await navigator.mediaDevices.getUserMedia({
           audio: { deviceId: { exact: deviceId }, channelCount: { ideal: 32 } }
         });
@@ -567,7 +561,6 @@
         if (multiAudioCtx.state === 'suspended') multiAudioCtx.resume();
 
         const source = multiAudioCtx.createMediaStreamSource(multiAudioStream);
-        // 実際に取得できたチャンネル数
         const channelCount = source.channelCount || multiAudioStream.getAudioTracks()[0].getSettings().channelCount || 2;
         
         const splitter = multiAudioCtx.createChannelSplitter(channelCount);
@@ -581,7 +574,7 @@
           analyser.fftSize = 256;
           
           const gain = multiAudioCtx.createGain();
-          gain.gain.value = 0; // 初期ミュート
+          gain.gain.value = 0; 
           
           splitter.connect(analyser, i, 0);
           analyser.connect(gain);
@@ -589,7 +582,6 @@
 
           multiAudioNodes.push({ analyser, gain, isListening: false });
 
-          // 各チャンネルのUI生成（横型メーター）
           const row = document.createElement('div');
           row.className = 'multi-ch-row';
           row.innerHTML = `
@@ -637,8 +629,6 @@
       els.btnStartMultiAudio.textContent = 'CONNECT';
     }
 
-
-    // モニター名称の同期
     els.editMonitorTitle.addEventListener('input', (e) => {
       state.monitorTitle = e.target.value;
       els.mainMonitorTitle.textContent = state.monitorTitle || 'NO TITLE';
@@ -646,23 +636,26 @@
       sendData({ type: 'update-monitor-title', title: state.monitorTitle });
     });
 
-    // カメラデバイス取得
     async function updateVideoSources() {
       if (state.activeVideoSender && state.activeVideoSender !== state.myUserId) {
           return;
       }
       const select = els.editMonitorSource;
       const currentValue = select.value;
+      
       try {
         try {
           const tempStream = await navigator.mediaDevices.getUserMedia({ video: true });
           tempStream.getTracks().forEach(track => track.stop());
-        } catch (e) { console.warn('カメラアクセスブロック', e); }
+        } catch (e) {
+          console.warn('カメラアクセスがブロックされたか、カメラがありません。', e);
+        }
 
         const devices = await navigator.mediaDevices.enumerateDevices();
         const videoInputs = devices.filter(device => device.kind === 'videoinput');
         
         select.innerHTML = '<option value="off">OFF</option><option value="screen">画面共有</option>';
+        
         videoInputs.forEach((device, index) => {
           const option = document.createElement('option');
           option.value = device.deviceId;
@@ -670,12 +663,16 @@
           select.appendChild(option);
         });
 
-        if (Array.from(select.options).some(opt => opt.value === currentValue)) select.value = currentValue;
-        else select.value = 'off';
-      } catch (e) { console.warn('カメラデバイス取得エラー', e); }
+        if (Array.from(select.options).some(opt => opt.value === currentValue)) {
+          select.value = currentValue;
+        } else {
+          select.value = 'off';
+        }
+      } catch (e) {
+        console.warn('カメラデバイス取得エラー', e);
+      }
     }
 
-    // 映像ソース切り替え（自動フォールバック）
     els.editMonitorSource.addEventListener('change', async (e) => {
       if (!state.room || !state.room.localParticipant) return;
       const deviceId = e.target.value;
@@ -685,18 +682,28 @@
       els.mainMonitorSourceText.style.display = 'block';
       
       try {
-        if (currentLocalVideoTrack) { detachVideoTrack(currentLocalVideoTrack); currentLocalVideoTrack = null; }
+        if (currentLocalVideoTrack) {
+          detachVideoTrack(currentLocalVideoTrack);
+          currentLocalVideoTrack = null;
+        }
+        
         await state.room.localParticipant.setScreenShareEnabled(false);
         await state.room.localParticipant.setCameraEnabled(false);
+        
         const existingPubs = Array.from(state.room.localParticipant.videoTrackPublications.values());
         for (const pub of existingPubs) {
-          if (pub.track) { pub.track.stop(); await state.room.localParticipant.unpublishTrack(pub.track); }
+          if (pub.track) {
+            pub.track.stop(); 
+            await state.room.localParticipant.unpublishTrack(pub.track);
+          }
         }
+        
         els.monitorVideoWrapper.querySelectorAll('video').forEach(v => v.remove());
         await new Promise(resolve => setTimeout(resolve, 600));
 
         if (deviceId === 'off') {
-          state.activeVideoSender = null; saveRoomState();
+          state.activeVideoSender = null;
+          saveRoomState();
           sendData({ type: 'update-video-sender', senderId: null, sourceText: 'OFF' });
           els.mainMonitorSourceText.textContent = '[ NO VIDEO ]';
           els.editMonitorSource.disabled = false;
@@ -709,35 +716,65 @@
         if (deviceId === 'screen') {
           await state.room.localParticipant.setScreenShareEnabled(true);
           const activePub = state.room.localParticipant.getTrackPublication(LivekitClient.Track.Source.ScreenShare);
-          if (activePub && activePub.track) { currentLocalVideoTrack = activePub.track; attachVideoTrack(currentLocalVideoTrack); }
-          else els.mainMonitorSourceText.textContent = '[ NO VIDEO ]';
+          if (activePub && activePub.track) {
+            currentLocalVideoTrack = activePub.track;
+            attachVideoTrack(currentLocalVideoTrack);
+          } else {
+            els.mainMonitorSourceText.textContent = '[ NO VIDEO ]';
+          }
         } else {
           let stream;
-          try { stream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: deviceId } } }); } 
-          catch (exactErr) { stream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: { ideal: deviceId } } }); }
+          try {
+            stream = await navigator.mediaDevices.getUserMedia({
+              video: { deviceId: { exact: deviceId } }
+            });
+          } catch (exactErr) {
+            console.warn("exact指定をブラウザが拒否。ideal指定で再取得します。", exactErr);
+            stream = await navigator.mediaDevices.getUserMedia({
+              video: { deviceId: { ideal: deviceId } }
+            });
+          }
           
           const rawTrack = stream.getVideoTracks()[0];
           const localVideoTrack = new LivekitClient.LocalVideoTrack(rawTrack);
-          await state.room.localParticipant.publishTrack(localVideoTrack, { name: 'camera', source: LivekitClient.Track.Source.Camera });
+          
+          await state.room.localParticipant.publishTrack(localVideoTrack, {
+            name: 'camera',
+            source: LivekitClient.Track.Source.Camera
+          });
+          
           currentLocalVideoTrack = localVideoTrack;
           attachVideoTrack(currentLocalVideoTrack);
         }
         
         saveRoomState();
         sendData({ type: 'update-video-sender', senderId: state.myUserId, sourceText: sourceText });
+
       } catch (err) {
-        console.error("映像切り替えエラー: ", err); alert("カメラの切り替えに失敗しました。");
-        els.editMonitorSource.value = 'off'; state.activeVideoSender = null;
+        console.error("映像切り替えエラー: ", err);
+        alert("カメラの切り替えに失敗しました。他のアプリ(OBS等)がカメラを使用していないか確認してください。");
+        els.editMonitorSource.value = 'off';
+        state.activeVideoSender = null;
         sendData({ type: 'update-video-sender', senderId: null, sourceText: 'OFF' });
         els.mainMonitorSourceText.textContent = '[ NO VIDEO ]';
-      } finally { els.editMonitorSource.disabled = false; }
+      } finally {
+        els.editMonitorSource.disabled = false;
+      }
     });
 
     function attachVideoTrack(track) {
       els.monitorVideoWrapper.querySelectorAll('video').forEach(v => v.remove());
+
       const videoEl = track.attach();
-      videoEl.style.width = '100%'; videoEl.style.height = '100%'; videoEl.style.objectFit = 'contain';
-      videoEl.style.background = '#000'; videoEl.style.position = 'absolute'; videoEl.style.inset = '0'; videoEl.style.zIndex = '5';
+      
+      videoEl.style.width = '100%';
+      videoEl.style.height = '100%';
+      videoEl.style.objectFit = 'contain';
+      videoEl.style.background = '#000';
+      videoEl.style.position = 'absolute';
+      videoEl.style.inset = '0';
+      videoEl.style.zIndex = '5';
+
       els.monitorVideoWrapper.appendChild(videoEl);
       els.mainMonitorSourceText.style.display = 'none';
     }
@@ -747,6 +784,16 @@
       els.monitorVideoWrapper.querySelectorAll('video').forEach(v => v.remove());
       els.mainMonitorSourceText.style.display = 'block';
     }
+
+    // ★★★ 欠落していた超重要なアイコン設計図を完全に修復！ ★★★
+    const iconSpeaker = `<svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
+    const iconSpeakerOff = `<svg class="btn-icon" viewBox="0 0 24 24"><path fill="currentColor" opacity="0.4" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/><line x1="4" y1="4" x2="20" y2="20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
+    const iconMic = `<svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>`;
+    const iconMicOff = `<svg class="btn-icon" viewBox="0 0 24 24"><path fill="currentColor" opacity="0.4" d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/><line x1="4" y1="4" x2="20" y2="20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
+
+    // グローバルアイコンの初期化
+    els.globalSpkIcon.innerHTML = iconSpeakerOff; 
+    els.globalMicIcon.innerHTML = iconMicOff;
 
     function updateChannelIcons() {
       els.globalSpkIcon.innerHTML = state.isMasterSpkMuted ? iconSpeakerOff : iconSpeakerOff; 
@@ -984,7 +1031,7 @@
           }
         });
 
-        // ★ マルチオーディオ用のメーター描画
+        // マルチオーディオ用メーター描画
         if (multiAudioNodes.length > 0) {
           multiAudioNodes.forEach((node, i) => {
             const data = new Uint8Array(node.analyser.frequencyBinCount);
