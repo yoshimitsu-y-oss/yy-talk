@@ -16,7 +16,6 @@
       return false;
     };
 
-    // Opus DTX (無音時の通信量削減)
     const origSetLocalDescription = RTCPeerConnection.prototype.setLocalDescription;
     RTCPeerConnection.prototype.setLocalDescription = function(desc) {
       if (desc && (desc.type === 'offer' || desc.type === 'answer')) {
@@ -75,7 +74,6 @@
       .app-container { height: 94vh; max-height: 1200px; min-height: 600px; width: 96vw; max-width: 1800px; border-radius: 20px; border: 8px solid #1e2128; }
     }
 
-    /* モーダル基本設定 */
     .overlay-base { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; flex-direction: column; backdrop-filter: blur(4px); z-index: 1000; overflow-y: auto;}
     #login-overlay { z-index: 2000; } #audio-overlay { z-index: 1100; }
     .btn-green-solid { background: var(--green); color: #000; border: none; padding: 15px 30px; font-size: 18px; font-weight: bold; border-radius: 30px; cursor: pointer; }
@@ -88,9 +86,7 @@
     .btn-join-member { background: var(--orange); width: 100%; } .btn-join-admin { background: transparent; border: 1.5px solid var(--blue) !important; color: var(--blue) !important; width: 100%; } .btn-stop { background: var(--red); width: 100%; }
     .status-text { font-size: 12px; color: var(--text-sub); text-align: center; margin-top: 5px; font-family: 'JetBrains Mono', monospace;}
 
-    /* =========================================
-       ヘッダー 
-       ========================================= */
+    /* ヘッダー */
     .header { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; background: var(--bg-dark); flex-shrink: 0; z-index: 100; }
     .header-left { display: flex; align-items: center; }
     #app-logo { height: 26px; width: auto; margin-right: 5px; }
@@ -105,9 +101,10 @@
     }
     .btn-header-icon svg { width: 16px; height: 16px; fill: currentColor; }
     
+    #btn-multi-audio.active { border-color: var(--orange); color: var(--orange); background: rgba(249, 115, 22, 0.1); }
     #btn-toggle-monitor.active { border-color: var(--blue); color: var(--blue); background: rgba(59, 130, 246, 0.1); }
     #btn-settings.active { border-color: var(--green); color: var(--green); background: rgba(74, 222, 128, 0.1); }
-    #btn-settings.admin-only { display: none; }
+    .admin-only { display: none; }
 
     .status-badge {
       border: 1.5px solid var(--text-sub); color: var(--text-sub);
@@ -116,9 +113,7 @@
     .status-badge.online { border-color: var(--blue); color: var(--blue); }
     #status-role { font-size: 11px; font-family: 'JetBrains Mono', monospace; font-weight: bold; color: var(--orange); margin-right: 2px;}
 
-    /* =========================================
-       モニターエリア
-       ========================================= */
+    /* モニターエリア */
     .monitor-section {
       width: 100%; background: #000;
       display: none; flex-direction: column; align-items: center;
@@ -133,9 +128,7 @@
     .video-dummy-text { color: #555; font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: bold; z-index: 1;}
     .video-wrapper video { width: 100%; height: 100%; object-fit: contain; background: #000; position: absolute; inset: 0; z-index: 5;}
 
-    /* =========================================
-       パッチパネル (設定 + マトリックス)
-       ========================================= */
+    /* パッチパネル＆マルチオーディオ共通 */
     .admin-modal { max-width: 95%; width: auto; min-width: 320px; }
     @media (min-width: 800px) { .admin-modal { max-width: 1200px; } }
     .scroll-area { max-height: 75vh; overflow: auto; padding-right: 5px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
@@ -147,7 +140,6 @@
     }
     .setting-group { display: flex; flex-direction: column; gap: 5px; align-items: center; }
     .setting-group label { font-size: 11px; color: var(--text-sub); font-weight: bold; }
-    
     .setting-group input, .setting-group select {
       background: #1c1d21; border: 1px solid var(--border-color); color: #fff;
       border-radius: 4px; font-size: 13px; padding: 4px 6px; height: 27px;
@@ -156,6 +148,7 @@
     .setting-group input:focus, .setting-group select:focus { outline: none; border-color: var(--blue); }
     .setting-group select:disabled { opacity: 0.5; cursor: not-allowed; }
 
+    /* マトリックス系 */
     .admin-matrix-wrapper { width: 100%; overflow-x: auto; overscroll-behavior-x: none; -webkit-overflow-scrolling: touch; border-radius: 8px; background: #0a0b0d; border: 1px solid var(--border-color); position: relative; }
     .admin-matrix { width: 100%; border-collapse: separate; border-spacing: 0; min-width: max-content; text-align: center; font-size: 13px; }
     .admin-matrix th, .admin-matrix td { border-bottom: 1px solid var(--border-color); border-right: 1px solid var(--border-color); padding: 6px; }
@@ -170,9 +163,6 @@
     .btn-delete-row { margin-top: 0; }
     .admin-matrix td.ch-cell input.admin-edit-type { width: 48px; height: 27px; text-align:center; font-family:'JetBrains Mono', monospace; background:#1c1d21; border:1px solid var(--border-color); color:#fff; border-radius:4px; font-size:10px; padding:4px; }
 
-    /* =========================================
-       マトリックス セル内レイアウト
-       ========================================= */
     .cell-layout { display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 8px; }
 
     .matrix-toggle {
@@ -191,17 +181,13 @@
     .matrix-toggle.active::after { content: "SET"; }
     .matrix-toggle.active::before { background: var(--green); box-shadow: 0 0 6px var(--green); }
 
-    /* REMOTE座布団グループ */
     .remote-group {
       display: flex; flex-direction: column; align-items: center;
       background: #111216; border: 1px solid #2a2c33;
       border-radius: 6px; padding: 4px 6px 6px;
       box-shadow: inset 0 1px 2px rgba(0,0,0,0.5);
     }
-    .remote-label {
-      font-family: 'JetBrains Mono', monospace; font-size: 8px; font-weight: bold;
-      color: #666; margin-bottom: 4px; letter-spacing: 1px;
-    }
+    .remote-label { font-family: 'JetBrains Mono', monospace; font-size: 8px; font-weight: bold; color: #666; margin-bottom: 4px; letter-spacing: 1px; }
     .remote-buttons { display: flex; gap: 6px; }
 
     .circle-btn {
@@ -214,16 +200,19 @@
 
     .remote-spk-btn { border: 1.5px solid var(--green); color: var(--green); }
     .remote-spk-btn.active { background-color: var(--green); color: #000; box-shadow: inset 0 2px 4px rgba(255,255,255,0.4), 0 0 10px rgba(74, 222, 128, 0.5); }
-
     .remote-mic-btn { border: 1.5px solid var(--red); color: var(--red); }
     .remote-mic-btn.active { background-color: var(--red); color: #fff; box-shadow: inset 0 2px 4px rgba(255,255,255,0.3), 0 0 10px rgba(220, 38, 38, 0.5); }
 
     .cp-meter-bg { width: 6px; height: 36px; background: #000; border-radius: 2px; position: relative; box-shadow: inset 0 0 3px rgba(0,0,0,0.8); overflow: hidden; margin-left: 2px;}
     .cp-meter-bar { width: 100%; height: 100%; background: linear-gradient(to top, #22c55e, #eab308, #ef4444); position: absolute; bottom: 0; left: 0; transform-origin: bottom; transform: scaleY(0); transition: transform 0.05s ease-out; }
 
-    /* =========================================
-       グローバル & チャンネルリスト
-       ========================================= */
+    /* マルチオーディオ専用 行スタイル */
+    .multi-ch-row {
+      display: flex; align-items: center; gap: 15px; background: #15161a;
+      padding: 10px 15px; border-radius: 8px; border: 1px solid var(--border-color);
+    }
+
+    /* グローバル & チャンネルリスト */
     .global-controls { display: flex; gap: 10px; padding: 5px 15px 10px; background: var(--bg-dark); border-bottom: 2px solid var(--green); flex-shrink: 0; z-index: 10;}
     .btn-global { flex: 1; padding: 8px 10px; border: none; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; font-family: 'JetBrains Mono', monospace; }
     .slash-line { display: none; } .muted-slash .slash-line { display: block; opacity: 1; }
@@ -357,6 +346,30 @@
       </div>
     </div>
 
+    <div id="multi-audio-overlay" class="overlay-base">
+      <div class="login-modal admin-modal" style="max-width: 600px;">
+        <button class="btn-close-login" id="btn-close-multi-audio">×</button>
+        <h3 style="margin: 0 0 15px 0; color: var(--text-main); text-align: center;">マルチオーディオモニター</h3>
+        
+        <div class="admin-settings-row" style="margin-bottom: 15px;">
+          <div class="setting-group" style="flex-direction: row; gap: 15px; width: 100%;">
+            <select id="multi-audio-source" style="flex: 1; width: auto; max-width: 300px;">
+              <option value="off">OFF</option>
+            </select>
+            <button id="btn-start-multi-audio" style="background: var(--blue); color: #fff; border: none; padding: 0 20px; height: 27px; border-radius: 4px; cursor: pointer; font-weight: bold; font-family: 'JetBrains Mono', monospace;">CONNECT</button>
+          </div>
+        </div>
+
+        <div class="scroll-area">
+          <div id="multi-audio-channels-container" style="display: flex; flex-direction: column; gap: 10px;">
+            <div style="text-align: center; color: var(--text-sub); font-size: 12px; padding: 20px 0;">
+              デバイスを選択し [CONNECT] を押してください
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <audio id="dummy-audio" loop playsinline src="https://raw.githubusercontent.com/anars/blank-audio/master/250-milliseconds-of-silence.mp3"></audio>
 
     <div class="header">
@@ -380,11 +393,17 @@
         
         <span id="status-role" style="display: none;"></span>
 
+        <button id="btn-multi-audio" class="btn-header-icon admin-only" title="マルチオーディオモニター">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2v20M17 5v14M7 9v6M22 10v4M2 11v2"/>
+          </svg>
+        </button>
+
         <button id="btn-toggle-monitor" class="btn-header-icon" title="モニター表示">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
         </button>
 
-        <button id="btn-settings" class="btn-header-icon admin-only" title="設定">
+        <button id="btn-settings" class="btn-header-icon admin-only" title="パッチパネル">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
         </button>
 
@@ -441,7 +460,7 @@
       remoteTalkStates: {}, remoteListenStates: {}, channelNodes: {}, 
       isAdmin: false, audioEnabled: false, isMasterSpkMuted: false, isMasterMicMuted: false,
       monitorTitle: 'MONITOR',
-      activeVideoSender: null // 親機ロック用
+      activeVideoSender: null
     };
 
     const LIVEKIT_WS_URL = "wss://yy-talk-pe8z9ycq.livekit.cloud";
@@ -462,7 +481,11 @@
       btnToggleMonitor: document.getElementById('btn-toggle-monitor'), monitorSection: document.getElementById('monitor-section'),
       editMonitorTitle: document.getElementById('edit-monitor-title'), editMonitorSource: document.getElementById('edit-monitor-source'),
       mainMonitorTitle: document.getElementById('main-monitor-title'), 
-      monitorVideoWrapper: document.getElementById('monitor-video-wrapper'), mainMonitorSourceText: document.getElementById('main-monitor-source-text')
+      monitorVideoWrapper: document.getElementById('monitor-video-wrapper'), mainMonitorSourceText: document.getElementById('main-monitor-source-text'),
+      // ★ 追加: マルチオーディオ用
+      btnMultiAudio: document.getElementById('btn-multi-audio'), multiAudioOverlay: document.getElementById('multi-audio-overlay'),
+      btnCloseMultiAudio: document.getElementById('btn-close-multi-audio'), multiAudioSource: document.getElementById('multi-audio-source'),
+      btnStartMultiAudio: document.getElementById('btn-start-multi-audio'), multiAudioChannelsContainer: document.getElementById('multi-audio-channels-container')
     };
 
     els.btnLoginShow.onclick = () => { els.loginOverlay.style.display = 'flex'; };
@@ -489,6 +512,132 @@
       els.btnSettings.classList.remove('active');
     };
 
+    // ★ マルチオーディオパネル開閉 ＆ オーディオデバイス取得
+    els.btnMultiAudio.onclick = async () => {
+      if (!state.isAdmin) return;
+      els.multiAudioOverlay.style.display = 'flex';
+      els.btnMultiAudio.classList.add('active');
+      await updateAudioInputSources();
+    };
+    els.btnCloseMultiAudio.onclick = () => {
+      els.multiAudioOverlay.style.display = 'none';
+      els.btnMultiAudio.classList.remove('active');
+    };
+
+    async function updateAudioInputSources() {
+      const select = els.multiAudioSource;
+      const currentValue = select.value;
+      select.innerHTML = '<option value="off">OFF</option>';
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const audioInputs = devices.filter(device => device.kind === 'audioinput');
+        audioInputs.forEach((device, index) => {
+          const option = document.createElement('option');
+          option.value = device.deviceId;
+          option.text = device.label || `Audio Input ${index + 1}`;
+          select.appendChild(option);
+        });
+        if (Array.from(select.options).some(opt => opt.value === currentValue)) select.value = currentValue;
+      } catch (e) { console.warn('オーディオデバイス取得エラー', e); }
+    }
+
+    // ★ マルチチャンネル監視ロジック
+    let multiAudioCtx = null;
+    let multiAudioStream = null;
+    let multiAudioNodes = [];
+
+    els.btnStartMultiAudio.onclick = async () => {
+      const deviceId = els.multiAudioSource.value;
+      if (deviceId === 'off') {
+        stopMultiAudioMonitor();
+        els.multiAudioChannelsContainer.innerHTML = '<div style="text-align: center; color: var(--text-sub); font-size: 12px; padding: 20px 0;">デバイスを選択し [CONNECT] を押してください</div>';
+        return;
+      }
+
+      stopMultiAudioMonitor();
+      els.btnStartMultiAudio.textContent = '読込中...';
+
+      try {
+        // 可能な限り多チャンネルを要求
+        multiAudioStream = await navigator.mediaDevices.getUserMedia({
+          audio: { deviceId: { exact: deviceId }, channelCount: { ideal: 32 } }
+        });
+
+        if (!multiAudioCtx) multiAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (multiAudioCtx.state === 'suspended') multiAudioCtx.resume();
+
+        const source = multiAudioCtx.createMediaStreamSource(multiAudioStream);
+        // 実際に取得できたチャンネル数
+        const channelCount = source.channelCount || multiAudioStream.getAudioTracks()[0].getSettings().channelCount || 2;
+        
+        const splitter = multiAudioCtx.createChannelSplitter(channelCount);
+        source.connect(splitter);
+
+        els.multiAudioChannelsContainer.innerHTML = '';
+        multiAudioNodes = [];
+
+        for (let i = 0; i < channelCount; i++) {
+          const analyser = multiAudioCtx.createAnalyser();
+          analyser.fftSize = 256;
+          
+          const gain = multiAudioCtx.createGain();
+          gain.gain.value = 0; // 初期ミュート
+          
+          splitter.connect(analyser, i, 0);
+          analyser.connect(gain);
+          gain.connect(multiAudioCtx.destination);
+
+          multiAudioNodes.push({ analyser, gain, isListening: false });
+
+          // 各チャンネルのUI生成（横型メーター）
+          const row = document.createElement('div');
+          row.className = 'multi-ch-row';
+          row.innerHTML = `
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: bold; color: var(--orange); width: 45px; flex-shrink: 0;">CH ${i + 1}</div>
+            <div class="circle-btn remote-spk-btn" id="multi-spk-${i}" style="flex-shrink: 0;">
+              <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+            </div>
+            <div style="flex: 1; height: 10px; background: #000; border-radius: 5px; overflow: hidden; position: relative; box-shadow: inset 0 0 3px rgba(0,0,0,0.8);">
+              <div id="multi-meter-${i}" style="position: absolute; left: 0; top: 0; bottom: 0; width: 0%; background: linear-gradient(90deg, #22c55e, #eab308, #ef4444); transition: width 0.05s linear;"></div>
+            </div>
+          `;
+          els.multiAudioChannelsContainer.appendChild(row);
+
+          const spkBtn = row.querySelector(`#multi-spk-${i}`);
+          spkBtn.onclick = () => {
+            const node = multiAudioNodes[i];
+            node.isListening = !node.isListening;
+            if (node.isListening) {
+              spkBtn.classList.add('active');
+              node.gain.gain.setTargetAtTime(1, multiAudioCtx.currentTime, 0.05);
+            } else {
+              spkBtn.classList.remove('active');
+              node.gain.gain.setTargetAtTime(0, multiAudioCtx.currentTime, 0.05);
+            }
+          };
+        }
+        els.btnStartMultiAudio.textContent = 'CONNECTED';
+      } catch (err) {
+        console.error("マルチオーディオ取得エラー:", err);
+        alert("オーディオデバイスの取得に失敗しました。");
+        els.multiAudioSource.value = 'off';
+        els.btnStartMultiAudio.textContent = 'CONNECT';
+      }
+    };
+
+    function stopMultiAudioMonitor() {
+      if (multiAudioStream) {
+        multiAudioStream.getTracks().forEach(t => t.stop());
+        multiAudioStream = null;
+      }
+      if (multiAudioCtx) {
+        multiAudioNodes.forEach(node => { try { node.gain.disconnect(); } catch(e){} });
+      }
+      multiAudioNodes = [];
+      els.btnStartMultiAudio.textContent = 'CONNECT';
+    }
+
+
     // モニター名称の同期
     els.editMonitorTitle.addEventListener('input', (e) => {
       state.monitorTitle = e.target.value;
@@ -497,27 +646,23 @@
       sendData({ type: 'update-monitor-title', title: state.monitorTitle });
     });
 
-    // ★ カメラデバイスの完全取得処理（ロック判定付き）
+    // カメラデバイス取得
     async function updateVideoSources() {
       if (state.activeVideoSender && state.activeVideoSender !== state.myUserId) {
           return;
       }
       const select = els.editMonitorSource;
       const currentValue = select.value;
-      
       try {
         try {
           const tempStream = await navigator.mediaDevices.getUserMedia({ video: true });
           tempStream.getTracks().forEach(track => track.stop());
-        } catch (e) {
-          console.warn('カメラアクセスがブロックされたか、カメラがありません。', e);
-        }
+        } catch (e) { console.warn('カメラアクセスブロック', e); }
 
         const devices = await navigator.mediaDevices.enumerateDevices();
         const videoInputs = devices.filter(device => device.kind === 'videoinput');
         
         select.innerHTML = '<option value="off">OFF</option><option value="screen">画面共有</option>';
-        
         videoInputs.forEach((device, index) => {
           const option = document.createElement('option');
           option.value = device.deviceId;
@@ -525,17 +670,12 @@
           select.appendChild(option);
         });
 
-        if (Array.from(select.options).some(opt => opt.value === currentValue)) {
-          select.value = currentValue;
-        } else {
-          select.value = 'off';
-        }
-      } catch (e) {
-        console.warn('カメラデバイス取得エラー', e);
-      }
+        if (Array.from(select.options).some(opt => opt.value === currentValue)) select.value = currentValue;
+        else select.value = 'off';
+      } catch (e) { console.warn('カメラデバイス取得エラー', e); }
     }
 
-    // ★ 映像ソース切り替え（排他ロックと「完全自動フォールバック」ロジック）
+    // 映像ソース切り替え（自動フォールバック）
     els.editMonitorSource.addEventListener('change', async (e) => {
       if (!state.room || !state.room.localParticipant) return;
       const deviceId = e.target.value;
@@ -545,31 +685,18 @@
       els.mainMonitorSourceText.style.display = 'block';
       
       try {
-        // 1. 今表示されている映像を剥がす
-        if (currentLocalVideoTrack) {
-          detachVideoTrack(currentLocalVideoTrack);
-          currentLocalVideoTrack = null;
-        }
-        
-        // 2. 一旦すべての映像をOFFにする
+        if (currentLocalVideoTrack) { detachVideoTrack(currentLocalVideoTrack); currentLocalVideoTrack = null; }
         await state.room.localParticipant.setScreenShareEnabled(false);
         await state.room.localParticipant.setCameraEnabled(false);
-        
-        // 手動でPublishしたトラックのクリーンアップ
         const existingPubs = Array.from(state.room.localParticipant.videoTrackPublications.values());
         for (const pub of existingPubs) {
-          if (pub.track) {
-            pub.track.stop(); 
-            await state.room.localParticipant.unpublishTrack(pub.track);
-          }
+          if (pub.track) { pub.track.stop(); await state.room.localParticipant.unpublishTrack(pub.track); }
         }
-        
         els.monitorVideoWrapper.querySelectorAll('video').forEach(v => v.remove());
         await new Promise(resolve => setTimeout(resolve, 600));
 
         if (deviceId === 'off') {
-          state.activeVideoSender = null;
-          saveRoomState();
+          state.activeVideoSender = null; saveRoomState();
           sendData({ type: 'update-video-sender', senderId: null, sourceText: 'OFF' });
           els.mainMonitorSourceText.textContent = '[ NO VIDEO ]';
           els.editMonitorSource.disabled = false;
@@ -579,91 +706,47 @@
         state.activeVideoSender = state.myUserId;
         const sourceText = deviceId === 'screen' ? 'SCREEN SHARE' : 'CAMERA';
         
-        // 3. 映像の送信を開始
         if (deviceId === 'screen') {
           await state.room.localParticipant.setScreenShareEnabled(true);
           const activePub = state.room.localParticipant.getTrackPublication(LivekitClient.Track.Source.ScreenShare);
-          if (activePub && activePub.track) {
-            currentLocalVideoTrack = activePub.track;
-            attachVideoTrack(currentLocalVideoTrack);
-          } else {
-            els.mainMonitorSourceText.textContent = '[ NO VIDEO ]';
-          }
+          if (activePub && activePub.track) { currentLocalVideoTrack = activePub.track; attachVideoTrack(currentLocalVideoTrack); }
+          else els.mainMonitorSourceText.textContent = '[ NO VIDEO ]';
         } else {
-          // 【★ ブラウザ設定不要の完全突破ロジック】
           let stream;
-          try {
-            // まずは絶対指定（exact）で試みる
-            stream = await navigator.mediaDevices.getUserMedia({
-              video: { deviceId: { exact: deviceId } }
-            });
-          } catch (exactErr) {
-            console.warn("exact指定をブラウザが拒否。ideal指定で再取得します。", exactErr);
-            // エラーが出た場合は優先指定（ideal）に切り替えて強制的に掴む
-            stream = await navigator.mediaDevices.getUserMedia({
-              video: { deviceId: { ideal: deviceId } }
-            });
-          }
+          try { stream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: deviceId } } }); } 
+          catch (exactErr) { stream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: { ideal: deviceId } } }); }
           
           const rawTrack = stream.getVideoTracks()[0];
           const localVideoTrack = new LivekitClient.LocalVideoTrack(rawTrack);
-          
-          // LiveKitの通信網に手動でねじ込む
-          await state.room.localParticipant.publishTrack(localVideoTrack, {
-            name: 'camera',
-            source: LivekitClient.Track.Source.Camera
-          });
-          
+          await state.room.localParticipant.publishTrack(localVideoTrack, { name: 'camera', source: LivekitClient.Track.Source.Camera });
           currentLocalVideoTrack = localVideoTrack;
           attachVideoTrack(currentLocalVideoTrack);
         }
         
         saveRoomState();
         sendData({ type: 'update-video-sender', senderId: state.myUserId, sourceText: sourceText });
-
       } catch (err) {
-        console.error("映像切り替えエラー: ", err);
-        alert("カメラの切り替えに失敗しました。他のアプリ(OBS等)がカメラを使用していないか確認してください。");
-        els.editMonitorSource.value = 'off';
-        state.activeVideoSender = null;
+        console.error("映像切り替えエラー: ", err); alert("カメラの切り替えに失敗しました。");
+        els.editMonitorSource.value = 'off'; state.activeVideoSender = null;
         sendData({ type: 'update-video-sender', senderId: null, sourceText: 'OFF' });
         els.mainMonitorSourceText.textContent = '[ NO VIDEO ]';
-      } finally {
-        els.editMonitorSource.disabled = false;
-      }
+      } finally { els.editMonitorSource.disabled = false; }
     });
 
-    // ★ 映像を貼る処理
     function attachVideoTrack(track) {
       els.monitorVideoWrapper.querySelectorAll('video').forEach(v => v.remove());
-
       const videoEl = track.attach();
-      
-      videoEl.style.width = '100%';
-      videoEl.style.height = '100%';
-      videoEl.style.objectFit = 'contain';
-      videoEl.style.background = '#000';
-      videoEl.style.position = 'absolute';
-      videoEl.style.inset = '0';
-      videoEl.style.zIndex = '5';
-
+      videoEl.style.width = '100%'; videoEl.style.height = '100%'; videoEl.style.objectFit = 'contain';
+      videoEl.style.background = '#000'; videoEl.style.position = 'absolute'; videoEl.style.inset = '0'; videoEl.style.zIndex = '5';
       els.monitorVideoWrapper.appendChild(videoEl);
       els.mainMonitorSourceText.style.display = 'none';
     }
 
-    // ★ 映像を剥がす処理
     function detachVideoTrack(track) {
       if (track) track.detach();
       els.monitorVideoWrapper.querySelectorAll('video').forEach(v => v.remove());
       els.mainMonitorSourceText.style.display = 'block';
     }
-
-    const iconSpeaker = `<svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
-    const iconSpeakerOff = `<svg class="btn-icon" viewBox="0 0 24 24"><path fill="currentColor" opacity="0.4" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/><line x1="4" y1="4" x2="20" y2="20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
-    const iconMic = `<svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>`;
-    const iconMicOff = `<svg class="btn-icon" viewBox="0 0 24 24"><path fill="currentColor" opacity="0.4" d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/><line x1="4" y1="4" x2="20" y2="20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
-
-    els.globalSpkIcon.innerHTML = iconSpeakerOff; els.globalMicIcon.innerHTML = iconMicOff;
 
     function updateChannelIcons() {
       els.globalSpkIcon.innerHTML = state.isMasterSpkMuted ? iconSpeakerOff : iconSpeakerOff; 
@@ -901,6 +984,19 @@
           }
         });
 
+        // ★ マルチオーディオ用のメーター描画
+        if (multiAudioNodes.length > 0) {
+          multiAudioNodes.forEach((node, i) => {
+            const data = new Uint8Array(node.analyser.frequencyBinCount);
+            node.analyser.getByteFrequencyData(data);
+            let sum = 0; 
+            for(let j=0; j<data.length; j++) sum += data[j];
+            let percent = ((sum / data.length) / 255) * 100 * 2.0;
+            const meterEl = document.getElementById(`multi-meter-${i}`);
+            if (meterEl) meterEl.style.width = Math.min(percent, 100) + '%';
+          });
+        }
+
         if (state.isAdmin) {
           state.registeredUsers?.forEach(uid => {
             let userVolRatio = 0;
@@ -1092,7 +1188,6 @@
       });
       html += `</tbody></table></div>`; container.innerHTML = html;
 
-      // SETボタン
       container.querySelectorAll('.matrix-toggle').forEach(btn => {
         btn.onclick = (e) => {
           const uid = e.target.getAttribute('data-uid'); const chid = e.target.getAttribute('data-chid'); let assigned = state.userAssignments[uid] || [];
@@ -1113,7 +1208,6 @@
         };
       });
 
-      // SPK操作
       container.querySelectorAll('.remote-spk-btn').forEach(btn => {
         btn.onclick = (e) => {
           if (btn.classList.contains('disabled')) return;
@@ -1134,7 +1228,6 @@
         };
       });
 
-      // MIC操作
       container.querySelectorAll('.remote-mic-btn').forEach(btn => {
         btn.onclick = (e) => {
           if (btn.classList.contains('disabled')) return; 
@@ -1299,14 +1392,12 @@
           saveRoomState(); if(state.isAdmin) buildAdminMatrix();
         }
         else if (data.type === 'remove-channel') { if(data.chId) removeChannel(data.chId); saveRoomState(); if(state.isAdmin) buildAdminMatrix(); }
-        // モニター名称の同期
         else if (data.type === 'update-monitor-title') {
           state.monitorTitle = data.title;
           els.mainMonitorTitle.textContent = data.title || 'NO TITLE';
           if (state.isAdmin) els.editMonitorTitle.value = data.title;
           saveRoomState();
         }
-        // ★ 親機の排他ロック同期
         else if (data.type === 'update-video-sender') {
           state.activeVideoSender = data.senderId;
           
@@ -1374,7 +1465,11 @@
       const rawRoomId = els.hostIdInput.value.trim() || 'yytalk'; const myName = els.joinUserIdInput.value.trim() || 'Unknown';
       state.roomId = rawRoomId; state.myUserId = myName; state.isAdmin = isAdmin;
       els.roomNameDisplay.textContent = `${rawRoomId}${isAdmin ? ' (Admin)' : ''}`;
-      if (isAdmin) { els.btnSettings.style.display = 'flex'; } else { els.btnSettings.style.display = 'none'; }
+      if (isAdmin) { 
+        document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex'); 
+      } else { 
+        document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none'); 
+      }
       LocalProfile.set({ roomId: rawRoomId, userId: myName, isAdmin });
       
       loadRoomState(state.roomId);
