@@ -16,6 +16,7 @@
       return false;
     };
 
+    // Opus DTX (無音時の通信量削減)
     const origSetLocalDescription = RTCPeerConnection.prototype.setLocalDescription;
     RTCPeerConnection.prototype.setLocalDescription = function(desc) {
       if (desc && (desc.type === 'offer' || desc.type === 'answer')) {
@@ -74,6 +75,7 @@
       .app-container { height: 94vh; max-height: 1200px; min-height: 600px; width: 96vw; max-width: 1800px; border-radius: 20px; border: 8px solid #1e2128; }
     }
 
+    /* モーダル基本設定 */
     .overlay-base { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; flex-direction: column; backdrop-filter: blur(4px); z-index: 1000; overflow-y: auto;}
     #login-overlay { z-index: 2000; } #audio-overlay { z-index: 1100; }
     .btn-green-solid { background: var(--green); color: #000; border: none; padding: 15px 30px; font-size: 18px; font-weight: bold; border-radius: 30px; cursor: pointer; }
@@ -86,7 +88,9 @@
     .btn-join-member { background: var(--orange); width: 100%; } .btn-join-admin { background: transparent; border: 1.5px solid var(--blue) !important; color: var(--blue) !important; width: 100%; } .btn-stop { background: var(--red); width: 100%; }
     .status-text { font-size: 12px; color: var(--text-sub); text-align: center; margin-top: 5px; font-family: 'JetBrains Mono', monospace;}
 
-    /* ヘッダー */
+    /* =========================================
+       ヘッダー 
+       ========================================= */
     .header { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; background: var(--bg-dark); flex-shrink: 0; z-index: 100; }
     .header-left { display: flex; align-items: center; }
     #app-logo { height: 26px; width: auto; margin-right: 5px; }
@@ -113,7 +117,9 @@
     .status-badge.online { border-color: var(--blue); color: var(--blue); }
     #status-role { font-size: 11px; font-family: 'JetBrains Mono', monospace; font-weight: bold; color: var(--orange); margin-right: 2px;}
 
-    /* モニターエリア */
+    /* =========================================
+       モニターエリア
+       ========================================= */
     .monitor-section {
       width: 100%; background: #000;
       display: none; flex-direction: column; align-items: center;
@@ -128,7 +134,9 @@
     .video-dummy-text { color: #555; font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: bold; z-index: 1;}
     .video-wrapper video { width: 100%; height: 100%; object-fit: contain; background: #000; position: absolute; inset: 0; z-index: 5;}
 
-    /* パッチパネル＆マルチオーディオ共通 */
+    /* =========================================
+       パッチパネル (設定 + マトリックス)
+       ========================================= */
     .admin-modal { max-width: 95%; width: auto; min-width: 320px; }
     @media (min-width: 800px) { .admin-modal { max-width: 1200px; } }
     .scroll-area { max-height: 75vh; overflow: auto; padding-right: 5px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
@@ -140,6 +148,7 @@
     }
     .setting-group { display: flex; flex-direction: column; gap: 5px; align-items: center; }
     .setting-group label { font-size: 11px; color: var(--text-sub); font-weight: bold; }
+    
     .setting-group input, .setting-group select {
       background: #1c1d21; border: 1px solid var(--border-color); color: #fff;
       border-radius: 4px; font-size: 13px; padding: 4px 6px; height: 27px;
@@ -148,7 +157,6 @@
     .setting-group input:focus, .setting-group select:focus { outline: none; border-color: var(--blue); }
     .setting-group select:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    /* マトリックス系 */
     .admin-matrix-wrapper { width: 100%; overflow-x: auto; overscroll-behavior-x: none; -webkit-overflow-scrolling: touch; border-radius: 8px; background: #0a0b0d; border: 1px solid var(--border-color); position: relative; }
     .admin-matrix { width: 100%; border-collapse: separate; border-spacing: 0; min-width: max-content; text-align: center; font-size: 13px; }
     .admin-matrix th, .admin-matrix td { border-bottom: 1px solid var(--border-color); border-right: 1px solid var(--border-color); padding: 6px; }
@@ -163,6 +171,9 @@
     .btn-delete-row { margin-top: 0; }
     .admin-matrix td.ch-cell input.admin-edit-type { width: 48px; height: 27px; text-align:center; font-family:'JetBrains Mono', monospace; background:#1c1d21; border:1px solid var(--border-color); color:#fff; border-radius:4px; font-size:10px; padding:4px; }
 
+    /* =========================================
+       マトリックス セル内レイアウト
+       ========================================= */
     .cell-layout { display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 8px; }
 
     .matrix-toggle {
@@ -181,6 +192,7 @@
     .matrix-toggle.active::after { content: "SET"; }
     .matrix-toggle.active::before { background: var(--green); box-shadow: 0 0 6px var(--green); }
 
+    /* REMOTE座布団グループ */
     .remote-group {
       display: flex; flex-direction: column; align-items: center;
       background: #111216; border: 1px solid #2a2c33;
@@ -212,7 +224,9 @@
       padding: 10px 15px; border-radius: 8px; border: 1px solid var(--border-color);
     }
 
-    /* グローバル & チャンネルリスト */
+    /* =========================================
+       グローバル & チャンネルリスト
+       ========================================= */
     .global-controls { display: flex; gap: 10px; padding: 5px 15px 10px; background: var(--bg-dark); border-bottom: 2px solid var(--green); flex-shrink: 0; z-index: 10;}
     .btn-global { flex: 1; padding: 8px 10px; border: none; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; font-family: 'JetBrains Mono', monospace; }
     .slash-line { display: none; } .muted-slash .slash-line { display: block; opacity: 1; }
@@ -460,7 +474,7 @@
       remoteTalkStates: {}, remoteListenStates: {}, channelNodes: {}, 
       isAdmin: false, audioEnabled: false, isMasterSpkMuted: false, isMasterMicMuted: false,
       monitorTitle: 'MONITOR',
-      activeVideoSender: null
+      activeVideoSender: null 
     };
 
     const LIVEKIT_WS_URL = "wss://yy-talk-pe8z9ycq.livekit.cloud";
@@ -490,6 +504,7 @@
     els.btnLoginShow.onclick = () => { els.loginOverlay.style.display = 'flex'; };
     document.getElementById('btn-close-login').onclick = () => { els.loginOverlay.style.display = 'none'; };
     
+    // モニター表示切替
     els.btnToggleMonitor.onclick = () => {
       const isActive = els.btnToggleMonitor.classList.toggle('active');
       if (isActive) els.monitorSection.classList.add('show');
@@ -497,6 +512,7 @@
       forceResize();
     };
 
+    // パッチパネル開閉
     els.btnSettings.onclick = () => { 
       if (!state.isAdmin) return; 
       els.adminOverlay.style.display = 'flex'; 
@@ -509,6 +525,7 @@
       els.btnSettings.classList.remove('active');
     };
 
+    // マルチオーディオパネル開閉
     els.btnMultiAudio.onclick = async () => {
       if (!state.isAdmin) return;
       els.multiAudioOverlay.style.display = 'flex';
@@ -541,6 +558,7 @@
     let multiAudioStream = null;
     let multiAudioNodes = [];
 
+    // ★ マルチチャンネルオーディオ取得（エコーキャンセル等OFFで生データを引く）
     els.btnStartMultiAudio.onclick = async () => {
       const deviceId = els.multiAudioSource.value;
       if (deviceId === 'off') {
@@ -553,8 +571,15 @@
       els.btnStartMultiAudio.textContent = '読込中...';
 
       try {
+        // 制約解除して32ch要求
         multiAudioStream = await navigator.mediaDevices.getUserMedia({
-          audio: { deviceId: { exact: deviceId }, channelCount: { ideal: 32 } }
+          audio: { 
+            deviceId: { exact: deviceId }, 
+            channelCount: { ideal: 32 },
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false
+          }
         });
 
         if (!multiAudioCtx) multiAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -563,6 +588,8 @@
         const source = multiAudioCtx.createMediaStreamSource(multiAudioStream);
         const channelCount = source.channelCount || multiAudioStream.getAudioTracks()[0].getSettings().channelCount || 2;
         
+        console.log(`マルチオーディオ取得成功: ${channelCount} channels`);
+
         const splitter = multiAudioCtx.createChannelSplitter(channelCount);
         source.connect(splitter);
 
@@ -785,13 +812,11 @@
       els.mainMonitorSourceText.style.display = 'block';
     }
 
-    // ★★★ 欠落していた超重要なアイコン設計図を完全に修復！ ★★★
     const iconSpeaker = `<svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
     const iconSpeakerOff = `<svg class="btn-icon" viewBox="0 0 24 24"><path fill="currentColor" opacity="0.4" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/><line x1="4" y1="4" x2="20" y2="20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
     const iconMic = `<svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>`;
     const iconMicOff = `<svg class="btn-icon" viewBox="0 0 24 24"><path fill="currentColor" opacity="0.4" d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/><line x1="4" y1="4" x2="20" y2="20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
 
-    // グローバルアイコンの初期化
     els.globalSpkIcon.innerHTML = iconSpeakerOff; 
     els.globalMicIcon.innerHTML = iconMicOff;
 
@@ -1031,7 +1056,6 @@
           }
         });
 
-        // マルチオーディオ用メーター描画
         if (multiAudioNodes.length > 0) {
           multiAudioNodes.forEach((node, i) => {
             const data = new Uint8Array(node.analyser.frequencyBinCount);
