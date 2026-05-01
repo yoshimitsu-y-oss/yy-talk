@@ -131,7 +131,6 @@
       display: flex; align-items: center; justify-content: center; border: 1px solid #333; position: relative;
     }
     .video-dummy-text { color: #555; font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: bold; z-index: 1;}
-    .video-wrapper video { width: 100%; height: 100%; object-fit: contain; background: #000; position: absolute; inset: 0; z-index: 5;}
 
     /* =========================================
        パッチパネル (設定 + マトリックス)
@@ -148,7 +147,8 @@
     }
     .setting-group { display: flex; flex-direction: column; gap: 5px; align-items: center; }
     .setting-group label { font-size: 11px; color: var(--text-sub); font-weight: bold; }
-    /* ★ 10文字幅 & パーティー名称欄と高さ(27px相当)・デザインを合わせる */
+    
+    /* ★ 10文字幅(14ch) & パーティー名称欄と高さ(27px相当)・デザインを合わせる */
     .setting-group input, .setting-group select {
       background: #1c1d21; border: 1px solid var(--border-color); color: #fff;
       border-radius: 4px; font-size: 13px; padding: 4px 6px; height: 27px;
@@ -442,14 +442,14 @@
       remoteTalkStates: {}, remoteListenStates: {}, channelNodes: {}, 
       isAdmin: false, audioEnabled: false, isMasterSpkMuted: false, isMasterMicMuted: false,
       monitorTitle: 'MONITOR',
-      activeVideoSender: null // ★ 現在映像を送信している親機ID（排他ロック用）
+      activeVideoSender: null // ★ 親機ロック機構
     };
 
     const LIVEKIT_WS_URL = "wss://yy-talk-pe8z9ycq.livekit.cloud";
     const WORKER_AUTH_URL = "https://yy-talk.yoshimitsu-y.workers.dev";
 
     let channels = [];
-    let currentLocalVideoTrack = null; // ★ 切り替え用のトラッキング変数
+    let currentLocalVideoTrack = null;
 
     const els = {
       statusMsg: document.getElementById('status-msg'), hostIdInput: document.getElementById('host-id'), joinUserIdInput: document.getElementById('join-userid'),
@@ -469,6 +469,7 @@
     els.btnLoginShow.onclick = () => { els.loginOverlay.style.display = 'flex'; };
     document.getElementById('btn-close-login').onclick = () => { els.loginOverlay.style.display = 'none'; };
     
+    // モニター表示切替
     els.btnToggleMonitor.onclick = () => {
       const isActive = els.btnToggleMonitor.classList.toggle('active');
       if (isActive) els.monitorSection.classList.add('show');
@@ -476,6 +477,7 @@
       forceResize();
     };
 
+    // パッチパネル開閉 ＆ カメラデバイス取得
     els.btnSettings.onclick = () => { 
       if (!state.isAdmin) return; 
       els.adminOverlay.style.display = 'flex'; 
@@ -488,6 +490,7 @@
       els.btnSettings.classList.remove('active');
     };
 
+    // モニター設定の同期
     els.editMonitorTitle.addEventListener('input', (e) => {
       state.monitorTitle = e.target.value;
       els.mainMonitorTitle.textContent = state.monitorTitle || 'NO TITLE';
@@ -495,9 +498,9 @@
       sendData({ type: 'update-monitor-title', title: state.monitorTitle });
     });
 
-    // ★ カメラデバイスの完全な取得処理
+    // ★ カメラデバイス取得処理（権限リクエスト付き）
     async function updateVideoSources() {
-      // 誰かがロックしている場合は更新処理をスキップしてロック状態を維持
+      // 誰かがロックしている場合は更新処理をスキップ
       if (state.activeVideoSender && state.activeVideoSender !== state.myUserId) {
           return;
       }
@@ -534,24 +537,33 @@
       }
     }
 
-    // ★ 映像の切り替えとMutex（排他ロック）制御
+    // ★ 映像の切り替えと排他ロック制御
     els.editMonitorSource.addEventListener('change', async (e) => {
       if (!state.room || !state.room.localParticipant) return;
       const deviceId = e.target.value;
+      
+      els.editMonitorSource.disabled = true;
+      els.mainMonitorSourceText.textContent = '[ SWITCHING... ]';
+      els.mainMonitorSourceText.style.display = 'block';
       
       try {
         if (currentLocalVideoTrack) {
           detachVideoTrack(currentLocalVideoTrack);
           currentLocalVideoTrack = null;
         }
+        
         await state.room.localParticipant.setScreenShareEnabled(false);
         await state.room.localParticipant.setCameraEnabled(false);
         
+        // ★ ハードウェアロック解放待ち（0.5秒）
+        await new Promise(resolve => setTimeout(resolve, 500));
+
         if (deviceId === 'off') {
           state.activeVideoSender = null;
           saveRoomState();
           sendData({ type: 'update-video-sender', senderId: null, sourceText: 'OFF' });
           els.mainMonitorSourceText.textContent = '[ NO VIDEO ]';
+          els.editMonitorSource.disabled = false;
           return;
         }
         
@@ -561,29 +573,36 @@
         if (deviceId === 'screen') {
           await state.room.localParticipant.setScreenShareEnabled(true);
         } else {
-          // exactを外して柔軟にキャプチャーボードを掴む
-          await state.room.localParticipant.setCameraEnabled(true, { deviceId: deviceId });
+          // exactを外し解像度を明記して安定化
+          await state.room.localParticipant.setCameraEnabled(true, { 
+            deviceId: deviceId,
+            resolution: { width: 1280, height: 720, frameRate: 30 }
+          });
         }
         
-        const tracks = Array.from(state.room.localParticipant.videoTrackPublications.values());
-        const activePub = tracks.find(pub => pub.track);
+        const trackSource = deviceId === 'screen' ? LivekitClient.Track.Source.ScreenShare : LivekitClient.Track.Source.Camera;
+        const activePub = state.room.localParticipant.getTrackPublication(trackSource);
         
         if (activePub && activePub.track) {
           currentLocalVideoTrack = activePub.track;
           attachVideoTrack(activePub.track);
+          els.mainMonitorSourceText.style.display = 'none';
+        } else {
+          els.mainMonitorSourceText.textContent = '[ NO VIDEO ]';
         }
 
-        els.mainMonitorSourceText.textContent = `[ SIGNAL: ${sourceText} ]`;
         saveRoomState();
         sendData({ type: 'update-video-sender', senderId: state.myUserId, sourceText: sourceText });
 
       } catch (err) {
         console.error("映像切り替えエラー: ", err);
-        alert("映像の切り替えに失敗しました。");
+        alert("カメラの切り替えに失敗しました。他のアプリがカメラを使用していないか確認してください。");
         els.editMonitorSource.value = 'off';
         state.activeVideoSender = null;
         sendData({ type: 'update-video-sender', senderId: null, sourceText: 'OFF' });
         els.mainMonitorSourceText.textContent = '[ NO VIDEO ]';
+      } finally {
+        els.editMonitorSource.disabled = false;
       }
     });
 
@@ -595,8 +614,16 @@
       const videoEl = document.createElement('video');
       videoEl.autoplay = true;
       videoEl.playsInline = true;
-      els.monitorVideoWrapper.appendChild(videoEl);
       
+      videoEl.style.width = '100%';
+      videoEl.style.height = '100%';
+      videoEl.style.objectFit = 'contain';
+      videoEl.style.background = '#000';
+      videoEl.style.position = 'absolute';
+      videoEl.style.inset = '0';
+      videoEl.style.zIndex = '5';
+
+      els.monitorVideoWrapper.appendChild(videoEl);
       track.attach(videoEl);
       els.mainMonitorSourceText.style.display = 'none';
     }
@@ -1167,7 +1194,6 @@
           if (senderId !== state.myUserId && !state.registeredUsers.includes(senderId)) { state.registeredUsers.push(senderId); state.userAssignments[senderId] = channels?.map(c => c.id) || []; saveRoomState(); if (state.isAdmin) buildAdminMatrix(); }
           if(state.isAdmin) { 
             sendData({ type: 'init-state', channels, assignments: state.userAssignments, registered: state.registeredUsers });
-            // もし自分が映像を送信していたら、新しく入ってきた人にも状態を知らせる
             if(state.activeVideoSender === state.myUserId) {
                 const sourceText = els.mainMonitorSourceText.textContent.replace('[ SIGNAL: ', '').replace(' ]', '');
                 sendData({ type: 'update-video-sender', senderId: state.myUserId, sourceText: sourceText });
@@ -1253,19 +1279,18 @@
           saveRoomState(); if(state.isAdmin) buildAdminMatrix();
         }
         else if (data.type === 'remove-channel') { if(data.chId) removeChannel(data.chId); saveRoomState(); if(state.isAdmin) buildAdminMatrix(); }
-        // ★ モニター設定の同期受信
+        // モニター設定の同期受信
         else if (data.type === 'update-monitor-title') {
           state.monitorTitle = data.title;
           els.mainMonitorTitle.textContent = data.title || 'NO TITLE';
           if (state.isAdmin) els.editMonitorTitle.value = data.title;
           saveRoomState();
         }
-        // ★ 映像送信者の排他ロック受信
+        // ★ 排他ロック（親機からの映像送信状態）の同期受信
         else if (data.type === 'update-video-sender') {
           state.activeVideoSender = data.senderId;
           
           if (data.senderId && data.senderId !== state.myUserId) {
-            // 他の人が送信を開始した
             els.mainMonitorSourceText.textContent = `[ SIGNAL: ${data.sourceText} ]`;
             if (state.isAdmin) {
               els.editMonitorSource.disabled = true;
@@ -1281,7 +1306,6 @@
             }
           } 
           else if (!data.senderId) {
-            // 誰も送信していない
             els.mainMonitorSourceText.textContent = '[ NO VIDEO ]';
             if (state.isAdmin) {
               els.editMonitorSource.disabled = false;
