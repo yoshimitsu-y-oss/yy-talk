@@ -100,7 +100,6 @@
     }
     .btn-header-icon svg { width: 16px; height: 16px; fill: currentColor; }
     
-    #btn-multi-audio.active { border-color: var(--orange); color: var(--orange); background: rgba(249, 115, 22, 0.1); }
     #btn-toggle-monitor.active { border-color: var(--blue); color: var(--blue); background: rgba(59, 130, 246, 0.1); }
     #btn-settings.active { border-color: var(--green); color: var(--green); background: rgba(74, 222, 128, 0.1); }
     .admin-only { display: none; }
@@ -133,11 +132,12 @@
     .video-dummy-text { color: #555; font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: bold; z-index: 1;}
     .video-wrapper video { width: 100%; height: 100%; object-fit: contain; background: #000; position: absolute; inset: 0; z-index: 5;}
 
-    /* ★ 統合設定パネル (レスポンシブ＆タブ対応) */
+    /* ★ 統合設定パネル (レスポンシブ＆タブ対応＆上合わせ) */
     .admin-modal { 
       width: 95%; max-width: 1200px; 
-      max-height: 90vh; /* 高さ制限を追加 */
+      max-height: 90vh;
       display: flex; flex-direction: column; padding: 20px 15px; 
+      margin-top: 5vh; margin-bottom: auto; /* ★ 上寄せにしてガタつき防止 */
     }
     .admin-tabs {
       display: flex; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); flex-shrink: 0;
@@ -163,28 +163,24 @@
       background: #15161a; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color);
     }
     .setting-group { display: flex; flex-direction: column; gap: 5px; align-items: center; }
-    .setting-group label { font-size: 11px; color: var(--text-sub); font-weight: bold; }
+    .setting-group label { font-size: 11px; color: var(--text-sub); font-weight: bold; letter-spacing: 1px; }
     
-    /* 映像ソースのプルダウンを30文字程度に拡大 */
     .setting-group input, .setting-group select {
       background: #1c1d21; border: 1px solid var(--border-color); color: #fff;
       border-radius: 4px; font-size: 13px; padding: 4px 6px; height: 27px;
       font-family: 'JetBrains Mono', monospace, sans-serif; text-align: center;
     }
     .setting-group input { width: 14ch; }
-    .setting-group select { width: 30ch; max-width: 100%; } 
+    .setting-group select { width: 30ch; max-width: 100%; } /* 横幅を30文字分に拡張 */
     .setting-group input:focus, .setting-group select:focus { outline: none; border-color: var(--blue); }
     .setting-group select:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    /* ★ タリーアサインリストUI */
-    .tally-label { font-size: 13px; font-weight: bold; color: var(--text-main); margin-bottom: 10px; display: block; text-align: center; }
+    /* タリーアサインリストUI */
+    .tally-label { font-size: 11px; font-weight: bold; color: var(--text-sub); margin-bottom: 10px; display: block; text-align: center; letter-spacing: 1px;}
     .tally-row {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 8px 12px; background: #1c1d21; border: 1px solid var(--border-color);
-      border-radius: 6px; margin-bottom: 6px;
-    }
-    .tally-row span {
-      font-size: 13px; font-family: 'JetBrains Mono', monospace; font-weight: bold; color: var(--green); flex: 1;
+      padding: 8px 15px; background: #1c1d21; border: 1px solid var(--border-color);
+      border-radius: 6px; margin-bottom: 6px; gap: 15px;
     }
     .tally-btn-group { display: flex; gap: 5px; }
     .tally-btn {
@@ -203,8 +199,8 @@
     .admin-matrix th, .admin-matrix td { border-bottom: 1px solid var(--border-color); border-right: 1px solid var(--border-color); padding: 6px; }
     .admin-matrix th { background-color: #1c1d21; color: var(--text-sub); font-weight: normal; position: sticky; top: 0; z-index: 5; border-top: 1px solid var(--border-color); min-width: 80px; }
     .diagonal-header { position: sticky; left: 0; z-index: 10 !important; min-width: 120px; min-height: 40px; background: linear-gradient(to top right, #1c1d21 49%, #3a3c42 49%, #3a3c42 51%, #1c1d21 51%); border-right: 2px solid var(--border-color) !important; box-shadow: 2px 0 5px rgba(0,0,0,0.4); }
-    .diagonal-header .dh-member { position: absolute; top: 4px; right: 10px; font-weight: bold; color: var(--text-main); font-size: 11px; }
-    .diagonal-header .dh-party { position: absolute; bottom: 4px; left: 10px; font-weight: bold; color: var(--text-main); font-size: 11px; }
+    .diagonal-header .dh-member { position: absolute; top: 4px; right: 10px; font-weight: bold; color: var(--text-sub); font-size: 11px; }
+    .diagonal-header .dh-party { position: absolute; bottom: 4px; left: 10px; font-weight: bold; color: var(--text-sub); font-size: 11px; }
     .matrix-user-header { cursor: pointer; transition: background 0.2s; }
     .admin-matrix td.ch-cell { text-align: left; background-color: #0a0b0d; min-width: 120px; padding: 6px; position: sticky; left: 0; z-index: 9; border-right: 2px solid var(--border-color) !important; box-shadow: 2px 0 5px rgba(0,0,0,0.4); }
     
@@ -254,35 +250,6 @@
 
     .cp-meter-bg { width: 6px; height: 36px; background: #000; border-radius: 2px; position: relative; box-shadow: inset 0 0 3px rgba(0,0,0,0.8); overflow: hidden; margin-left: 2px;}
     .cp-meter-bar { width: 100%; height: 100%; background: linear-gradient(to top, #22c55e, #eab308, #ef4444); position: absolute; bottom: 0; left: 0; transform-origin: bottom; transform: scaleY(0); transition: transform 0.05s ease-out; }
-
-    /* 32chデマルチプレクサ用 行スタイル */
-    .router-row {
-      display: flex; align-items: center; gap: 10px; background: #15161a;
-      padding: 10px 15px; border-radius: 8px; border: 1px solid var(--border-color);
-      flex-wrap: wrap; justify-content: center;
-    }
-    .router-sel {
-      background: #1c1d21; border: 1px solid var(--border-color); color: #fff;
-      border-radius: 4px; font-size: 11px; padding: 4px; width: 160px; text-overflow: ellipsis;
-    }
-    .router-sel:focus { outline: none; border-color: var(--orange); }
-    .btn-router-conn {
-      background: #2a2c33; color: var(--text-main); border: 1px solid #444;
-      padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px;
-      transition: all 0.2s; min-width: 60px; text-align: center;
-    }
-    .btn-router-conn.active {
-      background: var(--orange); color: #000; border-color: var(--orange);
-      box-shadow: 0 0 8px rgba(249, 115, 22, 0.5);
-    }
-    .router-meter-bg {
-      flex: 1; min-width: 60px; height: 10px; background: #000; border-radius: 5px; 
-      overflow: hidden; position: relative; box-shadow: inset 0 0 3px rgba(0,0,0,0.8);
-    }
-    .router-meter-fill {
-      position: absolute; left: 0; top: 0; bottom: 0; width: 0%; 
-      background: linear-gradient(90deg, #22c55e, #eab308, #ef4444); transition: width 0.05s linear;
-    }
 
     .global-controls { display: flex; gap: 10px; padding: 5px 15px 10px; background: var(--bg-dark); border-bottom: 2px solid var(--green); flex-shrink: 0; z-index: 10;}
     .btn-global { flex: 1; padding: 8px 10px; border: none; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; font-family: 'JetBrains Mono', monospace; }
@@ -348,6 +315,7 @@
     .master-meter-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); }
     .master-meter-mask { position: absolute; right: 0; top: 0; bottom: 0; width: 100%; background-color: var(--bg-dark); transition: width 0.05s linear; }
 
+    /* ★ スマホ横向き時のモニター自動調整（下のカードが見えるように高さを絞る） */
     @media (orientation: landscape) and (max-height: 500px) {
       .header { padding: 4px 15px; border-bottom: 1px solid #1e2128; min-height: 36px;}
       #app-logo { height: 18px; } 
@@ -363,6 +331,9 @@
       .card-footer { padding: 0 10px 2px !important; }
       .btn-expand { padding: 2px 30px !important; font-size: 12px !important; }
       .master-meter-container { height: 6px; }
+      
+      .video-wrapper { max-height: 35vh; aspect-ratio: auto; }
+      .video-wrapper video { object-fit: contain; }
     }
   </style>
 </head>
@@ -410,11 +381,11 @@
           <div id="admin-video-section">
             <div class="admin-settings-row">
               <div class="setting-group">
-                <label>モニター名称</label>
+                <label style="color: var(--text-sub);">MONITOR NAME</label>
                 <input type="text" id="edit-monitor-title" value="MONITOR">
               </div>
               <div class="setting-group">
-                <label>映像入力ソース (全員のモニターへ送信)</label>
+                <label style="color: var(--text-sub);">VIDEO SOURCE</label>
                 <select id="edit-monitor-source">
                   <option value="off">OFF</option>
                   <option value="screen">画面共有</option>
@@ -423,7 +394,7 @@
             </div>
 
             <div class="admin-settings-row" style="flex-direction: column; align-items: stretch;">
-              <span class="tally-label">🔴 TALLY ROUTING (各メンバーが受信するタリー番号)</span>
+              <span class="tally-label" style="color: var(--text-sub);">TALLY ROUTING</span>
               <div id="tally-assignment-list" style="display: flex; flex-direction: column;">
                 </div>
             </div>
@@ -432,34 +403,6 @@
           <div id="admin-patch-section" style="display: none;">
             <div id="admin-matrix-container"></div>
             <button id="btn-add-ch" style="background:transparent; border:1px solid var(--green); color:var(--green); width:100%; padding:10px; margin-top:15px; border-radius:8px; cursor:pointer; font-weight:bold; transition: background 0.2s;">＋ 新規パーティーを追加</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div id="multi-audio-overlay" class="overlay-base">
-      <div class="login-modal admin-modal" style="max-width: 800px; width: 95%;">
-        <button class="btn-close-login" id="btn-close-multi-audio">×</button>
-        <h3 style="margin: 0 0 10px 0; color: var(--text-main); text-align: center;">32CH デマルチプレクサ</h3>
-        <div style="text-align: center; color: var(--text-sub); font-size: 11px; margin-bottom: 15px;">
-          32ch入力(マスター)を内部で2chずつ16系統に分割し、指定の出力デバイスに直接ルーティングします。
-        </div>
-        
-        <div class="admin-settings-row" style="margin-bottom: 15px; padding: 10px 15px;">
-          <div class="setting-group" style="flex-direction: row; gap: 10px; width: 100%; align-items: center; justify-content: center;">
-            <span style="font-size: 12px; font-weight: bold; color: var(--orange);">MASTER IN (32ch):</span>
-            <select id="master-multi-in" style="flex: 1; width: auto; max-width: 300px; height: 27px; background: #1c1d21; border: 1px solid var(--border-color); color: #fff; border-radius: 4px; font-size: 12px; padding: 0 6px;">
-              <option value="off">OFF</option>
-            </select>
-            <button id="btn-start-multi-audio" style="background: var(--blue); color: #fff; border: none; padding: 0 15px; height: 27px; border-radius: 4px; cursor: pointer; font-weight: bold; font-family: 'JetBrains Mono', monospace;">CONNECT</button>
-          </div>
-        </div>
-
-        <div class="scroll-area" style="max-height: 55vh;">
-          <div id="router-channels-container" style="display: flex; flex-direction: column; gap: 8px;">
-            <div style="text-align: center; color: var(--text-sub); font-size: 12px; padding: 20px 0;">
-              マスターデバイスを選択し [CONNECT] を押してください
-            </div>
           </div>
         </div>
       </div>
@@ -486,12 +429,6 @@
       </div>
       <div class="header-right">
         <span id="status-role" style="display: none;"></span>
-
-        <button id="btn-multi-audio" class="btn-header-icon admin-only" title="32CH ルーター">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 2v20M17 5v14M7 9v6M22 10v4M2 11v2"/>
-          </svg>
-        </button>
 
         <button id="btn-toggle-monitor" class="btn-header-icon" title="モニター表示">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
@@ -546,12 +483,12 @@
       clear: () => { try { safeStorage.remove('yytalk_user_profile'); } catch(e) {} }
     };
 
-    // ★ 状態管理に tallyAssignments を追加
+    // 状態管理
     const state = {
       room: null, localStream: null,
       roomId: '', myUserId: '', 
       users: {}, registeredUsers: [], userAssignments: {}, 
-      tallyAssignments: {}, // { "Cam1": [1, 2], "Cam2": [3] } のような構造
+      tallyAssignments: {}, 
       mediaCalls: {}, talkStates: {}, listenStates: {}, channelVolumes: {}, 
       remoteTalkStates: {}, remoteListenStates: {}, channelNodes: {}, 
       isAdmin: false, audioEnabled: false, isMasterSpkMuted: false, isMasterMicMuted: false,
@@ -578,11 +515,6 @@
       editMonitorTitle: document.getElementById('edit-monitor-title'), editMonitorSource: document.getElementById('edit-monitor-source'),
       mainMonitorTitle: document.getElementById('main-monitor-title'), 
       monitorVideoWrapper: document.getElementById('monitor-video-wrapper'), mainMonitorSourceText: document.getElementById('main-monitor-source-text'),
-      btnMultiAudio: document.getElementById('btn-multi-audio'), multiAudioOverlay: document.getElementById('multi-audio-overlay'),
-      btnCloseMultiAudio: document.getElementById('btn-close-multi-audio'),
-      masterMultiIn: document.getElementById('master-multi-in'), btnStartMultiAudio: document.getElementById('btn-start-multi-audio'),
-      routerContainer: document.getElementById('router-channels-container'),
-      // タブ切り替え用
       tabVideo: document.getElementById('tab-video'), tabPatch: document.getElementById('tab-patch'),
       secVideo: document.getElementById('admin-video-section'), secPatch: document.getElementById('admin-patch-section'),
       tallyList: document.getElementById('tally-assignment-list')
@@ -630,9 +562,15 @@
         const row = document.createElement('div');
         row.className = 'tally-row';
         
-        const nameSpan = document.createElement('span');
-        nameSpan.textContent = uid;
-        row.appendChild(nameSpan);
+        const isOnline = uid === state.myUserId || (state.room && state.room.remoteParticipants.has(uid));
+        const statusColor = isOnline ? 'var(--green)' : 'var(--text-sub)';
+
+        row.innerHTML = `
+          <div style="display:flex; align-items:center; justify-content:center; gap:8px; flex: 1;">
+            <span style="color:${statusColor}; font-size:10px;">●</span>
+            <span style="color:#fff; font-size:13px; font-family:'JetBrains Mono', monospace; font-weight:bold;">${uid}</span>
+          </div>
+        `;
         
         const btnGroup = document.createElement('div');
         btnGroup.className = 'tally-btn-group';
@@ -664,225 +602,19 @@
       });
     }
 
-    // ★ 自分が受信中のタリー状態を管理し、光らせるかを判定する
     let activeTallies = new Set();
     function evaluateTallyGlow() {
       const myAssigned = state.tallyAssignments[state.myUserId] || [];
       const shouldGlow = myAssigned.some(id => activeTallies.has(id));
       
-      // 未設定（アサインが空）の場合は、旧仕様互換のため Tally 1 がONなら光るようにする
       let fallbackGlow = false;
-      if (myAssigned.length === 0 && activeTallies.has(1)) {
-        fallbackGlow = true;
-      }
+      if (myAssigned.length === 0 && activeTallies.has(1)) fallbackGlow = true;
 
       if (shouldGlow || fallbackGlow) {
         els.monitorVideoWrapper.classList.add('tally-on');
       } else {
         els.monitorVideoWrapper.classList.remove('tally-on');
       }
-    }
-
-
-    // 32CH デマルチプレクサのロジック
-    const NUM_ROUTERS = 16;
-    let routerState = []; 
-    let routerAudioCtx = null;
-    let masterAudioStream = null;
-    let cachedOutOptions = '<option value="default">OUT: DEFAULT</option>';
-
-    els.btnMultiAudio.onclick = async () => {
-      if (!state.isAdmin) return;
-      els.multiAudioOverlay.style.display = 'flex';
-      els.btnMultiAudio.classList.add('active');
-      
-      try {
-        await navigator.mediaDevices.getUserMedia({ audio: true });
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const inputs = devices.filter(d => d.kind === 'audioinput');
-        const outputs = devices.filter(d => d.kind === 'audiooutput');
-
-        let inOptions = '<option value="off">OFF</option>';
-        inputs.forEach((d, i) => { inOptions += `<option value="${d.deviceId}">${d.label || 'Input '+i}</option>`; });
-        els.masterMultiIn.innerHTML = inOptions;
-
-        cachedOutOptions = '<option value="default">OUT: DEFAULT</option>';
-        outputs.forEach((d, i) => { cachedOutOptions += `<option value="${d.deviceId}">${d.label || 'Output '+i}</option>`; });
-
-      } catch(e) { console.warn('デバイスリスト取得エラー', e); }
-    };
-    
-    els.btnCloseMultiAudio.onclick = () => {
-      els.multiAudioOverlay.style.display = 'none';
-      els.btnMultiAudio.classList.remove('active');
-    };
-
-    els.btnStartMultiAudio.onclick = async () => {
-      const masterInId = els.masterMultiIn.value;
-
-      if (masterInId === 'off') {
-        stopRouterMonitor();
-        els.routerContainer.innerHTML = '<div style="text-align: center; color: var(--text-sub); font-size: 12px; padding: 20px 0;">マスターデバイスを選択し [CONNECT] を押してください</div>';
-        return;
-      }
-
-      stopRouterMonitor();
-      els.btnStartMultiAudio.textContent = '読込中...';
-      els.routerContainer.innerHTML = '<div style="text-align: center; color: var(--orange); font-size: 12px; padding: 20px 0;">32chストリームを確保中...</div>';
-
-      try {
-        masterAudioStream = await navigator.mediaDevices.getUserMedia({
-          audio: { 
-            deviceId: { exact: masterInId },
-            channelCount: { exact: 32 },
-            echoCancellation: false,
-            noiseSuppression: false,
-            autoGainControl: false
-          }
-        });
-
-        if(!routerAudioCtx) {
-          routerAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        if (routerAudioCtx.state === 'suspended') routerAudioCtx.resume();
-
-        const source = routerAudioCtx.createMediaStreamSource(masterAudioStream);
-        const channelCount = Math.min(source.channelCount || 32, 32); 
-        const splitter = routerAudioCtx.createChannelSplitter(channelCount);
-        source.connect(splitter);
-
-        els.routerContainer.innerHTML = '';
-        routerState = [];
-
-        for (let i = 0; i < NUM_ROUTERS; i++) {
-          const merger = routerAudioCtx.createChannelMerger(2);
-          
-          if ((i * 2) < channelCount) {
-             splitter.connect(merger, i * 2, 0); 
-          }
-          if ((i * 2 + 1) < channelCount) {
-             splitter.connect(merger, i * 2 + 1, 1);
-          }
-
-          const dest = routerAudioCtx.createMediaStreamDestination();
-          merger.connect(dest);
-
-          const analyser = routerAudioCtx.createAnalyser();
-          analyser.fftSize = 256;
-          merger.connect(analyser);
-
-          const audioEl = new Audio();
-          audioEl.srcObject = dest.stream;
-          audioEl.muted = true;
-          audioEl.play().catch(e => console.warn('自動再生ブロック', e));
-
-          const row = document.createElement('div');
-          row.className = 'router-row';
-          row.innerHTML = `
-            <div style="width: 70px; color: var(--orange); font-weight: bold; font-size:11px; font-family: 'JetBrains Mono', monospace;">CH ${i*2+1}-${i*2+2}</div>
-            <span style="color: #666; font-size:10px;">▶</span>
-            <select id="router-out-${i}" class="router-sel">${cachedOutOptions}</select>
-            <button id="router-btn-${i}" class="btn-router-conn">CONN</button>
-            <div class="router-meter-bg"><div id="router-meter-${i}" class="router-meter-fill"></div></div>
-          `;
-          els.routerContainer.appendChild(row);
-
-          routerState.push({
-            isActive: false,
-            merger: merger,
-            dest: dest,
-            audioEl: audioEl,
-            analyser: analyser
-          });
-
-          const btn = document.getElementById(`router-btn-${i}`);
-          btn.onclick = () => toggleRoute(i);
-        }
-        
-        startRouterMeterDraw();
-        els.btnStartMultiAudio.textContent = 'CONNECTED';
-
-      } catch(err) {
-        console.error("32ch取得エラー:", err);
-        alert(`マスターデバイスの取得に失敗しました。\n(OSやデバイスが 32ch の出力をブラウザに許可していない可能性があります)\n\n詳細: ` + err.message);
-        els.masterMultiIn.value = 'off';
-        els.btnStartMultiAudio.textContent = 'CONNECT';
-        els.routerContainer.innerHTML = '<div style="text-align: center; color: var(--text-sub); font-size: 12px; padding: 20px 0;">マスターデバイスを選択し [CONNECT] を押してください</div>';
-      }
-    };
-
-    async function toggleRoute(index) {
-      const s = routerState[index];
-      const btn = document.getElementById(`router-btn-${index}`);
-      const outSel = document.getElementById(`router-out-${index}`);
-
-      if (s.isActive) {
-        s.audioEl.muted = true;
-        s.isActive = false;
-        btn.classList.remove('active');
-        outSel.disabled = false;
-        return;
-      }
-
-      const outId = outSel.value;
-      btn.textContent = '...';
-      outSel.disabled = true;
-
-      try {
-        if (outId !== 'default' && typeof s.audioEl.setSinkId === 'function') {
-          try {
-            await s.audioEl.setSinkId(outId);
-          } catch(err) {
-            console.warn(`出力先 ${outId} へのルーティングに失敗しました`, err);
-          }
-        }
-        
-        s.audioEl.muted = false;
-        s.isActive = true;
-
-        btn.classList.add('active');
-        btn.textContent = 'CONN';
-
-      } catch(e) {
-        console.error("Routing error:", e);
-        alert(`Pair ${index+1} の出力設定に失敗しました。\n` + e.message);
-        btn.textContent = 'CONN';
-        outSel.disabled = false;
-      }
-    }
-
-    function stopRouterMonitor() {
-      if (masterAudioStream) {
-        masterAudioStream.getTracks().forEach(t => t.stop());
-        masterAudioStream = null;
-      }
-      routerState.forEach(s => {
-        if(s.audioEl) { s.audioEl.pause(); s.audioEl.srcObject = null; }
-        if(s.merger) s.merger.disconnect();
-      });
-      routerState = [];
-      els.btnStartMultiAudio.textContent = 'CONNECT';
-    }
-
-    function startRouterMeterDraw() {
-      function draw() {
-        requestAnimationFrame(draw);
-        if(routerState.length === 0) return;
-        
-        for(let i=0; i<NUM_ROUTERS; i++) {
-          const s = routerState[i];
-          if(s && s.analyser) {
-            const data = new Uint8Array(s.analyser.frequencyBinCount);
-            s.analyser.getByteFrequencyData(data);
-            let sum = 0; 
-            for(let j=0; j<data.length; j++) sum += data[j];
-            let percent = ((sum / data.length) / 255) * 100 * 2.0;
-            const meterEl = document.getElementById(`router-meter-${i}`);
-            if(meterEl) meterEl.style.width = Math.min(percent, 100) + '%';
-          }
-        }
-      }
-      draw();
     }
 
     els.editMonitorTitle.addEventListener('input', (e) => {
@@ -893,9 +625,7 @@
     });
 
     async function updateVideoSources() {
-      if (state.activeVideoSender && state.activeVideoSender !== state.myUserId) {
-          return;
-      }
+      if (state.activeVideoSender && state.activeVideoSender !== state.myUserId) return;
       const select = els.editMonitorSource;
       const currentValue = select.value;
       
@@ -903,30 +633,21 @@
         try {
           const tempStream = await navigator.mediaDevices.getUserMedia({ video: true });
           tempStream.getTracks().forEach(track => track.stop());
-        } catch (e) {
-          console.warn('カメラアクセスがブロックされたか、カメラがありません。', e);
-        }
+        } catch (e) { console.warn('カメラアクセスブロック', e); }
 
         const devices = await navigator.mediaDevices.enumerateDevices();
         const videoInputs = devices.filter(device => device.kind === 'videoinput');
         
         select.innerHTML = '<option value="off">OFF</option><option value="screen">画面共有</option>';
-        
         videoInputs.forEach((device, index) => {
           const option = document.createElement('option');
           option.value = device.deviceId;
           option.text = device.label || `Camera ${index + 1}`;
           select.appendChild(option);
         });
-
-        if (Array.from(select.options).some(opt => opt.value === currentValue)) {
-          select.value = currentValue;
-        } else {
-          select.value = 'off';
-        }
-      } catch (e) {
-        console.warn('カメラデバイス取得エラー', e);
-      }
+        if (Array.from(select.options).some(opt => opt.value === currentValue)) select.value = currentValue;
+        else select.value = 'off';
+      } catch (e) { console.warn('カメラデバイス取得エラー', e); }
     }
 
     els.editMonitorSource.addEventListener('change', async (e) => {
@@ -981,13 +702,9 @@
         } else {
           let stream;
           try {
-            stream = await navigator.mediaDevices.getUserMedia({
-              video: { deviceId: { exact: deviceId } }
-            });
+            stream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: deviceId } } });
           } catch (exactErr) {
-            stream = await navigator.mediaDevices.getUserMedia({
-              video: { deviceId: { ideal: deviceId } }
-            });
+            stream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: { ideal: deviceId } } });
           }
           
           const rawTrack = stream.getVideoTracks()[0];
@@ -1007,7 +724,7 @@
 
       } catch (err) {
         console.error("映像切り替えエラー: ", err);
-        alert("カメラの切り替えに失敗しました。他のアプリ(OBS等)がカメラを使用していないか確認してください。");
+        alert("カメラの切り替えに失敗しました。");
         els.editMonitorSource.value = 'off';
         state.activeVideoSender = null;
         sendData({ type: 'update-video-sender', senderId: null, sourceText: 'OFF' });
@@ -1019,17 +736,9 @@
 
     function attachVideoTrack(track) {
       els.monitorVideoWrapper.querySelectorAll('video').forEach(v => v.remove());
-
       const videoEl = track.attach();
-      
-      videoEl.style.width = '100%';
-      videoEl.style.height = '100%';
-      videoEl.style.objectFit = 'contain';
-      videoEl.style.background = '#000';
-      videoEl.style.position = 'absolute';
-      videoEl.style.inset = '0';
-      videoEl.style.zIndex = '5';
-
+      videoEl.style.width = '100%'; videoEl.style.height = '100%'; videoEl.style.objectFit = 'contain';
+      videoEl.style.background = '#000'; videoEl.style.position = 'absolute'; videoEl.style.inset = '0'; videoEl.style.zIndex = '5';
       els.monitorVideoWrapper.appendChild(videoEl);
       els.mainMonitorSourceText.style.display = 'none';
     }
@@ -1079,7 +788,14 @@
            Object.values(state.channelNodes || {}).forEach(node => { try { node?.masterGain?.disconnect(); } catch(e){} });
            Object.values(state.mediaCalls || {}).forEach(call => { Object.values(call?.chGains || {}).forEach(g => { try { g?.disconnect(); } catch(e){} }); if(call) call.chGains = {}; });
         }
-        state.channelNodes = {}; channels = newChannels || [];
+        state.channelNodes = {}; 
+        channels = newChannels || [];
+        
+        // ★ 固定チャンネル（VIDEO/PGM）の保証
+        if (!channels.find(c => c.id === 'ch-video')) {
+          channels.unshift({ id: 'ch-video', name: 'VIDEO', type: 'PGM', fixed: true });
+        }
+
         if (newAssignments) state.userAssignments = newAssignments;
         if (newTallyAssignments) state.tallyAssignments = newTallyAssignments;
         
@@ -1116,8 +832,9 @@
         } catch(e){}
       }
       const defaultChannels = [
+        { id: 'ch-video', name: 'VIDEO', type: 'PGM', fixed: true },
         { id: 'ch1', name: 'TEST', type: 'local' }, { id: 'ch2', name: 'VE', type: 'PL' },
-        { id: 'ch3', name: 'CA', type: 'PL' }, { id: 'ch4', name: 'AUD', type: 'PL' }, { id: 'ch5', name: 'WL-CAM', type: 'PL' }
+        { id: 'ch3', name: 'CA', type: 'PL' }, { id: 'ch4', name: 'AUD', type: 'PL' }
       ];
       resetAndApplyChannels(defaultChannels, {}, {}, []);
     }
@@ -1148,7 +865,7 @@
             <div class="ch-name" id="name-${ch.id}">${ch.name || 'Unknown'}</div>
             <div class="ch-type" id="type-${ch.id}">${ch.type || 'PL'}</div>
           </div>
-          <div class="btn-action btn-talk ${state.talkStates[ch.id] ? 'active latched' : ''} ${tMuted}" id="talk-${ch.id}">${curTalkIcon}</div>
+          ${ch.fixed ? `<div style="width: 50px; height: 50px;"></div>` : `<div class="btn-action btn-talk ${state.talkStates[ch.id] ? 'active latched' : ''} ${tMuted}" id="talk-${ch.id}">${curTalkIcon}</div>`}
         </div>
         <div class="ch-meter-container"><div class="ch-meter-grad"></div><div class="ch-meter-mask" id="ch-meter-fill-${ch.id}"></div></div>
         <div class="card-footer" style="display: flex; justify-content: center; align-items: center; padding: 0 15px 4px; position: relative; z-index: 5;">
@@ -1167,7 +884,7 @@
 
       card.querySelector(`#expand-${ch.id}`).addEventListener('click', () => card.classList.toggle('expanded'));
       setupPTTButton(card.querySelector(`#listen-${ch.id}`), 'listen', ch.id);
-      setupPTTButton(card.querySelector(`#talk-${ch.id}`), 'talk', ch.id);
+      if(!ch.fixed) setupPTTButton(card.querySelector(`#talk-${ch.id}`), 'talk', ch.id);
     }
 
     function initChannelsDOM() {
@@ -1175,6 +892,10 @@
       let order = JSON.parse(safeStorage.get('yytalk-ch-order')) || [];
       channels?.forEach(ch => { if (!order.includes(ch.id)) order.push(ch.id); });
       order = order.filter(id => channels?.some(c => c?.id === id));
+      
+      // 固定チャンネルを必ず先頭に
+      if(order.includes('ch-video')) { order = order.filter(id => id !== 'ch-video'); order.unshift('ch-video'); }
+      
       safeStorage.set('yytalk-ch-order', JSON.stringify(order));
       order.forEach(id => { const ch = channels?.find(c => c?.id === id); if (ch) createChannelCard(ch); });
     }
@@ -1435,7 +1156,7 @@
       if (!state.isAdmin) return;
       const container = document.getElementById('admin-matrix-container');
       if(!container) return;
-      let html = `<div class="admin-matrix-wrapper"><table class="admin-matrix"><thead><tr><th class="diagonal-header"><span class="dh-member">メンバー</span><span class="dh-party">パーティー</span></th>`;
+      let html = `<div class="admin-matrix-wrapper"><table class="admin-matrix"><thead><tr><th class="diagonal-header"><span class="dh-member" style="color:var(--text-sub);">MEMBER</span><span class="dh-party" style="color:var(--text-sub);">PARTY</span></th>`;
       state.registeredUsers?.forEach(uid => {
           const isOnline = uid === state.myUserId || (state.room && state.room.remoteParticipants.has(uid));
           const statusColor = isOnline ? 'var(--green)' : 'var(--text-sub)';
@@ -1445,7 +1166,7 @@
       
       channels?.forEach(ch => {
           if(!ch) return;
-          html += `<tr><td class="ch-cell"><div style="display:flex; gap:6px; align-items:center; justify-content:space-between; width:100%;"><div style="display:flex; gap:4px; flex:1;"><input type="text" class="admin-edit-name" data-id="${ch.id}" value="${ch.name}" style="flex:1; width:70px; background:#1c1d21; border:1px solid var(--border-color); color:#fff; border-radius:4px; font-size:13px; padding:4px 6px;"><input type="text" class="admin-edit-type" data-id="${ch.id}" value="${ch.type}" style="width:48px; height:27px; text-align:center; font-family:'JetBrains Mono', monospace; background:#1c1d21; border:1px solid var(--border-color); color:#fff; border-radius:4px; font-size:10px; padding:4px;"></div><button class="btn-delete-row" data-id="${ch.id}">削除</button></div></td>`;
+          html += `<tr><td class="ch-cell"><div style="display:flex; gap:6px; align-items:center; justify-content:space-between; width:100%;"><div style="display:flex; gap:4px; flex:1;"><input type="text" class="admin-edit-name" data-id="${ch.id}" value="${ch.name}" style="flex:1; width:70px;" ${ch.fixed?'disabled':''}><input type="text" class="admin-edit-type" data-id="${ch.id}" value="${ch.type}" style="width:48px;" ${ch.fixed?'disabled':''}></div>${ch.fixed?'<div style="width:48px;"></div>':`<button class="btn-delete-row" data-id="${ch.id}">削除</button>`}</div></td>`;
           
           state.registeredUsers?.forEach(uid => { 
             const isAssigned = (state.userAssignments[uid] || []).includes(ch.id); 
@@ -1462,6 +1183,7 @@
             }
             const micActiveClass = isMicOn ? 'active' : '';
             const spkActiveClass = isSpkOn ? 'active' : '';
+            const micDisabledClass = ch.fixed ? 'disabled' : disabledClass;
 
             html += `<td>
               <div class="cell-layout">
@@ -1473,7 +1195,7 @@
                     <div class="circle-btn remote-spk-btn ${disabledClass} ${spkActiveClass}" data-uid="${uid}" data-chid="${ch.id}">
                       <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
                     </div>
-                    <div class="circle-btn remote-mic-btn ${disabledClass} ${micActiveClass}" data-uid="${uid}" data-chid="${ch.id}">
+                    <div class="circle-btn remote-mic-btn ${micDisabledClass} ${micActiveClass}" data-uid="${uid}" data-chid="${ch.id}" ${ch.fixed?'style="opacity:0.2; pointer-events:none;"':''}>
                       <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
                     </div>
                   </div>
@@ -1492,14 +1214,15 @@
           const uid = e.target.getAttribute('data-uid'); const chid = e.target.getAttribute('data-chid'); let assigned = state.userAssignments[uid] || [];
           const micBtn = document.querySelector(`.remote-mic-btn[data-uid="${uid}"][data-chid="${chid}"]`);
           const spkBtn = document.querySelector(`.remote-spk-btn[data-uid="${uid}"][data-chid="${chid}"]`);
+          const ch = channels?.find(c => c?.id === chid);
           
           if (assigned.includes(chid)) { 
              assigned = assigned.filter(id => id !== chid); e.target.classList.remove('active');
-             if(micBtn) { micBtn.classList.add('disabled'); micBtn.classList.remove('active'); }
+             if(micBtn && !ch.fixed) { micBtn.classList.add('disabled'); micBtn.classList.remove('active'); }
              if(spkBtn) { spkBtn.classList.add('disabled'); spkBtn.classList.remove('active'); }
           } else { 
              assigned.push(chid); e.target.classList.add('active'); 
-             if(micBtn) micBtn.classList.remove('disabled');
+             if(micBtn && !ch.fixed) micBtn.classList.remove('disabled');
              if(spkBtn) spkBtn.classList.remove('disabled');
           }
           state.userAssignments[uid] = assigned; saveRoomState(); if (uid === state.myUserId) applyAssignments(assigned);
@@ -1627,7 +1350,7 @@
           if(state.isAdmin) { 
             sendData({ type: 'init-state', channels, assignments: state.userAssignments, tallyAssignments: state.tallyAssignments, registered: state.registeredUsers });
             if(state.activeVideoSender === state.myUserId) {
-                const sourceText = els.mainMonitorSourceText.textContent.replace('[ SIGNAL: ', '').replace(' ]', '');
+                const sourceText = els.mainMonitorSourceText.textContent.replace('[ VIDEO SWITCHING NOW ]', '').replace('[ NO VIDEO ]', 'CAMERA').trim();
                 sendData({ type: 'update-video-sender', senderId: state.myUserId, sourceText: sourceText });
             }
           }
@@ -1698,13 +1421,14 @@
                  const chid = btn.getAttribute('data-chid');
                  const micBtn = document.querySelector(`.remote-mic-btn[data-uid="${data.targetUid}"][data-chid="${chid}"]`);
                  const spkBtn = document.querySelector(`.remote-spk-btn[data-uid="${data.targetUid}"][data-chid="${chid}"]`);
+                 const ch = channels.find(c => c.id === chid);
                  if ((data.channels||[]).includes(chid)) { 
                     btn.classList.add('active'); 
-                    if(micBtn) micBtn.classList.remove('disabled');
+                    if(micBtn && !ch?.fixed) micBtn.classList.remove('disabled');
                     if(spkBtn) spkBtn.classList.remove('disabled');
                  } else { 
                     btn.classList.remove('active'); 
-                    if(micBtn) { micBtn.classList.add('disabled'); micBtn.classList.remove('active'); }
+                    if(micBtn && !ch?.fixed) { micBtn.classList.add('disabled'); micBtn.classList.remove('active'); }
                     if(spkBtn) { spkBtn.classList.add('disabled'); spkBtn.classList.remove('active'); }
                  } 
                }); 
@@ -1730,7 +1454,7 @@
           state.activeVideoSender = data.senderId;
           
           if (data.senderId && data.senderId !== state.myUserId) {
-            els.mainMonitorSourceText.textContent = `[ SIGNAL: ${data.sourceText} ]`;
+            els.mainMonitorSourceText.textContent = `[ VIDEO SWITCHING NOW ]`;
             if (state.isAdmin) {
               els.editMonitorSource.disabled = true;
               if (els.editMonitorSource.options[0].value === 'locked') {
@@ -1802,7 +1526,7 @@
       
       loadRoomState(state.roomId);
 
-      // ★ タリー信号の受信設定 (ntfy.sh を利用)
+      // ★ タリー信号の受信設定
       const tallyTopic = "yytalk_tally_" + encodeURIComponent(rawRoomId);
       const evtSource = new EventSource(`https://ntfy.sh/${tallyTopic}/sse`);
       
@@ -1812,7 +1536,6 @@
           if (data.event === "message") {
             const rawMsg = data.message.trim();
             
-            // "1:ON" や "2:OFF" をパースする。 単に "ON" なら tally 1 扱い。
             let tId = 1;
             let act = rawMsg;
             if (rawMsg.includes(':')) {
