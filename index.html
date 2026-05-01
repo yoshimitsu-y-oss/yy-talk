@@ -119,9 +119,16 @@
     }
     .monitor-section.show { display: flex; }
     .monitor-label { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: bold; color: #ddd; margin-bottom: 8px; letter-spacing: 1px; }
+    
+    /* ★ タリー用のスタイル追加 */
     .video-wrapper {
       width: 100%; max-width: 960px; aspect-ratio: 16 / 9; background: #1a1a1a;
       display: flex; align-items: center; justify-content: center; border: 1px solid #333; position: relative;
+      transition: all 0.15s ease-out; /* 光るアニメーション */
+    }
+    .video-wrapper.tally-on {
+      border: 4px solid var(--alert) !important;
+      box-shadow: 0 0 30px rgba(239, 68, 68, 0.8), inset 0 0 30px rgba(239, 68, 68, 0.6);
     }
     .video-dummy-text { color: #555; font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: bold; z-index: 1;}
     .video-wrapper video { width: 100%; height: 100%; object-fit: contain; background: #000; position: absolute; inset: 0; z-index: 5;}
@@ -199,7 +206,10 @@
     .remote-mic-btn { border: 1.5px solid var(--red); color: var(--red); }
     .remote-mic-btn.active { background-color: var(--red); color: #fff; box-shadow: inset 0 2px 4px rgba(255,255,255,0.3), 0 0 10px rgba(220, 38, 38, 0.5); }
 
-    /* ★ 32chデマルチプレクサ用 行スタイル */
+    .cp-meter-bg { width: 6px; height: 36px; background: #000; border-radius: 2px; position: relative; box-shadow: inset 0 0 3px rgba(0,0,0,0.8); overflow: hidden; margin-left: 2px;}
+    .cp-meter-bar { width: 100%; height: 100%; background: linear-gradient(to top, #22c55e, #eab308, #ef4444); position: absolute; bottom: 0; left: 0; transform-origin: bottom; transform: scaleY(0); transition: transform 0.05s ease-out; }
+
+    /* 32chデマルチプレクサ用 行スタイル */
     .router-row {
       display: flex; align-items: center; gap: 10px; background: #15161a;
       padding: 10px 15px; border-radius: 8px; border: 1px solid var(--border-color);
@@ -526,7 +536,7 @@
       els.btnSettings.classList.remove('active');
     };
 
-    // ★ 32CH デマルチプレクサのロジック
+    // 32CH デマルチプレクサのロジック
     const NUM_ROUTERS = 16;
     let routerState = []; 
     let routerAudioCtx = null;
@@ -538,7 +548,6 @@
       els.multiAudioOverlay.style.display = 'flex';
       els.btnMultiAudio.classList.add('active');
       
-      // 入出力デバイスのリストを取得してキャッシュ
       try {
         await navigator.mediaDevices.getUserMedia({ audio: true });
         const devices = await navigator.mediaDevices.enumerateDevices();
@@ -560,7 +569,6 @@
       els.btnMultiAudio.classList.remove('active');
     };
 
-    // マスター接続ボタン処理
     els.btnStartMultiAudio.onclick = async () => {
       const masterInId = els.masterMultiIn.value;
 
@@ -575,7 +583,6 @@
       els.routerContainer.innerHTML = '<div style="text-align: center; color: var(--orange); font-size: 12px; padding: 20px 0;">32chストリームを確保中...</div>';
 
       try {
-        // ★ Web Audio APIの限界値である32chを要求し、エコーキャンセル等を切る
         masterAudioStream = await navigator.mediaDevices.getUserMedia({
           audio: { 
             deviceId: { exact: masterInId },
@@ -592,8 +599,6 @@
         if (routerAudioCtx.state === 'suspended') routerAudioCtx.resume();
 
         const source = routerAudioCtx.createMediaStreamSource(masterAudioStream);
-        
-        // Splitterの仕様に合わせて最大32でスプリット
         const channelCount = Math.min(source.channelCount || 32, 32); 
         const splitter = routerAudioCtx.createChannelSplitter(channelCount);
         source.connect(splitter);
@@ -601,29 +606,23 @@
         els.routerContainer.innerHTML = '';
         routerState = [];
 
-        // 16系統(2chペア)分のルーティングUIとノードを生成
         for (let i = 0; i < NUM_ROUTERS; i++) {
-          // LとRを結合するMergerを作成
           const merger = routerAudioCtx.createChannelMerger(2);
           
-          // チャンネル数が足りている場合のみ配線
           if ((i * 2) < channelCount) {
-             splitter.connect(merger, i * 2, 0); // L
+             splitter.connect(merger, i * 2, 0); 
           }
           if ((i * 2 + 1) < channelCount) {
-             splitter.connect(merger, i * 2 + 1, 1); // R
+             splitter.connect(merger, i * 2 + 1, 1);
           }
 
-          // 出力用のMediaStreamを作る
           const dest = routerAudioCtx.createMediaStreamDestination();
           merger.connect(dest);
 
-          // メーター監視用のアナライザー
           const analyser = routerAudioCtx.createAnalyser();
           analyser.fftSize = 256;
           merger.connect(analyser);
 
-          // 再生用のaudioタグ（初期状態はミュート）
           const audioEl = new Audio();
           audioEl.srcObject = dest.stream;
           audioEl.muted = true;
@@ -648,7 +647,6 @@
             analyser: analyser
           });
 
-          // 各行の接続ボタン処理
           const btn = document.getElementById(`router-btn-${i}`);
           btn.onclick = () => toggleRoute(i);
         }
@@ -671,7 +669,6 @@
       const outSel = document.getElementById(`router-out-${index}`);
 
       if (s.isActive) {
-        // ミュートして切断状態にする
         s.audioEl.muted = true;
         s.isActive = false;
         btn.classList.remove('active');
@@ -684,7 +681,6 @@
       outSel.disabled = true;
 
       try {
-        // setSinkIdで指定した出力先へルーティング
         if (outId !== 'default' && typeof s.audioEl.setSinkId === 'function') {
           try {
             await s.audioEl.setSinkId(outId);
@@ -693,7 +689,6 @@
           }
         }
         
-        // ミュート解除して音を出す
         s.audioEl.muted = false;
         s.isActive = true;
 
@@ -735,14 +730,12 @@
             for(let j=0; j<data.length; j++) sum += data[j];
             let percent = ((sum / data.length) / 255) * 100 * 2.0;
             const meterEl = document.getElementById(`router-meter-${i}`);
-            // CONNされているかに関わらずメーターは振らせる
             if(meterEl) meterEl.style.width = Math.min(percent, 100) + '%';
           }
         }
       }
       draw();
     }
-
 
     els.editMonitorTitle.addEventListener('input', (e) => {
       state.monitorTitle = e.target.value;
@@ -1620,6 +1613,25 @@
       LocalProfile.set({ roomId: rawRoomId, userId: myName, isAdmin });
       
       loadRoomState(state.roomId);
+
+      // ★ タリー信号の受信設定 (ntfy.sh を利用)
+      const tallyTopic = "yytalk_tally_" + encodeURIComponent(rawRoomId);
+      const evtSource = new EventSource(`https://ntfy.sh/${tallyTopic}/sse`);
+      
+      evtSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.event === "message") {
+            const msg = data.message.trim();
+            const monitor = document.getElementById('monitor-video-wrapper');
+            if (msg === "ON") {
+              monitor.classList.add('tally-on');
+            } else if (msg === "OFF") {
+              monitor.classList.remove('tally-on');
+            }
+          }
+        } catch(e) {}
+      };
 
       let token = "";
       try {
