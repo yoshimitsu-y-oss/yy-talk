@@ -112,6 +112,7 @@
     .status-badge.online { border-color: var(--blue); color: var(--blue); }
     #status-role { font-size: 11px; font-family: 'JetBrains Mono', monospace; font-weight: bold; color: var(--orange); margin-right: 2px;}
 
+    /* モニター＆タリー枠 */
     .monitor-section {
       width: 100%; background: #000;
       display: none; flex-direction: column; align-items: center;
@@ -120,11 +121,10 @@
     .monitor-section.show { display: flex; }
     .monitor-label { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: bold; color: #ddd; margin-bottom: 8px; letter-spacing: 1px; }
     
-    /* ★ タリー用のスタイル追加 */
     .video-wrapper {
       width: 100%; max-width: 960px; aspect-ratio: 16 / 9; background: #1a1a1a;
       display: flex; align-items: center; justify-content: center; border: 1px solid #333; position: relative;
-      transition: all 0.15s ease-out; /* 光るアニメーション */
+      transition: all 0.15s ease-out;
     }
     .video-wrapper.tally-on {
       border: 4px solid var(--alert) !important;
@@ -133,9 +133,29 @@
     .video-dummy-text { color: #555; font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: bold; z-index: 1;}
     .video-wrapper video { width: 100%; height: 100%; object-fit: contain; background: #000; position: absolute; inset: 0; z-index: 5;}
 
-    .admin-modal { max-width: 95%; width: auto; min-width: 320px; }
-    @media (min-width: 800px) { .admin-modal { max-width: 1200px; } }
-    .scroll-area { max-height: 75vh; overflow: auto; padding-right: 5px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+    /* ★ 統合設定パネル (レスポンシブ＆タブ対応) */
+    .admin-modal { 
+      width: 95%; max-width: 1200px; 
+      max-height: 90vh; /* 高さ制限を追加 */
+      display: flex; flex-direction: column; padding: 20px 15px; 
+    }
+    .admin-tabs {
+      display: flex; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); flex-shrink: 0;
+    }
+    .admin-tabs button {
+      flex: 1; background: transparent; border: none; color: var(--text-sub);
+      padding: 12px; font-weight: bold; cursor: pointer; font-size: 13px;
+      border-bottom: 2px solid transparent; transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .admin-tabs button svg { width: 18px; height: 18px; fill: currentColor; }
+    .admin-tabs button.active {
+      color: var(--blue); border-bottom: 2px solid var(--blue); background: rgba(59, 130, 246, 0.05);
+    }
+
+    .scroll-area { 
+      flex: 1; overflow-y: auto; padding-right: 5px; scrollbar-width: none; -webkit-overflow-scrolling: touch; min-height: 0; 
+    }
     .scroll-area::-webkit-scrollbar { display: none; }
     
     .admin-settings-row {
@@ -144,14 +164,40 @@
     }
     .setting-group { display: flex; flex-direction: column; gap: 5px; align-items: center; }
     .setting-group label { font-size: 11px; color: var(--text-sub); font-weight: bold; }
+    
+    /* 映像ソースのプルダウンを30文字程度に拡大 */
     .setting-group input, .setting-group select {
       background: #1c1d21; border: 1px solid var(--border-color); color: #fff;
       border-radius: 4px; font-size: 13px; padding: 4px 6px; height: 27px;
-      width: 14ch; font-family: 'JetBrains Mono', monospace, sans-serif; text-align: center;
+      font-family: 'JetBrains Mono', monospace, sans-serif; text-align: center;
     }
+    .setting-group input { width: 14ch; }
+    .setting-group select { width: 30ch; max-width: 100%; } 
     .setting-group input:focus, .setting-group select:focus { outline: none; border-color: var(--blue); }
     .setting-group select:disabled { opacity: 0.5; cursor: not-allowed; }
 
+    /* ★ タリーアサインリストUI */
+    .tally-label { font-size: 13px; font-weight: bold; color: var(--text-main); margin-bottom: 10px; display: block; text-align: center; }
+    .tally-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 12px; background: #1c1d21; border: 1px solid var(--border-color);
+      border-radius: 6px; margin-bottom: 6px;
+    }
+    .tally-row span {
+      font-size: 13px; font-family: 'JetBrains Mono', monospace; font-weight: bold; color: var(--green); flex: 1;
+    }
+    .tally-btn-group { display: flex; gap: 5px; }
+    .tally-btn {
+      width: 32px; height: 32px; border-radius: 4px; background: #121418;
+      border: 1px solid #444; color: #888; font-weight: bold; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; font-size: 12px; transition: all 0.1s;
+    }
+    .tally-btn.active {
+      background: var(--alert); color: #fff; border-color: var(--alert);
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+    }
+
+    /* パッチパネル系 */
     .admin-matrix-wrapper { width: 100%; overflow-x: auto; overscroll-behavior-x: none; -webkit-overflow-scrolling: touch; border-radius: 8px; background: #0a0b0d; border: 1px solid var(--border-color); position: relative; }
     .admin-matrix { width: 100%; border-collapse: separate; border-spacing: 0; min-width: max-content; text-align: center; font-size: 13px; }
     .admin-matrix th, .admin-matrix td { border-bottom: 1px solid var(--border-color); border-right: 1px solid var(--border-color); padding: 6px; }
@@ -348,23 +394,45 @@
     <div id="admin-overlay" class="overlay-base">
       <div class="login-modal admin-modal">
         <button class="btn-close-login" id="btn-close-admin">×</button>
-        <h3 style="margin: 0 0 15px 0; color: var(--text-main); text-align: center;">パッチパネル</h3>
+        
+        <div class="admin-tabs">
+          <button id="tab-video" class="active">
+            <svg viewBox="0 0 24 24"><path d="M23 7l-7 5 7 5V7zM1 6c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H3c-1.1 0-2-.9-2-2V6z"/></svg>
+            VIDEO & TALLY
+          </button>
+          <button id="tab-patch">
+            <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+            PATCH PANEL
+          </button>
+        </div>
+
         <div class="scroll-area">
-          <div class="admin-settings-row">
-            <div class="setting-group">
-              <label>モニター名称</label>
-              <input type="text" id="edit-monitor-title" value="MONITOR">
+          <div id="admin-video-section">
+            <div class="admin-settings-row">
+              <div class="setting-group">
+                <label>モニター名称</label>
+                <input type="text" id="edit-monitor-title" value="MONITOR">
+              </div>
+              <div class="setting-group">
+                <label>映像入力ソース (全員のモニターへ送信)</label>
+                <select id="edit-monitor-source">
+                  <option value="off">OFF</option>
+                  <option value="screen">画面共有</option>
+                </select>
+              </div>
             </div>
-            <div class="setting-group">
-              <label>映像入力ソース</label>
-              <select id="edit-monitor-source">
-                <option value="off">OFF</option>
-                <option value="screen">画面共有</option>
-              </select>
+
+            <div class="admin-settings-row" style="flex-direction: column; align-items: stretch;">
+              <span class="tally-label">🔴 TALLY ROUTING (各メンバーが受信するタリー番号)</span>
+              <div id="tally-assignment-list" style="display: flex; flex-direction: column;">
+                </div>
             </div>
           </div>
-          <div id="admin-matrix-container"></div>
-          <button id="btn-add-ch" style="background:transparent; border:1px solid var(--green); color:var(--green); width:100%; padding:10px; margin-top:15px; border-radius:8px; cursor:pointer; font-weight:bold; transition: background 0.2s;">＋ 新規パーティーを追加</button>
+
+          <div id="admin-patch-section" style="display: none;">
+            <div id="admin-matrix-container"></div>
+            <button id="btn-add-ch" style="background:transparent; border:1px solid var(--green); color:var(--green); width:100%; padding:10px; margin-top:15px; border-radius:8px; cursor:pointer; font-weight:bold; transition: background 0.2s;">＋ 新規パーティーを追加</button>
+          </div>
         </div>
       </div>
     </div>
@@ -429,7 +497,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
         </button>
 
-        <button id="btn-settings" class="btn-header-icon admin-only" title="パッチパネル">
+        <button id="btn-settings" class="btn-header-icon admin-only" title="設定">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
         </button>
 
@@ -478,10 +546,12 @@
       clear: () => { try { safeStorage.remove('yytalk_user_profile'); } catch(e) {} }
     };
 
+    // ★ 状態管理に tallyAssignments を追加
     const state = {
       room: null, localStream: null,
       roomId: '', myUserId: '', 
       users: {}, registeredUsers: [], userAssignments: {}, 
+      tallyAssignments: {}, // { "Cam1": [1, 2], "Cam2": [3] } のような構造
       mediaCalls: {}, talkStates: {}, listenStates: {}, channelVolumes: {}, 
       remoteTalkStates: {}, remoteListenStates: {}, channelNodes: {}, 
       isAdmin: false, audioEnabled: false, isMasterSpkMuted: false, isMasterMicMuted: false,
@@ -511,12 +581,26 @@
       btnMultiAudio: document.getElementById('btn-multi-audio'), multiAudioOverlay: document.getElementById('multi-audio-overlay'),
       btnCloseMultiAudio: document.getElementById('btn-close-multi-audio'),
       masterMultiIn: document.getElementById('master-multi-in'), btnStartMultiAudio: document.getElementById('btn-start-multi-audio'),
-      routerContainer: document.getElementById('router-channels-container')
+      routerContainer: document.getElementById('router-channels-container'),
+      // タブ切り替え用
+      tabVideo: document.getElementById('tab-video'), tabPatch: document.getElementById('tab-patch'),
+      secVideo: document.getElementById('admin-video-section'), secPatch: document.getElementById('admin-patch-section'),
+      tallyList: document.getElementById('tally-assignment-list')
     };
 
     els.btnLoginShow.onclick = () => { els.loginOverlay.style.display = 'flex'; };
     document.getElementById('btn-close-login').onclick = () => { els.loginOverlay.style.display = 'none'; };
     
+    // タブ切り替えロジック
+    els.tabVideo.onclick = () => {
+      els.tabVideo.classList.add('active'); els.tabPatch.classList.remove('active');
+      els.secVideo.style.display = 'block'; els.secPatch.style.display = 'none';
+    };
+    els.tabPatch.onclick = () => {
+      els.tabPatch.classList.add('active'); els.tabVideo.classList.remove('active');
+      els.secVideo.style.display = 'none'; els.secPatch.style.display = 'block';
+    };
+
     els.btnToggleMonitor.onclick = () => {
       const isActive = els.btnToggleMonitor.classList.toggle('active');
       if (isActive) els.monitorSection.classList.add('show');
@@ -529,12 +613,76 @@
       els.adminOverlay.style.display = 'flex'; 
       els.btnSettings.classList.add('active');
       buildAdminMatrix(); 
+      buildTallyAssignmentUI();
       updateVideoSources(); 
     };
     els.btnCloseAdmin.onclick = () => { 
       els.adminOverlay.style.display = 'none'; 
       els.btnSettings.classList.remove('active');
     };
+
+    // ★ タリー設定のUI生成
+    function buildTallyAssignmentUI() {
+      if(!els.tallyList) return;
+      els.tallyList.innerHTML = '';
+      
+      state.registeredUsers?.forEach(uid => {
+        const row = document.createElement('div');
+        row.className = 'tally-row';
+        
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = uid;
+        row.appendChild(nameSpan);
+        
+        const btnGroup = document.createElement('div');
+        btnGroup.className = 'tally-btn-group';
+        
+        const assigned = state.tallyAssignments[uid] || [];
+        
+        for(let i=1; i<=6; i++) {
+          const btn = document.createElement('button');
+          btn.className = 'tally-btn' + (assigned.includes(i) ? ' active' : '');
+          btn.textContent = i;
+          btn.onclick = () => {
+            let current = state.tallyAssignments[uid] || [];
+            if (current.includes(i)) {
+              current = current.filter(id => id !== i);
+              btn.classList.remove('active');
+            } else {
+              current.push(i);
+              btn.classList.add('active');
+            }
+            state.tallyAssignments[uid] = current;
+            saveRoomState();
+            sendData({ type: 'update-tally-assignments', assignments: state.tallyAssignments });
+            if(uid === state.myUserId) evaluateTallyGlow();
+          };
+          btnGroup.appendChild(btn);
+        }
+        row.appendChild(btnGroup);
+        els.tallyList.appendChild(row);
+      });
+    }
+
+    // ★ 自分が受信中のタリー状態を管理し、光らせるかを判定する
+    let activeTallies = new Set();
+    function evaluateTallyGlow() {
+      const myAssigned = state.tallyAssignments[state.myUserId] || [];
+      const shouldGlow = myAssigned.some(id => activeTallies.has(id));
+      
+      // 未設定（アサインが空）の場合は、旧仕様互換のため Tally 1 がONなら光るようにする
+      let fallbackGlow = false;
+      if (myAssigned.length === 0 && activeTallies.has(1)) {
+        fallbackGlow = true;
+      }
+
+      if (shouldGlow || fallbackGlow) {
+        els.monitorVideoWrapper.classList.add('tally-on');
+      } else {
+        els.monitorVideoWrapper.classList.remove('tally-on');
+      }
+    }
+
 
     // 32CH デマルチプレクサのロジック
     const NUM_ROUTERS = 16;
@@ -786,7 +934,7 @@
       const deviceId = e.target.value;
       
       els.editMonitorSource.disabled = true;
-      els.mainMonitorSourceText.textContent = '[ SWITCHING... ]';
+      els.mainMonitorSourceText.textContent = '[ VIDEO SWITCHING NOW ]';
       els.mainMonitorSourceText.style.display = 'block';
       
       try {
@@ -837,7 +985,6 @@
               video: { deviceId: { exact: deviceId } }
             });
           } catch (exactErr) {
-            console.warn("exact指定をブラウザが拒否。ideal指定で再取得します。", exactErr);
             stream = await navigator.mediaDevices.getUserMedia({
               video: { deviceId: { ideal: deviceId } }
             });
@@ -917,17 +1064,25 @@
 
     function saveRoomState() {
       if(!state.roomId) return;
-      const data = { channels, userAssignments: state.userAssignments, registeredUsers: state.registeredUsers, monitorTitle: state.monitorTitle };
+      const data = { 
+        channels, 
+        userAssignments: state.userAssignments, 
+        tallyAssignments: state.tallyAssignments,
+        registeredUsers: state.registeredUsers, 
+        monitorTitle: state.monitorTitle 
+      };
       safeStorage.set('yytalk_room_' + state.roomId, JSON.stringify(data));
     }
 
-    function resetAndApplyChannels(newChannels, newAssignments, newRegistered) {
+    function resetAndApplyChannels(newChannels, newAssignments, newTallyAssignments, newRegistered) {
         if (audioCtx) {
            Object.values(state.channelNodes || {}).forEach(node => { try { node?.masterGain?.disconnect(); } catch(e){} });
            Object.values(state.mediaCalls || {}).forEach(call => { Object.values(call?.chGains || {}).forEach(g => { try { g?.disconnect(); } catch(e){} }); if(call) call.chGains = {}; });
         }
         state.channelNodes = {}; channels = newChannels || [];
         if (newAssignments) state.userAssignments = newAssignments;
+        if (newTallyAssignments) state.tallyAssignments = newTallyAssignments;
+        
         if (newRegistered) { state.registeredUsers = newRegistered; } else { state.registeredUsers = Object.keys(state.userAssignments || {}); }
         initChannelsDOM();
         
@@ -945,6 +1100,7 @@
         }
         if (state.userAssignments && state.myUserId) { applyAssignments(state.userAssignments[state.myUserId] || channels.map(c=>c.id)); } else { applyAssignments(channels.map(c=>c.id)); }
         updateAudioRouting(); updateChannelIcons();
+        evaluateTallyGlow();
     }
 
     function loadRoomState(roomId) {
@@ -953,14 +1109,17 @@
         try { 
           const parsed = JSON.parse(saved); 
           if(parsed.monitorTitle) { state.monitorTitle = parsed.monitorTitle; els.mainMonitorTitle.textContent = state.monitorTitle; els.editMonitorTitle.value = state.monitorTitle; }
-          if (parsed?.channels?.length > 0) { resetAndApplyChannels(parsed.channels, parsed.userAssignments, parsed.registeredUsers); return; } 
+          if (parsed?.channels?.length > 0) { 
+             resetAndApplyChannels(parsed.channels, parsed.userAssignments, parsed.tallyAssignments, parsed.registeredUsers); 
+             return; 
+          } 
         } catch(e){}
       }
       const defaultChannels = [
         { id: 'ch1', name: 'TEST', type: 'local' }, { id: 'ch2', name: 'VE', type: 'PL' },
         { id: 'ch3', name: 'CA', type: 'PL' }, { id: 'ch4', name: 'AUD', type: 'PL' }, { id: 'ch5', name: 'WL-CAM', type: 'PL' }
       ];
-      resetAndApplyChannels(defaultChannels, {}, []);
+      resetAndApplyChannels(defaultChannels, {}, {}, []);
     }
 
     function createChannelCard(ch) {
@@ -1392,14 +1551,28 @@
       if(btnAddUser) {
         btnAddUser.onclick = () => {
           const uid = prompt('事前登録するメンバーのユーザーIDを入力してください:');
-          if (uid && uid.trim() !== '' && !state.registeredUsers.includes(uid)) { state.registeredUsers.push(uid); state.userAssignments[uid] = channels?.map(c => c.id) || []; saveRoomState(); buildAdminMatrix(); sendData({ type: 'update-registered', registered: state.registeredUsers }); }
+          if (uid && uid.trim() !== '' && !state.registeredUsers.includes(uid)) { 
+            state.registeredUsers.push(uid); 
+            state.userAssignments[uid] = channels?.map(c => c.id) || []; 
+            state.tallyAssignments[uid] = []; 
+            saveRoomState(); buildAdminMatrix(); buildTallyAssignmentUI();
+            sendData({ type: 'update-registered', registered: state.registeredUsers }); 
+            sendData({ type: 'update-tally-assignments', assignments: state.tallyAssignments });
+          }
         };
       }
 
       container.querySelectorAll('.btn-delete-col').forEach(btn => {
         btn.onclick = (e) => {
           const uid = e.target.getAttribute('data-uid');
-          if(confirm(`ユーザー「${uid}」をリストから削除しますか？\n(設定も消去されます)`)) { state.registeredUsers = state.registeredUsers.filter(u => u !== uid); delete state.userAssignments[uid]; saveRoomState(); buildAdminMatrix(); sendData({ type: 'update-registered', registered: state.registeredUsers }); }
+          if(confirm(`ユーザー「${uid}」をリストから削除しますか？\n(設定も消去されます)`)) { 
+            state.registeredUsers = state.registeredUsers.filter(u => u !== uid); 
+            delete state.userAssignments[uid]; 
+            delete state.tallyAssignments[uid];
+            saveRoomState(); buildAdminMatrix(); buildTallyAssignmentUI();
+            sendData({ type: 'update-registered', registered: state.registeredUsers }); 
+            sendData({ type: 'update-tally-assignments', assignments: state.tallyAssignments });
+          }
         };
       });
 
@@ -1444,24 +1617,39 @@
     function handleNetworkData(data, senderId) {
         if (!data) return;
         if (data.type === 'hello') {
-          if (senderId !== state.myUserId && !state.registeredUsers.includes(senderId)) { state.registeredUsers.push(senderId); state.userAssignments[senderId] = channels?.map(c => c.id) || []; saveRoomState(); if (state.isAdmin) buildAdminMatrix(); }
+          if (senderId !== state.myUserId && !state.registeredUsers.includes(senderId)) { 
+            state.registeredUsers.push(senderId); 
+            state.userAssignments[senderId] = channels?.map(c => c.id) || []; 
+            if (!state.tallyAssignments[senderId]) state.tallyAssignments[senderId] = [];
+            saveRoomState(); 
+            if (state.isAdmin) { buildAdminMatrix(); buildTallyAssignmentUI(); }
+          }
           if(state.isAdmin) { 
-            sendData({ type: 'init-state', channels, assignments: state.userAssignments, registered: state.registeredUsers });
+            sendData({ type: 'init-state', channels, assignments: state.userAssignments, tallyAssignments: state.tallyAssignments, registered: state.registeredUsers });
             if(state.activeVideoSender === state.myUserId) {
                 const sourceText = els.mainMonitorSourceText.textContent.replace('[ SIGNAL: ', '').replace(' ]', '');
                 sendData({ type: 'update-video-sender', senderId: state.myUserId, sourceText: sourceText });
             }
           }
         }
-        else if (data.type === 'init-state') { resetAndApplyChannels(data.channels, data.assignments, data.registered); saveRoomState(); if(state.isAdmin) buildAdminMatrix(); }
+        else if (data.type === 'init-state') { 
+          resetAndApplyChannels(data.channels, data.assignments, data.tallyAssignments, data.registered); 
+          saveRoomState(); 
+          if(state.isAdmin) { buildAdminMatrix(); buildTallyAssignmentUI(); } 
+        }
         else if (data.type === 'update-ch-info') {
           channels = data.data || [];
           channels.forEach((ch) => { if(!ch) return; const nameEl = document.getElementById(`name-${ch.id}`); const typeEl = document.getElementById(`type-${ch.id}`); if(nameEl) nameEl.textContent = ch.name; if(typeEl) typeEl.textContent = ch.type; });
           saveRoomState();
           if(state.isAdmin) { document.querySelectorAll('.admin-edit-name').forEach(input => { const ch = channels.find(c => c?.id === input.getAttribute('data-id')); if(ch) input.value = ch.name; }); document.querySelectorAll('.admin-edit-type').forEach(input => { const ch = channels.find(c => c?.id === input.getAttribute('data-id')); if(ch) input.value = ch.type; }); }
         }
-        else if (data.type === 'update-registered') { state.registeredUsers = data.registered || []; saveRoomState(); if(state.isAdmin) buildAdminMatrix(); }
-        
+        else if (data.type === 'update-registered') { state.registeredUsers = data.registered || []; saveRoomState(); if(state.isAdmin) { buildAdminMatrix(); buildTallyAssignmentUI(); } }
+        else if (data.type === 'update-tally-assignments') {
+          state.tallyAssignments = data.assignments || {};
+          saveRoomState();
+          if (state.isAdmin) buildTallyAssignmentUI();
+          if (state.myUserId) evaluateTallyGlow();
+        }
         else if (data.type === 'update-talk-states') { 
           state.remoteTalkStates[senderId] = data.states || {}; 
           updateAudioRouting(); 
@@ -1622,13 +1810,21 @@
         try {
           const data = JSON.parse(event.data);
           if (data.event === "message") {
-            const msg = data.message.trim();
-            const monitor = document.getElementById('monitor-video-wrapper');
-            if (msg === "ON") {
-              monitor.classList.add('tally-on');
-            } else if (msg === "OFF") {
-              monitor.classList.remove('tally-on');
+            const rawMsg = data.message.trim();
+            
+            // "1:ON" や "2:OFF" をパースする。 単に "ON" なら tally 1 扱い。
+            let tId = 1;
+            let act = rawMsg;
+            if (rawMsg.includes(':')) {
+              const parts = rawMsg.split(':');
+              tId = parseInt(parts[0], 10);
+              act = parts[1];
             }
+
+            if (act === "ON") activeTallies.add(tId);
+            else if (act === "OFF") activeTallies.delete(tId);
+
+            evaluateTallyGlow();
           }
         } catch(e) {}
       };
