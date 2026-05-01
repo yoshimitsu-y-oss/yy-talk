@@ -141,18 +141,21 @@
     .scroll-area { max-height: 75vh; overflow: auto; padding-right: 5px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
     .scroll-area::-webkit-scrollbar { display: none; }
     
+    /* ★ モニター設定エリア（センター寄せ＆デザイン統一） */
     .admin-settings-row {
       display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; margin-bottom: 20px;
       background: #15161a; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color);
     }
     .setting-group { display: flex; flex-direction: column; gap: 5px; align-items: center; }
     .setting-group label { font-size: 11px; color: var(--text-sub); font-weight: bold; }
+    /* ★ 10文字幅 & パーティー名称欄と高さ(27px相当)・デザインを合わせる */
     .setting-group input, .setting-group select {
       background: #1c1d21; border: 1px solid var(--border-color); color: #fff;
-      border-radius: 4px; font-size: 13px; padding: 4px 6px;
+      border-radius: 4px; font-size: 13px; padding: 4px 6px; height: 27px;
       width: 14ch; font-family: 'JetBrains Mono', monospace, sans-serif; text-align: center;
     }
     .setting-group input:focus, .setting-group select:focus { outline: none; border-color: var(--blue); }
+    .setting-group select:disabled { opacity: 0.5; cursor: not-allowed; }
 
     .admin-matrix-wrapper { width: 100%; overflow-x: auto; overscroll-behavior-x: none; -webkit-overflow-scrolling: touch; border-radius: 8px; background: #0a0b0d; border: 1px solid var(--border-color); position: relative; }
     .admin-matrix { width: 100%; border-collapse: separate; border-spacing: 0; min-width: max-content; text-align: center; font-size: 13px; }
@@ -166,9 +169,11 @@
     
     .btn-delete-col, .btn-delete-row { background: var(--red); color: #fff; border: none; border-radius: 6px; cursor: pointer; padding: 6px 12px; font-size: 11px; transition: all 0.2s; display: inline-block; font-weight: bold; }
     .btn-delete-row { margin-top: 0; }
-    .admin-matrix td.ch-cell input.admin-edit-type { width: 48px; text-align:center; font-family:'JetBrains Mono', monospace; background:#1c1d21; border:1px solid var(--border-color); color:#fff; border-radius:4px; font-size:10px; padding:4px; }
+    .admin-matrix td.ch-cell input.admin-edit-type { width: 48px; height: 27px; text-align:center; font-family:'JetBrains Mono', monospace; background:#1c1d21; border:1px solid var(--border-color); color:#fff; border-radius:4px; font-size:10px; padding:4px; }
 
-    /* ★ マトリックス セル内レイアウト */
+    /* =========================================
+       マトリックス セル内レイアウト
+       ========================================= */
     .cell-layout { display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 8px; }
 
     .matrix-toggle {
@@ -187,11 +192,10 @@
     .matrix-toggle.active::after { content: "SET"; }
     .matrix-toggle.active::before { background: var(--green); box-shadow: 0 0 6px var(--green); }
 
-    /* ★ REMOTE操作用の座布団グループ */
+    /* ★ REMOTE座布団グループ */
     .remote-group {
       display: flex; flex-direction: column; align-items: center;
-      background: #111216; /* 座布団の色 */
-      border: 1px solid #2a2c33;
+      background: #111216; border: 1px solid #2a2c33;
       border-radius: 6px; padding: 4px 6px 6px;
       box-shadow: inset 0 1px 2px rgba(0,0,0,0.5);
     }
@@ -199,9 +203,7 @@
       font-family: 'JetBrains Mono', monospace; font-size: 8px; font-weight: bold;
       color: #666; margin-bottom: 4px; letter-spacing: 1px;
     }
-    .remote-buttons {
-      display: flex; gap: 6px;
-    }
+    .remote-buttons { display: flex; gap: 6px; }
 
     .circle-btn {
       width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
@@ -439,13 +441,15 @@
       mediaCalls: {}, talkStates: {}, listenStates: {}, channelVolumes: {}, 
       remoteTalkStates: {}, remoteListenStates: {}, channelNodes: {}, 
       isAdmin: false, audioEnabled: false, isMasterSpkMuted: false, isMasterMicMuted: false,
-      monitorTitle: 'MONITOR'
+      monitorTitle: 'MONITOR',
+      activeVideoSender: null // ★ 現在映像を送信している親機ID（排他ロック用）
     };
 
     const LIVEKIT_WS_URL = "wss://yy-talk-pe8z9ycq.livekit.cloud";
     const WORKER_AUTH_URL = "https://yy-talk.yoshimitsu-y.workers.dev";
 
     let channels = [];
+    let currentLocalVideoTrack = null; // ★ 切り替え用のトラッキング変数
 
     const els = {
       statusMsg: document.getElementById('status-msg'), hostIdInput: document.getElementById('host-id'), joinUserIdInput: document.getElementById('join-userid'),
@@ -465,7 +469,6 @@
     els.btnLoginShow.onclick = () => { els.loginOverlay.style.display = 'flex'; };
     document.getElementById('btn-close-login').onclick = () => { els.loginOverlay.style.display = 'none'; };
     
-    // モニター表示切替
     els.btnToggleMonitor.onclick = () => {
       const isActive = els.btnToggleMonitor.classList.toggle('active');
       if (isActive) els.monitorSection.classList.add('show');
@@ -473,29 +476,31 @@
       forceResize();
     };
 
-    // パッチパネル開閉 ＆ カメラデバイス取得
     els.btnSettings.onclick = () => { 
       if (!state.isAdmin) return; 
       els.adminOverlay.style.display = 'flex'; 
       els.btnSettings.classList.add('active');
       buildAdminMatrix(); 
-      updateVideoSources(); // パネルを開いたあとにデバイス一覧を更新
+      updateVideoSources(); 
     };
     els.btnCloseAdmin.onclick = () => { 
       els.adminOverlay.style.display = 'none'; 
       els.btnSettings.classList.remove('active');
     };
 
-    // モニター設定の同期
     els.editMonitorTitle.addEventListener('input', (e) => {
       state.monitorTitle = e.target.value;
       els.mainMonitorTitle.textContent = state.monitorTitle || 'NO TITLE';
       saveRoomState(); 
-      sendData({ type: 'update-monitor', title: state.monitorTitle });
+      sendData({ type: 'update-monitor-title', title: state.monitorTitle });
     });
 
-    // ★ カメラデバイスの完全な取得処理（権限リクエスト付き）
+    // ★ カメラデバイスの完全な取得処理
     async function updateVideoSources() {
+      // 誰かがロックしている場合は更新処理をスキップしてロック状態を維持
+      if (state.activeVideoSender && state.activeVideoSender !== state.myUserId) {
+          return;
+      }
       const select = els.editMonitorSource;
       const currentValue = select.value;
       
@@ -529,58 +534,81 @@
       }
     }
 
-    // ローカル映像のPublish処理
+    // ★ 映像の切り替えとMutex（排他ロック）制御
     els.editMonitorSource.addEventListener('change', async (e) => {
       if (!state.room || !state.room.localParticipant) return;
       const deviceId = e.target.value;
       
       try {
+        if (currentLocalVideoTrack) {
+          detachVideoTrack(currentLocalVideoTrack);
+          currentLocalVideoTrack = null;
+        }
         await state.room.localParticipant.setScreenShareEnabled(false);
         await state.room.localParticipant.setCameraEnabled(false);
         
         if (deviceId === 'off') {
-          detachVideoTrack();
+          state.activeVideoSender = null;
+          saveRoomState();
+          sendData({ type: 'update-video-sender', senderId: null, sourceText: 'OFF' });
+          els.mainMonitorSourceText.textContent = '[ NO VIDEO ]';
           return;
         }
+        
+        state.activeVideoSender = state.myUserId;
+        const sourceText = deviceId === 'screen' ? 'SCREEN SHARE' : 'CAMERA';
         
         if (deviceId === 'screen') {
           await state.room.localParticipant.setScreenShareEnabled(true);
         } else {
-          await state.room.localParticipant.setCameraEnabled(true, { deviceId: { exact: deviceId } });
+          // exactを外して柔軟にキャプチャーボードを掴む
+          await state.room.localParticipant.setCameraEnabled(true, { deviceId: deviceId });
         }
         
-        const tracks = state.room.localParticipant.videoTrackPublications;
-        tracks.forEach(pub => { if (pub.track) attachVideoTrack(pub.track); });
+        const tracks = Array.from(state.room.localParticipant.videoTrackPublications.values());
+        const activePub = tracks.find(pub => pub.track);
+        
+        if (activePub && activePub.track) {
+          currentLocalVideoTrack = activePub.track;
+          attachVideoTrack(activePub.track);
+        }
+
+        els.mainMonitorSourceText.textContent = `[ SIGNAL: ${sourceText} ]`;
+        saveRoomState();
+        sendData({ type: 'update-video-sender', senderId: state.myUserId, sourceText: sourceText });
 
       } catch (err) {
-        console.error("映像送信エラー: ", err);
-        alert("映像の取得に失敗しました。カメラや画面共有の許可を確認してください。");
+        console.error("映像切り替えエラー: ", err);
+        alert("映像の切り替えに失敗しました。");
         els.editMonitorSource.value = 'off';
-        detachVideoTrack();
+        state.activeVideoSender = null;
+        sendData({ type: 'update-video-sender', senderId: null, sourceText: 'OFF' });
+        els.mainMonitorSourceText.textContent = '[ NO VIDEO ]';
       }
     });
 
+    // ★ 映像を貼る処理（古いタグは確実に削除）
     function attachVideoTrack(track) {
-      let videoEl = els.monitorVideoWrapper.querySelector('video');
-      if (!videoEl) {
-        videoEl = document.createElement('video');
-        videoEl.autoplay = true;
-        videoEl.playsInline = true;
-        els.monitorVideoWrapper.appendChild(videoEl);
-      }
+      let oldVideo = els.monitorVideoWrapper.querySelector('video');
+      if (oldVideo) oldVideo.remove();
+
+      const videoEl = document.createElement('video');
+      videoEl.autoplay = true;
+      videoEl.playsInline = true;
+      els.monitorVideoWrapper.appendChild(videoEl);
+      
       track.attach(videoEl);
       els.mainMonitorSourceText.style.display = 'none';
     }
 
+    // ★ 映像を剥がす処理
     function detachVideoTrack(track) {
       const videoEl = els.monitorVideoWrapper.querySelector('video');
       if (videoEl) {
         if (track) track.detach(videoEl);
         videoEl.remove();
       }
-      if (!els.monitorVideoWrapper.querySelector('video')) {
-        els.mainMonitorSourceText.style.display = 'block';
-      }
+      els.mainMonitorSourceText.style.display = 'block';
     }
 
     const iconSpeaker = `<svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
@@ -975,7 +1003,7 @@
       
       channels?.forEach(ch => {
           if(!ch) return;
-          html += `<tr><td class="ch-cell"><div style="display:flex; gap:6px; align-items:center; justify-content:space-between; width:100%;"><div style="display:flex; gap:4px; flex:1;"><input type="text" class="admin-edit-name" data-id="${ch.id}" value="${ch.name}" style="flex:1; width:70px; background:#1c1d21; border:1px solid var(--border-color); color:#fff; border-radius:4px; font-size:13px; padding:4px 6px;"><input type="text" class="admin-edit-type" data-id="${ch.id}" value="${ch.type}" style="width:48px; text-align:center; font-family:'JetBrains Mono', monospace; background:#1c1d21; border:1px solid var(--border-color); color:#fff; border-radius:4px; font-size:10px; padding:4px;"></div><button class="btn-delete-row" data-id="${ch.id}">削除</button></div></td>`;
+          html += `<tr><td class="ch-cell"><div style="display:flex; gap:6px; align-items:center; justify-content:space-between; width:100%;"><div style="display:flex; gap:4px; flex:1;"><input type="text" class="admin-edit-name" data-id="${ch.id}" value="${ch.name}" style="flex:1; width:70px; background:#1c1d21; border:1px solid var(--border-color); color:#fff; border-radius:4px; font-size:13px; padding:4px 6px;"><input type="text" class="admin-edit-type" data-id="${ch.id}" value="${ch.type}" style="width:48px; height:27px; text-align:center; font-family:'JetBrains Mono', monospace; background:#1c1d21; border:1px solid var(--border-color); color:#fff; border-radius:4px; font-size:10px; padding:4px;"></div><button class="btn-delete-row" data-id="${ch.id}">削除</button></div></td>`;
           
           state.registeredUsers?.forEach(uid => { 
             const isAssigned = (state.userAssignments[uid] || []).includes(ch.id); 
@@ -993,7 +1021,6 @@
             const micActiveClass = isMicOn ? 'active' : '';
             const spkActiveClass = isSpkOn ? 'active' : '';
 
-            // ★ 1つのセル内に SET, REMOTEグループ(SPK, MIC), メーター を配置
             html += `<td>
               <div class="cell-layout">
                 <div class="matrix-toggle ${activeClass}" data-uid="${uid}" data-chid="${ch.id}"></div>
@@ -1138,7 +1165,14 @@
         if (!data) return;
         if (data.type === 'hello') {
           if (senderId !== state.myUserId && !state.registeredUsers.includes(senderId)) { state.registeredUsers.push(senderId); state.userAssignments[senderId] = channels?.map(c => c.id) || []; saveRoomState(); if (state.isAdmin) buildAdminMatrix(); }
-          if(state.isAdmin) { sendData({ type: 'init-state', channels, assignments: state.userAssignments, registered: state.registeredUsers }); }
+          if(state.isAdmin) { 
+            sendData({ type: 'init-state', channels, assignments: state.userAssignments, registered: state.registeredUsers });
+            // もし自分が映像を送信していたら、新しく入ってきた人にも状態を知らせる
+            if(state.activeVideoSender === state.myUserId) {
+                const sourceText = els.mainMonitorSourceText.textContent.replace('[ SIGNAL: ', '').replace(' ]', '');
+                sendData({ type: 'update-video-sender', senderId: state.myUserId, sourceText: sourceText });
+            }
+          }
         }
         else if (data.type === 'init-state') { resetAndApplyChannels(data.channels, data.assignments, data.registered); saveRoomState(); if(state.isAdmin) buildAdminMatrix(); }
         else if (data.type === 'update-ch-info') {
@@ -1220,11 +1254,43 @@
         }
         else if (data.type === 'remove-channel') { if(data.chId) removeChannel(data.chId); saveRoomState(); if(state.isAdmin) buildAdminMatrix(); }
         // ★ モニター設定の同期受信
-        else if (data.type === 'update-monitor') {
+        else if (data.type === 'update-monitor-title') {
           state.monitorTitle = data.title;
           els.mainMonitorTitle.textContent = data.title || 'NO TITLE';
           if (state.isAdmin) els.editMonitorTitle.value = data.title;
           saveRoomState();
+        }
+        // ★ 映像送信者の排他ロック受信
+        else if (data.type === 'update-video-sender') {
+          state.activeVideoSender = data.senderId;
+          
+          if (data.senderId && data.senderId !== state.myUserId) {
+            // 他の人が送信を開始した
+            els.mainMonitorSourceText.textContent = `[ SIGNAL: ${data.sourceText} ]`;
+            if (state.isAdmin) {
+              els.editMonitorSource.disabled = true;
+              if (els.editMonitorSource.options[0].value === 'locked') {
+                els.editMonitorSource.options[0].text = `[Locked by ${data.senderId}]`;
+              } else {
+                const opt = document.createElement('option');
+                opt.value = 'locked';
+                opt.text = `[Locked by ${data.senderId}]`;
+                els.editMonitorSource.add(opt, els.editMonitorSource[0]);
+              }
+              els.editMonitorSource.value = 'locked';
+            }
+          } 
+          else if (!data.senderId) {
+            // 誰も送信していない
+            els.mainMonitorSourceText.textContent = '[ NO VIDEO ]';
+            if (state.isAdmin) {
+              els.editMonitorSource.disabled = false;
+              if (els.editMonitorSource.options[0].value === 'locked') {
+                els.editMonitorSource.remove(0);
+              }
+              els.editMonitorSource.value = 'off';
+            }
+          }
         }
     }
 
