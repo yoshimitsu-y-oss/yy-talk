@@ -499,7 +499,6 @@
 
     // ★ カメラデバイスの完全取得処理（ロック判定付き）
     async function updateVideoSources() {
-      // 誰かがロックしている場合は更新処理をスキップしてロック維持
       if (state.activeVideoSender && state.activeVideoSender !== state.myUserId) {
           return;
       }
@@ -536,7 +535,7 @@
       }
     }
 
-    // ★ 映像ソース切り替え（排他ロックと完全切り替えロジック）
+    // ★ 映像ソース切り替え（排他ロックと「完全自動フォールバック」ロジック）
     els.editMonitorSource.addEventListener('change', async (e) => {
       if (!state.room || !state.room.localParticipant) return;
       const deviceId = e.target.value;
@@ -556,10 +555,16 @@
         await state.room.localParticipant.setScreenShareEnabled(false);
         await state.room.localParticipant.setCameraEnabled(false);
         
-        // 古いビデオ要素が残っていたら強制削除
-        els.monitorVideoWrapper.querySelectorAll('video').forEach(v => v.remove());
+        // 手動でPublishしたトラックのクリーンアップ
+        const existingPubs = Array.from(state.room.localParticipant.videoTrackPublications.values());
+        for (const pub of existingPubs) {
+          if (pub.track) {
+            pub.track.stop(); 
+            await state.room.localParticipant.unpublishTrack(pub.track);
+          }
+        }
         
-        // USBデバイス等の完全解放を待つ
+        els.monitorVideoWrapper.querySelectorAll('video').forEach(v => v.remove());
         await new Promise(resolve => setTimeout(resolve, 600));
 
         if (deviceId === 'off') {
@@ -577,26 +582,42 @@
         // 3. 映像の送信を開始
         if (deviceId === 'screen') {
           await state.room.localParticipant.setScreenShareEnabled(true);
+          const activePub = state.room.localParticipant.getTrackPublication(LivekitClient.Track.Source.ScreenShare);
+          if (activePub && activePub.track) {
+            currentLocalVideoTrack = activePub.track;
+            attachVideoTrack(currentLocalVideoTrack);
+          } else {
+            els.mainMonitorSourceText.textContent = '[ NO VIDEO ]';
+          }
         } else {
-          // LiveKitの公式切り替えメソッドを使用し、解像度を明記
-          await state.room.switchActiveDevice('videoinput', deviceId);
-          await state.room.localParticipant.setCameraEnabled(true, { 
-            deviceId: deviceId,
-            resolution: { width: 1280, height: 720, frameRate: 30 }
+          // 【★ ブラウザ設定不要の完全突破ロジック】
+          let stream;
+          try {
+            // まずは絶対指定（exact）で試みる
+            stream = await navigator.mediaDevices.getUserMedia({
+              video: { deviceId: { exact: deviceId } }
+            });
+          } catch (exactErr) {
+            console.warn("exact指定をブラウザが拒否。ideal指定で再取得します。", exactErr);
+            // エラーが出た場合は優先指定（ideal）に切り替えて強制的に掴む
+            stream = await navigator.mediaDevices.getUserMedia({
+              video: { deviceId: { ideal: deviceId } }
+            });
+          }
+          
+          const rawTrack = stream.getVideoTracks()[0];
+          const localVideoTrack = new LivekitClient.LocalVideoTrack(rawTrack);
+          
+          // LiveKitの通信網に手動でねじ込む
+          await state.room.localParticipant.publishTrack(localVideoTrack, {
+            name: 'camera',
+            source: LivekitClient.Track.Source.Camera
           });
+          
+          currentLocalVideoTrack = localVideoTrack;
+          attachVideoTrack(currentLocalVideoTrack);
         }
         
-        // 4. トラックを取得して画面に貼る
-        const trackSource = deviceId === 'screen' ? LivekitClient.Track.Source.ScreenShare : LivekitClient.Track.Source.Camera;
-        const activePub = state.room.localParticipant.getTrackPublication(trackSource);
-        
-        if (activePub && activePub.track) {
-          currentLocalVideoTrack = activePub.track;
-          attachVideoTrack(activePub.track);
-        } else {
-          els.mainMonitorSourceText.textContent = '[ NO VIDEO ]';
-        }
-
         saveRoomState();
         sendData({ type: 'update-video-sender', senderId: state.myUserId, sourceText: sourceText });
 
@@ -612,11 +633,10 @@
       }
     });
 
-    // ★ 映像を貼る処理（LiveKitにすべて任せる）
+    // ★ 映像を貼る処理
     function attachVideoTrack(track) {
       els.monitorVideoWrapper.querySelectorAll('video').forEach(v => v.remove());
 
-      // LiveKitにvideo要素を作らせる (muted等が自動付与される)
       const videoEl = track.attach();
       
       videoEl.style.width = '100%';
@@ -1072,6 +1092,7 @@
       });
       html += `</tbody></table></div>`; container.innerHTML = html;
 
+      // SETボタン
       container.querySelectorAll('.matrix-toggle').forEach(btn => {
         btn.onclick = (e) => {
           const uid = e.target.getAttribute('data-uid'); const chid = e.target.getAttribute('data-chid'); let assigned = state.userAssignments[uid] || [];
@@ -1092,6 +1113,7 @@
         };
       });
 
+      // SPK操作
       container.querySelectorAll('.remote-spk-btn').forEach(btn => {
         btn.onclick = (e) => {
           if (btn.classList.contains('disabled')) return;
@@ -1112,6 +1134,7 @@
         };
       });
 
+      // MIC操作
       container.querySelectorAll('.remote-mic-btn').forEach(btn => {
         btn.onclick = (e) => {
           if (btn.classList.contains('disabled')) return; 
@@ -1276,6 +1299,7 @@
           saveRoomState(); if(state.isAdmin) buildAdminMatrix();
         }
         else if (data.type === 'remove-channel') { if(data.chId) removeChannel(data.chId); saveRoomState(); if(state.isAdmin) buildAdminMatrix(); }
+        // モニター名称の同期
         else if (data.type === 'update-monitor-title') {
           state.monitorTitle = data.title;
           els.mainMonitorTitle.textContent = data.title || 'NO TITLE';
