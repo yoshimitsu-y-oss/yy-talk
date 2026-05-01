@@ -131,6 +131,7 @@
       display: flex; align-items: center; justify-content: center; border: 1px solid #333; position: relative;
     }
     .video-dummy-text { color: #555; font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: bold; z-index: 1;}
+    .video-wrapper video { width: 100%; height: 100%; object-fit: contain; background: #000; position: absolute; inset: 0; z-index: 5;}
 
     /* =========================================
        パッチパネル (設定 + マトリックス)
@@ -140,7 +141,6 @@
     .scroll-area { max-height: 75vh; overflow: auto; padding-right: 5px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
     .scroll-area::-webkit-scrollbar { display: none; }
     
-    /* ★ モニター設定エリア（センター寄せ＆デザイン統一） */
     .admin-settings-row {
       display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; margin-bottom: 20px;
       background: #15161a; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color);
@@ -148,7 +148,6 @@
     .setting-group { display: flex; flex-direction: column; gap: 5px; align-items: center; }
     .setting-group label { font-size: 11px; color: var(--text-sub); font-weight: bold; }
     
-    /* ★ 10文字幅(14ch) & パーティー名称欄と高さ(27px相当)・デザインを合わせる */
     .setting-group input, .setting-group select {
       background: #1c1d21; border: 1px solid var(--border-color); color: #fff;
       border-radius: 4px; font-size: 13px; padding: 4px 6px; height: 27px;
@@ -192,7 +191,7 @@
     .matrix-toggle.active::after { content: "SET"; }
     .matrix-toggle.active::before { background: var(--green); box-shadow: 0 0 6px var(--green); }
 
-    /* ★ REMOTE座布団グループ */
+    /* REMOTE座布団グループ */
     .remote-group {
       display: flex; flex-direction: column; align-items: center;
       background: #111216; border: 1px solid #2a2c33;
@@ -442,7 +441,7 @@
       remoteTalkStates: {}, remoteListenStates: {}, channelNodes: {}, 
       isAdmin: false, audioEnabled: false, isMasterSpkMuted: false, isMasterMicMuted: false,
       monitorTitle: 'MONITOR',
-      activeVideoSender: null // ★ 親機ロック機構
+      activeVideoSender: null // 親機ロック用
     };
 
     const LIVEKIT_WS_URL = "wss://yy-talk-pe8z9ycq.livekit.cloud";
@@ -477,7 +476,7 @@
       forceResize();
     };
 
-    // パッチパネル開閉 ＆ カメラデバイス取得
+    // パッチパネル開閉
     els.btnSettings.onclick = () => { 
       if (!state.isAdmin) return; 
       els.adminOverlay.style.display = 'flex'; 
@@ -490,7 +489,7 @@
       els.btnSettings.classList.remove('active');
     };
 
-    // モニター設定の同期
+    // モニター名称の同期
     els.editMonitorTitle.addEventListener('input', (e) => {
       state.monitorTitle = e.target.value;
       els.mainMonitorTitle.textContent = state.monitorTitle || 'NO TITLE';
@@ -498,9 +497,9 @@
       sendData({ type: 'update-monitor-title', title: state.monitorTitle });
     });
 
-    // ★ カメラデバイス取得処理（権限リクエスト付き）
+    // ★ カメラデバイスの完全取得処理（ロック判定付き）
     async function updateVideoSources() {
-      // 誰かがロックしている場合は更新処理をスキップ
+      // 誰かがロックしている場合は更新処理をスキップしてロック維持
       if (state.activeVideoSender && state.activeVideoSender !== state.myUserId) {
           return;
       }
@@ -537,7 +536,7 @@
       }
     }
 
-    // ★ 映像の切り替えと排他ロック制御
+    // ★ 映像ソース切り替え（排他ロックと完全切り替えロジック）
     els.editMonitorSource.addEventListener('change', async (e) => {
       if (!state.room || !state.room.localParticipant) return;
       const deviceId = e.target.value;
@@ -547,16 +546,21 @@
       els.mainMonitorSourceText.style.display = 'block';
       
       try {
+        // 1. 今表示されている映像を剥がす
         if (currentLocalVideoTrack) {
           detachVideoTrack(currentLocalVideoTrack);
           currentLocalVideoTrack = null;
         }
         
+        // 2. 一旦すべての映像をOFFにする
         await state.room.localParticipant.setScreenShareEnabled(false);
         await state.room.localParticipant.setCameraEnabled(false);
         
-        // ★ ハードウェアロック解放待ち（0.5秒）
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // 古いビデオ要素が残っていたら強制削除
+        els.monitorVideoWrapper.querySelectorAll('video').forEach(v => v.remove());
+        
+        // USBデバイス等の完全解放を待つ
+        await new Promise(resolve => setTimeout(resolve, 600));
 
         if (deviceId === 'off') {
           state.activeVideoSender = null;
@@ -570,23 +574,25 @@
         state.activeVideoSender = state.myUserId;
         const sourceText = deviceId === 'screen' ? 'SCREEN SHARE' : 'CAMERA';
         
+        // 3. 映像の送信を開始
         if (deviceId === 'screen') {
           await state.room.localParticipant.setScreenShareEnabled(true);
         } else {
-          // exactを外し解像度を明記して安定化
+          // LiveKitの公式切り替えメソッドを使用し、解像度を明記
+          await state.room.switchActiveDevice('videoinput', deviceId);
           await state.room.localParticipant.setCameraEnabled(true, { 
             deviceId: deviceId,
             resolution: { width: 1280, height: 720, frameRate: 30 }
           });
         }
         
+        // 4. トラックを取得して画面に貼る
         const trackSource = deviceId === 'screen' ? LivekitClient.Track.Source.ScreenShare : LivekitClient.Track.Source.Camera;
         const activePub = state.room.localParticipant.getTrackPublication(trackSource);
         
         if (activePub && activePub.track) {
           currentLocalVideoTrack = activePub.track;
           attachVideoTrack(activePub.track);
-          els.mainMonitorSourceText.style.display = 'none';
         } else {
           els.mainMonitorSourceText.textContent = '[ NO VIDEO ]';
         }
@@ -596,7 +602,7 @@
 
       } catch (err) {
         console.error("映像切り替えエラー: ", err);
-        alert("カメラの切り替えに失敗しました。他のアプリがカメラを使用していないか確認してください。");
+        alert("カメラの切り替えに失敗しました。他のアプリ(OBS等)がカメラを使用していないか確認してください。");
         els.editMonitorSource.value = 'off';
         state.activeVideoSender = null;
         sendData({ type: 'update-video-sender', senderId: null, sourceText: 'OFF' });
@@ -606,14 +612,12 @@
       }
     });
 
-    // ★ 映像を貼る処理（古いタグは確実に削除）
+    // ★ 映像を貼る処理（LiveKitにすべて任せる）
     function attachVideoTrack(track) {
-      let oldVideo = els.monitorVideoWrapper.querySelector('video');
-      if (oldVideo) oldVideo.remove();
+      els.monitorVideoWrapper.querySelectorAll('video').forEach(v => v.remove());
 
-      const videoEl = document.createElement('video');
-      videoEl.autoplay = true;
-      videoEl.playsInline = true;
+      // LiveKitにvideo要素を作らせる (muted等が自動付与される)
+      const videoEl = track.attach();
       
       videoEl.style.width = '100%';
       videoEl.style.height = '100%';
@@ -624,17 +628,13 @@
       videoEl.style.zIndex = '5';
 
       els.monitorVideoWrapper.appendChild(videoEl);
-      track.attach(videoEl);
       els.mainMonitorSourceText.style.display = 'none';
     }
 
     // ★ 映像を剥がす処理
     function detachVideoTrack(track) {
-      const videoEl = els.monitorVideoWrapper.querySelector('video');
-      if (videoEl) {
-        if (track) track.detach(videoEl);
-        videoEl.remove();
-      }
+      if (track) track.detach();
+      els.monitorVideoWrapper.querySelectorAll('video').forEach(v => v.remove());
       els.mainMonitorSourceText.style.display = 'block';
     }
 
@@ -1072,7 +1072,6 @@
       });
       html += `</tbody></table></div>`; container.innerHTML = html;
 
-      // SETボタン
       container.querySelectorAll('.matrix-toggle').forEach(btn => {
         btn.onclick = (e) => {
           const uid = e.target.getAttribute('data-uid'); const chid = e.target.getAttribute('data-chid'); let assigned = state.userAssignments[uid] || [];
@@ -1093,7 +1092,6 @@
         };
       });
 
-      // SPK操作
       container.querySelectorAll('.remote-spk-btn').forEach(btn => {
         btn.onclick = (e) => {
           if (btn.classList.contains('disabled')) return;
@@ -1114,7 +1112,6 @@
         };
       });
 
-      // MIC操作
       container.querySelectorAll('.remote-mic-btn').forEach(btn => {
         btn.onclick = (e) => {
           if (btn.classList.contains('disabled')) return; 
@@ -1279,14 +1276,13 @@
           saveRoomState(); if(state.isAdmin) buildAdminMatrix();
         }
         else if (data.type === 'remove-channel') { if(data.chId) removeChannel(data.chId); saveRoomState(); if(state.isAdmin) buildAdminMatrix(); }
-        // モニター設定の同期受信
         else if (data.type === 'update-monitor-title') {
           state.monitorTitle = data.title;
           els.mainMonitorTitle.textContent = data.title || 'NO TITLE';
           if (state.isAdmin) els.editMonitorTitle.value = data.title;
           saveRoomState();
         }
-        // ★ 排他ロック（親機からの映像送信状態）の同期受信
+        // ★ 親機の排他ロック同期
         else if (data.type === 'update-video-sender') {
           state.activeVideoSender = data.senderId;
           
