@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>YY-Talk PRO - SFU Edition</title>
+  <title>YY-Talk PRO - Ultimate Edition</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -64,7 +64,7 @@
     }
 
     .app-container {
-      width: 100%; height: 100dvh; background-color: var(--bg-dark); display: flex; flex-direction: column;
+      width: 100%; height: 100dvh; background-color: var(--bg-dark); display: flex; flex-direction: column; position: relative;
       padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom);
       padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right);
       margin: 0 auto;
@@ -75,6 +75,7 @@
       .app-container { height: 94vh; max-height: 1200px; min-height: 600px; width: 96vw; max-width: 1800px; border-radius: 20px; border: 8px solid #1e2128; }
     }
 
+    /* モーダル基本設定 */
     .overlay-base { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; flex-direction: column; backdrop-filter: blur(4px); z-index: 1000; overflow-y: auto;}
     #login-overlay { z-index: 2000; } #audio-overlay { z-index: 1100; }
     .btn-green-solid { background: var(--green); color: #000; border: none; padding: 15px 30px; font-size: 18px; font-weight: bold; border-radius: 30px; cursor: pointer; }
@@ -87,13 +88,76 @@
     .btn-join-member { background: var(--orange); width: 100%; } .btn-join-admin { background: transparent; border: 1.5px solid var(--blue) !important; color: var(--blue) !important; width: 100%; } .btn-stop { background: var(--red); width: 100%; }
     .status-text { font-size: 12px; color: var(--text-sub); text-align: center; margin-top: 5px; font-family: 'JetBrains Mono', monospace;}
 
-    /* 管理者パネル（パッチパネル） */
+    /* =========================================
+       ヘッダー 
+       ========================================= */
+    .header { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; background: var(--bg-dark); flex-shrink: 0; z-index: 100; }
+    .header-left { display: flex; align-items: center; }
+    #app-logo { height: 26px; width: auto; margin-right: 5px; }
+    @media (min-width: 600px) { #app-logo { height: 32px; } }
+    
+    .header-right { display: flex; align-items: center; gap: 8px; }
+    
+    .btn-header-icon {
+      background: transparent; border: 1.5px solid var(--text-sub); color: var(--text-sub);
+      width: 32px; height: 32px; border-radius: 6px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; transition: 0.2s; padding: 0;
+    }
+    .btn-header-icon svg { width: 16px; height: 16px; fill: currentColor; }
+    
+    #btn-toggle-monitor.active { border-color: var(--blue); color: var(--blue); background: rgba(59, 130, 246, 0.1); }
+    #btn-settings.active { border-color: var(--green); color: var(--green); background: rgba(74, 222, 128, 0.1); }
+    #btn-settings.admin-only { display: none; }
+
+    .status-badge {
+      border: 1.5px solid var(--text-sub); color: var(--text-sub);
+      padding: 6px 12px; border-radius: 6px; font-weight: bold; font-size: 11px; cursor: pointer; transition: 0.2s;
+    }
+    .status-badge.online { border-color: var(--blue); color: var(--blue); }
+    #status-role { font-size: 11px; font-family: 'JetBrains Mono', monospace; font-weight: bold; color: var(--orange); margin-right: 2px;}
+
+    /* =========================================
+       モニターエリア
+       ========================================= */
+    .monitor-section {
+      width: 100%; background: #000;
+      display: none; flex-direction: column; align-items: center;
+      padding: 10px 0 15px; border-bottom: 2px solid var(--border-color); flex-shrink: 0;
+    }
+    .monitor-section.show { display: flex; }
+    .monitor-label { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: bold; color: #ddd; margin-bottom: 8px; letter-spacing: 1px; }
+    .video-wrapper {
+      width: 100%; max-width: 960px; aspect-ratio: 16 / 9; background: #1a1a1a;
+      display: flex; align-items: center; justify-content: center; border: 1px solid #333; position: relative;
+    }
+    /* ★ [NO VIDEO] テキスト */
+    .video-dummy-text { color: #555; font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: bold; z-index: 1;}
+    .video-wrapper video { width: 100%; height: 100%; object-fit: contain; background: #000; position: absolute; inset: 0; z-index: 5;}
+
+    /* =========================================
+       パッチパネル (設定 + マトリックス)
+       ========================================= */
     .admin-modal { max-width: 95%; width: auto; min-width: 320px; }
     @media (min-width: 800px) { .admin-modal { max-width: 1200px; } }
     .scroll-area { max-height: 75vh; overflow: auto; padding-right: 5px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
     .scroll-area::-webkit-scrollbar { display: none; }
-    .admin-matrix-wrapper { width: 100%; overflow-x: auto; overscroll-behavior-x: none; -webkit-overflow-scrolling: touch; border-radius: 8px; background: #0a0b0d; border: 1px solid var(--border-color); position: relative; }
     
+    /* ★ モニター設定エリア（センター寄せ＆デザイン統一） */
+    .admin-settings-row {
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; margin-bottom: 20px;
+      background: #15161a; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color);
+    }
+    .setting-group { display: flex; flex-direction: column; gap: 5px; align-items: center; }
+    .setting-group label { font-size: 11px; color: var(--text-sub); font-weight: bold; }
+    /* 10文字幅(14ch) & パーティー名称と同じデザイン */
+    .setting-group input, .setting-group select {
+      background: #1c1d21; border: 1px solid var(--border-color); color: #fff;
+      border-radius: 4px; font-size: 13px; padding: 4px 6px;
+      width: 14ch; font-family: 'JetBrains Mono', monospace, sans-serif; text-align: center;
+    }
+    .setting-group input:focus, .setting-group select:focus { outline: none; border-color: var(--blue); }
+
+    .admin-matrix-wrapper { width: 100%; overflow-x: auto; overscroll-behavior-x: none; -webkit-overflow-scrolling: touch; border-radius: 8px; background: #0a0b0d; border: 1px solid var(--border-color); position: relative; }
     .admin-matrix { width: 100%; border-collapse: separate; border-spacing: 0; min-width: max-content; text-align: center; font-size: 13px; }
     .admin-matrix th, .admin-matrix td { border-bottom: 1px solid var(--border-color); border-right: 1px solid var(--border-color); padding: 6px; }
     .admin-matrix th { background-color: #1c1d21; color: var(--text-sub); font-weight: normal; position: sticky; top: 0; z-index: 5; border-top: 1px solid var(--border-color); min-width: 80px; }
@@ -107,10 +171,9 @@
     .btn-delete-row { margin-top: 0; }
     .admin-matrix td.ch-cell input.admin-edit-type { width: 48px; text-align:center; font-family:'JetBrains Mono', monospace; background:#1c1d21; border:1px solid var(--border-color); color:#fff; border-radius:4px; font-size:10px; padding:4px; }
 
-    /* ★ セル内レイアウト（SET, Spk, Mic, メーター） */
+    /* ★ マトリックス セル内レイアウト */
     .cell-layout { display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 8px; }
 
-    /* 1. 自照式ハードウェアボタン（SET / -） */
     .matrix-toggle {
       width: 36px; height: 24px; margin: 0;
       background: linear-gradient(to bottom, #2a2c33, #1c1d21);
@@ -127,7 +190,6 @@
     .matrix-toggle.active::after { content: "SET"; }
     .matrix-toggle.active::before { background: var(--green); box-shadow: 0 0 6px var(--green); }
 
-    /* 2. 共通丸ボタンベース (Spk & Mic) */
     .circle-btn {
       width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
       background: #1c1d21; cursor: pointer; transition: all 0.2s ease;
@@ -136,31 +198,18 @@
     .circle-btn svg { width: 14px; height: 14px; fill: currentColor; pointer-events: none; }
     .circle-btn.disabled { border-color: #444 !important; color: #444 !important; background: #15161a; box-shadow: none; cursor: not-allowed; opacity: 0.5; }
 
-    /* 🟢 スピーカー（LISTEN） */
     .remote-spk-btn { border: 1.5px solid var(--green); color: var(--green); }
     .remote-spk-btn.active { background-color: var(--green); color: #000; box-shadow: inset 0 2px 4px rgba(255,255,255,0.4), 0 0 10px rgba(74, 222, 128, 0.5); }
 
-    /* 🔴 マイク（TALK） */
     .remote-mic-btn { border: 1.5px solid var(--red); color: var(--red); }
     .remote-mic-btn.active { background-color: var(--red); color: #fff; box-shadow: inset 0 2px 4px rgba(255,255,255,0.3), 0 0 10px rgba(220, 38, 38, 0.5); }
 
-    /* 3. 縦型レベルメーター */
     .cp-meter-bg { width: 6px; height: 24px; background: #000; border-radius: 2px; position: relative; box-shadow: inset 0 0 3px rgba(0,0,0,0.8); overflow: hidden; }
     .cp-meter-bar { width: 100%; height: 100%; background: linear-gradient(to top, #22c55e, #eab308, #ef4444); position: absolute; bottom: 0; left: 0; transform-origin: bottom; transform: scaleY(0); transition: transform 0.05s ease-out; }
 
-    /* UI共通 */
-    .header { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; background: var(--bg-dark); flex-shrink: 0; z-index: 10; }
-    .header-left { display: flex; align-items: center; }
-    #app-logo { height: 26px; width: auto; margin-right: 5px; }
-    @media (min-width: 600px) { #app-logo { height: 32px; } }
-    .header-right { display: flex; align-items: center; gap: 12px; color: var(--text-sub); font-size: 13px; font-weight: bold; }
-    .btn-login-trigger { display: flex; align-items: center; justify-content: center; background: transparent; border: 1.5px solid var(--text-sub); color: var(--text-sub); padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; transition: 0.2s; }
-    .btn-login-trigger.online { border-color: var(--blue); color: var(--blue); }
-    #btn-settings { padding: 6px; border-color: var(--text-sub); }
-    #btn-settings svg { width: 18px; height: 18px; fill: var(--text-sub); }
-    #btn-settings.online svg { fill: var(--green); border-color: var(--green); }
-    #btn-settings.admin-only { display: none; }
-
+    /* =========================================
+       グローバル & チャンネルリスト
+       ========================================= */
     .global-controls { display: flex; gap: 10px; padding: 5px 15px 10px; background: var(--bg-dark); border-bottom: 2px solid var(--green); flex-shrink: 0; z-index: 10;}
     .btn-global { flex: 1; padding: 8px 10px; border: none; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; font-family: 'JetBrains Mono', monospace; }
     .slash-line { display: none; } .muted-slash .slash-line { display: block; opacity: 1; }
@@ -271,8 +320,23 @@
     <div id="admin-overlay" class="overlay-base">
       <div class="login-modal admin-modal">
         <button class="btn-close-login" id="btn-close-admin">×</button>
-        <h3 style="margin: 0 0 15px 0; text-align: center; color: var(--text-main);">パッチパネル</h3>
+        <h3 style="margin: 0 0 15px 0; color: var(--text-main); text-align: center;">パッチパネル</h3>
         <div class="scroll-area">
+          
+          <div class="admin-settings-row">
+            <div class="setting-group">
+              <label>モニター名称</label>
+              <input type="text" id="edit-monitor-title" value="MONITOR">
+            </div>
+            <div class="setting-group">
+              <label>映像入力ソース</label>
+              <select id="edit-monitor-source">
+                <option value="off">OFF</option>
+                <option value="screen">画面共有</option>
+              </select>
+            </div>
+          </div>
+
           <div id="admin-matrix-container"></div>
           <button id="btn-add-ch" style="background:transparent; border:1px solid var(--green); color:var(--green); width:100%; padding:10px; margin-top:15px; border-radius:8px; cursor:pointer; font-weight:bold; transition: background 0.2s;">＋ 新規パーティーを追加</button>
         </div>
@@ -299,9 +363,25 @@
         <span id="header-room-name" style="margin-left: 8px; font-size: 13px; color: var(--text-sub); font-family: 'JetBrains Mono', monospace;"></span>
       </div>
       <div class="header-right">
-        <button id="btn-settings" class="btn-login-trigger admin-only"></button>
-        <span id="status-role" style="color: var(--orange); font-family: 'JetBrains Mono', monospace;">Offline</span>
-        <button id="btn-show-login" class="btn-login-trigger">Login</button>
+        
+        <span id="status-role" style="display: none;"></span>
+
+        <button id="btn-toggle-monitor" class="btn-header-icon" title="モニター表示">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+        </button>
+
+        <button id="btn-settings" class="btn-header-icon admin-only" title="設定">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+        </button>
+
+        <div id="btn-show-login" class="status-badge">Login</div>
+      </div>
+    </div>
+
+    <div id="monitor-section" class="monitor-section">
+      <div class="monitor-label" id="main-monitor-title">MONITOR</div>
+      <div class="video-wrapper" id="monitor-video-wrapper">
+        <div class="video-dummy-text" id="main-monitor-source-text">[ NO VIDEO ]</div>
       </div>
     </div>
 
@@ -345,7 +425,8 @@
       users: {}, registeredUsers: [], userAssignments: {}, 
       mediaCalls: {}, talkStates: {}, listenStates: {}, channelVolumes: {}, 
       remoteTalkStates: {}, remoteListenStates: {}, channelNodes: {}, 
-      isAdmin: false, audioEnabled: false, isMasterSpkMuted: false, isMasterMicMuted: false
+      isAdmin: false, audioEnabled: false, isMasterSpkMuted: false, isMasterMicMuted: false,
+      monitorTitle: 'MONITOR'
     };
 
     const LIVEKIT_WS_URL = "wss://yy-talk-pe8z9ycq.livekit.cloud";
@@ -361,19 +442,131 @@
       adminOverlay: document.getElementById('admin-overlay'), btnSettings: document.getElementById('btn-settings'), btnCloseAdmin: document.getElementById('btn-close-admin'),
       btnAddCh: document.getElementById('btn-add-ch'), chWrap: document.getElementById('channel-list-wrap'), btnJoinMember: document.getElementById('btn-join-member'), btnJoinAdmin: document.getElementById('btn-join-admin'),
       btnMasterSpk: document.getElementById('btn-master-spk'), btnMasterMic: document.getElementById('btn-master-mic'),
-      globalSpkIcon: document.getElementById('global-spk-icon'), globalMicIcon: document.getElementById('global-mic-icon')
+      globalSpkIcon: document.getElementById('global-spk-icon'), globalMicIcon: document.getElementById('global-mic-icon'),
+      btnToggleMonitor: document.getElementById('btn-toggle-monitor'), monitorSection: document.getElementById('monitor-section'),
+      editMonitorTitle: document.getElementById('edit-monitor-title'), editMonitorSource: document.getElementById('edit-monitor-source'),
+      mainMonitorTitle: document.getElementById('main-monitor-title'), 
+      monitorVideoWrapper: document.getElementById('monitor-video-wrapper'), mainMonitorSourceText: document.getElementById('main-monitor-source-text')
     };
 
     els.btnLoginShow.onclick = () => { els.loginOverlay.style.display = 'flex'; };
     document.getElementById('btn-close-login').onclick = () => { els.loginOverlay.style.display = 'none'; };
-    els.btnSettings.onclick = () => { if (!state.isAdmin) return; buildAdminMatrix(); els.adminOverlay.style.display = 'flex'; };
-    els.btnCloseAdmin.onclick = () => { els.adminOverlay.style.display = 'none'; };
+    
+    // モニター表示切替
+    els.btnToggleMonitor.onclick = () => {
+      const isActive = els.btnToggleMonitor.classList.toggle('active');
+      if (isActive) els.monitorSection.classList.add('show');
+      else els.monitorSection.classList.remove('show');
+      forceResize();
+    };
+
+    // パッチパネル開閉 ＆ カメラデバイス取得
+    els.btnSettings.onclick = () => { 
+      if (!state.isAdmin) return; 
+      updateVideoSources(); // デバイスリスト更新
+      buildAdminMatrix(); 
+      els.adminOverlay.style.display = 'flex'; 
+      els.btnSettings.classList.add('active');
+    };
+    els.btnCloseAdmin.onclick = () => { 
+      els.adminOverlay.style.display = 'none'; 
+      els.btnSettings.classList.remove('active');
+    };
+
+    // モニター設定の同期
+    els.editMonitorTitle.addEventListener('input', (e) => {
+      state.monitorTitle = e.target.value;
+      els.mainMonitorTitle.textContent = state.monitorTitle || 'NO TITLE';
+      saveRoomState(); 
+      sendData({ type: 'update-monitor', title: state.monitorTitle });
+    });
+
+    // ★ カメラデバイスの取得処理
+    async function updateVideoSources() {
+      const select = els.editMonitorSource;
+      const currentValue = select.value;
+      select.innerHTML = '<option value="off">OFF</option><option value="screen">画面共有</option>';
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoInputs = devices.filter(device => device.kind === 'videoinput');
+        videoInputs.forEach((device, index) => {
+          const option = document.createElement('option');
+          option.value = device.deviceId;
+          option.text = device.label || `Camera ${index + 1}`;
+          select.appendChild(option);
+        });
+        if (Array.from(select.options).some(opt => opt.value === currentValue)) {
+          select.value = currentValue;
+        }
+      } catch (e) {
+        console.warn('カメラデバイス取得エラー', e);
+      }
+    }
+
+    // ★ ローカルの映像をPublishする処理（1台のみの送信想定）
+    let currentVideoTrack = null;
+    els.editMonitorSource.addEventListener('change', async (e) => {
+      if (!state.room || !state.room.localParticipant) return;
+      const deviceId = e.target.value;
+      
+      try {
+        // 一旦すべての映像送信を解除
+        await state.room.localParticipant.setScreenShareEnabled(false);
+        await state.room.localParticipant.setCameraEnabled(false);
+        
+        if (deviceId === 'off') {
+          detachVideoTrack();
+          return;
+        }
+        
+        // 映像の送信を開始
+        if (deviceId === 'screen') {
+          await state.room.localParticipant.setScreenShareEnabled(true);
+        } else {
+          await state.room.localParticipant.setCameraEnabled(true, { deviceId: { exact: deviceId } });
+        }
+        
+        // 送信した映像を自分の画面にも表示
+        const tracks = state.room.localParticipant.videoTrackPublications;
+        tracks.forEach(pub => { if (pub.track) attachVideoTrack(pub.track); });
+
+      } catch (err) {
+        console.error("映像送信エラー: ", err);
+        alert("映像の取得に失敗しました。カメラや画面共有の許可を確認してください。");
+        els.editMonitorSource.value = 'off';
+        detachVideoTrack();
+      }
+    });
+
+    // 映像を画面に貼り付ける関数
+    function attachVideoTrack(track) {
+      let videoEl = els.monitorVideoWrapper.querySelector('video');
+      if (!videoEl) {
+        videoEl = document.createElement('video');
+        videoEl.autoplay = true;
+        videoEl.playsInline = true;
+        els.monitorVideoWrapper.appendChild(videoEl);
+      }
+      track.attach(videoEl);
+      els.mainMonitorSourceText.style.display = 'none';
+    }
+
+    // 映像を画面から剥がす関数
+    function detachVideoTrack(track) {
+      const videoEl = els.monitorVideoWrapper.querySelector('video');
+      if (videoEl) {
+        if (track) track.detach(videoEl);
+        videoEl.remove();
+      }
+      if (!els.monitorVideoWrapper.querySelector('video')) {
+        els.mainMonitorSourceText.style.display = 'block';
+      }
+    }
 
     const iconSpeaker = `<svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
     const iconSpeakerOff = `<svg class="btn-icon" viewBox="0 0 24 24"><path fill="currentColor" opacity="0.4" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/><line x1="4" y1="4" x2="20" y2="20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
     const iconMic = `<svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>`;
     const iconMicOff = `<svg class="btn-icon" viewBox="0 0 24 24"><path fill="currentColor" opacity="0.4" d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/><line x1="4" y1="4" x2="20" y2="20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
-    const iconSettings = `<svg class="btn-icon" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>`;
 
     els.globalSpkIcon.innerHTML = iconSpeakerOff; els.globalMicIcon.innerHTML = iconMicOff;
 
@@ -393,7 +586,7 @@
 
     function saveRoomState() {
       if(!state.roomId) return;
-      const data = { channels, userAssignments: state.userAssignments, registeredUsers: state.registeredUsers };
+      const data = { channels, userAssignments: state.userAssignments, registeredUsers: state.registeredUsers, monitorTitle: state.monitorTitle };
       safeStorage.set('yytalk_room_' + state.roomId, JSON.stringify(data));
     }
 
@@ -426,7 +619,11 @@
     function loadRoomState(roomId) {
       const saved = safeStorage.get('yytalk_room_' + roomId);
       if (saved) {
-        try { const parsed = JSON.parse(saved); if (parsed?.channels?.length > 0) { resetAndApplyChannels(parsed.channels, parsed.userAssignments, parsed.registeredUsers); return; } } catch(e){}
+        try { 
+          const parsed = JSON.parse(saved); 
+          if(parsed.monitorTitle) { state.monitorTitle = parsed.monitorTitle; els.mainMonitorTitle.textContent = state.monitorTitle; els.editMonitorTitle.value = state.monitorTitle; }
+          if (parsed?.channels?.length > 0) { resetAndApplyChannels(parsed.channels, parsed.userAssignments, parsed.registeredUsers); return; } 
+        } catch(e){}
       }
       const defaultChannels = [
         { id: 'ch1', name: 'TEST', type: 'local' }, { id: 'ch2', name: 'VE', type: 'PL' },
@@ -680,7 +877,6 @@
         if (type === 'talk' && state.talkStates[channelId] !== active) { 
             state.talkStates[channelId] = active; changed = true; 
             if (card) { if(active) card.classList.add('talk-on'); else card.classList.remove('talk-on'); } 
-            
             if (state.isAdmin) {
                 const adminMicBtn = document.querySelector(`.remote-mic-btn[data-uid="${state.myUserId}"][data-chid="${channelId}"]`);
                 if (adminMicBtn) { if(active) adminMicBtn.classList.add('active'); else adminMicBtn.classList.remove('active'); }
@@ -689,7 +885,6 @@
         if (type === 'listen' && state.listenStates[channelId] !== active) { 
             state.listenStates[channelId] = active; changed = true; 
             if (card) { if(active) card.classList.add('listen-on'); else card.classList.remove('listen-on'); } 
-
             if (state.isAdmin) {
                 const adminSpkBtn = document.querySelector(`.remote-spk-btn[data-uid="${state.myUserId}"][data-chid="${channelId}"]`);
                 if (adminSpkBtn) { if(active) adminSpkBtn.classList.add('active'); else adminSpkBtn.classList.remove('active'); }
@@ -746,7 +941,6 @@
       if (uid === state.myUserId) applyAssignments(state.userAssignments[uid]);
     };
 
-    // ★ マトリックスUI構築
     function buildAdminMatrix() {
       if (!state.isAdmin) return;
       const container = document.getElementById('admin-matrix-container');
@@ -768,8 +962,7 @@
             const activeClass = isAssigned ? 'active' : ''; 
             const disabledClass = isAssigned ? '' : 'disabled';
             
-            let isMicOn = false;
-            let isSpkOn = false;
+            let isMicOn = false; let isSpkOn = false;
             if (uid === state.myUserId) {
                 isMicOn = state.talkStates[ch.id] === true;
                 isSpkOn = state.listenStates[ch.id] === true;
@@ -780,7 +973,6 @@
             const micActiveClass = isMicOn ? 'active' : '';
             const spkActiveClass = isSpkOn ? 'active' : '';
 
-            // ★ 1つのセル内に SET, SPK, MIC, メーターを配置
             html += `<td>
               <div class="cell-layout">
                 <div class="matrix-toggle ${activeClass}" data-uid="${uid}" data-chid="${ch.id}"></div>
@@ -798,7 +990,6 @@
       });
       html += `</tbody></table></div>`; container.innerHTML = html;
 
-      // SETボタンのクリック処理（マニュアル運用：勝手にONにしない）
       container.querySelectorAll('.matrix-toggle').forEach(btn => {
         btn.onclick = (e) => {
           const uid = e.target.getAttribute('data-uid'); const chid = e.target.getAttribute('data-chid'); let assigned = state.userAssignments[uid] || [];
@@ -819,7 +1010,6 @@
         };
       });
 
-      // ★ SPK（LISTEN）リモート操作
       container.querySelectorAll('.remote-spk-btn').forEach(btn => {
         btn.onclick = (e) => {
           if (btn.classList.contains('disabled')) return;
@@ -840,7 +1030,6 @@
         };
       });
 
-      // ★ MIC（TALK）リモート操作
       container.querySelectorAll('.remote-mic-btn').forEach(btn => {
         btn.onclick = (e) => {
           if (btn.classList.contains('disabled')) return; 
@@ -929,7 +1118,6 @@
         }
         else if (data.type === 'update-registered') { state.registeredUsers = data.registered || []; saveRoomState(); if(state.isAdmin) buildAdminMatrix(); }
         
-        // トーク（マイク）状態の同期
         else if (data.type === 'update-talk-states') { 
           state.remoteTalkStates[senderId] = data.states || {}; 
           updateAudioRouting(); 
@@ -940,7 +1128,6 @@
              });
           }
         }
-        // リッスン（スピーカー）状態の同期
         else if (data.type === 'update-listen-states') {
           state.remoteListenStates[senderId] = data.states || {};
           if (state.isAdmin) {
@@ -950,7 +1137,6 @@
              });
           }
         }
-        // 強制TALK受信
         else if (data.type === 'force-talk') {
           if (data.targetUid === state.myUserId) {
             state.talkStates[data.chId] = data.active;
@@ -961,7 +1147,6 @@
             updateAudioRouting(); updateChannelIcons(); syncTalkStates();
           }
         }
-        // 強制LISTEN受信
         else if (data.type === 'force-listen') {
           if (data.targetUid === state.myUserId) {
             state.listenStates[data.chId] = data.active;
@@ -1003,6 +1188,13 @@
           saveRoomState(); if(state.isAdmin) buildAdminMatrix();
         }
         else if (data.type === 'remove-channel') { if(data.chId) removeChannel(data.chId); saveRoomState(); if(state.isAdmin) buildAdminMatrix(); }
+        // ★ モニター設定の同期受信
+        else if (data.type === 'update-monitor') {
+          state.monitorTitle = data.title;
+          els.mainMonitorTitle.textContent = data.title || 'NO TITLE';
+          if (state.isAdmin) els.editMonitorTitle.value = data.title;
+          saveRoomState();
+        }
     }
 
     function removePeer(peerId) {
@@ -1015,7 +1207,7 @@
     function updateUserCount() {
       if(!state.room) return;
       const activeCount = state.room.remoteParticipants.size + 1;
-      els.roleDisplay.textContent = `ACTIVE (${activeCount})`; els.roleDisplay.style.color = 'var(--blue)';
+      els.roleDisplay.textContent = `ACTIVE (${activeCount})`; els.roleDisplay.style.display = 'block';
       els.btnLoginShow.textContent = "Connected"; els.btnLoginShow.classList.add('online');
       if (state.isAdmin) { document.querySelectorAll('.admin-matrix th').forEach(th => { const uidSpan = th.querySelector('span[style*="font-weight:bold"]'); if(uidSpan) { const uid = uidSpan.textContent; const isPeerOnline = uid === state.myUserId || state.room.remoteParticipants.has(uid); const dot = th.querySelector('span:first-child'); if(dot) dot.style.color = isPeerOnline ? 'var(--green)' : 'var(--text-sub)'; } }); }
     }
@@ -1041,7 +1233,7 @@
       const rawRoomId = els.hostIdInput.value.trim() || 'yytalk'; const myName = els.joinUserIdInput.value.trim() || 'Unknown';
       state.roomId = rawRoomId; state.myUserId = myName; state.isAdmin = isAdmin;
       els.roomNameDisplay.textContent = `${rawRoomId}${isAdmin ? ' (Admin)' : ''}`;
-      if (isAdmin) { els.btnSettings.style.display = 'flex'; els.btnSettings.innerHTML = iconSettings; } else { els.btnSettings.style.display = 'none'; }
+      if (isAdmin) { els.btnSettings.style.display = 'flex'; } else { els.btnSettings.style.display = 'none'; }
       LocalProfile.set({ roomId: rawRoomId, userId: myName, isAdmin });
       
       loadRoomState(state.roomId);
@@ -1070,10 +1262,19 @@
           const callData = { stream, audioEl }; state.mediaCalls[participant.identity] = callData;
           if (audioCtx) setupPeerMixer(callData);
           updateUserCount();
+        } else if (track.kind === LivekitClient.Track.Kind.Video) {
+          // リモートからビデオが来たら表示
+          attachVideoTrack(track);
         }
       });
 
-      room.on(LivekitClient.RoomEvent.TrackUnsubscribed, (track, publication, participant) => { removePeer(participant.identity); });
+      room.on(LivekitClient.RoomEvent.TrackUnsubscribed, (track, publication, participant) => { 
+        if (track.kind === LivekitClient.Track.Kind.Video) {
+          detachVideoTrack(track);
+        } else {
+          removePeer(participant.identity); 
+        }
+      });
       room.on(LivekitClient.RoomEvent.ParticipantDisconnected, (participant) => { removePeer(participant.identity); });
       
       room.on(LivekitClient.RoomEvent.ParticipantConnected, (participant) => { 
