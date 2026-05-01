@@ -75,7 +75,6 @@
       .app-container { height: 94vh; max-height: 1200px; min-height: 600px; width: 96vw; max-width: 1800px; border-radius: 20px; border: 8px solid #1e2128; }
     }
 
-    /* モーダル基本設定 */
     .overlay-base { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; flex-direction: column; backdrop-filter: blur(4px); z-index: 1000; overflow-y: auto;}
     #login-overlay { z-index: 2000; } #audio-overlay { z-index: 1100; }
     .btn-green-solid { background: var(--green); color: #000; border: none; padding: 15px 30px; font-size: 18px; font-weight: bold; border-radius: 30px; cursor: pointer; }
@@ -88,9 +87,7 @@
     .btn-join-member { background: var(--orange); width: 100%; } .btn-join-admin { background: transparent; border: 1.5px solid var(--blue) !important; color: var(--blue) !important; width: 100%; } .btn-stop { background: var(--red); width: 100%; }
     .status-text { font-size: 12px; color: var(--text-sub); text-align: center; margin-top: 5px; font-family: 'JetBrains Mono', monospace;}
 
-    /* =========================================
-       ヘッダー 
-       ========================================= */
+    /* ヘッダー */
     .header { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; background: var(--bg-dark); flex-shrink: 0; z-index: 100; }
     .header-left { display: flex; align-items: center; }
     #app-logo { height: 26px; width: auto; margin-right: 5px; }
@@ -117,9 +114,7 @@
     .status-badge.online { border-color: var(--blue); color: var(--blue); }
     #status-role { font-size: 11px; font-family: 'JetBrains Mono', monospace; font-weight: bold; color: var(--orange); margin-right: 2px;}
 
-    /* =========================================
-       モニターエリア
-       ========================================= */
+    /* モニターエリア */
     .monitor-section {
       width: 100%; background: #000;
       display: none; flex-direction: column; align-items: center;
@@ -134,9 +129,7 @@
     .video-dummy-text { color: #555; font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: bold; z-index: 1;}
     .video-wrapper video { width: 100%; height: 100%; object-fit: contain; background: #000; position: absolute; inset: 0; z-index: 5;}
 
-    /* =========================================
-       パッチパネル (設定 + マトリックス)
-       ========================================= */
+    /* パッチパネル＆マルチオーディオ共通 */
     .admin-modal { max-width: 95%; width: auto; min-width: 320px; }
     @media (min-width: 800px) { .admin-modal { max-width: 1200px; } }
     .scroll-area { max-height: 75vh; overflow: auto; padding-right: 5px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
@@ -148,7 +141,6 @@
     }
     .setting-group { display: flex; flex-direction: column; gap: 5px; align-items: center; }
     .setting-group label { font-size: 11px; color: var(--text-sub); font-weight: bold; }
-    
     .setting-group input, .setting-group select {
       background: #1c1d21; border: 1px solid var(--border-color); color: #fff;
       border-radius: 4px; font-size: 13px; padding: 4px 6px; height: 27px;
@@ -157,6 +149,7 @@
     .setting-group input:focus, .setting-group select:focus { outline: none; border-color: var(--blue); }
     .setting-group select:disabled { opacity: 0.5; cursor: not-allowed; }
 
+    /* マトリックス系 */
     .admin-matrix-wrapper { width: 100%; overflow-x: auto; overscroll-behavior-x: none; -webkit-overflow-scrolling: touch; border-radius: 8px; background: #0a0b0d; border: 1px solid var(--border-color); position: relative; }
     .admin-matrix { width: 100%; border-collapse: separate; border-spacing: 0; min-width: max-content; text-align: center; font-size: 13px; }
     .admin-matrix th, .admin-matrix td { border-bottom: 1px solid var(--border-color); border-right: 1px solid var(--border-color); padding: 6px; }
@@ -171,9 +164,6 @@
     .btn-delete-row { margin-top: 0; }
     .admin-matrix td.ch-cell input.admin-edit-type { width: 48px; height: 27px; text-align:center; font-family:'JetBrains Mono', monospace; background:#1c1d21; border:1px solid var(--border-color); color:#fff; border-radius:4px; font-size:10px; padding:4px; }
 
-    /* =========================================
-       マトリックス セル内レイアウト
-       ========================================= */
     .cell-layout { display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 8px; }
 
     .matrix-toggle {
@@ -192,7 +182,6 @@
     .matrix-toggle.active::after { content: "SET"; }
     .matrix-toggle.active::before { background: var(--green); box-shadow: 0 0 6px var(--green); }
 
-    /* REMOTE座布団グループ */
     .remote-group {
       display: flex; flex-direction: column; align-items: center;
       background: #111216; border: 1px solid #2a2c33;
@@ -224,9 +213,7 @@
       padding: 10px 15px; border-radius: 8px; border: 1px solid var(--border-color);
     }
 
-    /* =========================================
-       グローバル & チャンネルリスト
-       ========================================= */
+    /* グローバル & チャンネルリスト */
     .global-controls { display: flex; gap: 10px; padding: 5px 15px 10px; background: var(--bg-dark); border-bottom: 2px solid var(--green); flex-shrink: 0; z-index: 10;}
     .btn-global { flex: 1; padding: 8px 10px; border: none; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; font-family: 'JetBrains Mono', monospace; }
     .slash-line { display: none; } .muted-slash .slash-line { display: block; opacity: 1; }
@@ -339,7 +326,6 @@
         <button class="btn-close-login" id="btn-close-admin">×</button>
         <h3 style="margin: 0 0 15px 0; color: var(--text-main); text-align: center;">パッチパネル</h3>
         <div class="scroll-area">
-          
           <div class="admin-settings-row">
             <div class="setting-group">
               <label>モニター名称</label>
@@ -353,7 +339,6 @@
               </select>
             </div>
           </div>
-
           <div id="admin-matrix-container"></div>
           <button id="btn-add-ch" style="background:transparent; border:1px solid var(--green); color:var(--green); width:100%; padding:10px; margin-top:15px; border-radius:8px; cursor:pointer; font-weight:bold; transition: background 0.2s;">＋ 新規パーティーを追加</button>
         </div>
@@ -363,21 +348,23 @@
     <div id="multi-audio-overlay" class="overlay-base">
       <div class="login-modal admin-modal" style="max-width: 600px;">
         <button class="btn-close-login" id="btn-close-multi-audio">×</button>
-        <h3 style="margin: 0 0 15px 0; color: var(--text-main); text-align: center;">マルチオーディオモニター</h3>
+        <h3 style="margin: 0 0 15px 0; color: var(--text-main); text-align: center;">マルチオーディオ強制モニター</h3>
         
         <div class="admin-settings-row" style="margin-bottom: 15px;">
-          <div class="setting-group" style="flex-direction: row; gap: 15px; width: 100%;">
-            <select id="multi-audio-source" style="flex: 1; width: auto; max-width: 300px;">
+          <div class="setting-group" style="flex-direction: row; gap: 10px; width: 100%;">
+            <select id="multi-audio-source" style="flex: 1; width: auto; max-width: 260px;">
               <option value="off">OFF</option>
             </select>
-            <button id="btn-start-multi-audio" style="background: var(--blue); color: #fff; border: none; padding: 0 20px; height: 27px; border-radius: 4px; cursor: pointer; font-weight: bold; font-family: 'JetBrains Mono', monospace;">CONNECT</button>
+            <input type="number" id="multi-audio-ch-target" value="16" min="2" max="32" style="width: 50px; padding: 4px;" title="強制要求チャンネル数">
+            <span style="font-size: 11px; color: var(--text-sub); margin-right: 5px;">ch</span>
+            <button id="btn-start-multi-audio" style="background: var(--blue); color: #fff; border: none; padding: 0 15px; height: 27px; border-radius: 4px; cursor: pointer; font-weight: bold; font-family: 'JetBrains Mono', monospace;">CONNECT</button>
           </div>
         </div>
 
         <div class="scroll-area">
           <div id="multi-audio-channels-container" style="display: flex; flex-direction: column; gap: 10px;">
             <div style="text-align: center; color: var(--text-sub); font-size: 12px; padding: 20px 0;">
-              デバイスを選択し [CONNECT] を押してください
+              デバイスと要求ch数を選択し [CONNECT] を押してください
             </div>
           </div>
         </div>
@@ -404,7 +391,6 @@
         <span id="header-room-name" style="margin-left: 8px; font-size: 13px; color: var(--text-sub); font-family: 'JetBrains Mono', monospace;"></span>
       </div>
       <div class="header-right">
-        
         <span id="status-role" style="display: none;"></span>
 
         <button id="btn-multi-audio" class="btn-header-icon admin-only" title="マルチオーディオモニター">
@@ -474,7 +460,7 @@
       remoteTalkStates: {}, remoteListenStates: {}, channelNodes: {}, 
       isAdmin: false, audioEnabled: false, isMasterSpkMuted: false, isMasterMicMuted: false,
       monitorTitle: 'MONITOR',
-      activeVideoSender: null 
+      activeVideoSender: null
     };
 
     const LIVEKIT_WS_URL = "wss://yy-talk-pe8z9ycq.livekit.cloud";
@@ -558,45 +544,60 @@
     let multiAudioStream = null;
     let multiAudioNodes = [];
 
-    // ★ マルチチャンネルオーディオ取得（エコーキャンセル等OFFで生データを引く）
+    // ★ マルチチャンネルオーディオ取得（超強行突破モード）
     els.btnStartMultiAudio.onclick = async () => {
       const deviceId = els.multiAudioSource.value;
+      const targetCh = parseInt(document.getElementById('multi-audio-ch-target').value, 10) || 16;
+
       if (deviceId === 'off') {
         stopMultiAudioMonitor();
-        els.multiAudioChannelsContainer.innerHTML = '<div style="text-align: center; color: var(--text-sub); font-size: 12px; padding: 20px 0;">デバイスを選択し [CONNECT] を押してください</div>';
+        els.multiAudioChannelsContainer.innerHTML = '<div style="text-align: center; color: var(--text-sub); font-size: 12px; padding: 20px 0;">デバイスと要求ch数を選択し [CONNECT] を押してください</div>';
         return;
       }
 
       stopMultiAudioMonitor();
       els.btnStartMultiAudio.textContent = '読込中...';
+      els.multiAudioChannelsContainer.innerHTML = `<div style="text-align: center; color: var(--orange); font-size: 12px; padding: 20px 0;">[ ${targetCh} ch ] での強制取得を試行中...</div>`;
 
       try {
-        // 制約解除して32ch要求
-        multiAudioStream = await navigator.mediaDevices.getUserMedia({
+        let constraints = {
           audio: { 
             deviceId: { exact: deviceId }, 
-            channelCount: { ideal: 32 },
+            channelCount: { exact: targetCh }, // 強制ポイント
             echoCancellation: false,
             noiseSuppression: false,
-            autoGainControl: false
+            autoGainControl: false,
+            sampleRate: { ideal: 48000 }
           }
-        });
+        };
+
+        try {
+          multiAudioStream = await navigator.mediaDevices.getUserMedia(constraints);
+        } catch (e) {
+          console.warn("exact指定がOSに拒否されました。ideal指定で再アタックします。", e);
+          constraints.audio.channelCount = { ideal: targetCh };
+          multiAudioStream = await navigator.mediaDevices.getUserMedia(constraints);
+        }
 
         if (!multiAudioCtx) multiAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
         if (multiAudioCtx.state === 'suspended') multiAudioCtx.resume();
 
         const source = multiAudioCtx.createMediaStreamSource(multiAudioStream);
-        const channelCount = source.channelCount || multiAudioStream.getAudioTracks()[0].getSettings().channelCount || 2;
         
-        console.log(`マルチオーディオ取得成功: ${channelCount} channels`);
+        const actualChannelCount = source.channelCount || multiAudioStream.getAudioTracks()[0].getSettings().channelCount || 2;
+        console.log(`要求CH: ${targetCh} => 実際の取得CH: ${actualChannelCount} channels`);
 
-        const splitter = multiAudioCtx.createChannelSplitter(channelCount);
+        if (actualChannelCount < targetCh) {
+           alert(`【警告】\n${targetCh}chを要求しましたが、OSまたはブラウザの制限により ${actualChannelCount}ch までしか取得できませんでした。\n\n※OSのオーディオ設定(Audio MIDI設定など)のフォーマットを確認してください。`);
+        }
+
+        const splitter = multiAudioCtx.createChannelSplitter(actualChannelCount);
         source.connect(splitter);
 
         els.multiAudioChannelsContainer.innerHTML = '';
         multiAudioNodes = [];
 
-        for (let i = 0; i < channelCount; i++) {
+        for (let i = 0; i < actualChannelCount; i++) {
           const analyser = multiAudioCtx.createAnalyser();
           analyser.fftSize = 256;
           
@@ -638,9 +639,10 @@
         els.btnStartMultiAudio.textContent = 'CONNECTED';
       } catch (err) {
         console.error("マルチオーディオ取得エラー:", err);
-        alert("オーディオデバイスの取得に失敗しました。");
+        alert(`デバイスの取得に失敗しました。\n(OSが ${targetCh}ch の出力を許可していない可能性があります)\n\n詳細: ` + err.message);
         els.multiAudioSource.value = 'off';
         els.btnStartMultiAudio.textContent = 'CONNECT';
+        els.multiAudioChannelsContainer.innerHTML = '<div style="text-align: center; color: var(--text-sub); font-size: 12px; padding: 20px 0;">デバイスと要求ch数を選択し [CONNECT] を押してください</div>';
       }
     };
 
