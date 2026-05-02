@@ -650,9 +650,9 @@
       
       loadRoomState(state.roomId);
 
-      // ★ クラウドMQTT（HiveMQパブリックブローカー）による超低遅延タリー受信
+      // ★ クラウドMQTT（Mosquittoパブリックブローカー）による超低遅延タリー受信
       const tallyTopic = "yytalk/tally/" + encodeURIComponent(rawRoomId);
-      const mqttClient = mqtt.connect('wss://broker.hivemq.com:8443/mqtt');
+      const mqttClient = mqtt.connect('wss://test.mosquitto.org:8081');
 
       mqttClient.on('connect', () => {
         console.log('✅ MQTTブローカー接続完了。タリー待機中...');
