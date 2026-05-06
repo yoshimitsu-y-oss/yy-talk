@@ -76,8 +76,13 @@
     .video-wrapper.tally-on { border: 4px solid var(--alert) !important; box-shadow: 0 0 30px rgba(239, 68, 68, 0.8), inset 0 0 30px rgba(239, 68, 68, 0.6); }
     .video-dummy-text { color: #555; font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: bold; z-index: 1;} .video-wrapper video { width: 100%; height: 100%; object-fit: contain; background: #000; position: absolute; inset: 0; z-index: 5;}
     
-    .admin-modal { width: 95%; max-width: 1200px; max-height: 90vh; display: flex; flex-direction: column; padding: 20px 15px; margin-top: 5vh; margin-bottom: auto; }
-    .admin-tabs { display: flex; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
+    .admin-modal { width: 95%; max-width: 1200px; max-height: 90vh; display: flex; flex-direction: column; padding: 20px 15px; margin-top: 5vh; margin-bottom: auto; position: relative; }
+    
+    /* 修正: ×ボタンの干渉防止 */
+    .btn-close-modal { position: absolute; top: 12px; right: 12px; width: 34px; height: 34px; background: var(--bg-dark); border: 1px solid var(--border-color); color: var(--text-sub); border-radius: 50%; font-size: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 100; transition: 0.2s; padding: 0; }
+    .btn-close-modal:hover { background: var(--alert); color: #fff; border-color: var(--alert); }
+
+    .admin-tabs { display: flex; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); flex-shrink: 0; padding-right: 45px; /* ×ボタン用の余白 */ }
     .admin-tabs button { flex: 1; background: transparent; border: none; color: var(--text-sub); padding: 12px; font-weight: bold; cursor: pointer; font-size: 13px; border-bottom: 2px solid transparent; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
     .admin-tabs button svg { width: 18px; height: 18px; fill: currentColor; } .admin-tabs button.active { color: var(--blue); border-bottom: 2px solid var(--blue); background: rgba(59, 130, 246, 0.05); }
     .scroll-area { flex: 1; overflow-y: auto; padding-right: 5px; scrollbar-width: none; -webkit-overflow-scrolling: touch; min-height: 0; } .scroll-area::-webkit-scrollbar { display: none; }
@@ -178,7 +183,7 @@
 
     <div id="admin-overlay" class="overlay-base">
       <div class="login-modal admin-modal">
-        <button class="btn-close-login" id="btn-close-admin">×</button>
+        <button id="btn-close-admin" class="btn-close-modal">×</button>
         <div class="admin-tabs">
           <button id="tab-video" class="active"><svg viewBox="0 0 24 24"><path d="M23 7l-7 5 7 5V7zM1 6c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H3c-1.1 0-2-.9-2-2V6z"/></svg>VIDEO & TALLY</button>
           <button id="tab-patch"><svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>PATCH PANEL</button>
@@ -190,8 +195,7 @@
             <div class="admin-settings-row">
               <div class="setting-group"><label style="color: var(--text-sub);">MONITOR NAME</label><input type="text" id="edit-monitor-title" value="MONITOR"></div>
               <div class="setting-group"><label style="color: var(--text-sub);">VIDEO SOURCE</label><select id="edit-monitor-source"><option value="off">OFF</option><option value="screen">画面共有</option></select></div>
-              <div class="setting-group"><label style="color: var(--text-sub);">AUDIO SOURCE (PGM AUDIO)</label><select id="edit-monitor-audio-source"><option value="off">OFF</option></select></div>
-            </div>
+              </div>
             <div class="admin-settings-row" style="flex-direction: column; align-items: stretch;">
               <span class="tally-label" style="color: var(--text-sub);">TALLY ROUTING</span>
               <div id="tally-assignment-list" style="display: flex; flex-direction: column;"></div>
@@ -288,7 +292,7 @@
 
     const LIVEKIT_WS_URL = "wss://yy-talk-pe8z9ycq.livekit.cloud";
     const WORKER_AUTH_URL = "https://yy-talk.yoshimitsu-y.workers.dev";
-    let channels = []; let currentLocalVideoTrack = null; let pgmAudioTrack = null;
+    let channels = []; let currentLocalVideoTrack = null;
 
     const els = {
       statusMsg: document.getElementById('status-msg'), hostIdInput: document.getElementById('host-id'), joinUserIdInput: document.getElementById('join-userid'),
@@ -300,7 +304,7 @@
       btnMasterSpk: document.getElementById('btn-master-spk'), btnMasterMic: document.getElementById('btn-master-mic'),
       globalSpkIcon: document.getElementById('global-spk-icon'), globalMicIcon: document.getElementById('global-mic-icon'),
       btnToggleMonitor: document.getElementById('btn-toggle-monitor'), monitorSection: document.getElementById('monitor-section'),
-      editMonitorTitle: document.getElementById('edit-monitor-title'), editMonitorSource: document.getElementById('edit-monitor-source'), editMonitorAudioSource: document.getElementById('edit-monitor-audio-source'),
+      editMonitorTitle: document.getElementById('edit-monitor-title'), editMonitorSource: document.getElementById('edit-monitor-source'),
       mainMonitorTitle: document.getElementById('main-monitor-title'), monitorVideoWrapper: document.getElementById('monitor-video-wrapper'), mainMonitorSourceText: document.getElementById('main-monitor-source-text'),
       tabVideo: document.getElementById('tab-video'), tabPatch: document.getElementById('tab-patch'), tabIo: document.getElementById('tab-io'),
       secVideo: document.getElementById('admin-video-section'), secPatch: document.getElementById('admin-patch-section'), secIo: document.getElementById('admin-io-section'),
@@ -426,26 +430,7 @@
           if (Array.from(select.options).some(opt => opt.value === currentValue)) select.value = currentValue; else select.value = 'off';
         } catch (e) {}
       }
-      const aSelect = els.editMonitorAudioSource; const aCurrentValue = aSelect.value;
-      try {
-        const devices = await navigator.mediaDevices.enumerateDevices(); const audioInputs = devices.filter(device => device.kind === 'audioinput');
-        aSelect.innerHTML = '<option value="off">OFF</option>';
-        audioInputs.forEach((device, index) => { const option = document.createElement('option'); option.value = device.deviceId; option.text = device.label || `Audio ${index + 1}`; aSelect.appendChild(option); });
-        if (Array.from(aSelect.options).some(opt => opt.value === aCurrentValue)) aSelect.value = aCurrentValue; else aSelect.value = 'off';
-      } catch (e) {}
     }
-
-    els.editMonitorAudioSource.addEventListener('change', async (e) => {
-      if (!state.room || !state.room.localParticipant) return;
-      const deviceId = e.target.value;
-      if (pgmAudioTrack) { pgmAudioTrack.stop(); await state.room.localParticipant.unpublishTrack(pgmAudioTrack); pgmAudioTrack = null; }
-      if (deviceId === 'off') return;
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: { exact: deviceId }, echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
-        const rawTrack = stream.getAudioTracks()[0]; pgmAudioTrack = new LivekitClient.LocalAudioTrack(rawTrack);
-        await state.room.localParticipant.publishTrack(pgmAudioTrack, { name: 'pgm-audio', source: LivekitClient.Track.Source.Microphone });
-      } catch (err) { e.target.value = 'off'; }
-    });
 
     els.editMonitorSource.addEventListener('change', async (e) => {
       if (!state.room || !state.room.localParticipant) return;
@@ -455,7 +440,7 @@
         if (currentLocalVideoTrack) { detachVideoTrack(currentLocalVideoTrack); currentLocalVideoTrack = null; }
         await state.room.localParticipant.setScreenShareEnabled(false); await state.room.localParticipant.setCameraEnabled(false);
         const existingPubs = Array.from(state.room.localParticipant.videoTrackPublications.values());
-        for (const pub of existingPubs) { if (pub.track && pub.track.name !== 'pgm-audio') { pub.track.stop(); await state.room.localParticipant.unpublishTrack(pub.track); } }
+        for (const pub of existingPubs) { if (pub.track) { pub.track.stop(); await state.room.localParticipant.unpublishTrack(pub.track); } }
         els.monitorVideoWrapper.querySelectorAll('video').forEach(v => v.remove());
         await new Promise(resolve => setTimeout(resolve, 600));
 
@@ -512,7 +497,7 @@
     }
 
     function createChannelCard(ch) {
-      if(!ch || ch.id === 'ch-video') return; // メイン画面からVIDEOカードを非表示（モニター部で兼任）
+      if(!ch || ch.id === 'ch-video') return; 
       if(state.listenStates[ch.id] === undefined) state.listenStates[ch.id] = false; if(state.talkStates[ch.id] === undefined) state.talkStates[ch.id] = false; if(state.channelVolumes[ch.id] === undefined) state.channelVolumes[ch.id] = 1.5;
       const listenClass = state.listenStates[ch.id] ? 'listen-on' : ''; const talkClass = state.talkStates[ch.id] ? 'talk-on' : '';
       const curListenIcon = state.isMasterSpkMuted ? iconSpeakerOff : iconSpeaker; const curTalkIcon = state.isMasterMicMuted ? iconMicOff : iconMic;
@@ -598,7 +583,6 @@
         channels?.forEach(ch => { if (state.channelNodes[ch.id]) { const chData = new Uint8Array(state.channelNodes[ch.id].analyser.frequencyBinCount); state.channelNodes[ch.id].analyser.getByteFrequencyData(chData); let chSum = 0; for(let i=0; i<chData.length; i++) chSum += chData[i]; let chPercent = ((chSum / chData.length) / 255) * 100 * 2.5; if (state.talkStates[ch.id]) chPercent = Math.max(chPercent, localPercent); const meterEl = document.getElementById(`ch-meter-fill-${ch.id}`); if (meterEl) meterEl.style.width = Math.max(100 - Math.min(chPercent, 100), 0) + '%'; } });
         if (state.isAdmin) {
           state.registeredUsers?.forEach(uid => {
-            if (uid.startsWith('PGM_AUDIO_')) return;
             let userVolRatio = 0;
             if (uid === state.myUserId) { if (localMicAnalyser && localData) { let peak = 0; for(let i=0; i<localData.length; i++) { if(localData[i] > peak) peak = localData[i]; } userVolRatio = peak / 255; } }
             else { const callInfo = state.mediaCalls[uid]; if (callInfo && callInfo.analyser) { const pData = new Uint8Array(callInfo.analyser.frequencyBinCount); callInfo.analyser.getByteFrequencyData(pData); let peak = 0; for(let i=0; i<pData.length; i++) { if(pData[i] > peak) peak = pData[i]; } userVolRatio = peak / 255; } }
@@ -643,6 +627,17 @@
         updateAudioRouting(); updateChannelIcons(); if (changed && type === 'talk') syncTalkStates(); if (changed && type === 'listen') syncListenStates();
       }
       btn.addEventListener('pointerdown', (e) => { 
+          if (type === 'talk') {
+              const ch = channels.find(c => c.id === channelId);
+              if (ch && ch.type === 'Local') {
+                  let activeTalkers = 0;
+                  for (let uid in state.remoteTalkStates) if (state.remoteTalkStates[uid] && state.remoteTalkStates[uid][channelId]) activeTalkers++;
+                  if (activeTalkers >= 2) {
+                      btn.style.opacity = '0.3'; setTimeout(() => btn.style.opacity = '1', 300);
+                      return;
+                  }
+              }
+          }
           btn.setPointerCapture(e.pointerId); isDown = true; startX = e.clientX; els.dummyAudio?.play().catch(()=>{}); btn.style.transition = 'none'; if (!isLatched) { btn.classList.add('active'); applyState(true); } 
       });
       btn.addEventListener('pointermove', (e) => { if (!isDown) return; let deltaX = e.clientX - startX; if ((slideDir === 1 && deltaX < 0) || (slideDir === -1 && deltaX > 0)) { deltaX = 0; } const targetDistance = 120; let visualMoveX = deltaX; if (Math.abs(deltaX) > 20) { const sign = Math.sign(deltaX); const over = Math.abs(deltaX) - 20; visualMoveX = sign * (20 + Math.pow(over, 0.4) * 15); } if (Math.abs(deltaX) > targetDistance && Math.sign(deltaX) === slideDir) { isDown = false; btn.releasePointerCapture(e.pointerId); btn.style.transition = 'transform 0.15s ease-out'; btn.style.transform = `translateX(0px)`; if (isLatched) { isLatched = false; btn.classList.remove('latched', 'active'); if (navigator.vibrate) navigator.vibrate([30, 50, 30]); applyState(false); } else { isLatched = true; btn.classList.add('latched'); if (navigator.vibrate) navigator.vibrate(50); applyState(true); } return; } btn.style.transform = `translateX(${visualMoveX}px)`; });
@@ -686,30 +681,26 @@
       if (!state.isAdmin) return; const container = document.getElementById('admin-matrix-container'); if(!container) return;
       let html = `<div class="admin-matrix-wrapper"><table class="admin-matrix"><thead><tr><th class="diagonal-header"><span class="dh-member" style="color:var(--text-sub);">MEMBER</span><span class="dh-party" style="color:var(--text-sub);">PARTY</span></th>`;
       state.registeredUsers?.forEach(uid => {
-          if (uid.startsWith('PGM_AUDIO_')) return;
           const isOnline = uid === state.myUserId || (state.room && state.room.remoteParticipants.has(uid)); const statusColor = isOnline ? 'var(--green)' : 'var(--text-sub)';
           html += `<th class="matrix-user-header" onclick="toggleAllUserAssignments('${uid}')"><div style="display:flex; align-items:center; justify-content:center; gap:5px; margin-bottom:6px;"><span style="color:${statusColor}; font-size:10px;">●</span><span style="font-weight:bold; color:var(--text-main); font-family: 'JetBrains Mono', monospace; font-size:13px;">${uid}</span><div style="position: relative; width: 6px; height: 14px; background: #000; border-radius: 2px; overflow: hidden; margin-left: 4px; box-shadow: inset 0 0 2px rgba(0,0,0,0.8);"><div id="user-meter-${uid}" style="position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to top, #22c55e, #eab308, #ef4444); transform-origin: bottom; transform: scaleY(0); transition: transform 0.05s ease-out;"></div></div></div><button class="btn-delete-col" data-uid="${uid}" onclick="event.stopPropagation();">削除</button></th>`;
       });
       html += `<th><button id="btn-add-user" style="background:var(--blue); color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;">＋ 追加</button></th></tr></thead><tbody>`;
       channels?.forEach(ch => {
-          // 🛑 修正1：パッチパネルから VIDEO 行を完全に非表示にする
           if(!ch || ch.id === 'ch-video') return; 
           
           const typeSelect = `<select class="admin-edit-type" data-id="${ch.id}"><option value="PL" ${ch.type==='PL'?'selected':''}>PL</option><option value="Local" ${ch.type==='Local'?'selected':''}>Local</option><option value="Listen" ${ch.type==='Listen'?'selected':''}>Listen</option></select>`;
           html += `<tr><td class="ch-cell" style="vertical-align: middle;"><div style="display:flex; gap:6px; align-items:center; justify-content:space-between; width:100%; height:100%;"><div style="display:flex; gap:4px; flex:1; align-items:center;"><input type="text" class="admin-edit-name" data-id="${ch.id}" value="${ch.name}" style="flex:1; width:70px; font-size:11px;" ${ch.fixed?'disabled':''}>${typeSelect}</div>${ch.fixed?'<div style="width:48px;"></div>':`<button class="btn-delete-row" data-id="${ch.id}">削除</button>`}</div></td>`;
           state.registeredUsers?.forEach(uid => { 
-            if (uid.startsWith('PGM_AUDIO_')) return;
             const isAssigned = (state.userAssignments[uid] || []).includes(ch.id); const activeClass = isAssigned ? 'active' : ''; const disabledClass = isAssigned ? '' : 'disabled';
             let isMicOn = false; let isSpkOn = false;
             if (uid === state.myUserId) { isMicOn = state.talkStates[ch.id] === true; isSpkOn = state.listenStates[ch.id] === true; } else { isMicOn = state.remoteTalkStates[uid] && state.remoteTalkStates[uid][ch.id] === true; isSpkOn = state.remoteListenStates[uid] && state.remoteListenStates[uid][ch.id] === true; }
             const micActiveClass = isMicOn ? 'active' : ''; const spkActiveClass = isSpkOn ? 'active' : ''; 
             
-            // 🛑 修正2：Listenの時はマイクボタン（リモート用）を完全に消去する（透明な空箱を置く）
             let micBtnHtml = '';
             if (ch.type !== 'Listen') {
               micBtnHtml = `<div class="circle-btn remote-mic-btn ${disabledClass} ${micActiveClass}" data-uid="${uid}" data-chid="${ch.id}"><svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg></div>`;
             } else {
-              micBtnHtml = `<div style="width: 26px; height: 26px; opacity: 0.1; display: flex; align-items: center; justify-content: center;"><svg viewBox="0 0 24 24" style="width: 14px; height: 14px; fill: #444;"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg></div>`;
+              micBtnHtml = `<div style="width: 26px; height: 26px;"></div>`;
             }
 
             html += `<td><div class="cell-layout"><div class="matrix-toggle ${activeClass}" data-uid="${uid}" data-chid="${ch.id}"></div><div class="remote-group"><div class="remote-label">REMOTE</div><div class="remote-buttons"><div class="circle-btn remote-spk-btn ${disabledClass} ${spkActiveClass}" data-uid="${uid}" data-chid="${ch.id}"><svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></div>${micBtnHtml}</div></div><div class="cp-meter-bg"><div class="cp-meter-bar" id="cp-meter-${uid}-${ch.id}"></div></div></div></td>`; 
@@ -726,7 +717,6 @@
           if (assigned.includes(chid)) { 
             assigned = assigned.filter(id => id !== chid); 
           } else { 
-            // 🛑 修正3：Localの場合、アサインを最大2人までにブロックする
             if (ch && ch.type === 'Local') {
               let count = 0;
               for (let u in state.userAssignments) {
@@ -734,7 +724,7 @@
               }
               if (count >= 2) {
                 alert(`【制限】 Localパーティー（${ch.name}）は最大2人までしか割り当てできません。`);
-                return; // ここで処理を止める
+                return;
               }
             }
             assigned.push(chid); 
@@ -742,7 +732,7 @@
           state.userAssignments[uid] = assigned; saveRoomState(); 
           if (uid === state.myUserId) applyAssignments(assigned); 
           sendData({ type: 'assign-channels', channels: assigned, targetUid: uid });
-          buildAdminMatrix(); // アサイン結果を即座に再描画
+          buildAdminMatrix(); 
         };
       });
 
@@ -776,23 +766,34 @@
           if (e.target.classList.contains('admin-edit-name')) ch.name = e.target.value; 
           if (e.target.classList.contains('admin-edit-type')) {
             ch.type = e.target.value; 
-            // 🛑 種別が変更されたら、パッチパネルとメイン画面を即座に再描画してマイクボタンを消す
-            if (ch.type === 'Listen') {
-              for(let u in state.remoteTalkStates) {
-                if(state.remoteTalkStates[u]) state.remoteTalkStates[u][chId] = false;
+            
+            // 種別変更時、全メンバーのアサインを強制解除（オフ）
+            state.registeredUsers.forEach(u => {
+              if(state.userAssignments[u]) {
+                state.userAssignments[u] = state.userAssignments[u].filter(id => id !== chId);
               }
-              state.talkStates[chId] = false;
-            }
+            });
+            
+            // マイクとスピーカーのステータスも強制リセット
+            state.listenStates[chId] = false;
+            state.talkStates[chId] = false;
+            for(let u in state.remoteTalkStates) if(state.remoteTalkStates[u]) state.remoteTalkStates[u][chId] = false;
+            for(let u in state.remoteListenStates) if(state.remoteListenStates[u]) state.remoteListenStates[u][chId] = false;
           }
 
           const nameEl = document.getElementById(`name-${chId}`); const typeEl = document.getElementById(`type-${chId}`); 
           if (nameEl) nameEl.textContent = ch.name; if (typeEl) typeEl.textContent = ch.type; 
+          
           saveRoomState(); syncChannelInfo(); 
           
           if (e.target.classList.contains('admin-edit-type')) { 
+            // 自分のUIもリセット
+            applyAssignments(state.userAssignments[state.myUserId]);
             buildAdminMatrix();
             initChannelsDOM(); 
             updateAudioRouting();
+            // 他のメンバー全員に変更とアサイン解除を通知
+            sendData({ type: 'init-state', channels: state.channels, assignments: state.userAssignments, tallyAssignments: state.tallyAssignments, registered: state.registeredUsers });
           }
       }); });
 
@@ -848,8 +849,6 @@
     }
 
     function removePeer(peerId) {
-      const pgmId = 'PGM_AUDIO_' + peerId;
-      if (state.mediaCalls[pgmId]) { Object.values(state.mediaCalls[pgmId].chGains || {}).forEach(g => { try{ g.gain?.disconnect(); }catch(e){} }); try { state.mediaCalls[pgmId].audioEl.pause(); state.mediaCalls[pgmId].audioEl.srcObject = null; } catch(e){} delete state.mediaCalls[pgmId]; delete state.remoteTalkStates[pgmId]; }
       delete state.remoteTalkStates[peerId]; delete state.remoteListenStates[peerId];
       if (state.mediaCalls[peerId]) { Object.values(state.mediaCalls[peerId].chGains || {}).forEach(g => { try{ g.gain?.disconnect(); }catch(e){} }); try { state.mediaCalls[peerId].audioEl.pause(); state.mediaCalls[peerId].audioEl.srcObject = null; } catch(e){} delete state.mediaCalls[peerId]; }
       updateAudioRouting(); updateUserCount();
@@ -919,13 +918,12 @@
           if(state.ioBridge.outDevice && state.ioBridge.outDevice !== 'default' && typeof audioEl.setSinkId === 'function') {
               audioEl.setSinkId(state.ioBridge.outDevice).catch(e => console.log('Sink ID Error:', e));
           }
-
-          if (publication.trackName === 'pgm-audio') { const pgmId = 'PGM_AUDIO_' + participant.identity; const callData = { stream, audioEl }; state.mediaCalls[pgmId] = callData; if (audioCtx) setupPeerMixer(callData); state.remoteTalkStates[pgmId] = { 'ch-video': true }; updateAudioRouting(); } else { const callData = { stream, audioEl }; state.mediaCalls[participant.identity] = callData; if (audioCtx) setupPeerMixer(callData); updateUserCount(); }
+          const callData = { stream, audioEl }; state.mediaCalls[participant.identity] = callData; if (audioCtx) setupPeerMixer(callData); updateUserCount();
         } else if (track.kind === LivekitClient.Track.Kind.Video) { attachVideoTrack(track); }
       });
 
       room.on(LivekitClient.RoomEvent.TrackUnsubscribed, (track, publication, participant) => { 
-        if (track.kind === LivekitClient.Track.Kind.Video) { detachVideoTrack(track); } else if (publication.trackName === 'pgm-audio') { const pgmId = 'PGM_AUDIO_' + participant.identity; if (state.mediaCalls[pgmId]) { Object.values(state.mediaCalls[pgmId].chGains || {}).forEach(g => { try{ g.gain?.disconnect(); }catch(e){} }); try { state.mediaCalls[pgmId].audioEl.pause(); state.mediaCalls[pgmId].audioEl.srcObject = null; } catch(e){} delete state.mediaCalls[pgmId]; delete state.remoteTalkStates[pgmId]; updateAudioRouting(); } } else { removePeer(participant.identity); }
+        if (track.kind === LivekitClient.Track.Kind.Video) { detachVideoTrack(track); } else { removePeer(participant.identity); }
       });
       room.on(LivekitClient.RoomEvent.ParticipantDisconnected, (participant) => { removePeer(participant.identity); });
       room.on(LivekitClient.RoomEvent.ParticipantConnected, (participant) => { updateUserCount(); sendData({ type: 'hello', userId: state.myUserId }); syncTalkStates(); syncListenStates(); });
