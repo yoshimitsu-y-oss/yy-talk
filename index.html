@@ -655,12 +655,12 @@
       
       // ステップ3で作ったユーザー名とパスワードを入力してください
       const mqttOptions = {
-        username: 'あなたのユーザー名',
-        password: 'あなたのパスワード'
+        username: 'yytalk',
+        password: 'Yytalk415'
       };
       
       // URLの部分をステップ2の Cluster URL に書き換えてください（末尾の /mqtt はそのまま！）
-      const mqttClient = mqtt.connect('wss://あなたのClusterURL:8884/mqtt', mqttOptions);
+      const mqttClient = mqtt.connect('wss://20bd5d3aabd84b13995fccc5a186dc28.s1.eu.hivemq.cloud:8884/mqtt', mqttOptions);
 
       mqttClient.on('connect', () => {
         console.log('✅ MQTTブローカー接続完了。タリー待機中...');
