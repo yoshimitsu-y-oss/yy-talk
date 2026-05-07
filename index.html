@@ -79,18 +79,20 @@
     .video-dummy-text { color: #555; font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: bold; z-index: 1;} .video-wrapper video { width: 100%; height: 100%; object-fit: contain; background: #000; position: absolute; inset: 0; z-index: 5;}
     
     /* ---------------- Admin Modal ---------------- */
-    .admin-modal { width: 96%; max-width: 1100px; max-height: 90vh; display: flex; flex-direction: column; padding: 20px 15px 15px; margin: auto; position: relative; }
+    /* 修正: marginを上寄せ(5vh)に固定し、上部にボタン用のパディングを追加 */
+    .admin-modal { width: 96%; max-width: 1100px; max-height: 90vh; display: flex; flex-direction: column; padding: 50px 15px 15px; margin: 5vh auto auto; position: relative; }
     
-    /* 改修：モダンな丸型・半透明の閉じるボタン */
-    .btn-close-modal { position: absolute; top: 12px; right: 12px; width: 30px; height: 30px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #aaa; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 100; transition: all 0.2s ease; padding: 0; }
-    .btn-close-modal:hover { background: rgba(255,255,255,0.15); color: #fff; transform: scale(1.05); }
+    /* 修正: 丸の中にグレーでバツ（タブより上に配置） */
+    .btn-close-modal { position: absolute; top: 10px; right: 15px; width: 32px; height: 32px; background: #2a2c33; border: 1px solid #444; color: #9ca3af; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 100; transition: all 0.2s ease; padding: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+    .btn-close-modal:hover { background: #3a3c42; color: #fff; border-color: #555; }
 
-    /* 改修：モダンなセグメント風タブ（はみ出し防止） */
-    .admin-tabs-container { display: flex; gap: 6px; background: #111216; padding: 6px; border-radius: 10px; margin-bottom: 20px; flex-shrink: 0; border: 1px solid var(--border-color); overflow-x: auto; white-space: nowrap; scrollbar-width: none; margin-right: 40px; /* 閉じるボタン干渉防止 */ }
+    /* 修正: タブのデザインを色分けして見やすく */
+    .admin-tabs-container { display: flex; gap: 6px; background: #0a0b0d; padding: 6px; border-radius: 10px; margin-bottom: 20px; flex-shrink: 0; border: 1px solid #3a3c42; overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
     .admin-tabs-container::-webkit-scrollbar { display: none; }
-    .admin-tab-btn { flex: 1; min-width: max-content; background: transparent; border: 1px solid transparent; color: var(--text-sub); padding: 10px 15px; font-size: 12px; font-weight: bold; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .admin-tab-btn { flex: 1; min-width: max-content; background: transparent; border: none; color: #7a7e85; padding: 12px 15px; font-size: 13px; font-weight: bold; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 8px; }
     .admin-tab-btn svg { width: 16px; height: 16px; fill: currentColor; }
-    .admin-tab-btn.active { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+    /* アクティブなタブは青背景・白文字 */
+    .admin-tab-btn.active { background: var(--blue); color: #ffffff; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4); }
     
     .scroll-area { flex: 1; overflow-y: auto; padding-right: 5px; scrollbar-width: none; -webkit-overflow-scrolling: touch; min-height: 0; } .scroll-area::-webkit-scrollbar { display: none; }
     .admin-settings-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; margin-bottom: 20px; background: #15161a; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); }
@@ -99,16 +101,16 @@
     .setting-group input, .setting-group select { background: #1c1d21; border: 1px solid var(--border-color); color: #fff; border-radius: 4px; font-size: 13px; padding: 4px 6px; height: 27px; font-family: 'JetBrains Mono', monospace, sans-serif; text-align: center; text-align-last: center; }
     .setting-group input { width: 14ch; } .setting-group select { width: 100%; max-width: 30ch; } .setting-group input:focus, .setting-group select:focus { outline: none; border-color: var(--blue); } .setting-group select:disabled { opacity: 0.5; cursor: not-allowed; }
     
-    /* 改修：I/Oメニューの上合わせ */
     .io-setting-row { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 15px; background: #15161a; padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); align-items: flex-start; justify-content: center; }
     
     .tally-label { font-size: 11px; font-weight: bold; color: var(--text-sub); margin-bottom: 10px; display: block; text-align: center; letter-spacing: 1px;}
     
-    /* 改修：Tallyボタン（10個対応・折り返し） */
     .tally-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; background: #1c1d21; border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 8px; gap: 15px; flex-wrap: wrap; }
     .tally-member-info { display: flex; align-items: center; gap: 8px; flex-shrink: 0; min-width: 100px;}
-    .tally-btn-group { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; flex: 1; }
-    .tally-btn { width: 28px; height: 28px; border-radius: 4px; background: #121418; border: 1px solid #444; color: #888; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 11px; transition: all 0.1s; }
+    
+    /* 修正: タリーボタンをグリッドで5個ずつ折り返し */
+    .tally-btn-group { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; flex: 1; justify-content: flex-end; max-width: 250px; }
+    .tally-btn { width: 100%; aspect-ratio: 1/1; max-height: 32px; border-radius: 4px; background: #121418; border: 1px solid #444; color: #888; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; transition: all 0.1s; }
     .tally-btn.active { background: var(--alert); color: #fff; border-color: var(--alert); box-shadow: 0 0 8px rgba(239, 68, 68, 0.6); }
     
     .admin-matrix-wrapper { width: 100%; overflow-x: auto; overscroll-behavior-x: none; -webkit-overflow-scrolling: touch; border-radius: 8px; background: #0a0b0d; border: 1px solid var(--border-color); position: relative; }
@@ -120,9 +122,9 @@
     .matrix-user-header { cursor: pointer; transition: background 0.2s; }
     .admin-matrix td.ch-cell { text-align: left; background-color: #0a0b0d; min-width: 120px; padding: 6px; position: sticky; left: 0; z-index: 9; border-right: 2px solid var(--border-color) !important; box-shadow: 2px 0 5px rgba(0,0,0,0.4); vertical-align: middle;}
     
-    /* 改修：削除ボタンをスマートに小型化 */
-    .btn-delete-col, .btn-delete-row { background: rgba(239,68,68,0.1); color: var(--alert); border: 1px solid rgba(239,68,68,0.3); border-radius: 4px; cursor: pointer; padding: 4px 6px; font-size: 10px; transition: all 0.2s; display: inline-block; font-weight: bold; } 
-    .btn-delete-col:hover, .btn-delete-row:hover { background: var(--alert); color: #fff; }
+    /* 修正: 削除ボタンを以前のような赤色ベースに変更 */
+    .btn-delete-col, .btn-delete-row { background: var(--red); color: #fff; border: none; border-radius: 4px; cursor: pointer; padding: 5px 10px; font-size: 10px; transition: all 0.2s; display: inline-block; font-weight: bold; } 
+    .btn-delete-col:hover, .btn-delete-row:hover { filter: brightness(1.2); }
     .btn-delete-row { margin-top: 0; }
     
     .admin-matrix td.ch-cell select.admin-edit-type { width: 66px; height: 27px; text-align:center; font-family:'JetBrains Mono', monospace; background:#1c1d21; border:1px solid var(--border-color); color:#fff; border-radius:4px; font-size:10px; padding:4px; }
@@ -175,7 +177,6 @@
     .master-meter-container { height: 8px; width: 100%; background: var(--bg-dark); position: relative; flex-shrink: 0; z-index: 10;}
     .master-meter-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); } .master-meter-mask { position: absolute; right: 0; top: 0; bottom: 0; width: 100%; background-color: var(--bg-dark); transition: width 0.05s linear; }
 
-    /* 改修：スマホ横向き（ランドスケープ）時のモニター拡大 */
     @media (orientation: landscape) and (max-height: 500px) {
       .header { padding: 4px 15px; border-bottom: 1px solid #1e2128; min-height: 36px;} #app-logo { height: 18px; } 
       .global-controls { padding: 2px 15px 4px; gap: 8px; min-height: 36px;} .btn-global { padding: 4px 8px; font-size: 11px; height: 28px; }
@@ -184,6 +185,7 @@
       .ch-name { font-size: 13px; } .ch-type { font-size: 9px; } .card-footer { padding: 0 10px 2px !important; } .btn-expand { padding: 2px 30px !important; font-size: 12px !important; }
       .master-meter-container { height: 6px; }
       .monitor-section { padding: 5px 0; }
+      /* 横向きの時はモニターを大きめに表示 */
       .video-wrapper { height: auto; max-height: 45vh; width: 100%; max-width: 80vh; aspect-ratio: 16 / 9; margin: 0 auto; }
       .video-wrapper video { object-fit: contain; } .video-dummy-text { font-size: 12px; }
     }
@@ -208,7 +210,7 @@
     <div id="admin-overlay" class="overlay-base">
       <div class="login-modal admin-modal">
         <button id="btn-close-admin" class="btn-close-modal">
-          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
         
         <div class="admin-tabs-container">
@@ -395,7 +397,6 @@
           }
       };
 
-      // 修正: (NONE) の表記に変更
       [els.selectIoLeft, els.selectIoRight].forEach(sel => {
         sel.innerHTML = '<option value="">(NONE)</option>';
         channels.forEach(ch => {
@@ -413,7 +414,6 @@
       els.selectIoRight.onchange = (e) => { state.ioBridge.rightCh = e.target.value; saveRoomState(); updateAudioRouting(); };
     }
 
-
     function buildTallyAssignmentUI() {
       if(!els.tallyList) return; els.tallyList.innerHTML = '';
       state.registeredUsers?.forEach(uid => {
@@ -424,7 +424,6 @@
         const btnGroup = document.createElement('div'); btnGroup.className = 'tally-btn-group';
         const assigned = state.tallyAssignments[uid] || [];
         
-        // 修正: タリー10個に拡張
         for(let i=1; i<=10; i++) {
           const btn = document.createElement('button'); btn.className = 'tally-btn' + (assigned.includes(i) ? ' active' : ''); btn.textContent = i;
           btn.onclick = () => {
@@ -657,7 +656,7 @@
         updateAudioRouting(); updateChannelIcons(); if (changed && type === 'talk') syncTalkStates(); if (changed && type === 'listen') syncListenStates();
       }
       btn.addEventListener('pointerdown', (e) => { 
-          // 修正: Local制限（登録済みメンバーのみを正確にカウント）
+          // 修正: 登録されているメンバーのみをカウント
           if (type === 'talk') {
               const ch = channels.find(c => c.id === channelId);
               if (ch && ch.type === 'Local') {
@@ -752,7 +751,6 @@
           if (assigned.includes(chid)) { 
             assigned = assigned.filter(id => id !== chid); 
           } else { 
-            // 修正: Local制限（登録メンバーのみを正しくカウント）
             if (ch && ch.type === 'Local') {
               let count = 0;
               state.registeredUsers.forEach(u => {
