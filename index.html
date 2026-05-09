@@ -53,13 +53,16 @@
     @media (min-width: 600px) and (min-height: 600px) { body { display: flex; justify-content: center; align-items: center; position: static;} .app-container { height: 94vh; max-height: 1200px; min-height: 600px; width: 96vw; max-width: 1800px; border-radius: 20px; border: 8px solid #1e2128; } }
     .overlay-base { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; flex-direction: column; backdrop-filter: blur(4px); z-index: 1000; overflow-y: auto;}
     #login-overlay { z-index: 2000; } #audio-overlay { z-index: 1100; }
+    #disconnect-overlay { z-index: 3000; background: rgba(180, 20, 20, 0.95); } /* 切断エラー用オーバーレイ */
     .btn-green-solid { background: var(--green); color: #000; border: none; padding: 15px 30px; font-size: 18px; font-weight: bold; border-radius: 30px; cursor: pointer; }
     .login-modal { background: var(--card-bg); padding: 25px 20px; border-radius: 12px; width: 90%; max-width: 340px; border: 1px solid var(--border-color); position: relative; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); margin: auto; }
+    .disconnect-modal { background: #000; padding: 30px 20px; border-radius: 12px; width: 90%; max-width: 360px; text-align: center; border: 2px solid #ef4444; box-shadow: 0 10px 50px rgba(239, 68, 68, 0.4); margin: auto; }
     .login-modal .btn-close-login { position: absolute; top: 12px; right: 15px; background: transparent; border: none; color: #9ca3af; font-size: 28px; cursor: pointer; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; z-index: 2010; font-weight: normal; }
     .login-modal input { width: 100%; padding: 12px; background: #0a0b0d; border: 1px solid var(--border-color); color: #fff; border-radius: 8px; font-size: 16px; text-align: center;}
     .login-modal button:not(.btn-close-login) { padding: 14px; border: none; border-radius: 8px; font-weight: bold; color: #000; cursor: pointer; font-size: 15px; z-index: 2001; }
     .login-modal button:not(.btn-close-login):disabled { opacity: 0.5; cursor: not-allowed; }
     .btn-join-member { background: var(--orange); width: 100%; } .btn-join-admin { background: transparent; border: 1.5px solid var(--blue) !important; color: var(--blue) !important; width: 100%; } .btn-stop { background: var(--red); width: 100%; }
+    .btn-reload { background: #fff; color: #000; border: none; padding: 14px; font-weight: bold; border-radius: 8px; cursor: pointer; margin-top: 20px; width: 100%; font-size: 16px; }
     .status-text { font-size: 12px; color: var(--text-sub); text-align: center; margin-top: 5px; font-family: 'JetBrains Mono', monospace;}
     
     .header { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; background: var(--bg-dark); flex-shrink: 0; z-index: 100; }
@@ -78,7 +81,6 @@
     .video-wrapper.tally-on { border: 4px solid var(--alert) !important; box-shadow: 0 0 30px rgba(239, 68, 68, 0.8), inset 0 0 30px rgba(239, 68, 68, 0.6); }
     .video-dummy-text { color: #555; font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: bold; z-index: 1;} .video-wrapper video { width: 100%; height: 100%; object-fit: contain; background: #000; position: absolute; inset: 0; z-index: 5;}
     
-    /* ---------------- Admin Modal ---------------- */
     .admin-modal { width: 98%; max-width: 1100px; max-height: 90vh; display: flex; flex-direction: column; padding: 50px 15px 15px; margin: 5vh auto auto; position: relative; }
     
     .btn-close-modal { position: absolute; top: 5px; right: 15px; background: transparent; border: none; color: #7a7e85; font-size: 38px; font-weight: 300; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 100; transition: color 0.2s ease; padding: 0; line-height: 1; }
@@ -187,13 +189,22 @@
 
   <div class="app-container" id="main-app-container">
     <div id="audio-overlay" class="overlay-base"><p style="font-weight:bold; margin-bottom:20px; font-size: 18px;">通話に参加しますか？</p><button id="btn-enable-audio" class="btn-green-solid">音声を有効にして参加</button></div>
+    
+    <div id="disconnect-overlay" class="overlay-base">
+      <div class="disconnect-modal">
+        <h2 style="color: #ef4444; margin: 0 0 15px 0;">回線切断</h2>
+        <p style="color: #ddd; font-size: 14px; line-height: 1.6; margin: 0;">サーバーとの接続が失われました。<br>通信環境を確認し、再接続してください。</p>
+        <button class="btn-reload" onclick="location.reload()">再接続する</button>
+      </div>
+    </div>
+
     <div id="login-overlay" class="overlay-base" style="display: flex;">
       <div class="login-modal">
         <button class="btn-close-login" id="btn-close-login">
           <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
         <h3 style="margin: 0 0 5px 0; text-align: center; color: var(--text-main);">Network Login</h3>
-        <input id="host-id" type="text" placeholder="ルーム名 (日本語もOK)"><input id="join-userid" type="text" placeholder="ユーザーID (例: Cam1)">
+        <input id="host-id" type="text" placeholder="ルーム名 (スペース・日本語OK)"><input id="join-userid" type="text" placeholder="ユーザーID (例: Cam1)">
         <div style="display: flex; flex-direction: column; gap: 10px;"><button class="btn-join-member" id="btn-join-member">メンバーとして接続</button><button class="btn-join-admin" id="btn-join-admin">管理者として接続</button></div>
         <button class="btn-stop" id="btn-stop">Disconnect</button><div class="status-text" id="status-msg">待機中... ルーム名を入力して接続</div><div class="status-text" style="color: var(--blue);">My ID: <span id="status-my-id">-</span></div>
       </div>
@@ -289,18 +300,20 @@
     document.addEventListener('touchend', function(e) { const now = (new Date()).getTime(); if (now - lastTouchEnd <= 300) { e.preventDefault(); } lastTouchEnd = now; }, { passive: false });
     window.addEventListener('contextmenu', e => { if(e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') e.preventDefault(); });
 
-    // --- Device Lost フェイルセーフ ---
+    // 修正: デバイス消失の安全網（正しい空文字設定とエラー保護）
     navigator.mediaDevices.addEventListener('devicechange', async () => {
         if (!state.ioBridge || !state.ioBridge.enabled) return;
         const devices = await navigator.mediaDevices.enumerateDevices();
-        if (state.ioBridge.outDevice && state.ioBridge.outDevice !== 'default') {
+        if (state.ioBridge.outDevice && state.ioBridge.outDevice !== 'default' && state.ioBridge.outDevice !== '') {
             const exists = devices.some(d => d.deviceId === state.ioBridge.outDevice);
             if (!exists) {
                 state.ioBridge.outDevice = 'default';
                 if(els.selectOutput) els.selectOutput.value = 'default';
                 for (const peerId in state.mediaCalls) {
                     const el = state.mediaCalls[peerId].audioEl;
-                    if (el && typeof el.setSinkId === 'function') el.setSinkId('default').catch(()=>{});
+                    if (el && typeof el.setSinkId === 'function') {
+                        try { el.setSinkId('').catch(()=>{}); } catch(e){}
+                    }
                 }
                 alert("【警告】出力に指定されていたUSBデバイスが切断されました。\n安全のためシステム標準スピーカーに切り替えます。");
                 saveRoomState();
@@ -402,7 +415,9 @@
           state.ioBridge.outDevice = e.target.value; saveRoomState(); 
           for (const peerId in state.mediaCalls) {
               const audioEl = state.mediaCalls[peerId].audioEl;
-              if (audioEl && typeof audioEl.setSinkId === 'function') audioEl.setSinkId(state.ioBridge.outDevice).catch(console.error);
+              if (audioEl && typeof audioEl.setSinkId === 'function') {
+                  try { audioEl.setSinkId(state.ioBridge.outDevice); } catch(err){}
+              }
           }
       };
 
@@ -530,7 +545,6 @@
     function loadRoomState(roomId) {
       const saved = safeStorage.get('yytalk_room_' + roomId);
       if (saved) { try { const parsed = JSON.parse(saved); if(parsed.monitorTitle) { state.monitorTitle = parsed.monitorTitle; els.mainMonitorTitle.textContent = state.monitorTitle; els.editMonitorTitle.value = state.monitorTitle; } if(parsed.ioBridge) state.ioBridge = parsed.ioBridge; if (parsed?.channels?.length > 0) { resetAndApplyChannels(parsed.channels, parsed.userAssignments, parsed.tallyAssignments, parsed.registeredUsers); return; } } catch(e){} }
-      // ★デフォルトパーティーをCAMSのみに変更
       const defaultChannels = [ { id: 'ch-video', name: 'VIDEO', type: 'Listen', fixed: true }, { id: 'ch1', name: 'CAMS', type: 'PL' } ];
       resetAndApplyChannels(defaultChannels, {}, {}, []);
     }
@@ -634,8 +648,6 @@
     }
 
     function updateAudioRouting() {
-      // 修正: 自分のマイクレベルは常に拾い続けるよう、ローカルストリームのトラックはミュートにしない
-      // ※通信側でのミュートは LiveKit の API (setMicrophoneEnabled) で行っているため、メーター用は止めない。
       if (!audioCtx) return;
       channels?.forEach(ch => { if (state.channelNodes[ch.id]) { const vol = (state.listenStates[ch.id] && !state.isMasterSpkMuted) ? state.channelVolumes[ch.id] : 0; state.channelNodes[ch.id].masterGain.gain.setTargetAtTime(vol, audioCtx.currentTime, 0.05); } });
       
@@ -659,7 +671,6 @@
 
     function syncTalkStates() { 
         sendData({ type: 'update-talk-states', states: state.talkStates }); 
-        // ミュート状態をLiveKitにも反映（メーターを生かすため手動制御を補助）
         const isAnyTalking = Object.values(state.talkStates).some(v => v === true) && !state.isMasterMicMuted;
         if(state.room && state.room.localParticipant) {
              state.room.localParticipant.setMicrophoneEnabled(isAnyTalking).catch(()=>{});
@@ -676,18 +687,16 @@
         updateAudioRouting(); updateChannelIcons(); if (changed && type === 'talk') syncTalkStates(); if (changed && type === 'listen') syncListenStates();
       }
       btn.addEventListener('pointerdown', (e) => { 
-          // 修正: ゴーストを排除した厳格なLocal人数制限
           if (type === 'talk') {
               const ch = channels.find(c => c.id === channelId);
               if (ch && ch.type === 'Local') {
                   let activeTalkers = 0;
                   state.registeredUsers.forEach(uid => {
-                      // オンラインに存在していて、かつリモートトークがONの人のみカウント
                       if (state.room && state.room.remoteParticipants.has(uid) && state.remoteTalkStates[uid] && state.remoteTalkStates[uid][channelId]) activeTalkers++;
                   });
                   if (activeTalkers >= 2) {
                       btn.style.opacity = '0.3'; setTimeout(() => btn.style.opacity = '1', 300);
-                      return; // 制限オーバー時はブロック
+                      return; 
                   }
               }
           }
@@ -702,9 +711,7 @@
 
     window.toggleAllUserAssignments = function(uid) { 
       if(!confirm(`ユーザー「${uid}」の全パーティーを一括でオン/オフしますか？`)) return; 
-      
       const allAssigned = channels?.filter(c => c.id !== 'ch-video').every(ch => state.userAssignments[uid] && state.userAssignments[uid].includes(ch.id)); 
-      
       if (allAssigned) { 
         state.userAssignments[uid] = ['ch-video']; 
       } else { 
@@ -713,18 +720,11 @@
           if (ch.id === 'ch-video') return;
           if (ch.type === 'Local') {
             const isAlready = (state.userAssignments[uid] || []).includes(ch.id);
-            if (isAlready) {
-              newAssigned.push(ch.id);
-            } else {
-              let count = 0;
-              state.registeredUsers.forEach(u => {
-                  if (Array.isArray(state.userAssignments[u]) && state.userAssignments[u].includes(ch.id)) count++;
-              });
+            if (isAlready) { newAssigned.push(ch.id); } else {
+              let count = 0; state.registeredUsers.forEach(u => { if (Array.isArray(state.userAssignments[u]) && state.userAssignments[u].includes(ch.id)) count++; });
               if (count < 2) newAssigned.push(ch.id);
             }
-          } else {
-            newAssigned.push(ch.id);
-          }
+          } else { newAssigned.push(ch.id); }
         });
         state.userAssignments[uid] = newAssigned;
       } 
@@ -753,9 +753,7 @@
       html += `<th><button id="btn-add-user" style="background:rgba(59,130,246,0.2); color:#60a5fa; border:1px solid rgba(59,130,246,0.5); padding:6px 12px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;">＋ 追加</button></th></tr></thead><tbody>`;
       channels?.forEach(ch => {
           if(!ch || ch.id === 'ch-video') return; 
-          
           const typeSelect = `<select class="admin-edit-type" data-id="${ch.id}"><option value="PL" ${ch.type==='PL'?'selected':''}>PL</option><option value="Local" ${ch.type==='Local'?'selected':''}>Local</option><option value="Listen" ${ch.type==='Listen'?'selected':''}>Listen</option></select>`;
-          // 修正: 入力欄の幅を80pxに拡張し、文字数制限を撤去
           html += `<tr><td class="ch-cell" style="vertical-align: middle;"><div style="display:flex; gap:6px; align-items:center; justify-content:space-between; width:100%; height:100%;"><div style="display:flex; gap:4px; flex:1; align-items:center;"><input type="text" class="admin-edit-name" data-id="${ch.id}" value="${ch.name}" style="width:80px; font-size:12px; font-family:'JetBrains Mono', monospace; text-transform:uppercase; text-align:center;" ${ch.fixed?'disabled':''}>${typeSelect}</div>${ch.fixed?'<div style="width:48px;"></div>':`<button class="btn-delete-row" data-id="${ch.id}">削除</button>`}</div></td>`;
           state.registeredUsers?.forEach(uid => { 
             const isAssigned = (state.userAssignments[uid] || []).includes(ch.id); const activeClass = isAssigned ? 'active' : ''; const disabledClass = isAssigned ? '' : 'disabled';
@@ -789,10 +787,7 @@
               state.registeredUsers.forEach(u => {
                   if (Array.isArray(state.userAssignments[u]) && state.userAssignments[u].includes(chid)) count++;
               });
-              if (count >= 2) {
-                alert(`【制限】 Localパーティー（${ch.name}）は最大2人までしか割り当てできません。`);
-                return;
-              }
+              if (count >= 2) { alert(`【制限】 Localパーティー（${ch.name}）は最大2人までしか割り当てできません。`); return; }
             }
             assigned.push(chid); 
           }
@@ -833,15 +828,8 @@
           if (e.target.classList.contains('admin-edit-name')) ch.name = e.target.value.toUpperCase(); 
           if (e.target.classList.contains('admin-edit-type')) {
             ch.type = e.target.value; 
-            
-            state.registeredUsers.forEach(u => {
-              if(state.userAssignments[u]) {
-                state.userAssignments[u] = state.userAssignments[u].filter(id => id !== chId);
-              }
-            });
-            
-            state.listenStates[chId] = false;
-            state.talkStates[chId] = false;
+            state.registeredUsers.forEach(u => { if(state.userAssignments[u]) { state.userAssignments[u] = state.userAssignments[u].filter(id => id !== chId); } });
+            state.listenStates[chId] = false; state.talkStates[chId] = false;
             for(let u in state.remoteTalkStates) if(state.remoteTalkStates[u]) state.remoteTalkStates[u][chId] = false;
             for(let u in state.remoteListenStates) if(state.remoteListenStates[u]) state.remoteListenStates[u][chId] = false;
           }
@@ -853,9 +841,7 @@
           
           if (e.target.classList.contains('admin-edit-type')) { 
             applyAssignments(state.userAssignments[state.myUserId]);
-            buildAdminMatrix();
-            initChannelsDOM(); 
-            updateAudioRouting();
+            buildAdminMatrix(); initChannelsDOM(); updateAudioRouting();
             sendData({ type: 'init-state', channels: state.channels, assignments: state.userAssignments, tallyAssignments: state.tallyAssignments, registered: state.registeredUsers });
           }
       }); });
@@ -875,7 +861,6 @@
       updateAudioRouting(); updateChannelIcons(); syncTalkStates(); syncListenStates();
     }
 
-    // 修正: ステート保護フィルターの組み込み
     function handleNetworkData(data, senderId) {
         if (!data) return;
         if (data.type === 'hello') {
@@ -906,10 +891,7 @@
         else if (data.type === 'assign-channels') {
           if (data.channels && Array.isArray(data.channels)) {
               if (data.targetUid === state.myUserId) { applyAssignments(data.channels); }
-              if (data.targetUid) { 
-                 state.userAssignments[data.targetUid] = data.channels; 
-                 if (state.isAdmin) buildAdminMatrix();
-              } else { if (!state.isAdmin) applyAssignments(data.channels); } 
+              if (data.targetUid) { state.userAssignments[data.targetUid] = data.channels; if (state.isAdmin) buildAdminMatrix(); } else { if (!state.isAdmin) applyAssignments(data.channels); } 
               saveRoomState();
           }
         }
@@ -929,13 +911,8 @@
     }
 
     function removePeer(peerId) {
-      // 修正: ゴーストバスター（完全消去処理）
       delete state.remoteTalkStates[peerId]; delete state.remoteListenStates[peerId];
       if (state.mediaCalls[peerId]) { Object.values(state.mediaCalls[peerId].chGains || {}).forEach(g => { try{ g.gain?.disconnect(); }catch(e){} }); try { state.mediaCalls[peerId].audioEl.pause(); state.mediaCalls[peerId].audioEl.srcObject = null; } catch(e){} delete state.mediaCalls[peerId]; }
-      
-      const pgmId = 'PGM_AUDIO_' + peerId;
-      if (state.mediaCalls[pgmId]) { Object.values(state.mediaCalls[pgmId].chGains || {}).forEach(g => { try{ g.gain?.disconnect(); }catch(e){} }); try { state.mediaCalls[pgmId].audioEl.pause(); state.mediaCalls[pgmId].audioEl.srcObject = null; } catch(e){} delete state.mediaCalls[pgmId]; delete state.remoteTalkStates[pgmId]; }
-      
       updateAudioRouting(); updateUserCount();
     }
 
@@ -971,10 +948,11 @@
       
       loadRoomState(state.roomId);
 
-      const tallyTopic = "yytalk/tally/" + encodeURIComponent(rawRoomId);
+      // 修正: スペース入りの名前をそのまま受け取る
+      const tallyTopic = "yytalk/tally/" + rawRoomId;
       const mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
 
-      // 修正: MQTT再接続時の不死鳥ロジック
+      // 修正: 瞬断時の再接続ロジック
       mqttClient.on('connect', () => { mqttClient.subscribe(tallyTopic); });
       mqttClient.on('reconnect', () => { mqttClient.subscribe(tallyTopic); }); 
 
@@ -998,11 +976,16 @@
       btn.textContent = "接続中...";
       const room = new LivekitClient.Room({ adaptiveStream: false, dynacast: false }); state.room = room;
 
+      // 修正: スマホの画面ロック・回線切断時の不死鳥システム（UI表示）
+      room.on(LivekitClient.RoomEvent.Disconnected, () => {
+          document.getElementById('disconnect-overlay').style.display = 'flex';
+      });
+
       room.on(LivekitClient.RoomEvent.TrackSubscribed, (track, publication, participant) => {
         if (track.kind === LivekitClient.Track.Kind.Audio) {
           const stream = new MediaStream([track.mediaStreamTrack]); const audioEl = new Audio(); audioEl.srcObject = stream; audioEl.muted = true; audioEl.play().catch(()=>{});
           if(state.ioBridge.outDevice && state.ioBridge.outDevice !== 'default' && typeof audioEl.setSinkId === 'function') {
-              audioEl.setSinkId(state.ioBridge.outDevice).catch(e => console.log('Sink ID Error:', e));
+              try { audioEl.setSinkId(state.ioBridge.outDevice); } catch(err){}
           }
           const callData = { stream, audioEl }; state.mediaCalls[participant.identity] = callData; if (audioCtx) setupPeerMixer(callData); updateUserCount();
         } else if (track.kind === LivekitClient.Track.Kind.Video) { attachVideoTrack(track); }
