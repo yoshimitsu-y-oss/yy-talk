@@ -455,6 +455,7 @@
             saveRoomState();
             sendData({ type: 'update-io-bridge', ioBridge: state.ioBridge });
             await updateAudioDevices();
+            applyOutputDevice();
         }
     }
 
@@ -467,13 +468,8 @@
             if (!exists) {
                 state.ioBridge.outDevice4w = 'default';
                 if(els.select4wOutDevice) els.select4wOutDevice.value = 'default';
-                for (const peerId in state.mediaCalls) {
-                    const el = state.mediaCalls[peerId].audioEl;
-                    if (el && typeof el.setSinkId === 'function') {
-                        try { el.setSinkId('').catch(()=>{}); } catch(e){}
-                    }
-                }
-                alert("Audio Output Device Disconnected. Falling back to system default.");
+                applyOutputDevice();
+                alert("【警告】出力に指定されていたUSBデバイスが切断されました。\n安全のためシステム標準スピーカーに切り替えます。");
                 saveRoomState();
             }
         }
@@ -660,13 +656,9 @@
 
       if(els.select4wOutDevice) {
         els.select4wOutDevice.onchange = (e) => { 
-            state.ioBridge.outDevice4w = e.target.value; sendIoUpdate(); 
-            for (const callKey in state.mediaCalls) {
-                const audioEl = state.mediaCalls[callKey].audioEl;
-                if (audioEl && typeof audioEl.setSinkId === 'function') {
-                    try { audioEl.setSinkId(state.ioBridge.outDevice4w); } catch(err){}
-                }
-            }
+            state.ioBridge.outDevice4w = e.target.value; 
+            sendIoUpdate(); 
+            applyOutputDevice();
         };
         els.select4wInDevice.onchange = (e) => { state.ioBridge.inDevice4w = e.target.value; sendIoUpdate(); if(state.ioBridge.enabled) updateAudioDevices(); };
         els.selectPgmInDevice.onchange = (e) => { state.ioBridge.inDevicePgm = e.target.value; sendIoUpdate(); if(state.ioBridge.enabled) updateAudioDevices(); };
@@ -879,8 +871,27 @@
     }
 
     let audioCtx, masterAnalyser, localMicAnalyser;
+    
+    async function applyOutputDevice() {
+        if (!audioCtx) return;
+        let deviceId = '';
+        if (state.ioBridge.enabled && state.ioBridge.outDevice4w && state.ioBridge.outDevice4w !== 'default') {
+            deviceId = state.ioBridge.outDevice4w;
+        }
+        if (typeof audioCtx.setSinkId === 'function') {
+            try { await audioCtx.setSinkId(deviceId); } catch(e) { console.error('Audio context routing error:', e); }
+        }
+    }
+
     function initAudioContext() {
-      if (!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); masterAnalyser = audioCtx.createAnalyser(); masterAnalyser.fftSize = 256; masterAnalyser.connect(audioCtx.destination); if (state.localStream) { const localSrc = audioCtx.createMediaStreamSource(state.localStream); localMicAnalyser = audioCtx.createAnalyser(); localMicAnalyser.fftSize = 256; localSrc.connect(localMicAnalyser); } startMeterDraw(); channels?.forEach(ch => setupChannelAudio(ch.id)); }
+      if (!audioCtx) { 
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)(); 
+          masterAnalyser = audioCtx.createAnalyser(); masterAnalyser.fftSize = 256; 
+          masterAnalyser.connect(audioCtx.destination); 
+          if (state.localStream) { const localSrc = audioCtx.createMediaStreamSource(state.localStream); localMicAnalyser = audioCtx.createAnalyser(); localMicAnalyser.fftSize = 256; localSrc.connect(localMicAnalyser); } 
+          startMeterDraw(); channels?.forEach(ch => setupChannelAudio(ch.id)); 
+          applyOutputDevice();
+      }
       if(audioCtx.state === 'suspended') audioCtx.resume(); Object.values(state.mediaCalls || {}).forEach(callData => { if (!callData?.source) setupPeerMixer(callData); });
     }
     function setupChannelAudio(chId) { if (!audioCtx || state.channelNodes[chId]) return; const analyser = audioCtx.createAnalyser(); analyser.fftSize = 256; const masterGain = audioCtx.createGain(); masterGain.gain.value = 0; analyser.connect(masterGain); masterGain.connect(masterAnalyser); state.channelNodes[chId] = { analyser, masterGain }; }
