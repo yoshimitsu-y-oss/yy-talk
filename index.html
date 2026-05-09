@@ -570,7 +570,9 @@
 
             if (state.ioBridge.inDevice4w) {
                 try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: { exact: state.ioBridge.inDevice4w }, echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+                    let audioConst = { echoCancellation: false, noiseSuppression: false, autoGainControl: false };
+                    if (state.ioBridge.inDevice4w !== 'default') audioConst.deviceId = { exact: state.ioBridge.inDevice4w };
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: audioConst });
                     const source = audioCtx.createMediaStreamSource(stream);
                     const splitter = audioCtx.createChannelSplitter(2);
                     source.connect(splitter);
@@ -593,7 +595,9 @@
             
             if (state.ioBridge.inDevicePgm) {
                 try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: { exact: state.ioBridge.inDevicePgm }, echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+                    let audioConst = { echoCancellation: false, noiseSuppression: false, autoGainControl: false };
+                    if (state.ioBridge.inDevicePgm !== 'default') audioConst.deviceId = { exact: state.ioBridge.inDevicePgm };
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: audioConst });
                     const source = audioCtx.createMediaStreamSource(stream);
                     const splitter = audioCtx.createChannelSplitter(2);
                     source.connect(splitter);
@@ -935,10 +939,13 @@
               if(callData.trackName === 'io_pgm_l') targetCh = state.ioBridge.inAssignPgmL;
               if(callData.trackName === 'io_pgm_r') targetCh = state.ioBridge.inAssignPgmR;
 
+              const isSelf = callKey.startsWith(state.myUserId + '_');
+
               channels?.forEach(ch => {
                   if (callData.chGains && callData.chGains[ch.id]) {
                       const isTarget = (ch.id === targetCh) && (targetCh !== '');
-                      callData.chGains[ch.id].gain.gain.setTargetAtTime(isTarget && !state.isMasterSpkMuted ? 1 : 0, audioCtx.currentTime, 0.05);
+                      const vol = (!isSelf && isTarget && state.listenStates[ch.id] && !state.isMasterSpkMuted) ? 1 : 0;
+                      callData.chGains[ch.id].gain.gain.setTargetAtTime(vol, audioCtx.currentTime, 0.05);
                       callData.chGains[ch.id].panner.pan.setTargetAtTime(0, audioCtx.currentTime, 0.05);
                   }
               });
@@ -950,13 +957,25 @@
           channels?.forEach(ch => { 
               if (callData?.chGains && callData.chGains[ch.id]) { 
                   const isTalking = remoteTalk[ch.id] === true; 
-                  callData.chGains[ch.id].gain.gain.setTargetAtTime(isTalking ? 1 : 0, audioCtx.currentTime, 0.05); 
+                  const isIoOutTargetL = (ch.id === state.ioBridge.outAssign4wL);
+                  const isIoOutTargetR = (ch.id === state.ioBridge.outAssign4wR);
                   
+                  let vol = 0;
                   let panValue = 0;
+                  
                   if (state.ioBridge.enabled) {
-                      if (ch.id === state.ioBridge.outAssign4wL) panValue = -1.0;
-                      else if (ch.id === state.ioBridge.outAssign4wR) panValue = 1.0;
+                      if (isIoOutTargetL || isIoOutTargetR) {
+                          vol = isTalking ? 1 : 0;
+                          if (isIoOutTargetL && !isIoOutTargetR) panValue = -1.0;
+                          else if (isIoOutTargetR && !isIoOutTargetL) panValue = 1.0;
+                      } else {
+                          vol = (isTalking && state.listenStates[ch.id] && !state.isMasterSpkMuted) ? 1 : 0;
+                      }
+                  } else {
+                      vol = (isTalking && state.listenStates[ch.id] && !state.isMasterSpkMuted) ? 1 : 0;
                   }
+
+                  callData.chGains[ch.id].gain.gain.setTargetAtTime(vol, audioCtx.currentTime, 0.05); 
                   callData.chGains[ch.id].panner.pan.setTargetAtTime(panValue, audioCtx.currentTime, 0.05);
               } 
           }); 
@@ -1158,10 +1177,18 @@
         if (!data) return;
         if (data.type === 'hello') {
           if (senderId !== state.myUserId && !state.registeredUsers.includes(senderId)) { state.registeredUsers.push(senderId); state.userAssignments[senderId] = channels?.map(c => c.id) || []; if (!state.tallyAssignments[senderId]) state.tallyAssignments[senderId] = []; saveRoomState(); if (state.isAdmin) { buildAdminMatrix(); buildTallyAssignmentUI(); } }
-          if(state.isAdmin) { sendData({ type: 'init-state', channels, assignments: state.userAssignments, tallyAssignments: state.tallyAssignments, registered: state.registeredUsers }); if(state.activeVideoSender === state.myUserId) { const sourceText = els.mainMonitorSourceText.textContent.replace('[ VIDEO SWITCHING NOW ]', '').replace('[ NO VIDEO ]', 'CAMERA').trim(); sendData({ type: 'update-video-sender', senderId: state.myUserId, sourceText: sourceText }); } }
+          if(state.isAdmin) { sendData({ type: 'init-state', channels, assignments: state.userAssignments, tallyAssignments: state.tallyAssignments, registered: state.registeredUsers, ioBridge: state.ioBridge }); if(state.activeVideoSender === state.myUserId) { const sourceText = els.mainMonitorSourceText.textContent.replace('[ VIDEO SWITCHING NOW ]', '').replace('[ NO VIDEO ]', 'CAMERA').trim(); sendData({ type: 'update-video-sender', senderId: state.myUserId, sourceText: sourceText }); } }
         }
         else if (data.type === 'init-state') { 
             if(data.channels && Array.isArray(data.channels)) {
+                if (data.ioBridge) {
+                    state.ioBridge.inAssign4wL = data.ioBridge.inAssign4wL || '';
+                    state.ioBridge.inAssign4wR = data.ioBridge.inAssign4wR || '';
+                    state.ioBridge.outAssign4wL = data.ioBridge.outAssign4wL || '';
+                    state.ioBridge.outAssign4wR = data.ioBridge.outAssign4wR || '';
+                    state.ioBridge.inAssignPgmL = data.ioBridge.inAssignPgmL || '';
+                    state.ioBridge.inAssignPgmR = data.ioBridge.inAssignPgmR || '';
+                }
                 resetAndApplyChannels(data.channels, data.assignments, data.tallyAssignments, data.registered); 
                 saveRoomState(); if(state.isAdmin) { buildAdminMatrix(); buildTallyAssignmentUI(); } 
             }
@@ -1202,20 +1229,23 @@
           }
         }
         else if (data.type === 'update-io-bridge') {
-          state.ioBridge = data.ioBridge;
+          state.ioBridge.inAssign4wL = data.ioBridge.inAssign4wL || '';
+          state.ioBridge.inAssign4wR = data.ioBridge.inAssign4wR || '';
+          state.ioBridge.outAssign4wL = data.ioBridge.outAssign4wL || '';
+          state.ioBridge.outAssign4wR = data.ioBridge.outAssign4wR || '';
+          state.ioBridge.inAssignPgmL = data.ioBridge.inAssignPgmL || '';
+          state.ioBridge.inAssignPgmR = data.ioBridge.inAssignPgmR || '';
+          
           updateAudioRouting();
           if (state.isAdmin) {
-              const u = data.ioBridge;
-              if (els.select4wInDevice) {
-                  els.select4wInDevice.value = u.inDevice4w || 'default';
-                  els.select4wOutDevice.value = u.outDevice4w || 'default';
-                  els.selectPgmInDevice.value = u.inDevicePgm || '';
-                  els.select4wInL.value = u.inAssign4wL || '';
-                  els.select4wInR.value = u.inAssign4wR || '';
-                  els.select4wOutL.value = u.outAssign4wL || '';
-                  els.select4wOutR.value = u.outAssign4wR || '';
-                  els.selectPgmInL.value = u.inAssignPgmL || '';
-                  els.selectPgmInR.value = u.inAssignPgmR || '';
+              const u = state.ioBridge;
+              if (els.select4wInL) {
+                  els.select4wInL.value = u.inAssign4wL;
+                  els.select4wInR.value = u.inAssign4wR;
+                  els.select4wOutL.value = u.outAssign4wL;
+                  els.select4wOutR.value = u.outAssign4wR;
+                  els.selectPgmInL.value = u.inAssignPgmL;
+                  els.selectPgmInR.value = u.inAssignPgmR;
               }
           }
         }
