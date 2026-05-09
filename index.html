@@ -938,7 +938,18 @@
 
     function updateAudioRouting() {
       if (!audioCtx) return;
-      channels?.forEach(ch => { if (state.channelNodes[ch.id]) { const vol = (state.listenStates[ch.id] && !state.isMasterSpkMuted) ? state.channelVolumes[ch.id] : 0; state.channelNodes[ch.id].masterGain.gain.setTargetAtTime(vol, audioCtx.currentTime, 0.05); } });
+      channels?.forEach(ch => { 
+          if (state.channelNodes[ch.id]) { 
+              const isIoOutTarget = state.ioBridge.enabled && (ch.id === state.ioBridge.outAssign4wL || ch.id === state.ioBridge.outAssign4wR);
+              let vol = 0;
+              if (isIoOutTarget) {
+                  vol = state.channelVolumes[ch.id] !== undefined ? state.channelVolumes[ch.id] : 1.5;
+              } else {
+                  vol = (state.listenStates[ch.id] && !state.isMasterSpkMuted) ? (state.channelVolumes[ch.id] !== undefined ? state.channelVolumes[ch.id] : 1.5) : 0; 
+              }
+              state.channelNodes[ch.id].masterGain.gain.setTargetAtTime(vol, audioCtx.currentTime, 0.05); 
+          } 
+      });
       
       for (const callKey in state.mediaCalls) { 
           const callData = state.mediaCalls[callKey]; 
@@ -955,9 +966,25 @@
               channels?.forEach(ch => {
                   if (callData.chGains && callData.chGains[ch.id]) {
                       const isTarget = (ch.id === targetCh) && (targetCh !== '');
-                      const vol = (!isSelf && isTarget && state.listenStates[ch.id] && !state.isMasterSpkMuted) ? 1 : 0;
+                      const isIoOutTarget = state.ioBridge.enabled && (ch.id === state.ioBridge.outAssign4wL || ch.id === state.ioBridge.outAssign4wR);
+                      
+                      let vol = 0;
+                      if (isSelf) {
+                          vol = 0;
+                      } else if (isIoOutTarget) {
+                          vol = isTarget ? 1 : 0;
+                      } else {
+                          vol = (isTarget && state.listenStates[ch.id] && !state.isMasterSpkMuted) ? 1 : 0;
+                      }
+                      
                       callData.chGains[ch.id].gain.gain.setTargetAtTime(vol, audioCtx.currentTime, 0.05);
-                      callData.chGains[ch.id].panner.pan.setTargetAtTime(0, audioCtx.currentTime, 0.05);
+                      
+                      let panValue = 0;
+                      if (state.ioBridge.enabled) {
+                          if (ch.id === state.ioBridge.outAssign4wL && ch.id !== state.ioBridge.outAssign4wR) panValue = -1.0;
+                          else if (ch.id === state.ioBridge.outAssign4wR && ch.id !== state.ioBridge.outAssign4wL) panValue = 1.0;
+                      }
+                      callData.chGains[ch.id].panner.pan.setTargetAtTime(panValue, audioCtx.currentTime, 0.05);
                   }
               });
               continue;
@@ -968,20 +995,16 @@
           channels?.forEach(ch => { 
               if (callData?.chGains && callData.chGains[ch.id]) { 
                   const isTalking = remoteTalk[ch.id] === true; 
-                  const isIoOutTargetL = (ch.id === state.ioBridge.outAssign4wL);
-                  const isIoOutTargetR = (ch.id === state.ioBridge.outAssign4wR);
+                  const isIoOutTargetL = state.ioBridge.enabled && (ch.id === state.ioBridge.outAssign4wL);
+                  const isIoOutTargetR = state.ioBridge.enabled && (ch.id === state.ioBridge.outAssign4wR);
                   
                   let vol = 0;
                   let panValue = 0;
                   
-                  if (state.ioBridge.enabled) {
-                      if (isIoOutTargetL || isIoOutTargetR) {
-                          vol = isTalking ? 1 : 0;
-                          if (isIoOutTargetL && !isIoOutTargetR) panValue = -1.0;
-                          else if (isIoOutTargetR && !isIoOutTargetL) panValue = 1.0;
-                      } else {
-                          vol = (isTalking && state.listenStates[ch.id] && !state.isMasterSpkMuted) ? 1 : 0;
-                      }
+                  if (isIoOutTargetL || isIoOutTargetR) {
+                      vol = isTalking ? 1 : 0;
+                      if (isIoOutTargetL && !isIoOutTargetR) panValue = -1.0;
+                      else if (isIoOutTargetR && !isIoOutTargetL) panValue = 1.0;
                   } else {
                       vol = (isTalking && state.listenStates[ch.id] && !state.isMasterSpkMuted) ? 1 : 0;
                   }
