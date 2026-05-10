@@ -77,7 +77,6 @@
     .btn-reload:active { transform: scale(0.98); }
     .status-text { font-size: 12px; color: var(--text-sub); text-align: center; margin-top: 5px; font-family: 'JetBrains Mono', monospace;}
     
-    /* 完全に同期する水色波紋アニメーション（常に裏でタイマーを回し続ける） */
     @keyframes pulse-blue-border { 
       0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.6); border-color: var(--blue); } 
       70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); border-color: var(--blue); } 
@@ -86,23 +85,8 @@
     
     .login-input {
       width: 100%; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); background: #0a0b0d; color: var(--text-main); font-size: 16px; text-align: center; font-family: 'JetBrains Mono', monospace; outline: none; transition: 0.2s;
-      /* 常にアニメーションを適用し、2つの入力欄のタイミングを完全に同期させる */
-      animation: pulse-blue-border 1.5s infinite;
     }
-
-    /* 文字が入力された状態の時は、波紋を上書きして隠す（アニメーション自体は止まらない） */
-    .login-input:not(:placeholder-shown) {
-      box-shadow: none !important;
-      border-color: var(--border-color) !important;
-    }
-
-    /* フォーカス時はフォーカス用の青枠を優先し、波紋は出さない */
-    .login-input:focus { 
-      border-color: var(--blue) !important; 
-      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3) !important; 
-    }
-    
-    /* ブラウザのオートフィルによる背景白化・黄色化を防止 */
+    .login-input:focus { border-color: var(--blue) !important; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3) !important; animation: none !important; }
     .login-input:-webkit-autofill, .login-input:-webkit-autofill:hover, .login-input:-webkit-autofill:focus, .login-input:-webkit-autofill:active {
         -webkit-box-shadow: 0 0 0 30px #0a0b0d inset !important;
         -webkit-text-fill-color: white !important;
@@ -139,20 +123,17 @@
     .video-wrapper.tally-on { border: 4px solid var(--alert) !important; box-shadow: 0 0 30px rgba(239, 68, 68, 0.8), inset 0 0 30px rgba(239, 68, 68, 0.6); }
     .video-dummy-text { color: #555; font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: bold; z-index: 1;} .video-wrapper video { width: 100%; height: 100%; object-fit: contain; background: #000; position: absolute; inset: 0; z-index: 5;}
     
-    /* モーダル上部のパディングを調整し、バツを右に5pxずらす（top: -5px, right: 5px） */
     .admin-modal { width: 98%; max-width: 1100px; max-height: 95vh; display: flex; flex-direction: column; padding: 25px 15px 15px; margin: 2vh auto auto; position: relative; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);}
-    .btn-close-modal { position: absolute; top: -5px; right: 5px; background: transparent; border: none; color: #7a7e85; cursor: pointer; z-index: 200; transition: color 0.2s ease; padding: 0; line-height: 0; }
+    .btn-close-modal { position: absolute; top: -5px; right: 10px; background: transparent; border: none; color: #7a7e85; cursor: pointer; z-index: 200; transition: color 0.2s ease; padding: 0; line-height: 0; }
     .btn-close-modal svg { width: 32px; height: 32px; }
     .btn-close-modal:hover { color: #ffffff; }
 
-    /* メニュータブのデザイン：非選択時は暗く、下線を削除 */
     .admin-tabs-container { display: flex; gap: 8px; padding: 0 10px; margin-bottom: 20px; margin-top: 15px; width: 100%; }
-    .admin-tab-btn { flex: 1; min-width: 0; background: rgba(0, 0, 0, 0.4); border: 1px solid transparent; color: #555 !important; padding: 12px 4px; font-size: 13px; font-weight: bold; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; line-height: 1.2; text-align: center; position: relative; z-index: 1; margin-bottom: 0; }
+    .admin-tab-btn { flex: 1; min-width: 0; background: rgba(0, 0, 0, 0.4); border: 1px solid transparent; color: #555 !important; padding: 12px 4px; font-size: 13px; font-weight: bold; border-radius: 8px 8px 0 0; cursor: pointer; transition: all 0.2s ease; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; line-height: 1.2; text-align: center; position: relative; z-index: 1; margin-bottom: 0; }
     .admin-tab-btn svg { width: 20px; height: 20px; fill: currentColor; opacity: 0.6; transition: all 0.2s; }
     .admin-tab-btn:hover { color: #aaa !important; }
     
-    /* アクティブ時のみ背景色とグラデーションが浮かび上がり、目立つように */
-    .admin-tab-btn.active { background-color: var(--card-bg); background-image: linear-gradient(to bottom, rgba(96, 165, 250, 0.15) 0%, rgba(96, 165, 250, 0) 100%); border: 1px solid var(--border-color); color: #ffffff !important; box-shadow: none; text-shadow: 0 0 6px rgba(255,255,255,0.4); z-index: 2; }
+    .admin-tab-btn.active { background-color: var(--card-bg); background-image: linear-gradient(to bottom, rgba(96, 165, 250, 0.15) 0%, rgba(96, 165, 250, 0) 100%); border: 1px solid var(--border-color); color: #ffffff !important; box-shadow: none; text-shadow: 0 0 6px rgba(255,255,255,0.4); z-index: 2; border-radius: 8px 8px 0 0; }
     .admin-tab-btn.active svg { opacity: 1; fill: #ffffff; filter: drop-shadow(0 0 4px rgba(255,255,255,0.4)); }
     
     .scroll-area { flex: 1; overflow-y: auto; padding-right: 5px; scrollbar-width: none; -webkit-overflow-scrolling: touch; min-height: 0; } .scroll-area::-webkit-scrollbar { display: none; }
@@ -287,7 +268,7 @@
       <div id="disconnect-text" style="font-size: 14px; color: rgba(255,255,255,0.8); margin-bottom: 30px;">通信が切断されました。自動再接続を試行中...</div>
     </div>
 
-    <!-- 可愛いイラストとロゴのログイン画面 -->
+    <!-- ログイン画面 -->
     <div id="login-overlay" class="overlay-base" style="display: flex;">
       <div class="login-modal" style="padding: 40px 50px; border-radius: 16px; width: 90%; max-width: 480px; background: #111216; border: 1px solid var(--border-color); box-shadow: 0 20px 50px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; margin: auto;">
         <button class="btn-close-login" id="btn-close-login" style="position: absolute; top: 15px; right: 15px; background: transparent; border: none; color: #9ca3af; font-size: 24px; cursor: pointer; display: none; z-index: 200;">
@@ -295,7 +276,6 @@
         </button>
         
         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 30px; width: 100%;">
-          <!-- 上段: ロゴとYY-Talk（YY-Talkの文字のみ左に5pxずらす） -->
           <div style="display: flex; align-items: center; justify-content: space-between; width: 195px; margin-bottom: 5px;">
             <svg viewBox="0 0 66 60" style="height: 38px; width: auto; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4)); display: block;">
               <defs><linearGradient id="logo-grad-login" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" /><stop offset="100%" style="stop-color:#4ade80;stop-opacity:1" /></linearGradient></defs>
@@ -306,7 +286,6 @@
             </svg>
             <span style="font-family:'Noto Sans JP', sans-serif; font-weight:900; font-size:35px; color:#ffffff; line-height: 1; letter-spacing: -1px; transform: translateX(-5px);">YY-Talk</span>
           </div>
-          <!-- 下段: CONNECT SYSTEM と 衛星マーク -->
           <div style="display: flex; align-items: center; justify-content: space-between; width: 195px;">
             <h2 style="margin: 0; font-size: 16px; font-family: 'JetBrains Mono', monospace; letter-spacing: 2px; color: var(--text-main); white-space: nowrap; line-height: 1;">CONNECT SYSTEM</h2>
             <i class="fa-solid fa-satellite-dish" style="font-size: 19px; color: var(--blue); line-height: 1; transform: translateY(-1px);"></i>
@@ -333,7 +312,6 @@
 
     <div id="admin-overlay" class="overlay-base">
       <div class="login-modal admin-modal">
-        
         <button id="btn-close-admin" class="btn-close-modal">
             <svg viewBox="0 0 24 24" width="44" height="44" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
@@ -346,7 +324,6 @@
         
         <div class="scroll-area">
           <div id="admin-video-section">
-            
             <div class="io-interface-section" style="margin-bottom: 25px;">
               <h4 class="interface-title" style="margin-bottom: 15px;">MONITOR SETTINGS <span style="color: var(--text-sub); font-size: 11px;">(DISPLAY & VIDEO)</span></h4>
               <div style="background: #111216; padding: 25px; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; flex-wrap: wrap; justify-content: center; gap: 20px;">
@@ -355,14 +332,12 @@
                 <div class="setting-group"><label>VIDEO QUALITY</label><select id="edit-video-quality"><option value="128000">128 Kbps (~57MB/h)</option><option value="256000">256 Kbps (~115MB/h)</option><option value="512000" selected>512 Kbps (~230MB/h)</option><option value="1000000">1 Mbps (~450MB/h)</option><option value="5000000">5 Mbps (~2.2GB/h)</option></select></div>
               </div>
             </div>
-            
             <div class="io-interface-section">
               <h4 class="interface-title" style="margin-bottom: 15px;">TALLY ROUTING <span style="color: var(--text-sub); font-size: 11px;">(ASSIGNMENT)</span></h4>
               <div style="background: #111216; padding: 25px; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: stretch;">
                 <div id="tally-assignment-list" style="display: flex; flex-direction: column;"></div>
               </div>
             </div>
-            
           </div>
           
           <div id="admin-patch-section" style="display: none;">
@@ -371,7 +346,6 @@
           </div>
 
           <div id="admin-io-section" style="display: none;">
-            
             <div style="display: flex; flex-direction: column; align-items: center; margin-top: 0; margin-bottom: 20px; padding: 20px; background: #111216; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
               <span style="font-size: 16px; letter-spacing: 4px; color: var(--green); margin-bottom: 15px; font-weight: bold; font-family: 'JetBrains Mono', monospace;">I/O BRIDGE MODE</span>
               <div id="btn-io-toggle" class="io-toggle-wrapper">
@@ -384,7 +358,6 @@
               <div class="io-interface-section">
                 <h4 class="interface-title" style="margin-bottom: 15px;">4W INTERFACE <span style="color: var(--text-sub); font-size: 11px;">(IN / OUT)</span></h4>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                  
                   <div style="background: #111216; padding: 25px; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; flex-direction: column; gap: 15px;">
                     <div class="setting-group" style="align-items: center; width: 100%; max-width: none;">
                       <label>INPUT DEVICE (MIC)</label>
@@ -458,14 +431,12 @@
                       </div>
                     </div>
                   </div>
-
                 </div>
               </div>
 
               <div class="io-interface-section">
                 <h4 class="interface-title" style="margin-bottom: 15px;">PGM INTERFACE <span style="color: var(--text-sub); font-size: 11px;">(IN ONLY)</span></h4>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                  
                   <div style="background: #111216; padding: 25px; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; flex-direction: column; gap: 15px;">
                     <div class="setting-group" style="align-items: center; width: 100%; max-width: none;">
                       <label>PGM INPUT DEVICE (MIC)</label>
@@ -502,17 +473,11 @@
                       </div>
                     </div>
                   </div>
-                  
                   <div style="display: flex; flex-direction: column; justify-content: center; padding: 20px;">
-                    <p style="font-size: 12px; color: var(--text-sub); line-height: 1.6; margin: 0;">
-                      ※I/Fに入力されたステレオ音声はL/Rのモノラルに分割され、それぞれ指定したパーティーに流し込まれます。<br><br>
-                      ※I/OモードをONにすると、自動的にマイクのエコー除去等がOFF（ライン入力モード）になります。
-                    </p>
+                    <p style="font-size: 12px; color: var(--text-sub); line-height: 1.6; margin: 0;">※I/Fに入力されたステレオ音声はL/Rのモノラルに分割され、それぞれ指定したパーティーに流し込まれます。<br><br>※I/OモードをONにすると、自動的にマイクのエコー除去等がOFF（ライン入力モード）になります。</p>
                   </div>
-
                 </div>
               </div>
-              
             </div>
           </div>
         </div>
@@ -524,25 +489,14 @@
     <div class="header">
       <div class="header-left">
         <svg id="app-logo" viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" /><stop offset="100%" style="stop-color:#4ade80;stop-opacity:1" /></linearGradient></defs><path d="M 12 30 L 20 42 L 20 54 M 28 30 L 20 42" stroke="url(#logo-grad)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none" /><path d="M 12 20 Q 20 12 28 20 M 6 12 Q 20 0 34 12" stroke="url(#logo-grad)" stroke-width="4" stroke-linecap="round" fill="none" /><path d="M 42 30 L 50 42 L 50 54 M 58 30 L 50 42" stroke="url(#logo-grad)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none" /><path d="M 42 20 Q 50 12 58 20 M 36 12 Q 50 0 64 12" stroke="url(#logo-grad)" stroke-width="4" stroke-linecap="round" fill="none" /><text x="75" y="44" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-weight="900" font-size="34" fill="var(--text-main)" letter-spacing="-1">Talk</text></svg>
-        <div class="room-info-group" style="display: flex; flex-direction: row; gap: 15px; align-items: center; border-left: 1px solid var(--border-color); padding-left: 15px;">
-          <div>
-            <div class="room-info-label">ROOM NAME</div>
-            <div id="header-room-name" style="font-size: 15px; font-weight: bold; color: var(--text-main); font-family: 'JetBrains Mono', monospace; line-height: 1;">---</div>
-          </div>
+        <div class="room-info-group">
+          <div><div class="room-info-label">ROOM NAME</div><div id="header-room-name">---</div></div>
           <div style="width: 1px; height: 24px; background: var(--border-color);"></div>
-          <div>
-            <div class="room-info-label">USER ID</div>
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <div id="header-user-id" style="font-size: 15px; font-weight: bold; color: var(--text-main); font-family: 'JetBrains Mono', monospace; line-height: 1; display: none;">---</div>
-              <div id="header-active-count" style="font-size: 11px; font-weight: bold; color: var(--green); background: rgba(74, 222, 128, 0.1); padding: 2px 6px; border-radius: 4px; display: none; font-family: 'JetBrains Mono', monospace; border: 1px solid rgba(74, 222, 128, 0.3);"></div>
-            </div>
-          </div>
+          <div><div class="room-info-label">USER ID</div><div style="display: flex; align-items: center; gap: 8px;"><div id="header-user-id" style="font-size: 15px; font-weight: bold; color: var(--text-main); font-family: 'JetBrains Mono', monospace; line-height: 1; display: none;">---</div><div id="header-active-count"></div></div></div>
         </div>
       </div>
       <div class="header-right">
         <div id="status-rtt" style="font-size: 11px; font-family: 'JetBrains Mono', monospace; font-weight: bold; color: var(--text-sub); display: none;">-- ms</div>
-        <span id="status-role" style="display: none; font-size: 11px; font-family: 'JetBrains Mono', monospace; font-weight: bold; color: var(--orange); margin-right: 15px; margin-left: 10px;"></span>
-        
         <div style="position: relative;">
           <button id="btn-layout" class="btn-header-layout" title="レイアウト変更"><i class="fa-solid fa-border-all"></i></button>
           <div id="layout-dropdown" class="layout-dropdown">
@@ -551,7 +505,6 @@
             <button class="layout-item" data-layout="monitor"><i class="fa-solid fa-tv" style="margin-right:10px; width:16px; text-align:center;"></i>MONITOR</button>
           </div>
         </div>
-        
         <button id="btn-settings" class="btn-header-icon admin-only" title="設定"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></button>
         <div id="btn-show-login" class="status-badge">Login</div>
       </div>
@@ -607,6 +560,30 @@
         }
     });
 
+    let isPulsing = false;
+    function syncPulse() {
+      const host = document.getElementById('host-id');
+      const user = document.getElementById('join-userid');
+      if (host && user) {
+        const shouldPulse = host.value === '' && user.value === '';
+        if (shouldPulse !== isPulsing) {
+            isPulsing = shouldPulse;
+            host.style.animation = 'none';
+            user.style.animation = 'none';
+            if (shouldPulse) {
+                void host.offsetWidth; 
+                host.style.animation = 'pulse-blue-border 1.5s infinite';
+                user.style.animation = 'pulse-blue-border 1.5s infinite';
+            }
+        }
+      }
+    }
+    window.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('host-id')?.addEventListener('input', syncPulse);
+        document.getElementById('join-userid')?.addEventListener('input', syncPulse);
+        syncPulse();
+    });
+
     function patchIoToggle() {
         const toggleWrapper = document.getElementById('btn-io-toggle');
         const sliderText = document.getElementById('io-slider-text');
@@ -643,25 +620,18 @@
           
           toggleWrapper.querySelector('.io-toggle-slider').style.transition = 'left 0.3s cubic-bezier(0.4, 0.0, 0.2, 1), background-color 0.3s';
           toggleText.style.transition = 'transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1), color 0.3s';
-
-          // インラインスタイルをクリアしてCSSクラスに任せる
           toggleWrapper.querySelector('.io-toggle-slider').style.cssText = '';
           toggleText.style.cssText = '';
 
           let deltaX = e.clientX - toggleWrapper.startX;
-          
-          // 一定距離スライドした時のみ切り替え（クリックでの誤操作を防止する物理スイッチ挙動）
-          if (toggleWrapper.moved && Math.abs(deltaX) > 40) {
-              if (!state.ioBridge.enabled && deltaX > 60) { toggleAction(true); } 
-              else if (state.ioBridge.enabled && deltaX < -60) { toggleAction(false); } 
+          if (toggleWrapper.moved && Math.abs(deltaX) > 20) {
+              if (!state.ioBridge.enabled && deltaX > 30) { toggleAction(true); } 
+              else if (state.ioBridge.enabled && deltaX < -30) { toggleAction(false); } 
               else {
                   if(state.ioBridge.enabled) toggleWrapper.classList.add('active');
                   else toggleWrapper.classList.remove('active');
               }
-          } else {
-              if(state.ioBridge.enabled) toggleWrapper.classList.add('active');
-              else toggleWrapper.classList.remove('active');
-          }
+          } else { toggleAction(!state.ioBridge.enabled); }
         };
         toggleWrapper.onpointerup = handlePointerUp;
         
@@ -687,30 +657,24 @@
                     if (lBtn) lBtn.classList.remove('active', 'latched');
                 });
                 if(changed) {
-                    updateAudioRouting();
-                    updateChannelIcons();
-                    syncTalkStates();
-                    syncListenStates();
+                    updateAudioRouting(); updateChannelIcons(); syncTalkStates(); syncListenStates();
                 }
             }
-            saveRoomState();
-            sendData({ type: 'update-io-bridge', ioBridge: state.ioBridge });
-            await updateAudioDevices();
-            applyOutputDevice();
+            saveRoomState(); sendData({ type: 'update-io-bridge', ioBridge: state.ioBridge });
+            await updateAudioDevices(); applyOutputDevice();
         }
     }
 
     navigator.mediaDevices.addEventListener('devicechange', async () => {
         if (!state.ioBridge || !state.ioBridge.enabled) return;
         const devices = await navigator.mediaDevices.enumerateDevices();
-        
         if (state.ioBridge.outDevice4w && state.ioBridge.outDevice4w !== 'default' && state.ioBridge.outDevice4w !== '') {
             const exists = devices.some(d => d.deviceId === state.ioBridge.outDevice4w);
             if (!exists) {
                 state.ioBridge.outDevice4w = 'default';
                 if(els.select4wOutDevice) els.select4wOutDevice.value = 'default';
                 applyOutputDevice();
-                alert("【警告】出力に指定されていたUSBデバイスが切断されました。\n安全のためシステム標準スピーカーに切り替えます。");
+                alert("【警告】出力に指定されていたUSBデバイスが切断されました。\n安全のため標準スピーカーに切り替えます。");
                 saveRoomState();
             }
         }
@@ -774,28 +738,18 @@
     };
 
     els.appContainer.classList.add('layout-normal');
-    
     els.btnLayout.onclick = (e) => { e.stopPropagation(); els.layoutDropdown.classList.toggle('show'); };
     document.addEventListener('click', () => { els.layoutDropdown.classList.remove('show'); });
 
     els.layoutItems.forEach(item => {
-        item.onclick = (e) => {
-            const layout = item.getAttribute('data-layout');
-            applyLayout(layout);
-            state.layout = layout;
-            saveRoomState();
-        };
+        item.onclick = (e) => { applyLayout(item.getAttribute('data-layout')); state.layout = item.getAttribute('data-layout'); saveRoomState(); };
     });
 
     function applyLayout(layout) {
         els.appContainer.classList.remove('layout-normal', 'layout-hybrid', 'layout-monitor');
         els.appContainer.classList.add('layout-' + layout);
-        els.layoutItems.forEach(btn => {
-            if(btn.getAttribute('data-layout') === layout) btn.classList.add('active');
-            else btn.classList.remove('active');
-        });
-        if (layout === 'normal') els.btnLayout.classList.remove('active');
-        else els.btnLayout.classList.add('active');
+        els.layoutItems.forEach(btn => { if(btn.getAttribute('data-layout') === layout) btn.classList.add('active'); else btn.classList.remove('active'); });
+        if (layout === 'normal') els.btnLayout.classList.remove('active'); else els.btnLayout.classList.add('active');
         setTimeout(forceResize, 100);
     }
 
@@ -814,6 +768,7 @@
     els.btnSettings.onclick = () => { if (!state.isAdmin) return; els.adminOverlay.style.display = 'flex'; els.btnSettings.classList.add('active'); buildAdminMatrix(); buildTallyAssignmentUI(); updateVideoSources(); };
     els.btnCloseAdmin.onclick = () => { els.adminOverlay.style.display = 'none'; els.btnSettings.classList.remove('active'); };
 
+    // ★マイクをLiveKitの形式に合わせて安全に更新する処理
     async function updateAudioDevices() {
         if (!state.room || !state.room.localParticipant) return;
         
@@ -822,20 +777,41 @@
             { echoCancellation: true, noiseSuppression: true };
         
         try {
-            await state.room.localParticipant.setMicrophoneEnabled(false);
-            await state.room.localParticipant.setMicrophoneEnabled(true, micConstraints);
+            // 現在のマイクトラックを取得して削除
+            const existingPub = state.room.localParticipant.getTrackPublication(LivekitClient.Track.Source.Microphone);
+            if (existingPub && existingPub.track) {
+                await state.room.localParticipant.unpublishTrack(existingPub.track);
+                existingPub.track.stop();
+            }
+            
+            // 新しい設定でマイクを取得し直す
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: micConstraints });
+                state.localStream = stream; // ローカルメーター用更新
+                
+                const newMicTrack = new LivekitClient.LocalAudioTrack(stream.getAudioTracks()[0]);
+                await state.room.localParticipant.publishTrack(newMicTrack, { name: 'mic', source: LivekitClient.Track.Source.Microphone });
+                
+                // 現在のPTT状態に応じてミュート設定
+                const isAnyTalking = Object.values(state.talkStates).some(v => v === true) && !state.isMasterMicMuted;
+                if (!isAnyTalking) await newMicTrack.mute();
+                
+                // AudioContextの再接続（メーター用）
+                if (audioCtx) {
+                    if (localMicAnalyser) localMicAnalyser.disconnect();
+                    const localSrc = audioCtx.createMediaStreamSource(state.localStream);
+                    localMicAnalyser = audioCtx.createAnalyser();
+                    localMicAnalyser.fftSize = 256;
+                    localSrc.connect(localMicAnalyser);
+                }
+            }
         } catch(e) { console.error("Mic Update Error", e); }
 
         const handleIOTracks = async () => {
             if (!state.ioBridge.enabled) {
                 ['ioTrack4wL', 'ioTrack4wR', 'ioTrackPgmL', 'ioTrackPgmR'].forEach(async key => {
-                    if (state[key]) {
-                        await state.room.localParticipant.unpublishTrack(state[key].track);
-                        state[key].track.stop();
-                        state[key] = null;
-                    }
-                });
-                return;
+                    if (state[key]) { await state.room.localParticipant.unpublishTrack(state[key].track); state[key].track.stop(); state[key] = null; }
+                }); return;
             }
 
             if (state.ioBridge.inDevice4w) {
@@ -867,7 +843,6 @@
                     state.ioTrack4wR = await state.room.localParticipant.publishTrack(trackR, { name: 'io_4w_r', source: LivekitClient.Track.Source.Unknown });
                 } catch(e) { console.error("4W Input Error:", e); }
             }
-            
             if (state.ioBridge.inDevicePgm) {
                 try {
                     let audioConst = { echoCancellation: false, noiseSuppression: false, autoGainControl: false };
@@ -898,9 +873,7 @@
                 } catch(e) { console.error("PGM Input Error:", e); }
             }
         };
-
-        await handleIOTracks();
-        updateAudioRouting();
+        await handleIOTracks(); updateAudioRouting();
     }
 
     function buildIoUI() {
@@ -912,7 +885,6 @@
 
       window.updateIoElementsState = function() {
           const isIoOn = state.ioBridge.enabled;
-          // ビデオ＆タリーセクションを除外し、I/O設定タブ内のセクションのみを対象にする
           document.querySelectorAll('#admin-io-section .io-interface-section').forEach(el => {
               el.style.opacity = isIoOn ? '1' : '0.4';
               el.style.pointerEvents = isIoOn ? 'auto' : 'none';
@@ -923,27 +895,14 @@
       navigator.mediaDevices.enumerateDevices().then(devices => {
         const defaultOpt = '<option value="default">System Default</option>';
         const noneOpt = '<option value="">(None)</option>';
-        
         if(!els.select4wOutDevice) return;
-
-        els.select4wOutDevice.innerHTML = defaultOpt;
-        els.select4wInDevice.innerHTML = defaultOpt;
-        els.selectPgmInDevice.innerHTML = noneOpt;
-
+        els.select4wOutDevice.innerHTML = defaultOpt; els.select4wInDevice.innerHTML = defaultOpt; els.selectPgmInDevice.innerHTML = noneOpt;
         devices.forEach(d => {
-          const opt = document.createElement('option');
-          opt.value = d.deviceId; opt.textContent = d.label || `${d.kind} ${d.deviceId.slice(0,5)}`;
-          if (d.kind === 'audiooutput' && d.deviceId !== 'default') {
-            els.select4wOutDevice.appendChild(opt);
-          } else if (d.kind === 'audioinput' && d.deviceId !== 'default') {
-            els.select4wInDevice.appendChild(opt.cloneNode(true));
-            els.selectPgmInDevice.appendChild(opt.cloneNode(true));
-          }
+          const opt = document.createElement('option'); opt.value = d.deviceId; opt.textContent = d.label || `${d.kind} ${d.deviceId.slice(0,5)}`;
+          if (d.kind === 'audiooutput' && d.deviceId !== 'default') { els.select4wOutDevice.appendChild(opt); } 
+          else if (d.kind === 'audioinput' && d.deviceId !== 'default') { els.select4wInDevice.appendChild(opt.cloneNode(true)); els.selectPgmInDevice.appendChild(opt.cloneNode(true)); }
         });
-
-        els.select4wOutDevice.value = state.ioBridge.outDevice4w || 'default';
-        els.select4wInDevice.value = state.ioBridge.inDevice4w || 'default';
-        els.selectPgmInDevice.value = state.ioBridge.inDevicePgm || '';
+        els.select4wOutDevice.value = state.ioBridge.outDevice4w || 'default'; els.select4wInDevice.value = state.ioBridge.inDevice4w || 'default'; els.selectPgmInDevice.value = state.ioBridge.inDevicePgm || '';
       }).catch(()=>{});
 
       const sendIoUpdate = () => { saveRoomState(); sendData({ type: 'update-io-bridge', ioBridge: state.ioBridge }); updateAudioRouting(); };
@@ -951,32 +910,18 @@
       if(els.select4wOutDevice) {
         if (els.gain4wInL) {
             const setIoGainUI = () => {
-                els.gain4wInL.value = (state.ioBridge.inGain4wL ?? 1.0) * 100;
-                document.getElementById('fill-gain-4w-in-l').style.width = (els.gain4wInL.value / 2) + '%';
-                
-                els.gain4wInR.value = (state.ioBridge.inGain4wR ?? 1.0) * 100;
-                document.getElementById('fill-gain-4w-in-r').style.width = (els.gain4wInR.value / 2) + '%';
-                
-                els.gain4wOutL.value = (state.ioBridge.outGain4wL ?? 1.0) * 100;
-                document.getElementById('fill-gain-4w-out-l').style.width = (els.gain4wOutL.value / 2) + '%';
-                
-                els.gain4wOutR.value = (state.ioBridge.outGain4wR ?? 1.0) * 100;
-                document.getElementById('fill-gain-4w-out-r').style.width = (els.gain4wOutR.value / 2) + '%';
-                
-                els.gainPgmInL.value = (state.ioBridge.inGainPgmL ?? 1.0) * 100;
-                document.getElementById('fill-gain-pgm-in-l').style.width = (els.gainPgmInL.value / 2) + '%';
-                
-                els.gainPgmInR.value = (state.ioBridge.inGainPgmR ?? 1.0) * 100;
-                document.getElementById('fill-gain-pgm-in-r').style.width = (els.gainPgmInR.value / 2) + '%';
-            };
-            setIoGainUI();
+                els.gain4wInL.value = (state.ioBridge.inGain4wL ?? 1.0) * 100; document.getElementById('fill-gain-4w-in-l').style.width = (els.gain4wInL.value / 2) + '%';
+                els.gain4wInR.value = (state.ioBridge.inGain4wR ?? 1.0) * 100; document.getElementById('fill-gain-4w-in-r').style.width = (els.gain4wInR.value / 2) + '%';
+                els.gain4wOutL.value = (state.ioBridge.outGain4wL ?? 1.0) * 100; document.getElementById('fill-gain-4w-out-l').style.width = (els.gain4wOutL.value / 2) + '%';
+                els.gain4wOutR.value = (state.ioBridge.outGain4wR ?? 1.0) * 100; document.getElementById('fill-gain-4w-out-r').style.width = (els.gain4wOutR.value / 2) + '%';
+                els.gainPgmInL.value = (state.ioBridge.inGainPgmL ?? 1.0) * 100; document.getElementById('fill-gain-pgm-in-l').style.width = (els.gainPgmInL.value / 2) + '%';
+                els.gainPgmInR.value = (state.ioBridge.inGainPgmR ?? 1.0) * 100; document.getElementById('fill-gain-pgm-in-r').style.width = (els.gainPgmInR.value / 2) + '%';
+            }; setIoGainUI();
 
             const updateGain = (key, val, nodeKey, fillId) => {
                 state.ioBridge[key] = val / 100;
                 if (state.ioNodes[nodeKey]) state.ioNodes[nodeKey].gain.setTargetAtTime(state.ioBridge[key], audioCtx.currentTime, 0.05);
-                const fillEl = document.getElementById(fillId);
-                if(fillEl) fillEl.style.width = (val / 2) + '%';
-                sendIoUpdate();
+                const fillEl = document.getElementById(fillId); if(fillEl) fillEl.style.width = (val / 2) + '%'; sendIoUpdate();
             };
             els.gain4wInL.oninput = (e) => updateGain('inGain4wL', e.target.value, 'gain4wL', 'fill-gain-4w-in-l');
             els.gain4wInR.oninput = (e) => updateGain('inGain4wR', e.target.value, 'gain4wR', 'fill-gain-4w-in-r');
@@ -991,23 +936,13 @@
         els.selectPgmInDevice.onchange = (e) => { state.ioBridge.inDevicePgm = e.target.value; sendIoUpdate(); if(state.ioBridge.enabled) updateAudioDevices(); };
 
         ['select-4w-in-l', 'select-4w-in-r', 'select-4w-out-l', 'select-4w-out-r', 'select-pgm-in-l', 'select-pgm-in-r'].forEach(id => {
-          const sel = document.getElementById(id);
-          sel.innerHTML = '<option value="">(None)</option>';
-          channels.forEach(ch => {
-            if(ch.id !== 'ch-video') {
-              const opt = document.createElement('option');
-              opt.value = ch.id; opt.textContent = ch.name;
-              sel.appendChild(opt);
-            }
-          });
+          const sel = document.getElementById(id); sel.innerHTML = '<option value="">(None)</option>';
+          channels.forEach(ch => { if(ch.id !== 'ch-video') { const opt = document.createElement('option'); opt.value = ch.id; opt.textContent = ch.name; sel.appendChild(opt); } });
         });
         
-        els.select4wInL.value = state.ioBridge.inAssign4wL || '';
-        els.select4wInR.value = state.ioBridge.inAssign4wR || '';
-        els.select4wOutL.value = state.ioBridge.outAssign4wL || '';
-        els.select4wOutR.value = state.ioBridge.outAssign4wR || '';
-        els.selectPgmInL.value = state.ioBridge.inAssignPgmL || '';
-        els.selectPgmInR.value = state.ioBridge.inAssignPgmR || '';
+        els.select4wInL.value = state.ioBridge.inAssign4wL || ''; els.select4wInR.value = state.ioBridge.inAssign4wR || '';
+        els.select4wOutL.value = state.ioBridge.outAssign4wL || ''; els.select4wOutR.value = state.ioBridge.outAssign4wR || '';
+        els.selectPgmInL.value = state.ioBridge.inAssignPgmL || ''; els.selectPgmInR.value = state.ioBridge.inAssignPgmR || '';
 
         els.select4wInL.onchange = (e) => { state.ioBridge.inAssign4wL = e.target.value; sendIoUpdate(); };
         els.select4wInR.onchange = (e) => { state.ioBridge.inAssign4wR = e.target.value; sendIoUpdate(); };
@@ -1053,22 +988,15 @@
     els.editMonitorTitle.addEventListener('input', (e) => { state.monitorTitle = e.target.value; els.mainMonitorTitle.textContent = state.monitorTitle || 'MONITOR'; saveRoomState(); sendData({ type: 'update-monitor-title', title: state.monitorTitle }); });
     
     els.editVideoQuality.addEventListener('change', async (e) => { 
-        state.videoQuality = e.target.value; 
-        saveRoomState(); 
+        state.videoQuality = e.target.value; saveRoomState(); 
         if (state.activeVideoSender === state.myUserId && currentLocalVideoTrack) {
-            els.mainMonitorSourceText.textContent = '[ SWITCHING QUALITY ]'; 
-            els.mainMonitorSourceText.style.display = 'block';
-            els.editMonitorSource.disabled = true; els.editVideoQuality.disabled = true;
+            els.mainMonitorSourceText.textContent = '[ SWITCHING QUALITY ]'; els.mainMonitorSourceText.style.display = 'block'; els.editMonitorSource.disabled = true; els.editVideoQuality.disabled = true;
             try {
                 let targetBitrate = parseInt(state.videoQuality) || 512000;
                 await state.room.localParticipant.unpublishTrack(currentLocalVideoTrack);
-                await state.room.localParticipant.publishTrack(currentLocalVideoTrack, { 
-                    name: 'camera', source: currentLocalVideoTrack.source || LivekitClient.Track.Source.Camera, simulcast: false, videoEncoding: { maxBitrate: targetBitrate } 
-                });
-                const videoEl = els.monitorVideoWrapper.querySelector('video');
-                if (videoEl) currentLocalVideoTrack.attach(videoEl);
-            } catch (err) { console.error(err); } 
-            finally { els.mainMonitorSourceText.style.display = 'none'; els.editMonitorSource.disabled = false; els.editVideoQuality.disabled = false; }
+                await state.room.localParticipant.publishTrack(currentLocalVideoTrack, { name: 'camera', source: currentLocalVideoTrack.source || LivekitClient.Track.Source.Camera, simulcast: false, videoEncoding: { maxBitrate: targetBitrate } });
+                const videoEl = els.monitorVideoWrapper.querySelector('video'); if (videoEl) currentLocalVideoTrack.attach(videoEl);
+            } catch (err) { console.error(err); } finally { els.mainMonitorSourceText.style.display = 'none'; els.editMonitorSource.disabled = false; els.editVideoQuality.disabled = false; }
         }
     });
 
@@ -1140,7 +1068,7 @@
     }
     
     function toggleMasterSpk() { state.isMasterSpkMuted = !state.isMasterSpkMuted; updateAudioRouting(); updateChannelIcons(); } 
-    function toggleMasterMic() { state.isMasterMicMuted = !state.isMasterMicMuted; updateAudioRouting(); updateChannelIcons(); }
+    function toggleMasterMic() { state.isMasterMicMuted = !state.isMasterMicMuted; updateAudioRouting(); updateChannelIcons(); syncTalkStates(); }
     els.btnMasterSpk.onclick = toggleMasterSpk; els.btnMasterMic.onclick = toggleMasterMic;
 
     function saveRoomState() { if(!state.roomId) return; const data = { channels, userAssignments: state.userAssignments, tallyAssignments: state.tallyAssignments, registeredUsers: state.registeredUsers, monitorTitle: state.monitorTitle, videoQuality: state.videoQuality, ioBridge: state.ioBridge, layout: state.layout }; safeStorage.set('yytalk_room_' + state.roomId, JSON.stringify(data)); }
@@ -1438,11 +1366,18 @@
       }
     }
 
+    // ★修正：手動パブリッシュしたトラックを直接ミュート制御する安全な方式に変更
     function syncTalkStates() { 
         sendData({ type: 'update-talk-states', states: state.talkStates }); 
         const isAnyTalking = Object.values(state.talkStates).some(v => v === true) && !state.isMasterMicMuted;
-        if(state.room && state.room.localParticipant && typeof state.room.localParticipant.setMicrophoneEnabled === 'function') {
-             state.room.localParticipant.setMicrophoneEnabled(isAnyTalking).catch(()=>{});
+        if(state.room && state.room.localParticipant) {
+             const pub = state.room.localParticipant.getTrackPublication(LivekitClient.Track.Source.Microphone);
+             if (pub && pub.track) {
+                 if (isAnyTalking) pub.track.unmute().catch(()=>{});
+                 else pub.track.mute().catch(()=>{});
+             } else if (typeof state.room.localParticipant.setMicrophoneEnabled === 'function') {
+                 state.room.localParticipant.setMicrophoneEnabled(isAnyTalking).catch(()=>{});
+             }
         }
     } 
     function syncListenStates() { sendData({ type: 'update-listen-states', states: state.listenStates }); }
@@ -1841,9 +1776,7 @@
       }
       subText.textContent = "接続完了";
 
-      /* 右上のADMIN/MEMBER表示を削除してスッキリさせる */
       els.roleDisplay.style.display = 'none';
-      
       els.audioOverlay.style.display = 'flex';
       
       loadRoomState(state.roomId);
@@ -1864,7 +1797,8 @@
                     setScreenShareEnabled: async () => {},
                     setCameraEnabled: async () => {},
                     unpublishTrack: async () => {},
-                    publishTrack: async () => {}
+                    publishTrack: async () => {},
+                    getTrackPublication: () => { return null; }
                 }
             };
             if (channels.length > 1) state.remoteTalkStates = { 'Cam1': { [channels[1].id]: true } };
@@ -1965,19 +1899,21 @@
               console.warn("SFUサーバーへの接続に失敗しました。プレビューモード（UI確認用）として進行します。", e); 
           }
 
+          // ★修正：マイクデバイスをLiveKit仕様に安全にラップしてパブリッシュ
           try {
               if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                   const constraints = state.ioBridge.enabled ? { echoCancellation: false, noiseSuppression: false, autoGainControl: false } : { echoCancellation: true, noiseSuppression: true };
                   const stream = await navigator.mediaDevices.getUserMedia({ audio: constraints });
                   state.localStream = stream;
                   if (room.state === 'connected') {
-                      await room.localParticipant.publishTrack(stream.getAudioTracks()[0], { name: 'mic', source: LivekitClient.Track.Source.Microphone });
-                      await room.localParticipant.setMicrophoneEnabled(false);
+                      const localMicTrack = new LivekitClient.LocalAudioTrack(stream.getAudioTracks()[0]);
+                      await room.localParticipant.publishTrack(localMicTrack, { name: 'mic', source: LivekitClient.Track.Source.Microphone });
+                      await localMicTrack.mute(); // 初期状態はミュート
                       state.audioEnabled = true; initAudioContext();
                   }
               }
           } catch (err) {
-              console.warn("プレビュー環境のためマイクアクセスが制限されています:", err);
+              console.warn("マイクアクセスが制限されています:", err);
           }
       })();
     };
@@ -1988,7 +1924,7 @@
     document.getElementById('btn-enable-audio').onclick = () => { els.audioOverlay.style.display = 'none'; state.audioEnabled = true; initAudioContext(); };
     document.getElementById('btn-stop').onclick = () => { LocalProfile.clear(); location.reload(); };
 
-    // RTT（通信遅延）のリアルタイム取得ループ
+    // ★修正：RTT（通信遅延）を全てのLiveKitバージョンで安全に取得するフォールバック処理
     setInterval(async () => {
         const rttEl = document.getElementById('status-rtt');
         if (!rttEl) return;
@@ -2008,19 +1944,22 @@
         }
         
         try {
-            let pc = state.room.engine.pcManager?.subscriber?.pc || state.room.engine.subscriber?.pc || state.room.engine.client?.pc;
-            if (pc) {
+            let pc = state.room.engine?.pcManager?.subscriber?.pc || state.room.engine?.subscriber?.pc || state.room.engine?.client?.pc;
+            if (pc && typeof pc.getStats === 'function') {
                 const stats = await pc.getStats();
                 let found = false;
                 stats.forEach(report => {
-                    if (report.type === 'candidate-pair' && report.state === 'succeeded' && report.currentRoundTripTime !== undefined) {
-                        const rttMs = Math.round(report.currentRoundTripTime * 1000);
-                        rttEl.style.display = 'block';
-                        rttEl.textContent = `${rttMs} ms`;
-                        if (rttMs < 100) rttEl.style.color = 'var(--green)';
-                        else if (rttMs < 250) rttEl.style.color = 'var(--orange)';
-                        else rttEl.style.color = 'var(--red)';
-                        found = true;
+                    if (report.type === 'candidate-pair' && (report.state === 'succeeded' || report.nominated)) {
+                        let rttVal = report.currentRoundTripTime !== undefined ? report.currentRoundTripTime : report.roundTripTime;
+                        if (rttVal !== undefined) {
+                            const rttMs = Math.round(rttVal * 1000);
+                            rttEl.style.display = 'block';
+                            rttEl.textContent = `${rttMs} ms`;
+                            if (rttMs < 100) rttEl.style.color = 'var(--green)';
+                            else if (rttMs < 250) rttEl.style.color = 'var(--orange)';
+                            else rttEl.style.color = 'var(--red)';
+                            found = true;
+                        }
                     }
                 });
                 if (!found && state.room.state === 'connected') {
