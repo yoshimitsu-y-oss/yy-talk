@@ -9,12 +9,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <script>
     window.onerror = function(message, source, lineno) {
-      if (typeof message === 'string' && message.includes("Cannot assign to read only property 'getUserMedia'")) {
-        return true;
-      }
+      if (typeof message === 'string' && message.includes("Cannot assign to read only property 'getUserMedia'")) return true;
       console.error("System Error: ", message, "Line:", lineno);
       return false;
     };
@@ -32,21 +31,16 @@
           });
         }
       }
-    } catch (e) {
-      console.warn("Could not patch getUserMedia", e);
-    }
+    } catch (e) { console.warn("Could not patch getUserMedia", e); }
 
     const origSetLocalDescription = RTCPeerConnection.prototype.setLocalDescription;
     RTCPeerConnection.prototype.setLocalDescription = function(desc) {
-      if (desc && (desc.type === 'offer' || desc.type === 'answer')) {
-        desc.sdp = desc.sdp.replace(/(a=fmtp:111.*)/g, '$1;usedtx=1');
-      }
+      if (desc && (desc.type === 'offer' || desc.type === 'answer')) desc.sdp = desc.sdp.replace(/(a=fmtp:111.*)/g, '$1;usedtx=1');
       return origSetLocalDescription.apply(this, arguments);
     };
     function forceResize() {
       const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-      document.documentElement.style.height = h + 'px';
-      document.body.style.height = h + 'px';
+      document.documentElement.style.height = h + 'px'; document.body.style.height = h + 'px';
       const container = document.getElementById('main-app-container');
       if (container) container.style.height = h + 'px';
       window.scrollTo(0, 0);
@@ -75,15 +69,10 @@
     .overlay-base { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; flex-direction: column; backdrop-filter: blur(4px); z-index: 1000; overflow-y: auto;}
     #login-overlay { z-index: 2000; } #audio-overlay { z-index: 1100; }
     #disconnect-overlay { z-index: 3000; background: rgba(220, 38, 38, 0.95); }
+    
     .btn-green-solid { background: var(--green); color: #000; border: none; padding: 15px 30px; font-size: 18px; font-weight: bold; border-radius: 30px; cursor: pointer; }
-    .login-modal { background: var(--card-bg); padding: 25px 20px; border-radius: 12px; width: 90%; max-width: 340px; border: 1px solid var(--border-color); position: relative; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); margin: auto; }
-    .login-modal .btn-close-login { position: absolute; top: 12px; right: 15px; background: transparent; border: none; color: #9ca3af; font-size: 28px; cursor: pointer; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; z-index: 2010; font-weight: normal; display: none; }
-    .login-modal input { width: 100%; padding: 12px; background: #0a0b0d; border: 1px solid var(--border-color); color: #fff; border-radius: 8px; font-size: 16px; text-align: center;}
-    .login-modal button:not(.btn-close-login) { padding: 14px; border: none; border-radius: 8px; font-weight: bold; color: #000; cursor: pointer; font-size: 15px; z-index: 2001; transition: 0.2s;}
-    .login-modal button:not(.btn-close-login):active { transform: scale(0.98); }
-    .login-modal button:not(.btn-close-login):disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-join-member { background: var(--orange); width: 100%; } .btn-join-admin { background: transparent; border: 1.5px solid var(--blue) !important; color: var(--blue) !important; width: 100%; } .btn-stop { background: var(--red); width: 100%; }
-    .btn-reload { background: #fff; color: #000; border: none; padding: 14px; font-weight: bold; border-radius: 8px; cursor: pointer; margin-top: 20px; width: 100%; font-size: 16px; }
+    .btn-reload { background: #fff; color: #000; border: none; padding: 14px; font-weight: bold; border-radius: 8px; cursor: pointer; margin-top: 20px; width: 100%; font-size: 16px; transition: 0.2s;}
+    .btn-reload:active { transform: scale(0.98); }
     .status-text { font-size: 12px; color: var(--text-sub); text-align: center; margin-top: 5px; font-family: 'JetBrains Mono', monospace;}
     
     .header { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; background: var(--bg-dark); flex-shrink: 0; z-index: 100; }
@@ -92,13 +81,11 @@
     .room-info-label { font-size: 9px; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1px; font-weight: bold; line-height: 1; margin-bottom: 4px; font-family: 'JetBrains Mono', monospace;}
     #header-room-name { font-size: 15px; font-weight: bold; color: var(--text-main); line-height: 1; font-family: 'JetBrains Mono', monospace;}
     .header-right { display: flex; align-items: center; gap: 8px; }
+    
     .btn-header-icon { background: transparent; border: 1.5px solid var(--text-sub); color: var(--text-sub); width: 32px; height: 32px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; padding: 0; }
     .btn-header-icon svg { width: 16px; height: 16px; fill: currentColor; }
-    
-    /* アイコンのみのレイアウトボタン */
     .btn-header-layout { background: transparent; border: 1.5px solid var(--text-sub); color: var(--text-sub); width: 32px; height: 32px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; font-size: 14px; }
     .btn-header-layout.active { border-color: var(--blue); color: var(--blue); background: rgba(59, 130, 246, 0.1); }
-    
     #btn-settings.active { border-color: var(--green); color: var(--green); background: rgba(74, 222, 128, 0.1); }
     .admin-only { display: none; }
     .status-badge { border: 1.5px solid var(--text-sub); color: var(--text-sub); padding: 6px 12px; border-radius: 6px; font-weight: bold; font-size: 11px; cursor: pointer; transition: 0.2s; }
@@ -112,41 +99,32 @@
     .layout-item:hover { background: rgba(255,255,255,0.05); }
     .layout-item.active { color: var(--blue); }
 
-    /* レイアウト状態に応じた表示/非表示（完全上合わせ・フルワイド化） */
+    /* モニターレイアウト（上合わせ・全幅） */
     .monitor-section { width: 100%; background: #000; display: none; flex-direction: column; align-items: center; padding: 0; border-bottom: 2px solid var(--border-color); flex-shrink: 0; position: relative; }
     .app-container.layout-hybrid .monitor-section { display: flex; }
     .app-container.layout-monitor .monitor-section { display: flex; flex: 1; border-bottom: none; justify-content: flex-start; align-items: center; overflow: hidden; padding-top: 0; }
     .app-container.layout-monitor .monitor-section .video-wrapper { width: 100vw; max-width: none; height: auto; aspect-ratio: 16 / 9; max-height: calc(100dvh - 60px); margin: 0 auto; }
     .app-container.layout-monitor .global-controls, .app-container.layout-monitor .channel-list-container, .app-container.layout-monitor .master-meter-container { display: none !important; }
-
-    /* ラベルを映像の左上に重ねて、映像自体を完全に上合わせにする */
     .monitor-label { position: absolute; top: 10px; left: 10px; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: bold; color: rgba(255,255,255,0.7); background: rgba(0,0,0,0.5); padding: 4px 8px; border-radius: 4px; z-index: 10; letter-spacing: 1px; pointer-events: none; }
     .video-wrapper { width: 100%; max-width: 100%; aspect-ratio: 16 / 9; background: #1a1a1a; display: flex; align-items: center; justify-content: center; border: none; border-bottom: 1px solid #333; position: relative; transition: all 0.15s ease-out; }
     .video-wrapper.tally-on { border: 4px solid var(--alert) !important; box-shadow: 0 0 30px rgba(239, 68, 68, 0.8), inset 0 0 30px rgba(239, 68, 68, 0.6); }
     .video-dummy-text { color: #555; font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: bold; z-index: 1;} .video-wrapper video { width: 100%; height: 100%; object-fit: contain; background: #000; position: absolute; inset: 0; z-index: 5;}
     
-    /* モーダル上部のパディングを調整（バツボタンとの距離は保ちつつ上余白を削減） */
-    .admin-modal { width: 98%; max-width: 1100px; max-height: 90vh; display: flex; flex-direction: column; padding: 60px 15px 15px; margin: 5vh auto auto; position: relative; }
+    .admin-modal { width: 98%; max-width: 1100px; max-height: 90vh; display: flex; flex-direction: column; padding: 60px 15px 15px; margin: 5vh auto auto; position: relative; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);}
     .btn-close-modal { position: absolute; top: 5px; right: 15px; background: transparent; border: none; color: #7a7e85; cursor: pointer; z-index: 100; transition: color 0.2s ease; padding: 0; line-height: 0; }
     .btn-close-modal svg { width: 44px; height: 44px; }
     .btn-close-modal:hover { color: #ffffff; }
 
-    /* シームレスなベースライン（白い線）を削除しフラットに */
     .admin-tabs-container { display: flex; gap: 8px; padding: 0; margin-bottom: 25px; margin-top: 5px; width: 100%; border-bottom: none; }
-    
     .admin-tab-btn { flex: 1; min-width: 0; background: #111216; border: 1px solid transparent; border-bottom: none; color: #7a7e85 !important; padding: 12px 4px; font-size: 13px; font-weight: bold; border-radius: 8px 8px 0 0; cursor: pointer; transition: all 0.2s ease; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; line-height: 1.2; text-align: center; position: relative; z-index: 1; margin-bottom: 0; }
     .admin-tab-btn svg { width: 20px; height: 20px; fill: currentColor; opacity: 0.6; transition: all 0.2s; }
-    
     .admin-tab-btn.active { background-color: var(--card-bg); background-image: linear-gradient(to bottom, rgba(96, 165, 250, 0.25) 0%, rgba(96, 165, 250, 0) 100%); color: #ffffff !important; border: 1px solid rgba(96, 165, 250, 0.5); border-bottom: none; box-shadow: none; text-shadow: 0 0 6px rgba(255,255,255,0.4); z-index: 2; border-radius: 8px 8px 0 0; }
     .admin-tab-btn.active svg { opacity: 1; fill: #ffffff; filter: drop-shadow(0 0 4px rgba(255,255,255,0.4)); }
     
     .scroll-area { flex: 1; overflow-y: auto; padding-right: 5px; scrollbar-width: none; -webkit-overflow-scrolling: touch; min-height: 0; } .scroll-area::-webkit-scrollbar { display: none; }
     .admin-settings-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; margin-bottom: 25px; background: #111216; padding: 25px; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-    
     .setting-group { display: flex; flex-direction: column; gap: 5px; align-items: center; width: 100%; } @media(min-width:600px){ .setting-group{width:auto;} }
     .setting-group label { font-size: 11px; color: var(--text-sub); font-weight: bold; letter-spacing: 1px; }
-    
-    /* [修正] input[type="range"]（スライダー）には四角い枠線や背景色を適用しないように除外 */
     .setting-group input:not([type="range"]), .setting-group select { background: #1c1d21; border: 1px solid var(--border-color); color: #fff; border-radius: 4px; font-size: 13px; padding: 4px 6px; height: 27px; font-family: 'JetBrains Mono', monospace, sans-serif; text-align: center; text-align-last: center; }
     .setting-group input { width: 14ch; } .setting-group select { width: 100%; max-width: 30ch; } 
     .setting-group input:not([type="range"]):focus, .setting-group select:focus { outline: none; border-color: var(--blue); } 
@@ -162,19 +140,14 @@
     .io-toggle-wrapper:not(.active) .io-toggle-text { color: #7a7e85; transform: translateX(24px); }
     .io-select { width: 100%; height: 32px; background: #1c1d21; border: 1px solid var(--border-color); color: #fff; border-radius: 6px; font-size: 13px; padding: 0 10px; font-family: 'JetBrains Mono', monospace; cursor: pointer; transition: all 0.2s; text-align: center; text-align-last: center;}
     .io-select:focus { outline: none; border-color: var(--text-sub); }
-    
     .io-interface-section { display: flex; flex-direction: column; gap: 15px; }
     .interface-title { font-size: 13px; font-weight: bold; color: var(--text-main); letter-spacing: 2px; margin: 0; padding-left: 10px; border-left: 3px solid var(--blue); font-family: 'JetBrains Mono', monospace; }
-
     .tally-label { font-size: 11px; font-weight: bold; color: var(--text-sub); margin-bottom: 10px; display: block; text-align: center; letter-spacing: 1px;}
-    
     .tally-row { display: flex; align-items: center; justify-content: center; padding: 10px 15px; background: #1c1d21; border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 8px; gap: 20px; flex-wrap: wrap; }
     .tally-member-info { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-shrink: 0; width: 100px;}
     .tally-btn-group { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; width: 240px; }
     .tally-btn { width: 100%; aspect-ratio: 1/1; max-height: 32px; border-radius: 4px; background: #121418; border: 1px solid #444; color: #888; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; transition: all 0.1s; }
     .tally-btn.active { background: var(--alert); color: #fff; border-color: var(--alert); box-shadow: 0 0 8px rgba(239, 68, 68, 0.6); }
-    
-    /* ゲインスライダーとメーター用のスタイルを追加（横向きで視認性高くデザイン改善） */
     .io-gain-slider-wrap { display: flex; align-items: center; gap: 8px; width: 100%; margin-top: 5px; margin-bottom: 5px; }
     .io-meter-horizontal-bg { width: 100%; height: 8px; background: #000; border-radius: 4px; position: relative; overflow: hidden; box-shadow: inset 0 0 3px rgba(0,0,0,0.8); margin-bottom: 5px;}
     .io-meter-horizontal-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #22c55e 0%, #eab308 75%, #ef4444 100%); transition: width 0.05s ease-out; }
@@ -187,13 +160,10 @@
     .diagonal-header .dh-member { position: absolute; top: 4px; right: 10px; font-weight: bold; color: var(--text-sub); font-size: 11px; } .diagonal-header .dh-party { position: absolute; bottom: 4px; left: 10px; font-weight: bold; color: var(--text-sub); font-size: 11px; }
     .matrix-user-header { cursor: pointer; transition: background 0.2s; }
     .admin-matrix td.ch-cell { text-align: left; background-color: #0a0b0d; min-width: 120px; padding: 6px; position: sticky; left: 0; z-index: 9; border-right: 2px solid var(--border-color) !important; box-shadow: 2px 0 5px rgba(0,0,0,0.4); vertical-align: middle;}
-    
     .btn-delete-col, .btn-delete-row { background: var(--red); color: #fff; border: none; border-radius: 4px; cursor: pointer; padding: 5px 10px; font-size: 10px; transition: all 0.2s; display: inline-block; font-weight: bold; } 
     .btn-delete-col:hover, .btn-delete-row:hover { filter: brightness(1.2); }
     .btn-delete-row { margin-top: 0; }
-    
     .admin-matrix td.ch-cell select.admin-edit-type { width: 65px; height: 27px; text-align:center; font-family:'JetBrains Mono', monospace; background:#1c1d21; border:1px solid var(--border-color); color:#fff; border-radius:4px; font-size:11px; padding:2px; }
-    
     .cell-layout { display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 8px; }
     .matrix-toggle { width: 36px; height: 24px; margin: 0; background: linear-gradient(to bottom, #2a2c33, #1c1d21); border: 1px solid #000; border-radius: 3px; cursor: pointer; position: relative; transition: all 0.1s ease-out; box-shadow: 0 2px 2px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.1); display: flex; align-items: flex-end; justify-content: center; padding-bottom: 2px; font-size: 9px; font-family: 'JetBrains Mono', monospace; font-weight: bold; color: #555; user-select: none; }
     .matrix-toggle::after { content: "-"; } .matrix-toggle::before { content: ""; position: absolute; top: 3px; left: 4px; right: 4px; height: 3px; background: #111; border-radius: 1px; box-shadow: inset 0 1px 1px rgba(0,0,0,0.8); transition: all 0.15s ease-out; }
@@ -228,7 +198,6 @@
     .vol-icon { width: 14px; height: 14px; fill: var(--text-sub); flex-shrink: 0; } .vol-slider-wrap { flex: 1; position: relative; display: flex; align-items: center; touch-action: pan-x; }
     .vol-slider-track-bg { position: absolute; left: 0; right: 0; height: 4px; background: var(--border-color); border-radius: 2px; z-index: 1; } .vol-slider-fill { position: absolute; left: 0; height: 4px; background: var(--orange); border-radius: 2px; z-index: 2; width: 50%; pointer-events: none; }
     
-    /* スライダー（つまみ部分含む）から枠線とアウトラインを完全に排除 */
     input[type=range] { width: 100%; -webkit-appearance: none; background: transparent; height: 30px; position: relative; z-index: 3; margin: 0; outline: none; border: none; }
     input[type=range]:focus { outline: none; border: none; }
     input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 30px; background: transparent; border: none; } 
@@ -274,20 +243,30 @@
       <div id="disconnect-text" style="font-size: 14px; color: rgba(255,255,255,0.8); margin-bottom: 30px;">通信が切断されました。自動再接続を試行中...</div>
     </div>
 
+    <!-- 可愛いイラストのログイン画面 -->
     <div id="login-overlay" class="overlay-base" style="display: flex;">
-      <div class="login-modal">
-        <button class="btn-close-login" id="btn-close-login">
-          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-        </button>
-        <h3 style="margin: 0 0 5px 0; text-align: center; color: var(--text-main);">Network Login</h3>
-        <input id="host-id" type="text" placeholder="ルーム名 (スペース・日本語OK)"><input id="join-userid" type="text" placeholder="ユーザーID (例: Cam1)">
-        <div style="display: flex; flex-direction: column; gap: 10px;"><button class="btn-join-member" id="btn-join-member">メンバーとして接続</button><button class="btn-join-admin" id="btn-join-admin">管理者として接続</button></div>
-        <button class="btn-stop" id="btn-stop" style="display: none;">Disconnect</button><div class="status-text" id="status-msg">待機中... ルーム名を入力して接続</div>
+      <div class="login-modal" style="padding: 40px; border-radius: 16px; max-width: 400px; background: #111216;">
+        <div style="text-align: center; margin-bottom: 25px;">
+          <i class="fa-solid fa-satellite-dish" style="font-size: 40px; color: var(--blue); margin-bottom: 10px;"></i>
+          <h2 style="margin: 0; font-size: 20px; font-family: 'JetBrains Mono', monospace; letter-spacing: 2px;">CONNECT SYSTEM</h2>
+        </div>
+        
+        <input type="text" id="host-id" placeholder="Room ID (ex: yytalk)" value="yytalk" style="width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 8px; border: 1px solid var(--border-color); background: #0a0b0d; color: var(--text-main); font-size: 16px; text-align: center; font-family: 'JetBrains Mono', monospace; outline: none; transition: 0.2s;" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border-color)'">
+        <input type="text" id="join-userid" placeholder="Your Name (ex: CAM1)" style="width: 100%; padding: 15px; margin-bottom: 30px; border-radius: 8px; border: 1px solid var(--border-color); background: #0a0b0d; color: var(--text-main); font-size: 16px; text-align: center; font-family: 'JetBrains Mono', monospace; outline: none; transition: 0.2s;" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border-color)'">
+        
+        <button id="btn-join-member" class="btn-reload" style="width: 100%; background: var(--blue); color: white; margin-top: 0; padding: 16px;">接続 (Connect)</button>
+        <button id="btn-join-admin" class="btn-reload admin-btn" style="width: 100%; background: transparent; border: 1px solid var(--text-sub); color: var(--text-sub); margin-top: 15px; font-size: 14px; padding: 16px;">管理ルームを作成 (Admin)</button>
+        
+        <button id="btn-stop" class="btn-reload" style="width: 100%; background: var(--red); color: white; margin-top: 15px; display: none; padding: 16px;">切断 (Disconnect)</button>
+        
+        <div class="status-text" id="status-msg" style="margin-top: 25px; font-size: 12px; color: var(--text-sub);">待機中... ルーム名を入力して接続</div>
+        
+        <button id="btn-close-login" style="margin-top: 20px; background: transparent; border: none; color: var(--text-sub); font-size: 14px; text-decoration: underline; cursor: pointer; display: none;">閉じる</button>
       </div>
     </div>
 
     <div id="admin-overlay" class="overlay-base">
-      <div class="login-modal admin-modal">
+      <div class="login-modal admin-modal" style="background: var(--card-bg);">
         
         <button id="btn-close-admin" class="btn-close-modal">
             <svg viewBox="0 0 24 24" width="44" height="44" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -317,7 +296,6 @@
           </div>
 
           <div id="admin-io-section" style="display: none;">
-            
             <div style="display: flex; flex-direction: column; align-items: center; margin-top: 10px; margin-bottom: 30px; padding: 30px; background: #111216; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
               <span style="font-size: 16px; letter-spacing: 4px; color: var(--green); margin-bottom: 20px; font-weight: bold; font-family: 'JetBrains Mono', monospace;">I/O BRIDGE MODE</span>
               <div id="btn-io-toggle" class="io-toggle-wrapper">
@@ -676,34 +654,66 @@
     let channels = []; let currentLocalVideoTrack = null;
 
     const els = {
-      statusMsg: document.getElementById('status-msg'), hostIdInput: document.getElementById('host-id'), joinUserIdInput: document.getElementById('join-userid'),
-      myIdDisplay: document.getElementById('status-my-id'), roleDisplay: document.getElementById('status-role'), dummyAudio: document.getElementById('dummy-audio'),
-      audioOverlay: document.getElementById('audio-overlay'), loginOverlay: document.getElementById('login-overlay'), btnLoginShow: document.getElementById('btn-show-login'),
-      masterMeterFill: document.getElementById('master-meter-fill'), roomNameDisplay: document.getElementById('header-room-name'),
-      adminOverlay: document.getElementById('admin-overlay'), btnSettings: document.getElementById('btn-settings'), btnCloseAdmin: document.getElementById('btn-close-admin'),
-      btnAddCh: document.getElementById('btn-add-ch'), chWrap: document.getElementById('channel-list-wrap'), btnJoinMember: document.getElementById('btn-join-member'), btnJoinAdmin: document.getElementById('btn-join-admin'),
-      btnMasterSpk: document.getElementById('btn-master-spk'), btnMasterMic: document.getElementById('btn-master-mic'),
-      globalSpkIcon: document.getElementById('global-spk-icon'), globalMicIcon: document.getElementById('global-mic-icon'),
-      btnLayout: document.getElementById('btn-layout'), layoutDropdown: document.getElementById('layout-dropdown'), layoutItems: document.querySelectorAll('.layout-item'), appContainer: document.getElementById('main-app-container'),
+      statusMsg: document.getElementById('status-msg'), 
+      hostIdInput: document.getElementById('host-id'), 
+      joinUserIdInput: document.getElementById('join-userid'),
+      roleDisplay: document.getElementById('status-role'), 
+      dummyAudio: document.getElementById('dummy-audio'),
+      audioOverlay: document.getElementById('audio-overlay'), 
+      loginOverlay: document.getElementById('login-overlay'), 
+      btnLoginShow: document.getElementById('btn-show-login'),
+      masterMeterFill: document.getElementById('master-meter-fill'), 
+      roomNameDisplay: document.getElementById('header-room-name'),
+      userIdDisplay: document.getElementById('header-user-id'),
+      adminOverlay: document.getElementById('admin-overlay'), 
+      btnSettings: document.getElementById('btn-settings'), 
+      btnCloseAdmin: document.getElementById('btn-close-admin'),
+      btnAddCh: document.getElementById('btn-add-ch'), 
+      chWrap: document.getElementById('channel-list-wrap'), 
+      btnJoinMember: document.getElementById('btn-join-member'), 
+      btnJoinAdmin: document.getElementById('btn-join-admin'),
+      btnMasterSpk: document.getElementById('btn-master-spk'), 
+      btnMasterMic: document.getElementById('btn-master-mic'),
+      globalSpkIcon: document.getElementById('global-spk-icon'), 
+      globalMicIcon: document.getElementById('global-mic-icon'),
+      btnLayout: document.getElementById('btn-layout'), 
+      layoutDropdown: document.getElementById('layout-dropdown'), 
+      layoutItems: document.querySelectorAll('.layout-item'), 
+      appContainer: document.getElementById('main-app-container'),
       monitorSection: document.getElementById('monitor-section'),
-      editMonitorTitle: document.getElementById('edit-monitor-title'), editMonitorSource: document.getElementById('edit-monitor-source'), editVideoQuality: document.getElementById('edit-video-quality'),
-      mainMonitorTitle: document.getElementById('main-monitor-title'), monitorVideoWrapper: document.getElementById('monitor-video-wrapper'), mainMonitorSourceText: document.getElementById('main-monitor-source-text'),
-      tabVideo: document.getElementById('tab-video'), tabPatch: document.getElementById('tab-patch'), tabIo: document.getElementById('tab-io'),
-      secVideo: document.getElementById('admin-video-section'), secPatch: document.getElementById('admin-patch-section'), secIo: document.getElementById('admin-io-section'),
+      editMonitorTitle: document.getElementById('edit-monitor-title'), 
+      editMonitorSource: document.getElementById('edit-monitor-source'), 
+      editVideoQuality: document.getElementById('edit-video-quality'),
+      mainMonitorTitle: document.getElementById('main-monitor-title'), 
+      monitorVideoWrapper: document.getElementById('monitor-video-wrapper'), 
+      mainMonitorSourceText: document.getElementById('main-monitor-source-text'),
+      tabVideo: document.getElementById('tab-video'), 
+      tabPatch: document.getElementById('tab-patch'), 
+      tabIo: document.getElementById('tab-io'),
+      secVideo: document.getElementById('admin-video-section'), 
+      secPatch: document.getElementById('admin-patch-section'), 
+      secIo: document.getElementById('admin-io-section'),
       tallyList: document.getElementById('tally-assignment-list'),
       btnIoToggle: document.getElementById('btn-io-toggle'),
-      select4wInDevice: document.getElementById('select-4w-in-device'), select4wOutDevice: document.getElementById('select-4w-out-device'),
+      select4wInDevice: document.getElementById('select-4w-in-device'), 
+      select4wOutDevice: document.getElementById('select-4w-out-device'),
       selectPgmInDevice: document.getElementById('select-pgm-in-device'),
-      select4wInL: document.getElementById('select-4w-in-l'), select4wInR: document.getElementById('select-4w-in-r'),
-      select4wOutL: document.getElementById('select-4w-out-l'), select4wOutR: document.getElementById('select-4w-out-r'),
-      selectPgmInL: document.getElementById('select-pgm-in-l'), selectPgmInR: document.getElementById('select-pgm-in-r'),
-      gain4wInL: document.getElementById('gain-4w-in-l'), gain4wInR: document.getElementById('gain-4w-in-r'),
-      gain4wOutL: document.getElementById('gain-4w-out-l'), gain4wOutR: document.getElementById('gain-4w-out-r'),
-      gainPgmInL: document.getElementById('gain-pgm-in-l'), gainPgmInR: document.getElementById('gain-pgm-in-r')
+      select4wInL: document.getElementById('select-4w-in-l'), 
+      select4wInR: document.getElementById('select-4w-in-r'),
+      select4wOutL: document.getElementById('select-4w-out-l'), 
+      select4wOutR: document.getElementById('select-4w-out-r'),
+      selectPgmInL: document.getElementById('select-pgm-in-l'), 
+      selectPgmInR: document.getElementById('select-pgm-in-r'),
+      gain4wInL: document.getElementById('gain-4w-in-l'), 
+      gain4wInR: document.getElementById('gain-4w-in-r'),
+      gain4wOutL: document.getElementById('gain-4w-out-l'), 
+      gain4wOutR: document.getElementById('gain-4w-out-r'),
+      gainPgmInL: document.getElementById('gain-pgm-in-l'), 
+      gainPgmInR: document.getElementById('gain-pgm-in-r')
     };
 
     // --- レイアウト切り替えロジック ---
-    els.appContainer.classList.add('layout-normal'); // 初期クラス
+    els.appContainer.classList.add('layout-normal');
     
     els.btnLayout.onclick = (e) => {
         e.stopPropagation();
@@ -792,7 +802,7 @@
                     const gainR = audioCtx.createGain(); gainR.gain.value = state.ioBridge.inGain4wR ?? 1.0; state.ioNodes.gain4wR = gainR;
                     const analyserR = audioCtx.createAnalyser(); analyserR.fftSize = 256; state.ioNodes.analyser4wR = analyserR;
                     const destR = audioCtx.createMediaStreamDestination();
-                    splitter.connect(gainR, 1); gainR.connect(analyserR); gainR.connect(destR);
+                    splitter.connect(gainR, 1); gainR.connect(analyserR); connect(destR);
 
                     const trackL = new LivekitClient.LocalAudioTrack(destL.stream.getAudioTracks()[0]);
                     const trackR = new LivekitClient.LocalAudioTrack(destR.stream.getAudioTracks()[0]);
@@ -1731,8 +1741,10 @@
       
       state.roomId = rawRoomId; state.myUserId = myName; state.isAdmin = isAdmin;
       els.roomNameDisplay.textContent = rawRoomId;
-      document.getElementById('header-user-id').textContent = myName;
-      document.getElementById('header-user-id').style.display = 'inline-block';
+      if (els.userIdDisplay) {
+          els.userIdDisplay.textContent = myName;
+          els.userIdDisplay.style.display = 'inline-block';
+      }
 
       if (isAdmin) { document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex'); } else { document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none'); }
       LocalProfile.set({ roomId: rawRoomId, userId: myName, isAdmin });
@@ -1741,23 +1753,18 @@
       // ここで一旦「ログイン画面を隠してメイン画面を表示する処理」を先に行い、通信は裏に逃がす。
       els.loginOverlay.style.display = 'none'; 
       btn.textContent = originalText; btn.style.opacity = "1"; els.btnJoinMember.disabled = false; els.btnJoinAdmin.disabled = false;
-      document.getElementById('btn-show-login').textContent = "DISCONNECT";
-      document.getElementById('btn-show-login').classList.add('online');
+      els.btnLoginShow.textContent = "DISCONNECT";
+      els.btnLoginShow.classList.add('online');
       
       els.btnJoinMember.style.display = 'none';
       els.btnJoinAdmin.style.display = 'none';
-      document.getElementById('host-id-input').style.display = 'none';
-      document.getElementById('join-userid-input').style.display = 'none';
+      els.hostIdInput.style.display = 'none';
+      els.joinUserIdInput.style.display = 'none';
       els.btnStop.style.display = 'block';
       const closeBtn = document.getElementById('btn-close-login');
       if (closeBtn) closeBtn.style.display = 'block';
       
-      const hintText = document.getElementById('login-hint-text');
-      if(hintText) {
-          hintText.textContent = "接続完了 (Connected)";
-          hintText.style.color = "var(--green)";
-      }
-      els.statusMsg.textContent = "接続完了";
+      els.statusMsg.textContent = "接続完了 (Connected)";
       els.statusMsg.style.color = "var(--green)";
       
       let subText = document.getElementById('header-status-sub');
@@ -1770,12 +1777,12 @@
           subText.style.fontSize = '10px';
           subText.style.color = 'var(--text-sub)';
           subText.style.fontFamily = "'JetBrains Mono', monospace";
-          document.getElementById('btn-show-login').parentElement.appendChild(subText);
+          els.btnLoginShow.parentElement.appendChild(subText);
       }
       subText.textContent = "接続完了";
 
-      document.getElementById('status-role').style.display = 'block';
-      if(isAdmin) { document.getElementById('status-role').textContent = '(ADMIN)'; document.getElementById('status-role').style.color = 'var(--blue)'; } else { document.getElementById('status-role').textContent = '(MEMBER)'; document.getElementById('status-role').style.color = 'var(--text-sub)'; }
+      els.roleDisplay.style.display = 'block';
+      if(isAdmin) { els.roleDisplay.textContent = '(ADMIN)'; els.roleDisplay.style.color = 'var(--blue)'; } else { els.roleDisplay.textContent = '(MEMBER)'; els.roleDisplay.style.color = 'var(--text-sub)'; }
       
       els.audioOverlay.style.display = 'flex';
       
@@ -1791,7 +1798,6 @@
             });
             state.room = { remoteParticipants: new Map([['Cam1', {}], ['Director', {}]]) };
             if (channels.length > 1) state.remoteTalkStates = { 'Cam1': { [channels[1].id]: true } };
-            els.myIdDisplay.textContent = "debug";
             updateUserCount();
             if(isAdmin) { buildAdminMatrix(); buildTallyAssignmentUI(); }
             return;
@@ -1875,7 +1881,6 @@
             if (token !== "dummy_token_for_preview") {
                 await room.connect(LIVEKIT_WS_URL, token);
                 state.hasSuccessfullyConnected = true;
-                els.myIdDisplay.textContent = `${myName}`;
                 updateUserCount(); sendData({ type: 'hello', userId: state.myUserId }); syncTalkStates(); syncListenStates();
             }
           } catch (e) { 
