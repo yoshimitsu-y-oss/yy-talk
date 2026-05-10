@@ -660,11 +660,14 @@
         }
     }
 
-    navigator.mediaDevices.addEventListener('devicechange', async () => {
-        if (state.isAdmin && state.ioBridge.enabled) {
-            buildIoUI(); await updateAudioDevices(); applyOutputDevice();
-        }
-    });
+    // キャンバス環境などでの devicechange エラーを防止する安全装置
+    if (navigator.mediaDevices) {
+        navigator.mediaDevices.addEventListener('devicechange', async () => {
+            if (state.isAdmin && state.ioBridge.enabled) {
+                buildIoUI(); await updateAudioDevices(); applyOutputDevice();
+            }
+        });
+    }
 
     function buildIoUI() {
       const sliderText = document.getElementById('io-slider-text');
@@ -682,25 +685,37 @@
       };
       updateIoElementsState();
 
-      navigator.mediaDevices.enumerateDevices().then(devices => {
-        const defaultOpt = '<option value="default">System Default</option>';
-        const noneOpt = '<option value="">(None)</option>';
-        
-        const audioInputs = devices.filter(d => d.kind === 'audioinput');
-        let inOpts = defaultOpt + audioInputs.map(d => `<option value="${d.deviceId}">${d.label || 'Mic '+d.deviceId.substr(0,5)}</option>`).join('');
-        if(els.select4wInDevice) { els.select4wInDevice.innerHTML = inOpts; els.select4wInDevice.value = state.ioBridge.inDevice4w || 'default'; }
-        if(els.selectPgmInDevice) { els.selectPgmInDevice.innerHTML = inOpts; els.selectPgmInDevice.value = state.ioBridge.inDevicePgm || 'default'; }
+      if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+          navigator.mediaDevices.enumerateDevices().then(devices => {
+            const defaultOpt = '<option value="default">System Default</option>';
+            const noneOpt = '<option value="">(None)</option>';
+            
+            const audioInputs = devices.filter(d => d.kind === 'audioinput');
+            let inOpts = defaultOpt + audioInputs.map(d => `<option value="${d.deviceId}">${d.label || 'Mic '+d.deviceId.substr(0,5)}</option>`).join('');
+            if(els.select4wInDevice) { els.select4wInDevice.innerHTML = inOpts; els.select4wInDevice.value = state.ioBridge.inDevice4w || 'default'; }
+            if(els.selectPgmInDevice) { els.selectPgmInDevice.innerHTML = inOpts; els.selectPgmInDevice.value = state.ioBridge.inDevicePgm || 'default'; }
 
-        const audioOutputs = devices.filter(d => d.kind === 'audiooutput');
-        let outOpts = defaultOpt + audioOutputs.map(d => `<option value="${d.deviceId}">${d.label || 'Speaker '+d.deviceId.substr(0,5)}</option>`).join('');
-        if(els.select4wOutDevice) { els.select4wOutDevice.innerHTML = outOpts; els.select4wOutDevice.value = state.ioBridge.outDevice4w || 'default'; }
+            const audioOutputs = devices.filter(d => d.kind === 'audiooutput');
+            let outOpts = defaultOpt + audioOutputs.map(d => `<option value="${d.deviceId}">${d.label || 'Speaker '+d.deviceId.substr(0,5)}</option>`).join('');
+            if(els.select4wOutDevice) { els.select4wOutDevice.innerHTML = outOpts; els.select4wOutDevice.value = state.ioBridge.outDevice4w || 'default'; }
 
-        let chOpts = noneOpt + channels.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-        const setOpts = (el, val) => { if(el) { el.innerHTML = chOpts; el.value = val; } };
-        setOpts(els.select4wInL, state.ioBridge.inAssign4wL); setOpts(els.select4wInR, state.ioBridge.inAssign4wR);
-        setOpts(els.select4wOutL, state.ioBridge.outAssign4wL); setOpts(els.select4wOutR, state.ioBridge.outAssign4wR);
-        setOpts(els.selectPgmInL, state.ioBridge.inAssignPgmL); setOpts(els.selectPgmInR, state.ioBridge.inAssignPgmR);
-      });
+            let chOpts = noneOpt + channels.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            const setOpts = (el, val) => { if(el) { el.innerHTML = chOpts; el.value = val; } };
+            setOpts(els.select4wInL, state.ioBridge.inAssign4wL); setOpts(els.select4wInR, state.ioBridge.inAssign4wR);
+            setOpts(els.select4wOutL, state.ioBridge.outAssign4wL); setOpts(els.select4wOutR, state.ioBridge.outAssign4wR);
+            setOpts(els.selectPgmInL, state.ioBridge.inAssignPgmL); setOpts(els.selectPgmInR, state.ioBridge.inAssignPgmR);
+          }).catch(e => console.warn("Device enumeration failed:", e));
+      } else {
+            const defaultOpt = '<option value="default">System Default</option>';
+            if(els.select4wInDevice) els.select4wInDevice.innerHTML = defaultOpt;
+            if(els.selectPgmInDevice) els.selectPgmInDevice.innerHTML = defaultOpt;
+            if(els.select4wOutDevice) els.select4wOutDevice.innerHTML = defaultOpt;
+            let chOpts = '<option value="">(None)</option>' + channels.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            const setOpts = (el, val) => { if(el) { el.innerHTML = chOpts; el.value = val; } };
+            setOpts(els.select4wInL, state.ioBridge.inAssign4wL); setOpts(els.select4wInR, state.ioBridge.inAssign4wR);
+            setOpts(els.select4wOutL, state.ioBridge.outAssign4wL); setOpts(els.select4wOutR, state.ioBridge.outAssign4wR);
+            setOpts(els.selectPgmInL, state.ioBridge.inAssignPgmL); setOpts(els.selectPgmInR, state.ioBridge.inAssignPgmR);
+      }
 
       const sendIoUpdate = () => { saveRoomState(); sendData({ type: 'update-io-bridge', ioBridge: state.ioBridge }); updateAudioRouting(); };
 
@@ -791,29 +806,31 @@
                 try {
                     let audioConst = { echoCancellation: false, noiseSuppression: false, autoGainControl: false };
                     if (state.ioBridge.inDevice4w !== 'default') audioConst.deviceId = { exact: state.ioBridge.inDevice4w };
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: audioConst });
-                    const source = audioCtx.createMediaStreamSource(stream);
-                    const splitter = audioCtx.createChannelSplitter(2);
-                    source.connect(splitter);
-                    
-                    const gainL = audioCtx.createGain(); gainL.gain.value = state.ioBridge.inGain4wL ?? 1.0; state.ioNodes.gain4wL = gainL;
-                    const analyserL = audioCtx.createAnalyser(); analyserL.fftSize = 256; state.ioNodes.analyser4wL = analyserL;
-                    const destL = audioCtx.createMediaStreamDestination();
-                    splitter.connect(gainL, 0); gainL.connect(analyserL); gainL.connect(destL);
+                    if (navigator.mediaDevices) {
+                        const stream = await navigator.mediaDevices.getUserMedia({ audio: audioConst });
+                        const source = audioCtx.createMediaStreamSource(stream);
+                        const splitter = audioCtx.createChannelSplitter(2);
+                        source.connect(splitter);
+                        
+                        const gainL = audioCtx.createGain(); gainL.gain.value = state.ioBridge.inGain4wL ?? 1.0; state.ioNodes.gain4wL = gainL;
+                        const analyserL = audioCtx.createAnalyser(); analyserL.fftSize = 256; state.ioNodes.analyser4wL = analyserL;
+                        const destL = audioCtx.createMediaStreamDestination();
+                        splitter.connect(gainL, 0); gainL.connect(analyserL); gainL.connect(destL);
 
-                    const gainR = audioCtx.createGain(); gainR.gain.value = state.ioBridge.inGain4wR ?? 1.0; state.ioNodes.gain4wR = gainR;
-                    const analyserR = audioCtx.createAnalyser(); analyserR.fftSize = 256; state.ioNodes.analyser4wR = analyserR;
-                    const destR = audioCtx.createMediaStreamDestination();
-                    splitter.connect(gainR, 1); gainR.connect(analyserR); gainR.connect(destR);
+                        const gainR = audioCtx.createGain(); gainR.gain.value = state.ioBridge.inGain4wR ?? 1.0; state.ioNodes.gain4wR = gainR;
+                        const analyserR = audioCtx.createAnalyser(); analyserR.fftSize = 256; state.ioNodes.analyser4wR = analyserR;
+                        const destR = audioCtx.createMediaStreamDestination();
+                        splitter.connect(gainR, 1); gainR.connect(analyserR); gainR.connect(destR);
 
-                    const trackL = new LivekitClient.LocalAudioTrack(destL.stream.getAudioTracks()[0]);
-                    const trackR = new LivekitClient.LocalAudioTrack(destR.stream.getAudioTracks()[0]);
-                    
-                    if(state.ioTrack4wL) await state.room.localParticipant.unpublishTrack(state.ioTrack4wL.track);
-                    if(state.ioTrack4wR) await state.room.localParticipant.unpublishTrack(state.ioTrack4wR.track);
-                    
-                    state.ioTrack4wL = await state.room.localParticipant.publishTrack(trackL, { name: 'io_4w_l', source: LivekitClient.Track.Source.Unknown });
-                    state.ioTrack4wR = await state.room.localParticipant.publishTrack(trackR, { name: 'io_4w_r', source: LivekitClient.Track.Source.Unknown });
+                        const trackL = new LivekitClient.LocalAudioTrack(destL.stream.getAudioTracks()[0]);
+                        const trackR = new LivekitClient.LocalAudioTrack(destR.stream.getAudioTracks()[0]);
+                        
+                        if(state.ioTrack4wL) await state.room.localParticipant.unpublishTrack(state.ioTrack4wL.track);
+                        if(state.ioTrack4wR) await state.room.localParticipant.unpublishTrack(state.ioTrack4wR.track);
+                        
+                        state.ioTrack4wL = await state.room.localParticipant.publishTrack(trackL, { name: 'io_4w_l', source: LivekitClient.Track.Source.Unknown });
+                        state.ioTrack4wR = await state.room.localParticipant.publishTrack(trackR, { name: 'io_4w_r', source: LivekitClient.Track.Source.Unknown });
+                    }
                 } catch(e) { console.error("4W Input Error:", e); }
             }
             
@@ -821,29 +838,31 @@
                 try {
                     let audioConst = { echoCancellation: false, noiseSuppression: false, autoGainControl: false };
                     if (state.ioBridge.inDevicePgm !== 'default') audioConst.deviceId = { exact: state.ioBridge.inDevicePgm };
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: audioConst });
-                    const source = audioCtx.createMediaStreamSource(stream);
-                    const splitter = audioCtx.createChannelSplitter(2);
-                    source.connect(splitter);
-                    
-                    const gainL = audioCtx.createGain(); gainL.gain.value = state.ioBridge.inGainPgmL ?? 1.0; state.ioNodes.gainPgmL = gainL;
-                    const analyserL = audioCtx.createAnalyser(); analyserL.fftSize = 256; state.ioNodes.analyserPgmL = analyserL;
-                    const destL = audioCtx.createMediaStreamDestination();
-                    splitter.connect(gainL, 0); gainL.connect(analyserL); gainL.connect(destL);
+                    if (navigator.mediaDevices) {
+                        const stream = await navigator.mediaDevices.getUserMedia({ audio: audioConst });
+                        const source = audioCtx.createMediaStreamSource(stream);
+                        const splitter = audioCtx.createChannelSplitter(2);
+                        source.connect(splitter);
+                        
+                        const gainL = audioCtx.createGain(); gainL.gain.value = state.ioBridge.inGainPgmL ?? 1.0; state.ioNodes.gainPgmL = gainL;
+                        const analyserL = audioCtx.createAnalyser(); analyserL.fftSize = 256; state.ioNodes.analyserPgmL = analyserL;
+                        const destL = audioCtx.createMediaStreamDestination();
+                        splitter.connect(gainL, 0); gainL.connect(analyserL); gainL.connect(destL);
 
-                    const gainR = audioCtx.createGain(); gainR.gain.value = state.ioBridge.inGainPgmR ?? 1.0; state.ioNodes.gainPgmR = gainR;
-                    const analyserR = audioCtx.createAnalyser(); analyserR.fftSize = 256; state.ioNodes.analyserPgmR = analyserR;
-                    const destR = audioCtx.createMediaStreamDestination();
-                    splitter.connect(gainR, 1); gainR.connect(analyserR); gainR.connect(destR);
+                        const gainR = audioCtx.createGain(); gainR.gain.value = state.ioBridge.inGainPgmR ?? 1.0; state.ioNodes.gainPgmR = gainR;
+                        const analyserR = audioCtx.createAnalyser(); analyserR.fftSize = 256; state.ioNodes.analyserPgmR = analyserR;
+                        const destR = audioCtx.createMediaStreamDestination();
+                        splitter.connect(gainR, 1); gainR.connect(analyserR); gainR.connect(destR);
 
-                    const trackL = new LivekitClient.LocalAudioTrack(destL.stream.getAudioTracks()[0]);
-                    const trackR = new LivekitClient.LocalAudioTrack(destR.stream.getAudioTracks()[0]);
-                    
-                    if(state.ioTrackPgmL) await state.room.localParticipant.unpublishTrack(state.ioTrackPgmL.track);
-                    if(state.ioTrackPgmR) await state.room.localParticipant.unpublishTrack(state.ioTrackPgmR.track);
-                    
-                    state.ioTrackPgmL = await state.room.localParticipant.publishTrack(trackL, { name: 'io_pgm_l', source: LivekitClient.Track.Source.Unknown });
-                    state.ioTrackPgmR = await state.room.localParticipant.publishTrack(trackR, { name: 'io_pgm_r', source: LivekitClient.Track.Source.Unknown });
+                        const trackL = new LivekitClient.LocalAudioTrack(destL.stream.getAudioTracks()[0]);
+                        const trackR = new LivekitClient.LocalAudioTrack(destR.stream.getAudioTracks()[0]);
+                        
+                        if(state.ioTrackPgmL) await state.room.localParticipant.unpublishTrack(state.ioTrackPgmL.track);
+                        if(state.ioTrackPgmR) await state.room.localParticipant.unpublishTrack(state.ioTrackPgmR.track);
+                        
+                        state.ioTrackPgmL = await state.room.localParticipant.publishTrack(trackL, { name: 'io_pgm_l', source: LivekitClient.Track.Source.Unknown });
+                        state.ioTrackPgmR = await state.room.localParticipant.publishTrack(trackR, { name: 'io_pgm_r', source: LivekitClient.Track.Source.Unknown });
+                    }
                 } catch(e) { console.error("PGM Input Error:", e); }
             }
         };
@@ -1185,6 +1204,7 @@
         
         if (e.target.value === 'screen') {
             try {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) throw new Error("DisplayMedia is not supported in this environment");
                 const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
                 const track = stream.getVideoTracks()[0];
                 currentLocalVideoTrack = new LivekitClient.LocalVideoTrack(track);
@@ -1194,7 +1214,10 @@
                 const videoEl = els.monitorVideoWrapper.querySelector('video');
                 if (videoEl) currentLocalVideoTrack.attach(videoEl);
                 sendData({ type: 'update-video-sender', senderId: state.myUserId, sourceText: 'SCREEN' });
-            } catch (err) { console.error("Screen share failed:", err); els.editMonitorSource.value = 'off'; }
+            } catch (err) { 
+                console.warn("Screen share failed or cancelled:", err); 
+                els.editMonitorSource.value = 'off'; 
+            }
         } else {
             state.activeVideoSender = null;
             sendData({ type: 'update-video-sender', senderId: null, sourceText: '[ NO VIDEO ]' });
@@ -1577,7 +1600,11 @@
         updateAudioRouting();
     });
 
-    await room.connect(LIVEKIT_WS_URL, token);
+    try {
+        await room.connect(LIVEKIT_WS_URL, token);
+    } catch(e) {
+        console.warn("LiveKitへの接続に失敗しました。プレビューモード（UI確認用）として進行します。", e);
+    }
     
     // Tally triggers (keys 1, 2, 3)
     document.addEventListener('keydown', (e) => {
@@ -1606,12 +1633,16 @@
     });
 
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
-        state.localStream = stream;
-        await room.localParticipant.publishTrack(stream.getAudioTracks()[0], { name: 'mic', source: LivekitClient.Track.Source.Microphone });
-        await room.localParticipant.setMicrophoneEnabled(false);
+        if (navigator.mediaDevices) {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+            state.localStream = stream;
+            if (room.state === 'connected') {
+                await room.localParticipant.publishTrack(stream.getAudioTracks()[0], { name: 'mic', source: LivekitClient.Track.Source.Microphone });
+                await room.localParticipant.setMicrophoneEnabled(false);
+            }
+        }
     } catch (err) {
-        console.error("Mic error:", err);
+        console.warn("プレビュー環境のためマイクアクセスが制限されています:", err);
     }
 
       els.loginOverlay.style.display = 'none'; 
