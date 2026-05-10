@@ -492,7 +492,7 @@
         <div class="room-info-group">
           <div><div class="room-info-label">ROOM NAME</div><div id="header-room-name">---</div></div>
           <div style="width: 1px; height: 24px; background: var(--border-color);"></div>
-          <div><div class="room-info-label">USER ID</div><div style="display: flex; align-items: center; gap: 8px;"><div id="header-user-id" style="font-size: 15px; font-weight: bold; color: var(--text-main); font-family: 'JetBrains Mono', monospace; line-height: 1; display: none;">---</div><div id="header-active-count"></div></div></div>
+          <div><div class="room-info-label">USER ID</div><div style="display: flex; align-items: center; gap: 8px;"><div id="header-user-id" style="font-size: 15px; font-weight: bold; color: var(--text-main); font-family: 'JetBrains Mono', monospace; line-height: 1; display: none;">---</div><div id="header-user-separator" style="width: 1px; height: 16px; background: var(--border-color); display: none;"></div><div id="header-active-count" style="font-size: 11px; font-weight: bold; color: var(--green); background: rgba(74, 222, 128, 0.1); padding: 2px 6px; border-radius: 4px; display: none; font-family: 'JetBrains Mono', monospace; border: 1px solid rgba(74, 222, 128, 0.3);"></div></div></div>
         </div>
       </div>
       <div class="header-right">
@@ -1700,9 +1700,11 @@
       if(!state.room) return; 
       const activeCount = state.room.remoteParticipants ? state.room.remoteParticipants.size + 1 : 1; 
       const activeEl = document.getElementById('header-active-count');
+      const sepEl = document.getElementById('header-user-separator');
       if (activeEl) {
           activeEl.textContent = `ACTIVE: ${activeCount}`;
           activeEl.style.display = 'block';
+          if (sepEl && state.myUserId) sepEl.style.display = 'block';
       }
       
       els.btnLoginShow.textContent = "CONNECT"; 
@@ -1784,6 +1786,14 @@
       els.audioOverlay.style.display = 'flex';
       
       loadRoomState(state.roomId);
+
+      // 自身をregisteredUsersに確実に含める（パッチパネル等への表示用）
+      if (!state.registeredUsers.includes(state.myUserId)) {
+          state.registeredUsers.push(state.myUserId);
+          if (!state.userAssignments[state.myUserId]) state.userAssignments[state.myUserId] = channels?.map(c => c.id) || [];
+          if (!state.tallyAssignments[state.myUserId]) state.tallyAssignments[state.myUserId] = [];
+          saveRoomState();
+      }
 
       (async () => {
           if (myName.toLowerCase() === 'debug') {
@@ -1948,7 +1958,12 @@
         }
         
         try {
-            let pc = state.room.engine?.pcManager?.subscriber?.pc || state.room.engine?.subscriber?.pc || state.room.engine?.client?.pc;
+            let pc = state.room.engine?.pcManager?.subscriber?.pc 
+                  || state.room.engine?.subscriber?.pc 
+                  || state.room.engine?.client?.pc
+                  || state.room.engine?.pcManager?.publisher?.pc
+                  || state.room.engine?.publisher?.pc;
+                  
             if (pc && typeof pc.getStats === 'function') {
                 const stats = await pc.getStats();
                 let found = false;
@@ -1971,6 +1986,10 @@
                     rttEl.textContent = `< 50 ms`;
                     rttEl.style.color = 'var(--green)';
                 }
+            } else if (state.room.state === 'connected') {
+                rttEl.style.display = 'block';
+                rttEl.textContent = `Connected`;
+                rttEl.style.color = 'var(--green)';
             }
         } catch(e) {}
     }, 2000);
