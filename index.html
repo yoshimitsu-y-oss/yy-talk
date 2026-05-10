@@ -95,7 +95,7 @@
     
     .header { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; background: var(--bg-dark); flex-shrink: 0; z-index: 100; }
     .header-left { display: flex; align-items: center; } #app-logo { height: 26px; width: auto; margin-right: 15px; } @media (min-width: 600px) { #app-logo { height: 32px; } }
-    .room-info-group { display: flex; flex-direction: column; justify-content: center; border-left: 1px solid var(--border-color); padding-left: 15px; height: 32px;}
+    .room-info-group { display: flex; flex-direction: row; gap: 15px; align-items: center; border-left: 1px solid var(--border-color); padding-left: 15px; height: 32px;}
     .room-info-label { font-size: 9px; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1px; font-weight: bold; line-height: 1; margin-bottom: 4px; font-family: 'JetBrains Mono', monospace;}
     #header-room-name { font-size: 15px; font-weight: bold; color: var(--text-main); line-height: 1; font-family: 'JetBrains Mono', monospace;}
     .header-right { display: flex; align-items: center; gap: 8px; }
@@ -631,7 +631,11 @@
                   if(state.ioBridge.enabled) toggleWrapper.classList.add('active');
                   else toggleWrapper.classList.remove('active');
               }
-          } else { toggleAction(!state.ioBridge.enabled); }
+          } else {
+              // スライドが不十分な場合やクリック時は元の状態に戻す（誤操作防止）
+              if(state.ioBridge.enabled) toggleWrapper.classList.add('active');
+              else toggleWrapper.classList.remove('active');
+          }
         };
         toggleWrapper.onpointerup = handlePointerUp;
         
