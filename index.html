@@ -124,7 +124,7 @@
     .video-dummy-text { color: #555; font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: bold; z-index: 1;} .video-wrapper video { width: 100%; height: 100%; object-fit: contain; background: #000; position: absolute; inset: 0; z-index: 5;}
     
     .admin-modal { width: 98%; max-width: 1100px; max-height: 95vh; display: flex; flex-direction: column; padding: 25px 15px 15px; margin: 2vh auto auto; position: relative; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);}
-    .btn-close-modal { position: absolute; top: -5px; right: 5px; background: transparent; border: none; color: #7a7e85; cursor: pointer; z-index: 200; transition: color 0.2s ease; padding: 0; line-height: 0; }
+    .btn-close-modal { position: absolute; top: -5px; right: 10px; background: transparent; border: none; color: #7a7e85; cursor: pointer; z-index: 200; transition: color 0.2s ease; padding: 0; line-height: 0; }
     .btn-close-modal svg { width: 32px; height: 32px; }
     .btn-close-modal:hover { color: #ffffff; }
 
@@ -268,7 +268,6 @@
       <div id="disconnect-text" style="font-size: 14px; color: rgba(255,255,255,0.8); margin-bottom: 30px;">通信が切断されました。自動再接続を試行中...</div>
     </div>
 
-    <!-- ログイン画面 -->
     <div id="login-overlay" class="overlay-base" style="display: flex;">
       <div class="login-modal" style="padding: 40px 50px; border-radius: 16px; width: 90%; max-width: 480px; background: #111216; border: 1px solid var(--border-color); box-shadow: 0 20px 50px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; margin: auto;">
         <button class="btn-close-login" id="btn-close-login" style="position: absolute; top: 15px; right: 15px; background: transparent; border: none; color: #9ca3af; font-size: 24px; cursor: pointer; display: none; z-index: 200;">
@@ -694,7 +693,6 @@
       clear: () => { try { safeStorage.remove('yytalk_user_profile'); } catch(e) {} }
     };
 
-    // ★修正: state.localMicTrack の管理を追加し、マイクミュートが確実に反映されるように
     const state = {
       room: null, localStream: null, localMicTrack: null, roomId: '', myUserId: '', users: {}, registeredUsers: [], 
       userAssignments: {}, tallyAssignments: {}, mediaCalls: {}, talkStates: {}, listenStates: {}, 
@@ -778,7 +776,6 @@
             { echoCancellation: false, noiseSuppression: false, autoGainControl: false } : 
             { echoCancellation: true, noiseSuppression: true };
         
-        // ★マイクの再取得時に state.localMicTrack を確実に更新する
         try {
             const existingPub = state.room.localParticipant.getTrackPublication(LivekitClient.Track.Source.Microphone);
             if (existingPub && existingPub.track) {
@@ -1154,13 +1151,11 @@
       const savedProfile = LocalProfile.get(); if (savedProfile) { els.hostIdInput.value = savedProfile.roomId || ''; els.joinUserIdInput.value = savedProfile.userId || ''; }
     });
 
-    // ★修正: LiveKit v2に対応した安全なデータ送受信関数
     function sendData(payload) { 
         if (state.room && state.room.localParticipant && typeof state.room.localParticipant.publishData === 'function') { 
             try {
                 const str = JSON.stringify(payload); 
                 const encoder = new TextEncoder(); 
-                // 最新のLiveKit仕様に合わせてオプションオブジェクトを渡す
                 state.room.localParticipant.publishData(encoder.encode(str), { reliable: true }); 
             } catch (err) {
                 console.error("Data Publish Error", err);
@@ -1383,7 +1378,6 @@
       }
     }
 
-    // ★修正: 独自のマイクトラックに対して直接ミュート/アンミュートを行うよう統一
     function syncTalkStates() { 
         sendData({ type: 'update-talk-states', states: state.talkStates }); 
         const isAnyTalking = Object.values(state.talkStates).some(v => v === true) && !state.isMasterMicMuted;
@@ -1595,7 +1589,6 @@
       updateAudioRouting(); updateChannelIcons(); syncTalkStates(); syncListenStates();
     }
 
-    // ★修正: v2仕様に合わせてparticipantオブジェクトを安全に参照
     function handleNetworkData(data, senderId) {
         if (!data) return;
         if (data.type === 'hello') {
@@ -1730,6 +1723,16 @@
       const btn = isAdmin ? els.btnJoinAdmin : els.btnJoinMember; const originalText = btn.textContent;
       els.btnJoinMember.disabled = true; els.btnJoinAdmin.disabled = true; btn.textContent = "認証中..."; btn.style.opacity = "0.5";
       
+      // ★修正: クリック直後にマイク権限を要求する（ブラウザのブロックを回避）
+      try {
+          if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia && myName.toLowerCase() !== 'debug') {
+              const constraints = state.ioBridge.enabled ? { echoCancellation: false, noiseSuppression: false, autoGainControl: false } : { echoCancellation: true, noiseSuppression: true };
+              state.localStream = await navigator.mediaDevices.getUserMedia({ audio: constraints });
+          }
+      } catch (err) {
+          console.warn("マイクアクセスが制限または拒否されました:", err);
+      }
+
       state.roomId = rawRoomId; state.myUserId = myName; state.isAdmin = isAdmin;
       els.roomNameDisplay.textContent = rawRoomId;
       
@@ -1777,9 +1780,9 @@
       els.roleDisplay.style.display = 'none';
       els.audioOverlay.style.display = 'flex';
       
+      // ★修正: 部屋名が確定したこのタイミングで保存データをロード
       loadRoomState(state.roomId);
 
-      // パッチパネル表示等のために、自身を確実に登録ユーザーリストへ含める
       if (!state.registeredUsers.includes(state.myUserId)) {
           state.registeredUsers.push(state.myUserId);
           if (!state.userAssignments[state.myUserId]) state.userAssignments[state.myUserId] = channels?.map(c => c.id) || [];
@@ -1788,7 +1791,6 @@
       }
 
       (async () => {
-          // ★修正: デバッグモードのエラー回避（完全なダミーオブジェクトの生成）
           if (myName.toLowerCase() === 'debug') {
             state.registeredUsers = ['debug', 'Cam1', 'Cam2', 'Director', 'VE'];
             state.registeredUsers.forEach(u => {
@@ -1807,7 +1809,7 @@
                     publishTrack: async () => {},
                     getTrackPublication: () => { return null; }
                 },
-                engine: { pcManager: { subscriber: { pc: { getStats: async () => [] } } } } // RTT用ダミー
+                engine: { pcManager: { subscriber: { pc: { getStats: async () => [] } } } }
             };
             if (channels.length > 1) state.remoteTalkStates = { 'Cam1': { [channels[1].id]: true } };
             
@@ -1897,7 +1899,6 @@
           });
           room.on(LivekitClient.RoomEvent.ParticipantConnected, (participant) => { updateUserCount(); sendData({ type: 'hello', userId: state.myUserId }); syncTalkStates(); syncListenStates(); });
           
-          // ★修正: 最新のLiveKit仕様（Participant引数の安全な取得）に対応
           room.on(LivekitClient.RoomEvent.DataReceived, (payload, participant) => { 
               try { 
                   const data = JSON.parse(new TextDecoder().decode(payload)); 
@@ -1916,28 +1917,20 @@
               console.warn("SFUサーバーへの接続に失敗しました。プレビューモード（UI確認用）として進行します。", e); 
           }
 
-          // ★修正: LiveKitに任せずに、独自のマイクトラックを管理し、競合を排除
           try {
-              if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                  const constraints = state.ioBridge.enabled ? { echoCancellation: false, noiseSuppression: false, autoGainControl: false } : { echoCancellation: true, noiseSuppression: true };
+              if (state.localStream && room.state === 'connected') {
+                  const localMicTrack = new LivekitClient.LocalAudioTrack(state.localStream.getAudioTracks()[0]);
+                  state.localMicTrack = localMicTrack;
                   
-                  const stream = await navigator.mediaDevices.getUserMedia({ audio: constraints });
-                  state.localStream = stream; // ローカルメーター用
+                  await room.localParticipant.publishTrack(localMicTrack, { name: 'mic', source: LivekitClient.Track.Source.Microphone });
                   
-                  if (room.state === 'connected') {
-                      const localMicTrack = new LivekitClient.LocalAudioTrack(stream.getAudioTracks()[0]);
-                      state.localMicTrack = localMicTrack;
-                      
-                      await room.localParticipant.publishTrack(localMicTrack, { name: 'mic', source: LivekitClient.Track.Source.Microphone });
-                      
-                      // 初期状態はミュート（PTTボタンで解除）
-                      await localMicTrack.mute();
-                      state.audioEnabled = true; 
-                      initAudioContext();
-                  }
+                  // 初期状態はミュート
+                  await localMicTrack.mute();
+                  state.audioEnabled = true; 
+                  initAudioContext();
               }
           } catch (err) {
-              console.warn("マイクアクセスが制限されています:", err);
+              console.warn("マイクのパブリッシュに失敗しました:", err);
           }
       })();
     };
@@ -1948,12 +1941,11 @@
     document.getElementById('btn-enable-audio').onclick = () => { els.audioOverlay.style.display = 'none'; state.audioEnabled = true; initAudioContext(); };
     document.getElementById('btn-stop').onclick = () => { LocalProfile.clear(); location.reload(); };
 
-    // ★RTT（通信遅延）を全てのLiveKitバージョンとブラウザで安全に取得するフォールバックロジック
+    // ★修正: 最新のLiveKit仕様とブラウザに対応した包括的なRTT取得ロジック
     setInterval(async () => {
         const rttEl = document.getElementById('status-rtt');
         if (!rttEl) return;
         
-        // デバッグモード用のフェイク遅延生成
         if (state.myUserId && state.myUserId.toLowerCase() === 'debug') {
             const fakeRtt = Math.floor(Math.random() * 10) + 12; // 12~21ms
             rttEl.style.display = 'block';
@@ -1968,7 +1960,7 @@
         }
         
         try {
-            // LiveKitの内部オブジェクトを幅広く探索
+            // LiveKitのあらゆるバージョンをカバーする探索
             let pc = state.room.engine?.pcManager?.subscriber?.pc 
                   || state.room.engine?.subscriber?.pc 
                   || state.room.engine?.client?.pc
