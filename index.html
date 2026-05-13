@@ -268,6 +268,7 @@
       <div id="disconnect-text" style="font-size: 14px; color: rgba(255,255,255,0.8); margin-bottom: 30px;">通信が切断されました。自動再接続を試行中...</div>
     </div>
 
+    <!-- ログイン画面 -->
     <div id="login-overlay" class="overlay-base" style="display: flex;">
       <div class="login-modal" style="padding: 40px 50px; border-radius: 16px; width: 90%; max-width: 480px; background: #111216; border: 1px solid var(--border-color); box-shadow: 0 20px 50px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; margin: auto;">
         <button class="btn-close-login" id="btn-close-login" style="position: absolute; top: 15px; right: 15px; background: transparent; border: none; color: #9ca3af; font-size: 24px; cursor: pointer; display: none; z-index: 200;">
@@ -707,7 +708,7 @@
 
     const LIVEKIT_WS_URL = "wss://yy-talk-pe8z9ycq.livekit.cloud";
     const WORKER_AUTH_URL = "https://yy-talk.yoshimitsu-y.workers.dev";
-    let channels = []; currentLocalVideoTrack = null;
+    let channels = []; let currentLocalVideoTrack = null;
 
     const els = {
       statusMsg: document.getElementById('status-msg'), hostIdInput: document.getElementById('host-id'), joinUserIdInput: document.getElementById('join-userid'),
@@ -1118,13 +1119,19 @@
       const savedProfile = LocalProfile.get(); if (savedProfile) { els.hostIdInput.value = savedProfile.roomId || ''; els.joinUserIdInput.value = savedProfile.userId || ''; }
     });
 
-    // ★修正: 最も安定して動いていた純正のRELIABLEデータ送信方式に復元
+    // ★修正: 最も安定して動いていた「二段構え」のデータ送信（最新版・旧版両対応）
     function sendData(payload) { 
         if (state.room && state.room.localParticipant && typeof state.room.localParticipant.publishData === 'function') { 
             try {
                 const str = JSON.stringify(payload); 
                 const encoder = new TextEncoder(); 
-                state.room.localParticipant.publishData(encoder.encode(str), LivekitClient.DataPacket_Kind.RELIABLE); 
+                try {
+                    // 最新のLiveKit (v2) 仕様でのデータ送信
+                    state.room.localParticipant.publishData(encoder.encode(str), { reliable: true }); 
+                } catch (e) {
+                    // 旧バージョン (v1) 環境でのフォールバック
+                    state.room.localParticipant.publishData(encoder.encode(str), 1); 
+                }
             } catch (err) {
                 console.error("Data Publish Error", err);
             }
@@ -1346,11 +1353,11 @@
       }
     }
 
-    // ★修正: 最も安定して動いていた純正のシステム制御（setMicrophoneEnabled）に復元
+    // ★修正: 最も確実な純正のLiveKitマイク制御に復元（UIとの完全同期）
     function syncTalkStates() { 
         sendData({ type: 'update-talk-states', states: state.talkStates }); 
         const isAnyTalking = Object.values(state.talkStates).some(v => v === true) && !state.isMasterMicMuted;
-        if(state.room && state.room.localParticipant) {
+        if(state.room && state.room.localParticipant && typeof state.room.localParticipant.setMicrophoneEnabled === 'function') {
              state.room.localParticipant.setMicrophoneEnabled(isAnyTalking).catch(()=>{});
         }
     } 
@@ -1685,6 +1692,16 @@
       const btn = isAdmin ? els.btnJoinAdmin : els.btnJoinMember; const originalText = btn.textContent;
       els.btnJoinMember.disabled = true; els.btnJoinAdmin.disabled = true; btn.textContent = "認証中..."; btn.style.opacity = "0.5";
       
+      // ★修正: ブラウザのブロックを回避するため、接続処理を待つ前にここでマイク許可だけを先行取得しておく
+      try {
+          if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia && myName.toLowerCase() !== 'debug') {
+              const constraints = state.ioBridge.enabled ? { echoCancellation: false, noiseSuppression: false, autoGainControl: false } : { echoCancellation: true, noiseSuppression: true };
+              state.localStream = await navigator.mediaDevices.getUserMedia({ audio: constraints });
+          }
+      } catch (err) {
+          console.warn("マイクアクセスが制限または拒否されました:", err);
+      }
+
       state.roomId = rawRoomId; state.myUserId = myName; state.isAdmin = isAdmin;
       els.roomNameDisplay.textContent = rawRoomId;
       
@@ -1732,10 +1749,8 @@
       els.roleDisplay.style.display = 'none';
       els.audioOverlay.style.display = 'flex';
       
-      // ★修正: 部屋名が確定したこのタイミングで保存データをロード
+      // ★修正: 部屋名が決まったここでロードし、その後で自身を安全に登録する
       loadRoomState(state.roomId);
-
-      // パッチパネル等のために自身を確実にリストへ含める
       if (!state.registeredUsers.includes(state.myUserId)) {
           state.registeredUsers.push(state.myUserId);
           if (!state.userAssignments[state.myUserId]) state.userAssignments[state.myUserId] = channels?.map(c => c.id) || [];
@@ -1865,11 +1880,14 @@
           // ★修正: 純正のLiveKitシステムを利用し、接続直後にマイクを取得して配信する
           try {
               if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                  const constraints = state.ioBridge.enabled ? { echoCancellation: false, noiseSuppression: false, autoGainControl: false } : { echoCancellation: true, noiseSuppression: true };
-                  const stream = await navigator.mediaDevices.getUserMedia({ audio: constraints });
-                  state.localStream = stream;
+                  // もし先行取得したストリームがなければここで取得する
+                  if (!state.localStream) {
+                      const constraints = state.ioBridge.enabled ? { echoCancellation: false, noiseSuppression: false, autoGainControl: false } : { echoCancellation: true, noiseSuppression: true };
+                      state.localStream = await navigator.mediaDevices.getUserMedia({ audio: constraints });
+                  }
+                  
                   if (room.state === 'connected') {
-                      await room.localParticipant.publishTrack(stream.getAudioTracks()[0], { name: 'mic', source: LivekitClient.Track.Source.Microphone });
+                      await room.localParticipant.setMicrophoneEnabled(true);
                       await room.localParticipant.setMicrophoneEnabled(false);
                       state.audioEnabled = true; initAudioContext();
                   }
@@ -1891,7 +1909,6 @@
         const rttEl = document.getElementById('status-rtt');
         if (!rttEl) return;
         
-        // デバッグモード用のフェイク遅延生成
         if (state.myUserId && state.myUserId.toLowerCase() === 'debug') {
             const fakeRtt = Math.floor(Math.random() * 10) + 12; // 12~21ms
             rttEl.style.display = 'block';
