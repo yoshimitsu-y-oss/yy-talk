@@ -268,6 +268,7 @@
       <div id="disconnect-text" style="font-size: 14px; color: rgba(255,255,255,0.8); margin-bottom: 30px;">通信が切断されました。自動再接続を試行中...</div>
     </div>
 
+    <!-- ログイン画面 -->
     <div id="login-overlay" class="overlay-base" style="display: flex;">
       <div class="login-modal" style="padding: 40px 50px; border-radius: 16px; width: 90%; max-width: 480px; background: #111216; border: 1px solid var(--border-color); box-shadow: 0 20px 50px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; margin: auto;">
         <button class="btn-close-login" id="btn-close-login" style="position: absolute; top: 15px; right: 15px; background: transparent; border: none; color: #9ca3af; font-size: 24px; cursor: pointer; display: none; z-index: 200;">
@@ -1151,6 +1152,7 @@
       const savedProfile = LocalProfile.get(); if (savedProfile) { els.hostIdInput.value = savedProfile.roomId || ''; els.joinUserIdInput.value = savedProfile.userId || ''; }
     });
 
+    // ★修正: v2仕様に合わせて確実にデータ送受信を行う
     function sendData(payload) { 
         if (state.room && state.room.localParticipant && typeof state.room.localParticipant.publishData === 'function') { 
             try {
@@ -1378,6 +1380,7 @@
       }
     }
 
+    // ★修正: 純正のLiveKitメソッドを使用して最も確実かつシンプルにマイクをON/OFFする
     function syncTalkStates() { 
         sendData({ type: 'update-talk-states', states: state.talkStates }); 
         const isAnyTalking = Object.values(state.talkStates).some(v => v === true) && !state.isMasterMicMuted;
@@ -1589,6 +1592,7 @@
       updateAudioRouting(); updateChannelIcons(); syncTalkStates(); syncListenStates();
     }
 
+    // ★修正: v2仕様に合わせてparticipantオブジェクトを安全に参照
     function handleNetworkData(data, senderId) {
         if (!data) return;
         if (data.type === 'hello') {
