@@ -124,7 +124,7 @@
     .video-dummy-text { color: #555; font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: bold; z-index: 1;} .video-wrapper video { width: 100%; height: 100%; object-fit: contain; background: #000; position: absolute; inset: 0; z-index: 5;}
     
     .admin-modal { width: 98%; max-width: 1100px; max-height: 95vh; display: flex; flex-direction: column; padding: 25px 15px 15px; margin: 2vh auto auto; position: relative; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);}
-    .btn-close-modal { position: absolute; top: -5px; right: 10px; background: transparent; border: none; color: #7a7e85; cursor: pointer; z-index: 200; transition: color 0.2s ease; padding: 0; line-height: 0; }
+    .btn-close-modal { position: absolute; top: -5px; right: 5px; background: transparent; border: none; color: #7a7e85; cursor: pointer; z-index: 200; transition: color 0.2s ease; padding: 0; line-height: 0; }
     .btn-close-modal svg { width: 32px; height: 32px; }
     .btn-close-modal:hover { color: #ffffff; }
 
@@ -268,7 +268,6 @@
       <div id="disconnect-text" style="font-size: 14px; color: rgba(255,255,255,0.8); margin-bottom: 30px;">通信が切断されました。自動再接続を試行中...</div>
     </div>
 
-    <!-- ログイン画面 -->
     <div id="login-overlay" class="overlay-base" style="display: flex;">
       <div class="login-modal" style="padding: 40px 50px; border-radius: 16px; width: 90%; max-width: 480px; background: #111216; border: 1px solid var(--border-color); box-shadow: 0 20px 50px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; margin: auto;">
         <button class="btn-close-login" id="btn-close-login" style="position: absolute; top: 15px; right: 15px; background: transparent; border: none; color: #9ca3af; font-size: 24px; cursor: pointer; display: none; z-index: 200;">
@@ -695,7 +694,7 @@
     };
 
     const state = {
-      room: null, localStream: null, localMicTrack: null, roomId: '', myUserId: '', users: {}, registeredUsers: [], 
+      room: null, localStream: null, roomId: '', myUserId: '', users: {}, registeredUsers: [], 
       userAssignments: {}, tallyAssignments: {}, mediaCalls: {}, talkStates: {}, listenStates: {}, 
       channelVolumes: {}, remoteTalkStates: {}, remoteListenStates: {}, channelNodes: {}, 
       isAdmin: false, audioEnabled: false, isMasterSpkMuted: false, isMasterMicMuted: false, 
@@ -708,7 +707,7 @@
 
     const LIVEKIT_WS_URL = "wss://yy-talk-pe8z9ycq.livekit.cloud";
     const WORKER_AUTH_URL = "https://yy-talk.yoshimitsu-y.workers.dev";
-    let channels = []; let currentLocalVideoTrack = null;
+    let channels = []; currentLocalVideoTrack = null;
 
     const els = {
       statusMsg: document.getElementById('status-msg'), hostIdInput: document.getElementById('host-id'), joinUserIdInput: document.getElementById('join-userid'),
@@ -772,42 +771,10 @@
 
     async function updateAudioDevices() {
         if (!state.room || !state.room.localParticipant) return;
-        
-        const micConstraints = state.ioBridge.enabled ? 
-            { echoCancellation: false, noiseSuppression: false, autoGainControl: false } : 
-            { echoCancellation: true, noiseSuppression: true };
-        
+        const micConstraints = state.ioBridge.enabled ? { echoCancellation: false, noiseSuppression: false, autoGainControl: false } : { echoCancellation: true, noiseSuppression: true };
         try {
-            const existingPub = state.room.localParticipant.getTrackPublication(LivekitClient.Track.Source.Microphone);
-            if (existingPub && existingPub.track) {
-                await state.room.localParticipant.unpublishTrack(existingPub.track);
-                existingPub.track.stop();
-            }
-            if (state.localMicTrack) {
-                state.localMicTrack.stop();
-                state.localMicTrack = null;
-            }
-            
-            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: micConstraints });
-                state.localStream = stream; 
-                
-                const newMicTrack = new LivekitClient.LocalAudioTrack(stream.getAudioTracks()[0]);
-                state.localMicTrack = newMicTrack;
-                await state.room.localParticipant.publishTrack(newMicTrack, { name: 'mic', source: LivekitClient.Track.Source.Microphone });
-                
-                const isAnyTalking = Object.values(state.talkStates).some(v => v === true) && !state.isMasterMicMuted;
-                if (!isAnyTalking) await newMicTrack.mute();
-                else await newMicTrack.unmute();
-                
-                if (audioCtx) {
-                    if (localMicAnalyser) localMicAnalyser.disconnect();
-                    const localSrc = audioCtx.createMediaStreamSource(state.localStream);
-                    localMicAnalyser = audioCtx.createAnalyser();
-                    localMicAnalyser.fftSize = 256;
-                    localSrc.connect(localMicAnalyser);
-                }
-            }
+            await state.room.localParticipant.setMicrophoneEnabled(false);
+            await state.room.localParticipant.setMicrophoneEnabled(true, micConstraints);
         } catch(e) { console.error("Mic Update Error", e); }
 
         const handleIOTracks = async () => {
@@ -816,7 +783,6 @@
                     if (state[key]) { await state.room.localParticipant.unpublishTrack(state[key].track); state[key].track.stop(); state[key] = null; }
                 }); return;
             }
-
             if (state.ioBridge.inDevice4w) {
                 try {
                     let audioConst = { echoCancellation: false, noiseSuppression: false, autoGainControl: false };
@@ -1152,13 +1118,13 @@
       const savedProfile = LocalProfile.get(); if (savedProfile) { els.hostIdInput.value = savedProfile.roomId || ''; els.joinUserIdInput.value = savedProfile.userId || ''; }
     });
 
-    // ★修正: v2仕様に合わせて確実にデータ送受信を行う
+    // ★修正: 最も安定して動いていた純正のRELIABLEデータ送信方式に復元
     function sendData(payload) { 
         if (state.room && state.room.localParticipant && typeof state.room.localParticipant.publishData === 'function') { 
             try {
                 const str = JSON.stringify(payload); 
                 const encoder = new TextEncoder(); 
-                state.room.localParticipant.publishData(encoder.encode(str), { reliable: true }); 
+                state.room.localParticipant.publishData(encoder.encode(str), LivekitClient.DataPacket_Kind.RELIABLE); 
             } catch (err) {
                 console.error("Data Publish Error", err);
             }
@@ -1380,18 +1346,11 @@
       }
     }
 
-    // ★修正: 純正のLiveKitメソッドを使用して最も確実かつシンプルにマイクをON/OFFする
+    // ★修正: 最も安定して動いていた純正のシステム制御（setMicrophoneEnabled）に復元
     function syncTalkStates() { 
         sendData({ type: 'update-talk-states', states: state.talkStates }); 
         const isAnyTalking = Object.values(state.talkStates).some(v => v === true) && !state.isMasterMicMuted;
-        
-        if (state.localMicTrack) {
-            if (isAnyTalking) {
-                state.localMicTrack.unmute().catch(()=>{});
-            } else {
-                state.localMicTrack.mute().catch(()=>{});
-            }
-        } else if(state.room && state.room.localParticipant && typeof state.room.localParticipant.setMicrophoneEnabled === 'function') {
+        if(state.room && state.room.localParticipant) {
              state.room.localParticipant.setMicrophoneEnabled(isAnyTalking).catch(()=>{});
         }
     } 
@@ -1592,7 +1551,6 @@
       updateAudioRouting(); updateChannelIcons(); syncTalkStates(); syncListenStates();
     }
 
-    // ★修正: v2仕様に合わせてparticipantオブジェクトを安全に参照
     function handleNetworkData(data, senderId) {
         if (!data) return;
         if (data.type === 'hello') {
@@ -1727,16 +1685,6 @@
       const btn = isAdmin ? els.btnJoinAdmin : els.btnJoinMember; const originalText = btn.textContent;
       els.btnJoinMember.disabled = true; els.btnJoinAdmin.disabled = true; btn.textContent = "認証中..."; btn.style.opacity = "0.5";
       
-      // ★修正: クリック直後にマイク権限を要求する（ブラウザのブロックを回避）
-      try {
-          if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia && myName.toLowerCase() !== 'debug') {
-              const constraints = state.ioBridge.enabled ? { echoCancellation: false, noiseSuppression: false, autoGainControl: false } : { echoCancellation: true, noiseSuppression: true };
-              state.localStream = await navigator.mediaDevices.getUserMedia({ audio: constraints });
-          }
-      } catch (err) {
-          console.warn("マイクアクセスが制限または拒否されました:", err);
-      }
-
       state.roomId = rawRoomId; state.myUserId = myName; state.isAdmin = isAdmin;
       els.roomNameDisplay.textContent = rawRoomId;
       
@@ -1787,6 +1735,7 @@
       // ★修正: 部屋名が確定したこのタイミングで保存データをロード
       loadRoomState(state.roomId);
 
+      // パッチパネル等のために自身を確実にリストへ含める
       if (!state.registeredUsers.includes(state.myUserId)) {
           state.registeredUsers.push(state.myUserId);
           if (!state.userAssignments[state.myUserId]) state.userAssignments[state.myUserId] = channels?.map(c => c.id) || [];
@@ -1810,10 +1759,8 @@
                     setScreenShareEnabled: async () => {},
                     setCameraEnabled: async () => {},
                     unpublishTrack: async () => {},
-                    publishTrack: async () => {},
-                    getTrackPublication: () => { return null; }
-                },
-                engine: { pcManager: { subscriber: { pc: { getStats: async () => [] } } } }
+                    publishTrack: async () => {}
+                }
             };
             if (channels.length > 1) state.remoteTalkStates = { 'Cam1': { [channels[1].id]: true } };
             
@@ -1827,6 +1774,7 @@
                 if(sepEl) sepEl.style.display = 'block';
             }
             if(isAdmin) { buildAdminMatrix(); buildTallyAssignmentUI(); }
+            
             return;
           }
 
@@ -1902,14 +1850,7 @@
               removePeer(participant.identity + '_io_pgm_l'); removePeer(participant.identity + '_io_pgm_r');
           });
           room.on(LivekitClient.RoomEvent.ParticipantConnected, (participant) => { updateUserCount(); sendData({ type: 'hello', userId: state.myUserId }); syncTalkStates(); syncListenStates(); });
-          
-          room.on(LivekitClient.RoomEvent.DataReceived, (payload, participant) => { 
-              try { 
-                  const data = JSON.parse(new TextDecoder().decode(payload)); 
-                  const senderId = participant?.identity || 'unknown';
-                  handleNetworkData(data, senderId); 
-              } catch(e){} 
-          });
+          room.on(LivekitClient.RoomEvent.DataReceived, (payload, participant) => { try { const data = JSON.parse(new TextDecoder().decode(payload)); handleNetworkData(data, participant.identity); } catch(e){} });
 
           try {
             if (token !== "dummy_token_for_preview") {
@@ -1921,20 +1862,20 @@
               console.warn("SFUサーバーへの接続に失敗しました。プレビューモード（UI確認用）として進行します。", e); 
           }
 
+          // ★修正: 純正のLiveKitシステムを利用し、接続直後にマイクを取得して配信する
           try {
-              if (state.localStream && room.state === 'connected') {
-                  const localMicTrack = new LivekitClient.LocalAudioTrack(state.localStream.getAudioTracks()[0]);
-                  state.localMicTrack = localMicTrack;
-                  
-                  await room.localParticipant.publishTrack(localMicTrack, { name: 'mic', source: LivekitClient.Track.Source.Microphone });
-                  
-                  // 初期状態はミュート
-                  await localMicTrack.mute();
-                  state.audioEnabled = true; 
-                  initAudioContext();
+              if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                  const constraints = state.ioBridge.enabled ? { echoCancellation: false, noiseSuppression: false, autoGainControl: false } : { echoCancellation: true, noiseSuppression: true };
+                  const stream = await navigator.mediaDevices.getUserMedia({ audio: constraints });
+                  state.localStream = stream;
+                  if (room.state === 'connected') {
+                      await room.localParticipant.publishTrack(stream.getAudioTracks()[0], { name: 'mic', source: LivekitClient.Track.Source.Microphone });
+                      await room.localParticipant.setMicrophoneEnabled(false);
+                      state.audioEnabled = true; initAudioContext();
+                  }
               }
           } catch (err) {
-              console.warn("マイクのパブリッシュに失敗しました:", err);
+              console.warn("プレビュー環境のためマイクアクセスが制限されています:", err);
           }
       })();
     };
@@ -1945,11 +1886,12 @@
     document.getElementById('btn-enable-audio').onclick = () => { els.audioOverlay.style.display = 'none'; state.audioEnabled = true; initAudioContext(); };
     document.getElementById('btn-stop').onclick = () => { LocalProfile.clear(); location.reload(); };
 
-    // ★修正: 最新のLiveKit仕様とブラウザに対応した包括的なRTT取得ロジック
+    // ★修正: 最も安定して動いていた純正のRTT取得ロジックに復元
     setInterval(async () => {
         const rttEl = document.getElementById('status-rtt');
         if (!rttEl) return;
         
+        // デバッグモード用のフェイク遅延生成
         if (state.myUserId && state.myUserId.toLowerCase() === 'debug') {
             const fakeRtt = Math.floor(Math.random() * 10) + 12; // 12~21ms
             rttEl.style.display = 'block';
@@ -1964,28 +1906,19 @@
         }
         
         try {
-            // LiveKitのあらゆるバージョンをカバーする探索
-            let pc = state.room.engine?.pcManager?.subscriber?.pc 
-                  || state.room.engine?.subscriber?.pc 
-                  || state.room.engine?.client?.pc
-                  || state.room.engine?.pcManager?.publisher?.pc
-                  || state.room.engine?.publisher?.pc;
-                  
-            if (pc && typeof pc.getStats === 'function') {
+            let pc = state.room.engine.pcManager?.subscriber?.pc || state.room.engine.subscriber?.pc || state.room.engine.client?.pc;
+            if (pc) {
                 const stats = await pc.getStats();
                 let found = false;
                 stats.forEach(report => {
-                    if (report.type === 'candidate-pair' && (report.state === 'succeeded' || report.nominated)) {
-                        let rttVal = report.currentRoundTripTime !== undefined ? report.currentRoundTripTime : report.roundTripTime;
-                        if (rttVal !== undefined) {
-                            const rttMs = Math.round(rttVal * 1000);
-                            rttEl.style.display = 'block';
-                            rttEl.textContent = `${rttMs} ms`;
-                            if (rttMs < 100) rttEl.style.color = 'var(--green)';
-                            else if (rttMs < 250) rttEl.style.color = 'var(--orange)';
-                            else rttEl.style.color = 'var(--red)';
-                            found = true;
-                        }
+                    if (report.type === 'candidate-pair' && report.state === 'succeeded' && report.currentRoundTripTime !== undefined) {
+                        const rttMs = Math.round(report.currentRoundTripTime * 1000);
+                        rttEl.style.display = 'block';
+                        rttEl.textContent = `${rttMs} ms`;
+                        if (rttMs < 100) rttEl.style.color = 'var(--green)';
+                        else if (rttMs < 250) rttEl.style.color = 'var(--orange)';
+                        else rttEl.style.color = 'var(--red)';
+                        found = true;
                     }
                 });
                 if (!found && state.room.state === 'connected') {
@@ -1993,10 +1926,6 @@
                     rttEl.textContent = `< 50 ms`;
                     rttEl.style.color = 'var(--green)';
                 }
-            } else if (state.room.state === 'connected') {
-                rttEl.style.display = 'block';
-                rttEl.textContent = `Connected`;
-                rttEl.style.color = 'var(--green)';
             }
         } catch(e) {}
     }, 2000);
