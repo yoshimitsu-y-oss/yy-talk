@@ -45,6 +45,7 @@
     if (window.visualViewport) window.visualViewport.addEventListener('resize', forceResize);
   </script>
 
+  <!-- LiveKitクライアントのバージョンを安定版に固定 -->
   <script src="https://cdn.jsdelivr.net/npm/livekit-client@2.5.9/dist/livekit-client.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
@@ -415,27 +416,64 @@
     function patchIoToggle() {
         const toggleWrapper = document.getElementById('btn-io-toggle'); const sliderText = document.getElementById('io-slider-text'); const toggleText = toggleWrapper.querySelector('.io-toggle-text'); if(!toggleWrapper) return;
         toggleWrapper.onpointerdown = (e) => { toggleWrapper.setPointerCapture(e.pointerId); toggleWrapper.isDragging = true; toggleWrapper.startX = e.clientX; toggleWrapper.moved = false; toggleWrapper.querySelector('.io-toggle-slider').style.transition = 'none'; toggleText.style.transition = 'none'; };
-        toggleWrapper.onpointermove = (e) => { if (!toggleWrapper.isDragging) return; toggleWrapper.moved = true; let deltaX = e.clientX - toggleWrapper.startX; let currentLeft = state.ioBridge.enabled ? 188 : 0; let newLeft = currentLeft + deltaX; newLeft = Math.max(0, Math.min(newLeft, 188)); toggleWrapper.querySelector('.io-toggle-slider').style.left = `calc(2px + ${newLeft}px)`; let ratio = newLeft / 188; let textX = 24 - (ratio * 48); toggleText.style.transform = `translateX(${textX}px)`; };
+        toggleWrapper.onpointermove = (e) => {
+          if (!toggleWrapper.isDragging) return; toggleWrapper.moved = true;
+          let deltaX = e.clientX - toggleWrapper.startX; let currentLeft = state.ioBridge.enabled ? 188 : 0; let newLeft = currentLeft + deltaX;
+          newLeft = Math.max(0, Math.min(newLeft, 188)); toggleWrapper.querySelector('.io-toggle-slider').style.left = `calc(2px + ${newLeft}px)`;
+          let ratio = newLeft / 188; let textX = 24 - (ratio * 48); toggleText.style.transform = `translateX(${textX}px)`;
+        };
         const handlePointerUp = (e) => {
-          if (!toggleWrapper.isDragging) return; toggleWrapper.isDragging = false; toggleWrapper.releasePointerCapture(e.pointerId); toggleWrapper.querySelector('.io-toggle-slider').style.transition = 'left 0.3s cubic-bezier(0.4, 0.0, 0.2, 1), background-color 0.3s'; toggleText.style.transition = 'transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1), color 0.3s'; toggleWrapper.querySelector('.io-toggle-slider').style.cssText = ''; toggleText.style.cssText = '';
+          if (!toggleWrapper.isDragging) return; toggleWrapper.isDragging = false; toggleWrapper.releasePointerCapture(e.pointerId);
+          toggleWrapper.querySelector('.io-toggle-slider').style.transition = 'left 0.3s cubic-bezier(0.4, 0.0, 0.2, 1), background-color 0.3s'; toggleText.style.transition = 'transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1), color 0.3s';
+          toggleWrapper.querySelector('.io-toggle-slider').style.cssText = ''; toggleText.style.cssText = '';
           let deltaX = e.clientX - toggleWrapper.startX;
-          if (toggleWrapper.moved && Math.abs(deltaX) > 20) { if (!state.ioBridge.enabled && deltaX > 30) { toggleAction(true); } else if (state.ioBridge.enabled && deltaX < -30) { toggleAction(false); } else { if(state.ioBridge.enabled) toggleWrapper.classList.add('active'); else toggleWrapper.classList.remove('active'); } } else { if(state.ioBridge.enabled) toggleWrapper.classList.add('active'); else toggleWrapper.classList.remove('active'); }
+          if (toggleWrapper.moved && Math.abs(deltaX) > 20) {
+              if (!state.ioBridge.enabled && deltaX > 30) { toggleAction(true); } else if (state.ioBridge.enabled && deltaX < -30) { toggleAction(false); } 
+              else { if(state.ioBridge.enabled) toggleWrapper.classList.add('active'); else toggleWrapper.classList.remove('active'); }
+          } else { if(state.ioBridge.enabled) toggleWrapper.classList.add('active'); else toggleWrapper.classList.remove('active'); }
         };
         toggleWrapper.onpointerup = handlePointerUp;
+        
         async function toggleAction(newState) {
-            if (state.ioBridge.enabled === newState) return; state.ioBridge.enabled = newState; sliderText.textContent = newState ? "ON" : "OFF"; if(newState) toggleWrapper.classList.add('active'); else toggleWrapper.classList.remove('active');
+            if (state.ioBridge.enabled === newState) return;
+            state.ioBridge.enabled = newState; sliderText.textContent = newState ? "ON" : "OFF";
+            if(newState) toggleWrapper.classList.add('active'); else toggleWrapper.classList.remove('active');
             if (typeof updateIoElementsState === 'function') updateIoElementsState(); if (typeof updatePttButtonsState === 'function') updatePttButtonsState();
-            if (newState) { let changed = false; channels?.forEach(ch => { if (state.talkStates[ch.id]) { state.talkStates[ch.id] = false; changed = true; } if (state.listenStates[ch.id]) { state.listenStates[ch.id] = false; changed = true; } const card = document.getElementById(`card-${ch.id}`); if (card) card.classList.remove('talk-on', 'listen-on'); const tBtn = document.getElementById(`talk-${ch.id}`); if (tBtn) tBtn.classList.remove('active', 'latched'); const lBtn = document.getElementById(`listen-${ch.id}`); if (lBtn) lBtn.classList.remove('active', 'latched'); }); if(changed) { updateAudioRouting(); updateChannelIcons(); syncTalkStates(); syncListenStates(); } }
+            if (newState) {
+                let changed = false;
+                channels?.forEach(ch => {
+                    if (state.talkStates[ch.id]) { state.talkStates[ch.id] = false; changed = true; }
+                    if (state.listenStates[ch.id]) { state.listenStates[ch.id] = false; changed = true; }
+                    const card = document.getElementById(`card-${ch.id}`); if (card) card.classList.remove('talk-on', 'listen-on');
+                    const tBtn = document.getElementById(`talk-${ch.id}`); if (tBtn) tBtn.classList.remove('active', 'latched');
+                    const lBtn = document.getElementById(`listen-${ch.id}`); if (lBtn) lBtn.classList.remove('active', 'latched');
+                });
+                if(changed) { updateAudioRouting(); updateChannelIcons(); syncTalkStates(); syncListenStates(); }
+            }
             saveRoomState(); sendData({ type: 'update-io-bridge', ioBridge: state.ioBridge }); await updateAudioDevices(); applyOutputDevice();
         }
     }
 
     navigator.mediaDevices.addEventListener('devicechange', async () => {
-        if (!state.ioBridge || !state.ioBridge.enabled) return; const devices = await navigator.mediaDevices.enumerateDevices();
-        if (state.ioBridge.outDevice4w && state.ioBridge.outDevice4w !== 'default' && state.ioBridge.outDevice4w !== '') { const exists = devices.some(d => d.deviceId === state.ioBridge.outDevice4w); if (!exists) { state.ioBridge.outDevice4w = 'default'; if(els.select4wOutDevice) els.select4wOutDevice.value = 'default'; applyOutputDevice(); alert("【警告】出力に指定されていたUSBデバイスが切断されました。\n安全のため標準スピーカーに切り替えます。"); saveRoomState(); } }
+        if (!state.ioBridge || !state.ioBridge.enabled) return;
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        if (state.ioBridge.outDevice4w && state.ioBridge.outDevice4w !== 'default' && state.ioBridge.outDevice4w !== '') {
+            const exists = devices.some(d => d.deviceId === state.ioBridge.outDevice4w);
+            if (!exists) {
+                state.ioBridge.outDevice4w = 'default'; if(els.select4wOutDevice) els.select4wOutDevice.value = 'default';
+                applyOutputDevice(); alert("【警告】出力に指定されていたUSBデバイスが切断されました。\n安全のため標準スピーカーに切り替えます。"); saveRoomState();
+            }
+        }
     });
 
-    const safeStorage = { get: (key) => { try { return localStorage.getItem(key); } catch(e) { return null; } }, set: (key, val) => { try { localStorage.setItem(key, val); } catch(e) {} }, remove: (key) => { try { localStorage.removeItem(key); } catch(e) {} } };
+    // ★修正1: Canvas環境等でのLocalStorageエラーを回避するインメモリストレージの導入
+    const memStorage = {};
+    const safeStorage = { 
+        get: (key) => { try { return localStorage.getItem(key) || memStorage[key] || null; } catch(e) { return memStorage[key] || null; } }, 
+        set: (key, val) => { memStorage[key] = val; try { localStorage.setItem(key, val); } catch(e) {} }, 
+        remove: (key) => { delete memStorage[key]; try { localStorage.removeItem(key); } catch(e) {} } 
+    };
+    
     const LocalProfile = { get: () => { try { return JSON.parse(safeStorage.get('yytalk_user_profile')); } catch(e) { return null; } }, set: (data) => { try { safeStorage.set('yytalk_user_profile', JSON.stringify(data)); } catch(e) {} }, clear: () => { try { safeStorage.remove('yytalk_user_profile'); } catch(e) {} } };
 
     const state = {
@@ -447,21 +485,46 @@
       ioTrack4wL: null, ioTrack4wR: null, ioTrackPgmL: null, ioTrackPgmR: null, masterAudioEl: null, hasSuccessfullyConnected: false
     };
 
-    const LIVEKIT_WS_URL = "wss://yy-talk-pe8z9ycq.livekit.cloud"; const WORKER_AUTH_URL = "https://yy-talk.yoshimitsu-y.workers.dev";
+    const LIVEKIT_WS_URL = "wss://yy-talk-pe8z9ycq.livekit.cloud";
+    const WORKER_AUTH_URL = "https://yy-talk.yoshimitsu-y.workers.dev";
     let channels = []; let currentLocalVideoTrack = null;
 
     const els = {
-      statusMsg: document.getElementById('status-msg'), hostIdInput: document.getElementById('host-id'), joinUserIdInput: document.getElementById('join-userid'), roleDisplay: document.getElementById('status-role'), dummyAudio: document.getElementById('dummy-audio'), audioOverlay: document.getElementById('audio-overlay'), loginOverlay: document.getElementById('login-overlay'), btnLoginShow: document.getElementById('btn-show-login'), masterMeterFill: document.getElementById('master-meter-fill'), roomNameDisplay: document.getElementById('header-room-name'), userIdDisplay: document.getElementById('header-user-id'), adminOverlay: document.getElementById('admin-overlay'), btnSettings: document.getElementById('btn-settings'), btnCloseAdmin: document.getElementById('btn-close-admin'), btnAddCh: document.getElementById('btn-add-ch'), chWrap: document.getElementById('channel-list-wrap'), btnJoinMember: document.getElementById('btn-join-member'), btnJoinAdmin: document.getElementById('btn-join-admin'), btnStop: document.getElementById('btn-stop'), btnMasterSpk: document.getElementById('btn-master-spk'), btnMasterMic: document.getElementById('btn-master-mic'), globalSpkIcon: document.getElementById('global-spk-icon'), globalMicIcon: document.getElementById('global-mic-icon'), btnLayout: document.getElementById('btn-layout'), layoutDropdown: document.getElementById('layout-dropdown'), layoutItems: document.querySelectorAll('.layout-item'), appContainer: document.getElementById('main-app-container'), monitorSection: document.getElementById('monitor-section'), editMonitorTitle: document.getElementById('edit-monitor-title'), editMonitorSource: document.getElementById('edit-monitor-source'), editVideoQuality: document.getElementById('edit-video-quality'), mainMonitorTitle: document.getElementById('main-monitor-title'), monitorVideoWrapper: document.getElementById('monitor-video-wrapper'), mainMonitorSourceText: document.getElementById('main-monitor-source-text'), tabVideo: document.getElementById('tab-video'), tabPatch: document.getElementById('tab-patch'), tabIo: document.getElementById('tab-io'), secVideo: document.getElementById('admin-video-section'), secPatch: document.getElementById('admin-patch-section'), secIo: document.getElementById('admin-io-section'), tallyList: document.getElementById('tally-assignment-list'), btnIoToggle: document.getElementById('btn-io-toggle'), select4wInDevice: document.getElementById('select-4w-in-device'), select4wOutDevice: document.getElementById('select-4w-out-device'), selectPgmInDevice: document.getElementById('select-pgm-in-device'), select4wInL: document.getElementById('select-4w-in-l'), select4wInR: document.getElementById('select-4w-in-r'), select4wOutL: document.getElementById('select-4w-out-l'), select4wOutR: document.getElementById('select-4w-out-r'), selectPgmInL: document.getElementById('select-pgm-in-l'), selectPgmInR: document.getElementById('select-pgm-in-r'), gain4wInL: document.getElementById('gain-4w-in-l'), gain4wInR: document.getElementById('gain-4w-in-r'), gain4wOutL: document.getElementById('gain-4w-out-l'), gain4wOutR: document.getElementById('gain-4w-out-r'), gainPgmInL: document.getElementById('gain-pgm-in-l'), gainPgmInR: document.getElementById('gain-pgm-in-r')
+      statusMsg: document.getElementById('status-msg'), hostIdInput: document.getElementById('host-id'), joinUserIdInput: document.getElementById('join-userid'),
+      roleDisplay: document.getElementById('status-role'), dummyAudio: document.getElementById('dummy-audio'), audioOverlay: document.getElementById('audio-overlay'), loginOverlay: document.getElementById('login-overlay'), btnLoginShow: document.getElementById('btn-show-login'),
+      masterMeterFill: document.getElementById('master-meter-fill'), roomNameDisplay: document.getElementById('header-room-name'), userIdDisplay: document.getElementById('header-user-id'),
+      adminOverlay: document.getElementById('admin-overlay'), btnSettings: document.getElementById('btn-settings'), btnCloseAdmin: document.getElementById('btn-close-admin'),
+      btnAddCh: document.getElementById('btn-add-ch'), chWrap: document.getElementById('channel-list-wrap'), btnJoinMember: document.getElementById('btn-join-member'), btnJoinAdmin: document.getElementById('btn-join-admin'),
+      btnStop: document.getElementById('btn-stop'), btnMasterSpk: document.getElementById('btn-master-spk'), btnMasterMic: document.getElementById('btn-master-mic'),
+      globalSpkIcon: document.getElementById('global-spk-icon'), globalMicIcon: document.getElementById('global-mic-icon'), btnLayout: document.getElementById('btn-layout'), layoutDropdown: document.getElementById('layout-dropdown'), layoutItems: document.querySelectorAll('.layout-item'), appContainer: document.getElementById('main-app-container'),
+      monitorSection: document.getElementById('monitor-section'), editMonitorTitle: document.getElementById('edit-monitor-title'), editMonitorSource: document.getElementById('edit-monitor-source'), editVideoQuality: document.getElementById('edit-video-quality'),
+      mainMonitorTitle: document.getElementById('main-monitor-title'), monitorVideoWrapper: document.getElementById('monitor-video-wrapper'), mainMonitorSourceText: document.getElementById('main-monitor-source-text'),
+      tabVideo: document.getElementById('tab-video'), tabPatch: document.getElementById('tab-patch'), tabIo: document.getElementById('tab-io'), secVideo: document.getElementById('admin-video-section'), secPatch: document.getElementById('admin-patch-section'), secIo: document.getElementById('admin-io-section'),
+      tallyList: document.getElementById('tally-assignment-list'), btnIoToggle: document.getElementById('btn-io-toggle'), select4wInDevice: document.getElementById('select-4w-in-device'), select4wOutDevice: document.getElementById('select-4w-out-device'),
+      selectPgmInDevice: document.getElementById('select-pgm-in-device'), select4wInL: document.getElementById('select-4w-in-l'), select4wInR: document.getElementById('select-4w-in-r'), select4wOutL: document.getElementById('select-4w-out-l'), select4wOutR: document.getElementById('select-4w-out-r'),
+      selectPgmInL: document.getElementById('select-pgm-in-l'), selectPgmInR: document.getElementById('select-pgm-in-r'), gain4wInL: document.getElementById('gain-4w-in-l'), gain4wInR: document.getElementById('gain-4w-in-r'), gain4wOutL: document.getElementById('gain-4w-out-l'), gain4wOutR: document.getElementById('gain-4w-out-r'),
+      gainPgmInL: document.getElementById('gain-pgm-in-l'), gainPgmInR: document.getElementById('gain-pgm-in-r')
     };
 
-    els.appContainer.classList.add('layout-normal'); els.btnLayout.onclick = (e) => { e.stopPropagation(); els.layoutDropdown.classList.toggle('show'); }; document.addEventListener('click', () => { els.layoutDropdown.classList.remove('show'); }); els.layoutItems.forEach(item => { item.onclick = (e) => { applyLayout(item.getAttribute('data-layout')); state.layout = item.getAttribute('data-layout'); saveRoomState(); }; });
+    els.appContainer.classList.add('layout-normal');
+    els.btnLayout.onclick = (e) => { e.stopPropagation(); els.layoutDropdown.classList.toggle('show'); };
+    document.addEventListener('click', () => { els.layoutDropdown.classList.remove('show'); });
+    els.layoutItems.forEach(item => { item.onclick = (e) => { applyLayout(item.getAttribute('data-layout')); state.layout = item.getAttribute('data-layout'); saveRoomState(); }; });
 
-    function applyLayout(layout) { els.appContainer.classList.remove('layout-normal', 'layout-hybrid', 'layout-monitor'); els.appContainer.classList.add('layout-' + layout); els.layoutItems.forEach(btn => { if(btn.getAttribute('data-layout') === layout) btn.classList.add('active'); else btn.classList.remove('active'); }); if (layout === 'normal') els.btnLayout.classList.remove('active'); else els.btnLayout.classList.add('active'); setTimeout(forceResize, 100); }
+    function applyLayout(layout) {
+        els.appContainer.classList.remove('layout-normal', 'layout-hybrid', 'layout-monitor'); els.appContainer.classList.add('layout-' + layout);
+        els.layoutItems.forEach(btn => { if(btn.getAttribute('data-layout') === layout) btn.classList.add('active'); else btn.classList.remove('active'); });
+        if (layout === 'normal') els.btnLayout.classList.remove('active'); else els.btnLayout.classList.add('active'); setTimeout(forceResize, 100);
+    }
 
-    els.btnLoginShow.onclick = () => { els.loginOverlay.style.display = 'flex'; }; document.getElementById('btn-close-login').onclick = () => { els.loginOverlay.style.display = 'none'; };
+    els.btnLoginShow.onclick = () => { els.loginOverlay.style.display = 'flex'; };
+    document.getElementById('btn-close-login').onclick = () => { els.loginOverlay.style.display = 'none'; };
+    
     function switchTab(activeTab, activeSec) { [els.tabVideo, els.tabPatch, els.tabIo].forEach(t => t.classList.remove('active')); [els.secVideo, els.secPatch, els.secIo].forEach(s => s.style.display = 'none'); activeTab.classList.add('active'); activeSec.style.display = 'block'; }
     els.tabVideo.onclick = () => switchTab(els.tabVideo, els.secVideo); els.tabPatch.onclick = () => switchTab(els.tabPatch, els.secPatch); els.tabIo.onclick = () => { switchTab(els.tabIo, els.secIo); buildIoUI(); };
-    els.btnSettings.onclick = () => { if (!state.isAdmin) return; els.adminOverlay.style.display = 'flex'; els.btnSettings.classList.add('active'); buildAdminMatrix(); buildTallyAssignmentUI(); updateVideoSources(); }; els.btnCloseAdmin.onclick = () => { els.adminOverlay.style.display = 'none'; els.btnSettings.classList.remove('active'); };
+    
+    els.btnSettings.onclick = () => { if (!state.isAdmin) return; els.adminOverlay.style.display = 'flex'; els.btnSettings.classList.add('active'); buildAdminMatrix(); buildTallyAssignmentUI(); updateVideoSources(); };
+    els.btnCloseAdmin.onclick = () => { els.adminOverlay.style.display = 'none'; els.btnSettings.classList.remove('active'); };
 
     function updateUserCount() {
       if(!state.room) return;
@@ -497,11 +560,19 @@
     }
 
     function buildIoUI() {
-      const sliderText = document.getElementById('io-slider-text'); if(sliderText) sliderText.textContent = state.ioBridge.enabled ? "ON" : "OFF"; if(state.ioBridge.enabled) els.btnIoToggle.classList.add('active'); else els.btnIoToggle.classList.remove('active'); patchIoToggle();
-      window.updateIoElementsState = function() { const isIoOn = state.ioBridge.enabled; document.querySelectorAll('#admin-io-section .io-interface-section').forEach(el => { el.style.opacity = isIoOn ? '1' : '0.4'; el.style.pointerEvents = isIoOn ? 'auto' : 'none'; }); }; updateIoElementsState();
+      const sliderText = document.getElementById('io-slider-text');
+      if(sliderText) sliderText.textContent = state.ioBridge.enabled ? "ON" : "OFF";
+      if(state.ioBridge.enabled) els.btnIoToggle.classList.add('active'); else els.btnIoToggle.classList.remove('active');
+      patchIoToggle();
+      window.updateIoElementsState = function() { const isIoOn = state.ioBridge.enabled; document.querySelectorAll('#admin-io-section .io-interface-section').forEach(el => { el.style.opacity = isIoOn ? '1' : '0.4'; el.style.pointerEvents = isIoOn ? 'auto' : 'none'; }); };
+      updateIoElementsState();
       navigator.mediaDevices.enumerateDevices().then(devices => {
-        const defaultOpt = '<option value="default">System Default</option>'; const noneOpt = '<option value="">(None)</option>'; if(!els.select4wOutDevice) return; els.select4wOutDevice.innerHTML = defaultOpt; els.select4wInDevice.innerHTML = defaultOpt; els.selectPgmInDevice.innerHTML = noneOpt;
-        devices.forEach(d => { const opt = document.createElement('option'); opt.value = d.deviceId; opt.textContent = d.label || `${d.kind} ${d.deviceId.slice(0,5)}`; if (d.kind === 'audiooutput' && d.deviceId !== 'default') { els.select4wOutDevice.appendChild(opt); } else if (d.kind === 'audioinput' && d.deviceId !== 'default') { els.select4wInDevice.appendChild(opt.cloneNode(true)); els.selectPgmInDevice.appendChild(opt.cloneNode(true)); } });
+        const defaultOpt = '<option value="default">System Default</option>'; const noneOpt = '<option value="">(None)</option>';
+        if(!els.select4wOutDevice) return; els.select4wOutDevice.innerHTML = defaultOpt; els.select4wInDevice.innerHTML = defaultOpt; els.selectPgmInDevice.innerHTML = noneOpt;
+        devices.forEach(d => {
+          const opt = document.createElement('option'); opt.value = d.deviceId; opt.textContent = d.label || `${d.kind} ${d.deviceId.slice(0,5)}`;
+          if (d.kind === 'audiooutput' && d.deviceId !== 'default') { els.select4wOutDevice.appendChild(opt); } else if (d.kind === 'audioinput' && d.deviceId !== 'default') { els.select4wInDevice.appendChild(opt.cloneNode(true)); els.selectPgmInDevice.appendChild(opt.cloneNode(true)); }
+        });
         els.select4wOutDevice.value = state.ioBridge.outDevice4w || 'default'; els.select4wInDevice.value = state.ioBridge.inDevice4w || 'default'; els.selectPgmInDevice.value = state.ioBridge.inDevicePgm || '';
       }).catch(()=>{});
 
@@ -509,9 +580,18 @@
 
       if(els.select4wOutDevice) {
         if (els.gain4wInL) {
-            const setIoGainUI = () => { els.gain4wInL.value = (state.ioBridge.inGain4wL ?? 1.0) * 100; document.getElementById('fill-gain-4w-in-l').style.width = (els.gain4wInL.value / 2) + '%'; els.gain4wInR.value = (state.ioBridge.inGain4wR ?? 1.0) * 100; document.getElementById('fill-gain-4w-in-r').style.width = (els.gain4wInR.value / 2) + '%'; els.gain4wOutL.value = (state.ioBridge.outGain4wL ?? 1.0) * 100; document.getElementById('fill-gain-4w-out-l').style.width = (els.gain4wOutL.value / 2) + '%'; els.gain4wOutR.value = (state.ioBridge.outGain4wR ?? 1.0) * 100; document.getElementById('fill-gain-4w-out-r').style.width = (els.gain4wOutR.value / 2) + '%'; els.gainPgmInL.value = (state.ioBridge.inGainPgmL ?? 1.0) * 100; document.getElementById('fill-gain-pgm-in-l').style.width = (els.gainPgmInL.value / 2) + '%'; els.gainPgmInR.value = (state.ioBridge.inGainPgmR ?? 1.0) * 100; document.getElementById('fill-gain-pgm-in-r').style.width = (els.gainPgmInR.value / 2) + '%'; }; setIoGainUI();
+            const setIoGainUI = () => {
+                els.gain4wInL.value = (state.ioBridge.inGain4wL ?? 1.0) * 100; document.getElementById('fill-gain-4w-in-l').style.width = (els.gain4wInL.value / 2) + '%';
+                els.gain4wInR.value = (state.ioBridge.inGain4wR ?? 1.0) * 100; document.getElementById('fill-gain-4w-in-r').style.width = (els.gain4wInR.value / 2) + '%';
+                els.gain4wOutL.value = (state.ioBridge.outGain4wL ?? 1.0) * 100; document.getElementById('fill-gain-4w-out-l').style.width = (els.gain4wOutL.value / 2) + '%';
+                els.gain4wOutR.value = (state.ioBridge.outGain4wR ?? 1.0) * 100; document.getElementById('fill-gain-4w-out-r').style.width = (els.gain4wOutR.value / 2) + '%';
+                els.gainPgmInL.value = (state.ioBridge.inGainPgmL ?? 1.0) * 100; document.getElementById('fill-gain-pgm-in-l').style.width = (els.gainPgmInL.value / 2) + '%';
+                els.gainPgmInR.value = (state.ioBridge.inGainPgmR ?? 1.0) * 100; document.getElementById('fill-gain-pgm-in-r').style.width = (els.gainPgmInR.value / 2) + '%';
+            }; setIoGainUI();
             const updateGain = (key, val, nodeKey, fillId) => { state.ioBridge[key] = val / 100; if (state.ioNodes[nodeKey]) state.ioNodes[nodeKey].gain.setTargetAtTime(state.ioBridge[key], audioCtx.currentTime, 0.05); const fillEl = document.getElementById(fillId); if(fillEl) fillEl.style.width = (val / 2) + '%'; sendIoUpdate(); };
-            els.gain4wInL.oninput = (e) => updateGain('inGain4wL', e.target.value, 'gain4wL', 'fill-gain-4w-in-l'); els.gain4wInR.oninput = (e) => updateGain('inGain4wR', e.target.value, 'gain4wR', 'fill-gain-4w-in-r'); els.gain4wOutL.oninput = (e) => updateGain('outGain4wL', e.target.value, 'gainOutL', 'fill-gain-4w-out-l'); els.gain4wOutR.oninput = (e) => updateGain('outGain4wR', e.target.value, 'gainOutR', 'fill-gain-4w-out-r'); els.gainPgmInL.oninput = (e) => updateGain('inGainPgmL', e.target.value, 'gainPgmL', 'fill-gain-pgm-in-l'); els.gainPgmInR.oninput = (e) => updateGain('inGainPgmR', e.target.value, 'gainPgmR', 'fill-gain-pgm-in-r');
+            els.gain4wInL.oninput = (e) => updateGain('inGain4wL', e.target.value, 'gain4wL', 'fill-gain-4w-in-l'); els.gain4wInR.oninput = (e) => updateGain('inGain4wR', e.target.value, 'gain4wR', 'fill-gain-4w-in-r');
+            els.gain4wOutL.oninput = (e) => updateGain('outGain4wL', e.target.value, 'gainOutL', 'fill-gain-4w-out-l'); els.gain4wOutR.oninput = (e) => updateGain('outGain4wR', e.target.value, 'gainOutR', 'fill-gain-4w-out-r');
+            els.gainPgmInL.oninput = (e) => updateGain('inGainPgmL', e.target.value, 'gainPgmL', 'fill-gain-pgm-in-l'); els.gainPgmInR.oninput = (e) => updateGain('inGainPgmR', e.target.value, 'gainPgmR', 'fill-gain-pgm-in-r');
         }
         els.select4wOutDevice.onchange = (e) => { state.ioBridge.outDevice4w = e.target.value; sendIoUpdate(); applyOutputDevice(); }; els.select4wInDevice.onchange = (e) => { state.ioBridge.inDevice4w = e.target.value; sendIoUpdate(); if(state.ioBridge.enabled) updateAudioDevices(); }; els.selectPgmInDevice.onchange = (e) => { state.ioBridge.inDevicePgm = e.target.value; sendIoUpdate(); if(state.ioBridge.enabled) updateAudioDevices(); };
         ['select-4w-in-l', 'select-4w-in-r', 'select-4w-out-l', 'select-4w-out-r', 'select-pgm-in-l', 'select-pgm-in-r'].forEach(id => { const sel = document.getElementById(id); sel.innerHTML = '<option value="">(None)</option>'; channels.forEach(ch => { if(ch.id !== 'ch-video') { const opt = document.createElement('option'); opt.value = ch.id; opt.textContent = ch.name; sel.appendChild(opt); } }); });
@@ -523,13 +603,25 @@
     function buildTallyAssignmentUI() {
       if(!els.tallyList) return; els.tallyList.innerHTML = '';
       state.registeredUsers?.forEach(uid => {
-        const row = document.createElement('div'); row.className = 'tally-row'; const isOnline = uid === state.myUserId || (state.room && state.room.remoteParticipants && state.room.remoteParticipants.has(uid)); const statusColor = isOnline ? 'var(--green)' : 'var(--text-sub)'; row.innerHTML = `<div class="tally-member-info"><span style="color:${statusColor}; font-size:10px;">●</span><span style="color:#fff; font-size:14px; font-weight:600;">${uid}</span></div>`; const btnGroup = document.createElement('div'); btnGroup.className = 'tally-btn-group'; const assigned = state.tallyAssignments[uid] || [];
-        for(let i=1; i<=10; i++) { const btn = document.createElement('button'); btn.className = 'tally-btn' + (assigned.includes(i) ? ' active' : ''); btn.textContent = i; btn.onclick = () => { let current = state.tallyAssignments[uid] || []; if (current.includes(i)) { current = current.filter(id => id !== i); btn.classList.remove('active'); } else { current.push(i); btn.classList.add('active'); } state.tallyAssignments[uid] = current; saveRoomState(); sendData({ type: 'update-tally-assignments', assignments: state.tallyAssignments }); if(uid === state.myUserId) evaluateTallyGlow(); }; btnGroup.appendChild(btn); } row.appendChild(btnGroup); els.tallyList.appendChild(row);
+        const row = document.createElement('div'); row.className = 'tally-row';
+        const isOnline = uid === state.myUserId || (state.room && state.room.remoteParticipants && state.room.remoteParticipants.has(uid));
+        const statusColor = isOnline ? 'var(--green)' : 'var(--text-sub)';
+        row.innerHTML = `<div class="tally-member-info"><span style="color:${statusColor}; font-size:10px;">●</span><span style="color:#fff; font-size:14px; font-weight:600;">${uid}</span></div>`;
+        const btnGroup = document.createElement('div'); btnGroup.className = 'tally-btn-group'; const assigned = state.tallyAssignments[uid] || [];
+        for(let i=1; i<=10; i++) {
+          const btn = document.createElement('button'); btn.className = 'tally-btn' + (assigned.includes(i) ? ' active' : ''); btn.textContent = i;
+          btn.onclick = () => { let current = state.tallyAssignments[uid] || []; if (current.includes(i)) { current = current.filter(id => id !== i); btn.classList.remove('active'); } else { current.push(i); btn.classList.add('active'); } state.tallyAssignments[uid] = current; saveRoomState(); sendData({ type: 'update-tally-assignments', assignments: state.tallyAssignments }); if(uid === state.myUserId) evaluateTallyGlow(); };
+          btnGroup.appendChild(btn);
+        }
+        row.appendChild(btnGroup); els.tallyList.appendChild(row);
       });
     }
 
     let activeTallies = new Set();
-    function evaluateTallyGlow() { const myAssigned = state.tallyAssignments[state.myUserId] || []; const shouldGlow = myAssigned.some(id => activeTallies.has(id)); let fallbackGlow = false; if (myAssigned.length === 0 && activeTallies.has(1)) fallbackGlow = true; if (shouldGlow || fallbackGlow) els.monitorVideoWrapper.classList.add('tally-on'); else els.monitorVideoWrapper.classList.remove('tally-on'); }
+    function evaluateTallyGlow() {
+      const myAssigned = state.tallyAssignments[state.myUserId] || []; const shouldGlow = myAssigned.some(id => activeTallies.has(id)); let fallbackGlow = false; if (myAssigned.length === 0 && activeTallies.has(1)) fallbackGlow = true;
+      if (shouldGlow || fallbackGlow) els.monitorVideoWrapper.classList.add('tally-on'); else els.monitorVideoWrapper.classList.remove('tally-on');
+    }
 
     els.editMonitorTitle.addEventListener('input', (e) => { state.monitorTitle = e.target.value; els.mainMonitorTitle.textContent = state.monitorTitle || 'MONITOR'; saveRoomState(); sendData({ type: 'update-monitor-title', title: state.monitorTitle }); });
     els.editVideoQuality.addEventListener('change', async (e) => { 
@@ -574,7 +666,11 @@
     function toggleMasterSpk() { state.isMasterSpkMuted = !state.isMasterSpkMuted; updateAudioRouting(); updateChannelIcons(); } function toggleMasterMic() { state.isMasterMicMuted = !state.isMasterMicMuted; updateAudioRouting(); updateChannelIcons(); syncTalkStates(); }
     els.btnMasterSpk.onclick = toggleMasterSpk; els.btnMasterMic.onclick = toggleMasterMic;
 
-    function saveRoomState() { if(!state.roomId) return; const data = { channels, userAssignments: state.userAssignments, tallyAssignments: state.tallyAssignments, registeredUsers: state.registeredUsers, monitorTitle: state.monitorTitle, videoQuality: state.videoQuality, ioBridge: state.ioBridge, layout: state.layout }; safeStorage.set('yytalk_room_' + state.roomId, JSON.stringify(data)); }
+    function saveRoomState() { 
+        if(!state.roomId) return; 
+        const data = { channels, userAssignments: state.userAssignments, tallyAssignments: state.tallyAssignments, registeredUsers: state.registeredUsers, monitorTitle: state.monitorTitle, videoQuality: state.videoQuality, ioBridge: state.ioBridge, layout: state.layout }; 
+        safeStorage.set('yytalk_room_' + state.roomId, JSON.stringify(data)); 
+    }
     
     function resetAndApplyChannels(newChannels, newAssignments, newTallyAssignments, newRegistered) {
         if (audioCtx) { Object.values(state.channelNodes || {}).forEach(node => { try { node?.masterGain?.disconnect(); } catch(e){} }); Object.values(state.mediaCalls || {}).forEach(call => { Object.values(call?.chGains || {}).forEach(g => { try { g.gain?.disconnect(); } catch(e){} }); if(call) call.chGains = {}; }); }
@@ -632,12 +728,18 @@
       const savedProfile = LocalProfile.get(); if (savedProfile) { els.hostIdInput.value = savedProfile.roomId || ''; els.joinUserIdInput.value = savedProfile.userId || ''; }
     });
 
-    function sendData(payload) { 
+    // ★修正1: フェイルセーフ送信の実装（通信エラー時の握り潰しを防止）
+    async function sendData(payload) { 
         if (state.room && state.room.localParticipant) { 
             try {
-                const str = JSON.stringify(payload); const payloadData = new TextEncoder().encode(str); 
-                try { state.room.localParticipant.publishData(payloadData, { reliable: true }); } catch (e) { state.room.localParticipant.publishData(payloadData, 1); }
-            } catch (err) {}
+                const str = JSON.stringify(payload); 
+                const payloadData = new TextEncoder().encode(str); 
+                try { 
+                    await state.room.localParticipant.publishData(payloadData, { reliable: true }); 
+                } catch (e) { 
+                    await state.room.localParticipant.publishData(payloadData, 1); 
+                }
+            } catch (err) { console.error("Data Publish Error", err); }
         } 
     }
 
@@ -648,7 +750,7 @@
           sendData({ type: 'add-channel', ch: newCh, assignments: state.userAssignments, registered: state.registeredUsers });
           Object.values(state.mediaCalls || {}).forEach(call => { if (call?.source && audioCtx && newCh && !call.isIOTrack) { const splitGain = audioCtx.createGain(); const panner = audioCtx.createStereoPanner(); splitGain.gain.value = 0; call.source.connect(panner); panner.connect(splitGain); if(state.channelNodes[newCh.id]) splitGain.connect(state.channelNodes[newCh.id].analyser); call.chGains[newCh.id] = { gain: splitGain, panner: panner }; } });
           saveRoomState(); buildAdminMatrix(); if (state.userAssignments && state.myUserId) { applyAssignments(state.userAssignments[state.myUserId] || channels.map(c=>c.id)); }
-      } catch (err) {}
+      } catch (err) { console.warn("Failed to add channel.", err); }
     };
 
     function removeChannel(chId) {
@@ -658,7 +760,6 @@
       updateAudioRouting(); updateChannelIcons(); let order = JSON.parse(safeStorage.get('yytalk-ch-order')) || []; order = order.filter(id => id !== chId); safeStorage.set('yytalk-ch-order', JSON.stringify(order));
     }
     
-    // ★修復: 退出したユーザーの接続や音声ノードを安全に削除する処理
     function removePeer(peerId) {
         if (state.mediaCalls[peerId]) {
             if (state.mediaCalls[peerId].audioEl) { state.mediaCalls[peerId].audioEl.pause(); state.mediaCalls[peerId].audioEl.removeAttribute('src'); state.mediaCalls[peerId].audioEl.load(); }
@@ -775,12 +876,13 @@
       }
     }
 
+    // ★修正2: 送信マイクとメーターマイクを分離し、LiveKit純正APIで安全にミュート管理する
     function syncTalkStates() { 
         sendData({ type: 'update-talk-states', states: state.talkStates }); 
         const isAnyTalking = Object.values(state.talkStates).some(v => v === true) && !state.isMasterMicMuted;
-        if (state.localMicTrack) {
-            if (isAnyTalking) { state.localMicTrack.unmute().catch(()=>{}); } 
-            else { state.localMicTrack.mute().catch(()=>{}); }
+        if(state.room && state.room.localParticipant && state.localMicTrack) {
+             if (isAnyTalking) { state.localMicTrack.unmute().catch(()=>{}); } 
+             else { state.localMicTrack.mute().catch(()=>{}); }
         }
     } 
     function syncListenStates() { sendData({ type: 'update-listen-states', states: state.listenStates }); }
@@ -868,6 +970,7 @@
 
       container.querySelectorAll('.btn-delete-col').forEach(btn => { btn.onclick = (e) => { const uid = e.target.getAttribute('data-uid'); if(confirm(`ユーザー「${uid}」をリストから削除しますか？`)) { state.registeredUsers = state.registeredUsers.filter(u => u !== uid); delete state.userAssignments[uid]; delete state.tallyAssignments[uid]; saveRoomState(); buildAdminMatrix(); buildTallyAssignmentUI(); sendData({ type: 'update-registered', registered: state.registeredUsers }); sendData({ type: 'update-tally-assignments', assignments: state.tallyAssignments }); } }; });
 
+      // ★修正3: `state.channels` のタイポを排除し、他端末へ確実な同期データを送る
       container.querySelectorAll('.admin-edit-name, .admin-edit-type').forEach(input => { 
         input.addEventListener('change', (e) => { 
           const chId = e.target.getAttribute('data-id'); const ch = channels?.find(c => c?.id === chId); if(!ch) return; 
@@ -882,7 +985,10 @@
           const nameEl = document.getElementById(`name-${chId}`); const typeEl = document.getElementById(`type-${chId}`); 
           if (nameEl) nameEl.textContent = ch.name; if (typeEl) typeEl.textContent = ch.type; 
           saveRoomState(); syncChannelInfo(); 
-          if (e.target.classList.contains('admin-edit-type')) { applyAssignments(state.userAssignments[state.myUserId]); buildAdminMatrix(); initChannelsDOM(); updateAudioRouting(); sendData({ type: 'init-state', channels: state.channels, assignments: state.userAssignments, tallyAssignments: state.tallyAssignments, registered: state.registeredUsers }); }
+          if (e.target.classList.contains('admin-edit-type')) { 
+              applyAssignments(state.userAssignments[state.myUserId]); buildAdminMatrix(); initChannelsDOM(); updateAudioRouting(); 
+              sendData({ type: 'init-state', channels: channels, assignments: state.userAssignments, tallyAssignments: state.tallyAssignments, registered: state.registeredUsers, ioBridge: state.ioBridge }); 
+          }
       }); });
 
       container.querySelectorAll('.btn-delete-row').forEach(btn => { btn.onclick = (e) => { const chId = e.target.getAttribute('data-id'); const ch = channels?.find(c => c?.id === chId); if(!ch || !confirm(`パーティー「${ch.name}」を削除しますか？`)) return; removeChannel(chId); saveRoomState(); sendData({ type: 'remove-channel', chId: chId }); buildAdminMatrix(); }; });
@@ -904,7 +1010,7 @@
         if (!data) return;
         if (data.type === 'hello') {
           if (senderId !== state.myUserId && !state.registeredUsers.includes(senderId)) { state.registeredUsers.push(senderId); state.userAssignments[senderId] = channels?.map(c => c.id) || []; if (!state.tallyAssignments[senderId]) state.tallyAssignments[senderId] = []; saveRoomState(); if (state.isAdmin) { buildAdminMatrix(); buildTallyAssignmentUI(); } }
-          if(state.isAdmin) { sendData({ type: 'init-state', channels, assignments: state.userAssignments, tallyAssignments: state.tallyAssignments, registered: state.registeredUsers, ioBridge: state.ioBridge }); if(state.activeVideoSender === state.myUserId) { const sourceText = els.mainMonitorSourceText.textContent.replace('[ VIDEO SWITCHING NOW ]', '').replace('[ NO VIDEO ]', 'CAMERA').trim(); sendData({ type: 'update-video-sender', senderId: state.myUserId, sourceText: sourceText }); } }
+          if(state.isAdmin) { sendData({ type: 'init-state', channels: channels, assignments: state.userAssignments, tallyAssignments: state.tallyAssignments, registered: state.registeredUsers, ioBridge: state.ioBridge }); if(state.activeVideoSender === state.myUserId) { const sourceText = els.mainMonitorSourceText.textContent.replace('[ VIDEO SWITCHING NOW ]', '').replace('[ NO VIDEO ]', 'CAMERA').trim(); sendData({ type: 'update-video-sender', senderId: state.myUserId, sourceText: sourceText }); } }
         }
         else if (data.type === 'init-state') { 
             if(data.channels && Array.isArray(data.channels)) {
@@ -1000,8 +1106,14 @@
 
       els.roleDisplay.style.display = 'none'; els.audioOverlay.style.display = 'flex';
       
-      // ★修正: 部屋名が確定したこのタイミングでロードし、自身を確実に登録ユーザーリストへ含める
+      // ★修正4: ここでデータを確実にロードし、自身のユーザー名が存在しなければ追記して即セーブする
       loadRoomState(state.roomId);
+      if (!state.registeredUsers.includes(state.myUserId)) {
+          state.registeredUsers.push(state.myUserId);
+          if (!state.userAssignments[state.myUserId]) state.userAssignments[state.myUserId] = channels?.map(c => c.id) || [];
+          if (!state.tallyAssignments[state.myUserId]) state.tallyAssignments[state.myUserId] = [];
+          saveRoomState();
+      }
 
       (async () => {
           if (myName.toLowerCase() === 'debug') {
@@ -1124,30 +1236,24 @@
           try {
               await room.connect(LIVEKIT_WS_URL, token);
               state.hasSuccessfullyConnected = true;
-              
-              // 欠落していた自身のリスト追加を確実に実行
-              if (!state.registeredUsers.includes(state.myUserId)) {
-                  state.registeredUsers.push(state.myUserId);
-                  if (!state.userAssignments[state.myUserId]) state.userAssignments[state.myUserId] = channels?.map(c => c.id) || [];
-                  if (!state.tallyAssignments[state.myUserId]) state.tallyAssignments[state.myUserId] = [];
-                  saveRoomState();
-              }
-              
               updateUserCount(); 
+              
+              if (state.isAdmin) { buildAdminMatrix(); buildTallyAssignmentUI(); }
+              
               sendData({ type: 'hello', userId: state.myUserId }); 
               syncTalkStates(); 
               syncListenStates();
               
-              if (state.isAdmin) { buildAdminMatrix(); buildTallyAssignmentUI(); }
-              
-              // ★修正: 純正システムを利用し、接続直後にマイクを取得・配信。そのストリームをメーターに繋ぐ。
+              // ★修正5: マイクのクローンを作成。LiveKitによるミュート仕様がローカルメーターを巻き込むのを防止
               if (state.localStream) {
-                  const localMicTrack = new LivekitClient.LocalAudioTrack(state.localStream.getAudioTracks()[0]);
+                  const clonedTrack = state.localStream.getAudioTracks()[0].clone();
+                  const localMicTrack = new LivekitClient.LocalAudioTrack(clonedTrack);
                   state.localMicTrack = localMicTrack;
+                  
                   await room.localParticipant.publishTrack(localMicTrack, { name: 'mic', source: LivekitClient.Track.Source.Microphone });
                   await localMicTrack.mute(); // 初期状態はミュート
                   state.audioEnabled = true; 
-                  initAudioContext();
+                  initAudioContext(); // ここで大元の localStream がメーターに繋がるため、ミュート中も振れる
               }
           } catch (e) { 
               alert("【LiveKit接続エラー】\nSFUサーバーへの接続に失敗しました。\n\n詳細: " + e.message); 
@@ -1161,7 +1267,6 @@
     document.getElementById('btn-enable-audio').onclick = () => { els.audioOverlay.style.display = 'none'; state.audioEnabled = true; initAudioContext(); };
     document.getElementById('btn-stop').onclick = () => { LocalProfile.clear(); location.reload(); };
 
-    // ★欠落していた退出処理の修復
     function removePeer(peerId) {
         if (state.mediaCalls[peerId]) {
             if (state.mediaCalls[peerId].audioEl) { state.mediaCalls[peerId].audioEl.pause(); state.mediaCalls[peerId].audioEl.removeAttribute('src'); state.mediaCalls[peerId].audioEl.load(); }
@@ -1172,7 +1277,6 @@
         updateAudioRouting(); if(state.isAdmin) buildAdminMatrix(); updateUserCount();
     }
     
-    // ★欠落していた人数表示処理の修復
     function updateUserCount() {
       if(!state.room) return;
       const count = state.room.remoteParticipants.size + 1;
@@ -1181,7 +1285,6 @@
       if(activeEl && sepEl) { activeEl.textContent = `ACTIVE: ${count}`; activeEl.style.display = 'block'; sepEl.style.display = 'block'; }
     }
 
-    // RTT遅延表示
     setInterval(async () => {
         const rttEl = document.getElementById('status-rtt'); if (!rttEl) return;
         if (state.myUserId && state.myUserId.toLowerCase() === 'debug') { const fakeRtt = Math.floor(Math.random() * 10) + 12; rttEl.style.display = 'block'; rttEl.textContent = `${fakeRtt} ms`; rttEl.style.color = 'var(--green)'; return; }
