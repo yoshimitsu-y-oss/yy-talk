@@ -45,7 +45,6 @@
     if (window.visualViewport) window.visualViewport.addEventListener('resize', forceResize);
   </script>
 
-  <!-- LiveKitクライアントのバージョンを安定版に固定 -->
   <script src="https://cdn.jsdelivr.net/npm/livekit-client@2.5.9/dist/livekit-client.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
@@ -350,6 +349,7 @@
                       </div>
                     </div>
                   </div>
+
                   <div style="background: #111216; padding: 25px; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; flex-direction: column; gap: 15px;">
                     <div class="setting-group" style="align-items: center; width: 100%; max-width: none;"><label>OUTPUT DEVICE (SPK)</label><select id="select-4w-out-device" class="io-select" style="max-width: none;"></select></div>
                     <div style="display: flex; gap: 10px;">
@@ -789,7 +789,7 @@
     });
 
     function sendData(payload) { 
-        if (state.room && state.room.localParticipant && typeof state.room.localParticipant.publishData === 'function') { 
+        if (state.room && state.room.localParticipant) { 
             try {
                 const str = JSON.stringify(payload); 
                 const payloadData = new TextEncoder().encode(str); 
@@ -835,7 +835,12 @@
           const masterDest = audioCtx.createMediaStreamDestination(); masterMerger.connect(masterDest);
           state.masterAudioEl = new Audio(); state.masterAudioEl.srcObject = masterDest.stream; state.masterAudioEl.play().catch(e => console.error("Master Audio Autoplay prevented:", e));
           
-          if (state.localStream) { const localSrc = audioCtx.createMediaStreamSource(state.localStream); localMicAnalyser = audioCtx.createAnalyser(); localMicAnalyser.fftSize = 256; localSrc.connect(localMicAnalyser); } 
+          if (state.localStream) { 
+              const localSrc = audioCtx.createMediaStreamSource(state.localStream); 
+              localMicAnalyser = audioCtx.createAnalyser(); 
+              localMicAnalyser.fftSize = 256; 
+              localSrc.connect(localMicAnalyser); 
+          } 
           startMeterDraw(); channels?.forEach(ch => setupChannelAudio(ch.id)); applyOutputDevice();
       }
       if(audioCtx.state === 'suspended') audioCtx.resume(); Object.values(state.mediaCalls || {}).forEach(callData => { if (!callData?.source) setupPeerMixer(callData); });
@@ -924,7 +929,12 @@
     function syncTalkStates() { 
         sendData({ type: 'update-talk-states', states: state.talkStates }); 
         const isAnyTalking = Object.values(state.talkStates).some(v => v === true) && !state.isMasterMicMuted;
-        if(state.room && state.room.localParticipant) { state.room.localParticipant.setMicrophoneEnabled(isAnyTalking).catch(()=>{}); }
+        
+        // ★修正: ローカルマイクが存在する場合は、LiveKitサーバーの仕様に関わらず直接ミュート制御を行う
+        if (state.localMicTrack) {
+            if (isAnyTalking) { state.localMicTrack.unmute().catch(()=>{}); } 
+            else { state.localMicTrack.mute().catch(()=>{}); }
+        }
     } 
     function syncListenStates() { sendData({ type: 'update-listen-states', states: state.listenStates }); }
 
@@ -1115,12 +1125,18 @@
       const btn = isAdmin ? els.btnJoinAdmin : els.btnJoinMember; const originalText = btn.textContent;
       els.btnJoinMember.disabled = true; els.btnJoinAdmin.disabled = true; btn.textContent = "認証中..."; btn.style.opacity = "0.5";
 
-      // サーバー接続の前にユーザーアクション内でマイクストリームを確保
+      // ★修正: サーバー接続を待つ前に、ユーザーアクション（クリック）起因のこの場所でマイクの許可を取り、ストリームを確保しておく
+      // これによりブラウザによるマイクの自動ブロックを回避し、オフラインでもメーターが機能するようにします。
       if (myName.toLowerCase() !== 'debug') {
           try {
               const constraints = state.ioBridge.enabled ? { echoCancellation: false, noiseSuppression: false, autoGainControl: false } : { echoCancellation: true, noiseSuppression: true };
               state.localStream = await navigator.mediaDevices.getUserMedia({ audio: constraints });
-          } catch (err) { console.warn("マイク取得に失敗しました:", err); }
+              state.audioEnabled = true;
+              initAudioContext(); // サーバー接続前にローカルのメーターを起動
+          } catch (err) { 
+              alert("マイクへのアクセスが拒否されたか、デバイスが見つかりません。\nブラウザの設定でマイクを許可してください。");
+              console.warn("マイク取得に失敗しました:", err); 
+          }
       }
 
       state.roomId = rawRoomId; state.myUserId = myName; state.isAdmin = isAdmin;
@@ -1177,9 +1193,16 @@
           let token = "";
           try {
             const res = await fetch(`${WORKER_AUTH_URL}/?room=${encodeURIComponent(rawRoomId)}&user=${encodeURIComponent(myName)}`);
-            if (!res.ok) throw new Error("認証に失敗しました");
+            if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
             const data = await res.json(); token = data.token;
-          } catch (e) { console.warn("パスポート発行エラー（プレビューモードとして進行）: " + e.message); token = "dummy_token_for_preview"; }
+          } catch (e) { 
+              // ★修正: バックエンドのエラーを握りつぶさず、必ずダイアログを出して処理を停止する
+              alert("【致命的エラー】\n認証サーバー(Worker)からのトークン取得に失敗しました。\n\n詳細: " + e.message + "\n\n※Worker側のCORS設定やプログラムに問題がある可能性が高いです。"); 
+              els.statusMsg.textContent = "接続エラー";
+              els.statusMsg.style.color = "var(--alert)";
+              els.btnStop.style.display = 'block';
+              return; 
+          }
 
           const room = new LivekitClient.Room({ adaptiveStream: false, dynacast: false }); state.room = room;
 
@@ -1206,12 +1229,27 @@
           room.on(LivekitClient.RoomEvent.DataReceived, (payload, participant) => { try { const data = JSON.parse(new TextDecoder().decode(payload)); handleNetworkData(data, participant.identity); } catch(e){} });
 
           try {
-            if (token !== "dummy_token_for_preview") {
-                await room.connect(LIVEKIT_WS_URL, token);
-                state.hasSuccessfullyConnected = true;
-                updateUserCount(); sendData({ type: 'hello', userId: state.myUserId }); syncTalkStates(); syncListenStates();
-            }
-          } catch (e) { console.warn("SFUサーバーへの接続に失敗しました。プレビューモード（UI確認用）として進行します。", e); }
+              // サーバー接続エラーも握り潰さず、エラーダイアログを出す
+              await room.connect(LIVEKIT_WS_URL, token);
+              state.hasSuccessfullyConnected = true;
+              updateUserCount(); 
+              sendData({ type: 'hello', userId: state.myUserId }); 
+              syncTalkStates(); 
+              syncListenStates();
+              
+              // ★修正: サーバー接続成功後、事前に取得しておいたマイクを「クローン」してLiveKitに送信する
+              // これにより、LiveKit側のミュートにローカルのメーターが巻き込まれるのを防ぎます
+              if (state.localStream) {
+                  const clonedTrack = state.localStream.getAudioTracks()[0].clone();
+                  const localMicTrack = new LivekitClient.LocalAudioTrack(clonedTrack);
+                  state.localMicTrack = localMicTrack;
+                  await room.localParticipant.publishTrack(localMicTrack, { name: 'mic', source: LivekitClient.Track.Source.Microphone });
+                  await localMicTrack.mute(); // 初期状態はミュート
+              }
+          } catch (e) { 
+              alert("【LiveKit接続エラー】\nSFUサーバーへの接続に失敗しました。\n\n詳細: " + e.message); 
+              console.warn(e);
+          }
       })();
     };
 
