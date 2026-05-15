@@ -45,6 +45,7 @@
     if (window.visualViewport) window.visualViewport.addEventListener('resize', forceResize);
   </script>
 
+  <!-- LiveKitクライアントのバージョンを安定版に固定 -->
   <script src="https://cdn.jsdelivr.net/npm/livekit-client@2.5.9/dist/livekit-client.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
@@ -250,6 +251,7 @@
       <div id="disconnect-text" style="font-size: 14px; color: rgba(255,255,255,0.8); margin-bottom: 30px;">通信が切断されました。自動再接続を試行中...</div>
     </div>
 
+    <!-- ログイン画面 -->
     <div id="login-overlay" class="overlay-base" style="display: flex;">
       <div class="login-modal" style="padding: 40px 50px; border-radius: 16px; width: 90%; max-width: 480px; background: #111216; border: 1px solid var(--border-color); box-shadow: 0 20px 50px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; margin: auto;">
         <button class="btn-close-login" id="btn-close-login" style="position: absolute; top: 15px; right: 15px; background: transparent; border: none; color: #9ca3af; font-size: 24px; cursor: pointer; display: none; z-index: 200;"><i class="fa-solid fa-xmark"></i></button>
@@ -588,13 +590,7 @@
 
     async function updateAudioDevices() {
         if (!state.room || !state.room.localParticipant) return;
-        const micConstraints = state.ioBridge.enabled ? { echoCancellation: false, noiseSuppression: false, autoGainControl: false } : { echoCancellation: true, noiseSuppression: true };
-        try {
-            const isAnyTalking = Object.values(state.talkStates).some(v => v === true) && !state.isMasterMicMuted;
-            await state.room.localParticipant.setMicrophoneEnabled(false);
-            if (isAnyTalking) { await state.room.localParticipant.setMicrophoneEnabled(true, micConstraints); }
-        } catch(e) { console.error("Mic Update Error", e); }
-
+        
         const handleIOTracks = async () => {
             if (!state.ioBridge.enabled) {
                 ['ioTrack4wL', 'ioTrack4wR', 'ioTrackPgmL', 'ioTrackPgmR'].forEach(async key => { if (state[key]) { await state.room.localParticipant.unpublishTrack(state[key].track); state[key].track.stop(); state[key] = null; } }); return;
@@ -792,17 +788,12 @@
       const savedProfile = LocalProfile.get(); if (savedProfile) { els.hostIdInput.value = savedProfile.roomId || ''; els.joinUserIdInput.value = savedProfile.userId || ''; }
     });
 
-    // ★修正: 最も安定して動いていた「LiveKit純正(RELIABLE)＋v1互換フォールバック」データ送信
     function sendData(payload) { 
-        if (state.room && state.room.localParticipant) { 
+        if (state.room && state.room.localParticipant && typeof state.room.localParticipant.publishData === 'function') { 
             try {
                 const str = JSON.stringify(payload); 
                 const payloadData = new TextEncoder().encode(str); 
-                try {
-                    state.room.localParticipant.publishData(payloadData, { reliable: true });
-                } catch (e) {
-                    state.room.localParticipant.publishData(payloadData, 1); 
-                }
+                try { state.room.localParticipant.publishData(payloadData, { reliable: true }); } catch (e) { state.room.localParticipant.publishData(payloadData, 1); }
             } catch (err) { console.error("Data Publish Error", err); }
         } 
     }
@@ -844,7 +835,6 @@
           const masterDest = audioCtx.createMediaStreamDestination(); masterMerger.connect(masterDest);
           state.masterAudioEl = new Audio(); state.masterAudioEl.srcObject = masterDest.stream; state.masterAudioEl.play().catch(e => console.error("Master Audio Autoplay prevented:", e));
           
-          // ★メーター用に取得しておいた生の音声ストリームを接続
           if (state.localStream) { const localSrc = audioCtx.createMediaStreamSource(state.localStream); localMicAnalyser = audioCtx.createAnalyser(); localMicAnalyser.fftSize = 256; localSrc.connect(localMicAnalyser); } 
           startMeterDraw(); channels?.forEach(ch => setupChannelAudio(ch.id)); applyOutputDevice();
       }
@@ -931,13 +921,10 @@
       }
     }
 
-    // ★修正: 純正の機能でLiveKit側にマイク送信のON/OFFだけを指示する（メーター用のマイクは常に生きてるので振れる）
     function syncTalkStates() { 
         sendData({ type: 'update-talk-states', states: state.talkStates }); 
         const isAnyTalking = Object.values(state.talkStates).some(v => v === true) && !state.isMasterMicMuted;
-        if(state.room && state.room.localParticipant) {
-             state.room.localParticipant.setMicrophoneEnabled(isAnyTalking).catch(()=>{});
-        }
+        if(state.room && state.room.localParticipant) { state.room.localParticipant.setMicrophoneEnabled(isAnyTalking).catch(()=>{}); }
     } 
     function syncListenStates() { sendData({ type: 'update-listen-states', states: state.listenStates }); }
 
