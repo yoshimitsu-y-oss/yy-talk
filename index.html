@@ -11,6 +11,47 @@
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
+  <script>
+    // --- 🚨 UI Debug Logger ---
+    function uiLog(msg, color='#4ade80') {
+      const d = document.getElementById('debug-logger'); if(!d) return;
+      const l = document.createElement('div'); l.style.color = color;
+      l.textContent = `[${new Date().toISOString().split('T')[1].slice(0,-1)}] ${msg}`;
+      d.appendChild(l); d.scrollTop = d.scrollHeight;
+    }
+    window.onerror = function(msg, src, line, col, err) { uiLog(`ERROR: ${msg} (${line}:${col})`, '#ef4444'); return false; };
+    window.onunhandledrejection = function(e) { uiLog(`PROMISE ERR: ${e.reason}`, '#ef4444'); };
+    
+    // --- Safe Resize ---
+    window.forceResize = function() {
+      const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      document.documentElement.style.height = h + 'px'; document.body.style.height = h + 'px';
+      const c = document.getElementById('main-app-container'); if (c) c.style.height = h + 'px';
+      window.scrollTo(0, 0);
+    };
+    window.addEventListener('resize', window.forceResize);
+    window.addEventListener('orientationchange', () => { setTimeout(window.forceResize, 50); setTimeout(window.forceResize, 200); setTimeout(window.forceResize, 500); });
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', window.forceResize);
+
+    try {
+      if (typeof navigator !== 'undefined' && navigator.mediaDevices) {
+        let originalGUM = navigator.mediaDevices.getUserMedia;
+        if (originalGUM) {
+          originalGUM = originalGUM.bind(navigator.mediaDevices);
+          Object.defineProperty(navigator.mediaDevices, 'getUserMedia', {
+            get: () => originalGUM, set: (val) => { originalGUM = val; }, configurable: true, enumerable: true
+          });
+        }
+      }
+    } catch (e) { }
+
+    const origSetLocalDescription = RTCPeerConnection.prototype.setLocalDescription;
+    RTCPeerConnection.prototype.setLocalDescription = function(desc) {
+      if (desc && (desc.type === 'offer' || desc.type === 'answer')) desc.sdp = desc.sdp.replace(/(a=fmtp:111.*)/g, '$1;usedtx=1');
+      return origSetLocalDescription.apply(this, arguments);
+    };
+  </script>
+
   <!-- LiveKitの安定バージョン -->
   <script src="https://cdn.jsdelivr.net/npm/livekit-client@2.5.9/dist/livekit-client.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
@@ -144,7 +185,6 @@
     #channel-list-wrap { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 10px; } 
     @media (min-width: 600px) { #channel-list-wrap { gap: 15px; } }
     
-    /* ★カードの美しいデザイン（完全復元） */
     .channel-card { background-color: var(--card-bg); border-radius: 8px; position: relative; overflow: hidden; display: flex; flex-direction: column; transition: background 0.3s ease; border: 1px solid var(--border-color); } .channel-card.expanded { background-color: var(--card-bg-expanded); }
     .channel-card::before, .channel-card::after { content: ""; position: absolute; top: 0; bottom: 0; width: 50%; opacity: 0; transition: opacity 0.3s ease; pointer-events: none; z-index: 0; }
     .channel-card::before { left: 0; background: linear-gradient(to right, rgba(74, 222, 128, 0.25) 0%, transparent 100%); } .channel-card::after { right: 0; background: linear-gradient(to left, rgba(220, 38, 38, 0.25) 0%, transparent 100%); }
@@ -154,6 +194,7 @@
     .volume-panel { display: none; padding: 5px 20px; align-items: center; gap: 10px; } .channel-card.expanded .volume-panel { display: flex; }
     .vol-icon { font-size: 14px; color: var(--text-sub); flex-shrink: 0; width: 14px; height: 14px; } .vol-slider-wrap { flex: 1; position: relative; display: flex; align-items: center; touch-action: pan-x; }
     .vol-slider-track-bg { position: absolute; left: 0; right: 0; height: 4px; background: var(--border-color); border-radius: 2px; z-index: 1; } .vol-slider-fill { position: absolute; left: 0; height: 4px; background: var(--orange); border-radius: 2px; z-index: 2; width: 50%; pointer-events: none; }
+    
     input[type=range] { width: 100%; -webkit-appearance: none; background: transparent; height: 30px; position: relative; z-index: 3; margin: 0; outline: none; border: none; }
     input[type=range]:focus { outline: none; border: none; }
     input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 30px; background: transparent; border: none; } 
@@ -320,39 +361,8 @@
   </div>
 
   <script>
-    // --- 🚨 UI Debug Logger ---
-    function uiLog(msg, color='#4ade80') {
-      const d = document.getElementById('debug-logger'); if(!d) return;
-      const l = document.createElement('div'); l.style.color = color;
-      l.textContent = `[${new Date().toISOString().split('T')[1].slice(0,-1)}] ${msg}`;
-      d.appendChild(l); d.scrollTop = d.scrollHeight;
-    }
-    window.onerror = function(msg, src, line, col, err) { uiLog(`ERROR: ${msg} (${line}:${col})`, '#ef4444'); return false; };
-    window.onunhandledrejection = function(e) { uiLog(`PROMISE ERR: ${e.reason}`, '#ef4444'); };
-    uiLog("System Script Loaded.");
-
     // --- 安全なDOMアクセスのためのヘルパー ---
     const $ = id => document.getElementById(id);
-
-    // ★ 欠落していた forceResize の確実な登録
-    window.forceResize = function() {
-      const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-      document.documentElement.style.height = h + 'px'; document.body.style.height = h + 'px';
-      const c = $('main-app-container'); if (c) c.style.height = h + 'px';
-      window.scrollTo(0, 0);
-    };
-    window.addEventListener('resize', window.forceResize);
-    window.addEventListener('orientationchange', () => { setTimeout(window.forceResize, 50); setTimeout(window.forceResize, 200); setTimeout(window.forceResize, 500); });
-    if (window.visualViewport) window.visualViewport.addEventListener('resize', window.forceResize);
-
-    document.addEventListener('touchmove', function(e) { if (e.touches.length > 1) { e.preventDefault(); } }, { passive: false });
-    let lastTouchEnd = 0; document.addEventListener('touchend', function(e) { const now = (new Date()).getTime(); if (now - lastTouchEnd <= 300) { e.preventDefault(); } lastTouchEnd = now; }, { passive: false });
-    window.addEventListener('contextmenu', e => { if(e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') e.preventDefault(); });
-
-    let isReloading = false;
-    function triggerAutoReconnect() { if (isReloading) return; isReloading = true; const overlay = $('disconnect-overlay'); if (overlay) { overlay.style.display = 'flex'; const text = $('disconnect-text'); if(text) text.textContent = '接続が完全に切断されました。自動復帰します...'; } setTimeout(() => location.reload(), 3000); }
-    window.addEventListener('offline', () => { const overlay = $('disconnect-overlay'); if (overlay) { overlay.style.display = 'flex'; const text = $('disconnect-text'); if(text) text.textContent = 'ネットワーク待機中...'; } });
-    window.addEventListener('online', () => { const overlay = $('disconnect-overlay'); if (overlay) { const text = $('disconnect-text'); if(text) text.textContent = '通信回復。再接続中...'; setTimeout(() => location.reload(), 1500); } });
 
     let isPulsing = false;
     function syncPulse() { const host = $('host-id'); const user = $('join-userid'); if (host && user) { const shouldPulse = host.value === '' && user.value === ''; if (shouldPulse !== isPulsing) { isPulsing = shouldPulse; host.style.animation = 'none'; user.style.animation = 'none'; if (shouldPulse) { void host.offsetWidth; host.style.animation = 'pulse-blue-border 1.5s infinite'; user.style.animation = 'pulse-blue-border 1.5s infinite'; } } } }
@@ -493,6 +503,7 @@
 
         const bms = $('btn-master-spk'); if(bms) bms.onclick = toggleMasterSpk;
         const bmm = $('btn-master-mic'); if(bmm) bmm.onclick = toggleMasterMic;
+        updateChannelIcons();
 
         const savedProfile = LocalProfile.get(); if (savedProfile) { if($('host-id')) $('host-id').value = savedProfile.roomId || ''; if($('join-userid')) $('join-userid').value = savedProfile.userId || ''; }
     });
