@@ -72,11 +72,11 @@
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     
     .btn-green-solid { background: var(--green); color: #000; border: none; padding: 15px 30px; font-size: 18px; font-weight: bold; border-radius: 30px; cursor: pointer; }
-    .login-modal { background: var(--card-bg); padding: 25px 20px; border-radius: 12px; width: 90%; max-width: 340px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); margin: auto; position: relative;}
-    .login-modal .btn-close-login { position: absolute; top: 12px; right: 15px; background: transparent; border: none; color: #9ca3af; font-size: 28px; cursor: pointer; padding: 0; width: 32px; height: 32px; display: none; align-items: center; justify-content: center; z-index: 2010; font-weight: normal; }
-    .login-modal button:not(.btn-close-login) { padding: 14px; border: none; border-radius: 8px; font-weight: bold; color: #000; cursor: pointer; font-size: 15px; z-index: 2001; transition: 0.2s;}
+    .login-modal { background: var(--card-bg); padding: 40px 50px; border-radius: 16px; width: 90%; max-width: 480px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 15px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); margin: auto; position: relative;}
+    .login-modal .btn-close-login { position: absolute; top: 15px; right: 15px; background: transparent; border: none; color: #9ca3af; font-size: 28px; cursor: pointer; padding: 0; width: 32px; height: 32px; display: none; align-items: center; justify-content: center; z-index: 2010; font-weight: normal; }
+    .login-modal button:not(.btn-close-login) { padding: 16px; border: none; border-radius: 8px; font-weight: bold; color: #000; cursor: pointer; font-size: 15px; z-index: 2001; transition: 0.2s;}
     .login-modal button:not(.btn-close-login):active { transform: scale(0.98); } .login-modal button:not(.btn-close-login):disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-join-member { background: var(--orange); width: 100%; } .btn-join-admin { background: transparent; border: 1.5px solid var(--blue) !important; color: var(--blue) !important; width: 100%; } .btn-stop { background: var(--red); width: 100%; color: #fff!important;}
+    .btn-join-member { background: var(--blue); color: white!important; width: 100%; } .btn-join-admin { background: transparent; border: 1px solid var(--text-sub) !important; color: var(--text-sub) !important; width: 100%; } .btn-stop { background: var(--red); width: 100%; color: #fff!important;}
     .status-text { font-size: 12px; color: var(--text-sub); text-align: center; margin-top: 5px; font-family: 'JetBrains Mono', monospace;}
     
     @keyframes pulse-blue-border { 0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.6); border-color: var(--blue); } 70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); border-color: var(--blue); } 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); border-color: var(--border-color); } }
@@ -108,7 +108,7 @@
     .video-dummy-text { color: #555; font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: bold; z-index: 1;} .video-wrapper video { width: 100%; height: 100%; object-fit: contain; background: #000; position: absolute; inset: 0; z-index: 5;}
     
     .admin-modal { width: 98%; max-width: 1100px; max-height: 95vh; display: flex; flex-direction: column; padding: 25px 15px 15px; margin: 2vh auto auto; position: relative; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);}
-    .btn-close-modal { position: absolute; top: -5px; right: 5px; background: transparent; border: none; color: #7a7e85; cursor: pointer; z-index: 200; transition: color 0.2s ease; padding: 0; line-height: 0; font-size: 24px;}
+    .btn-close-modal { position: absolute; top: 10px; right: 15px; background: transparent; border: none; color: #7a7e85; cursor: pointer; z-index: 200; transition: color 0.2s ease; padding: 0; font-size: 24px;}
     .btn-close-modal:hover { color: #ffffff; }
     .admin-tabs-container { display: flex; gap: 8px; padding: 0 10px; margin-bottom: 20px; margin-top: 15px; width: 100%; }
     .admin-tab-btn { flex: 1; min-width: 0; background: rgba(0, 0, 0, 0.4); border: 1px solid transparent; color: #555 !important; padding: 12px 4px; font-size: 13px; font-weight: bold; border-radius: 8px 8px 0 0; cursor: pointer; transition: all 0.2s ease; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; line-height: 1.2; text-align: center; position: relative; z-index: 1; margin-bottom: 0; }
@@ -168,7 +168,7 @@
     .remote-group { display: flex; flex-direction: column; align-items: center; background: #111216; border: 1px solid #2a2c33; border-radius: 6px; padding: 4px 6px 6px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.5); }
     .remote-label { font-family: 'JetBrains Mono', monospace; font-size: 8px; font-weight: bold; color: #666; margin-bottom: 4px; letter-spacing: 1px; } .remote-buttons { display: flex; gap: 6px; }
     .circle-btn { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #1c1d21; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.05); }
-    .circle-btn i { font-size: 12px; pointer-events: none; } .circle-btn.disabled { border-color: #444 !important; color: #444 !important; background: #15161a; box-shadow: none; cursor: not-allowed; opacity: 0.5; }
+    .circle-btn svg { width: 14px; height: 14px; fill: currentColor; pointer-events: none; } .circle-btn.disabled { border-color: #444 !important; color: #444 !important; background: #15161a; box-shadow: none; cursor: not-allowed; opacity: 0.5; }
     .remote-spk-btn { border: 1.5px solid var(--green); color: var(--green); } .remote-spk-btn.active { background-color: var(--green); color: #000; box-shadow: inset 0 2px 4px rgba(255,255,255,0.4), 0 0 10px rgba(74, 222, 128, 0.5); }
     .remote-mic-btn { border: 1.5px solid var(--red); color: var(--red); } .remote-mic-btn.active { background-color: var(--red); color: #fff; box-shadow: inset 0 2px 4px rgba(255,255,255,0.3), 0 0 10px rgba(220, 38, 38, 0.5); }
     .cp-meter-bg { width: 6px; height: 36px; background: #000; border-radius: 2px; position: relative; box-shadow: inset 0 0 3px rgba(0,0,0,0.8); overflow: hidden; margin-left: 2px;} .cp-meter-bar { width: 100%; height: 100%; background: linear-gradient(to top, #22c55e, #eab308, #ef4444); position: absolute; bottom: 0; left: 0; transform-origin: bottom; transform: scaleY(0); transition: transform 0.05s ease-out; }
@@ -192,7 +192,7 @@
     .status-line-bg { position: absolute; left: 0; top: 10%; bottom: 10%; width: 4px; background-color: #0a0b0d; border-radius: 0 4px 4px 0; overflow: hidden; z-index: 2; }
     .status-line-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to top, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); } .status-line-mask { position: absolute; top: 0; left: 0; right: 0; height: 100%; background-color: var(--bg-dark); transition: height 0.1s linear; }
     .volume-panel { display: none; padding: 5px 20px; align-items: center; gap: 10px; } .channel-card.expanded .volume-panel { display: flex; }
-    .vol-icon { font-size: 14px; color: var(--text-sub); flex-shrink: 0; width: 14px; height: 14px; } .vol-slider-wrap { flex: 1; position: relative; display: flex; align-items: center; touch-action: pan-x; }
+    .vol-icon { width: 14px; height: 14px; fill: var(--text-sub); flex-shrink: 0; } .vol-slider-wrap { flex: 1; position: relative; display: flex; align-items: center; touch-action: pan-x; }
     .vol-slider-track-bg { position: absolute; left: 0; right: 0; height: 4px; background: var(--border-color); border-radius: 2px; z-index: 1; } .vol-slider-fill { position: absolute; left: 0; height: 4px; background: var(--orange); border-radius: 2px; z-index: 2; width: 50%; pointer-events: none; }
     
     input[type=range] { width: 100%; -webkit-appearance: none; background: transparent; height: 30px; position: relative; z-index: 3; margin: 0; outline: none; border: none; }
@@ -237,16 +237,16 @@
   <div class="app-container" id="main-app-container">
     <div id="audio-overlay" class="overlay-base"><p style="font-weight:bold;margin-bottom:20px;font-size:18px;">通話に参加しますか？</p><button id="btn-enable-audio" class="btn-green-solid">音声を有効にして参加</button></div>
     
-    <div id="disconnect-overlay" class="overlay-base">
+    <div id="disconnect-overlay" class="overlay-base" style="z-index: 3000; background: rgba(220, 38, 38, 0.95);">
       <div class="loader-spinner" style="border: 4px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px;"></div>
       <div style="font-size: 20px; font-weight: bold; margin-bottom: 10px; color: white;">CONNECTION LOST</div>
       <div id="disconnect-text" style="font-size: 14px; color: rgba(255,255,255,0.8); margin-bottom: 30px;">通信が切断されました。自動再接続を試行中...</div>
     </div>
 
-    <!-- ログイン画面 -->
-    <div id="login-overlay" class="overlay-base">
-      <div class="login-modal">
-        <button class="btn-close-login" id="btn-close-login"><i class="fa-solid fa-xmark"></i></button>
+    <!-- ログイン画面 (リッチUI復元) -->
+    <div id="login-overlay" class="overlay-base" style="display: flex;">
+      <div class="login-modal" style="padding: 40px 50px; border-radius: 16px; width: 90%; max-width: 480px; background: #111216; border: 1px solid var(--border-color); box-shadow: 0 20px 50px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; margin: auto;">
+        <button class="btn-close-login" id="btn-close-login" style="position: absolute; top: 15px; right: 15px; background: transparent; border: none; color: #9ca3af; font-size: 24px; cursor: pointer; display: none; z-index: 200;"><i class="fa-solid fa-xmark"></i></button>
         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 30px; width: 100%;">
           <div style="display: flex; align-items: center; justify-content: space-between; width: 195px; margin-bottom: 5px;">
             <svg viewBox="0 0 66 60" style="height: 38px; width: auto; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4)); display: block;">
@@ -265,41 +265,41 @@
         </div>
         <div id="host-id-input-container" style="width: 100%; margin-bottom: 8px;">
             <label style="display: block; text-align: left; font-size: 11px; color: var(--text-sub); font-weight: bold; letter-spacing: 1px; margin-bottom: 5px;">ROOM NAME</label>
-            <input type="text" id="host-id" class="login-input" placeholder="例: STUDIO_A">
+            <input type="text" id="host-id" class="login-input" placeholder="例: STUDIO_A" style="margin-bottom: 0;">
         </div>
         <div id="join-userid-input-container" style="width: 100%; margin-bottom: 35px;">
             <label style="display: block; text-align: left; font-size: 11px; color: var(--text-sub); font-weight: bold; letter-spacing: 1px; margin-bottom: 5px;">USER ID</label>
-            <input type="text" id="join-userid" class="login-input" placeholder="例: CAM1">
+            <input type="text" id="join-userid" class="login-input" placeholder="例: CAM1" style="margin-bottom: 0;">
         </div>
-        <button id="btn-join-member" class="btn-reload btn-join-member">接続 (Connect)</button>
-        <button id="btn-join-admin" class="btn-reload btn-join-admin">管理者接続 (Admin)</button>
-        <button id="btn-stop" class="btn-reload btn-stop">切断 (Disconnect)</button>
-        <div class="status-text" id="status-msg">待機中... ルーム名とユーザーIDを入力</div>
+        <button id="btn-join-member" class="btn-reload" style="width: 100%; background: var(--blue); color: white; margin-top: 0; padding: 16px;">接続 (Connect)</button>
+        <button id="btn-join-admin" class="btn-reload admin-btn" style="width: 100%; background: transparent; border: 1px solid var(--text-sub); color: var(--text-sub); margin-top: 15px; font-size: 14px; padding: 16px;">管理者接続 (Admin)</button>
+        <button id="btn-stop" class="btn-reload" style="width: 100%; background: var(--red); color: white; margin-top: 10px; display: none; padding: 16px;">切断 (Disconnect)</button>
+        <div class="status-text" id="status-msg" style="margin-top: 25px; font-size: 12px; color: var(--text-sub);">待機中... ルーム名とユーザーIDを入力して接続</div>
       </div>
     </div>
 
     <!-- 管理者パネル -->
     <div id="admin-overlay" class="overlay-base">
       <div class="login-modal admin-modal">
-        <button id="btn-close-admin" class="btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
+        <button id="btn-close-admin" class="btn-close-modal"><svg viewBox="0 0 24 24" width="44" height="44" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
         <div class="admin-tabs-container">
-          <button id="tab-video" class="admin-tab-btn active"><i class="fa-solid fa-tv"></i><span>VIDEO & TALLY</span></button>
-          <button id="tab-patch" class="admin-tab-btn"><i class="fa-solid fa-network-wired"></i><span>PATCH PANEL</span></button>
-          <button id="tab-io" class="admin-tab-btn"><i class="fa-solid fa-sliders"></i><span>I/O BRIDGE</span></button>
+          <button id="tab-video" class="admin-tab-btn active"><svg viewBox="0 0 24 24"><path d="M23 7l-7 5 7 5V7zM1 6c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H3c-1.1 0-2-.9-2-2V6z"/></svg><span>VIDEO & TALLY</span></button>
+          <button id="tab-patch" class="admin-tab-btn"><svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg><span>PATCH PANEL</span></button>
+          <button id="tab-io" class="admin-tab-btn"><svg viewBox="0 0 24 24" style="margin-right: 5px;"><path d="M4 10h3v7H4zM10.5 10h3v7h-3zM2 19h20v3H2zM17 10h3v7h-3zM12 1L2 6v2h20V6z"/></svg><span>I/O BRIDGE</span></button>
         </div>
         <div class="scroll-area">
           <div id="admin-video-section">
             <div class="io-interface-section" style="margin-bottom: 25px;">
-              <h4 class="interface-title">MONITOR SETTINGS</h4>
-              <div class="admin-settings-row">
+              <h4 class="interface-title" style="margin-bottom: 15px;">MONITOR SETTINGS <span style="color: var(--text-sub); font-size: 11px;">(DISPLAY & VIDEO)</span></h4>
+              <div style="background: #111216; padding: 25px; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; flex-wrap: wrap; justify-content: center; gap: 20px;">
                 <div class="setting-group"><label>MONITOR NAME</label><input type="text" id="edit-monitor-title" value="MONITOR"></div>
                 <div class="setting-group"><label>VIDEO SOURCE</label><select id="edit-monitor-source"><option value="off">OFF</option><option value="screen">画面共有</option></select></div>
-                <div class="setting-group"><label>VIDEO QUALITY</label><select id="edit-video-quality"><option value="128000">128 Kbps</option><option value="256000">256 Kbps</option><option value="512000" selected>512 Kbps</option><option value="1000000">1 Mbps</option><option value="5000000">5 Mbps</option></select></div>
+                <div class="setting-group"><label>VIDEO QUALITY</label><select id="edit-video-quality"><option value="128000">128 Kbps (~57MB/h)</option><option value="256000">256 Kbps (~115MB/h)</option><option value="512000" selected>512 Kbps (~230MB/h)</option><option value="1000000">1 Mbps (~450MB/h)</option><option value="5000000">5 Mbps (~2.2GB/h)</option></select></div>
               </div>
             </div>
             <div class="io-interface-section">
-              <h4 class="interface-title">TALLY ROUTING</h4>
-              <div class="admin-settings-row" style="flex-direction: column; align-items: stretch;">
+              <h4 class="interface-title" style="margin-bottom: 15px;">TALLY ROUTING <span style="color: var(--text-sub); font-size: 11px;">(ASSIGNMENT)</span></h4>
+              <div style="background: #111216; padding: 25px; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: stretch;">
                 <div id="tally-assignment-list" style="display: flex; flex-direction: column;"></div>
               </div>
             </div>
@@ -309,7 +309,7 @@
             <button id="btn-add-ch" style="background: rgba(96, 165, 250, 0.1); color: var(--blue); border: 1px solid rgba(96, 165, 250, 0.4); width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background 0.2s;">＋ 新規パーティーを追加</button>
           </div>
           <div id="admin-io-section" style="display: none;">
-            <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; padding: 20px; background: #111216; border-radius: 12px; border: 1px solid var(--border-color);">
+            <div style="display: flex; flex-direction: column; align-items: center; margin-top: 0; margin-bottom: 20px; padding: 20px; background: #111216; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
               <span style="font-size: 16px; letter-spacing: 4px; color: var(--green); margin-bottom: 15px; font-weight: bold; font-family: 'JetBrains Mono', monospace;">I/O BRIDGE MODE</span>
               <div id="btn-io-toggle" class="io-toggle-wrapper"><div class="io-toggle-slider"><span id="io-slider-text">OFF</span></div><span class="io-toggle-text">I/O BRIDGE</span></div>
             </div>
@@ -341,7 +341,7 @@
             <button class="layout-item" data-layout="monitor"><i class="fa-solid fa-tv" style="margin-right:10px; width:16px; text-align:center;"></i>MONITOR</button>
           </div>
         </div>
-        <button id="btn-settings" class="btn-header-icon admin-only" title="設定"><i class="fa-solid fa-gear"></i></button>
+        <button id="btn-settings" class="btn-header-icon admin-only" title="設定"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></button>
         <div id="btn-show-login" class="status-badge">Login</div>
       </div>
     </div>
@@ -364,11 +364,21 @@
     // --- 安全なDOMアクセスのためのヘルパー ---
     const $ = id => document.getElementById(id);
 
+    // ★ 欠落回避のため再登録
+    window.forceResize = function() {
+      const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      document.documentElement.style.height = h + 'px'; document.body.style.height = h + 'px';
+      const c = $('main-app-container'); if (c) c.style.height = h + 'px';
+      window.scrollTo(0, 0);
+    };
+
     let isPulsing = false;
     function syncPulse() { const host = $('host-id'); const user = $('join-userid'); if (host && user) { const shouldPulse = host.value === '' && user.value === ''; if (shouldPulse !== isPulsing) { isPulsing = shouldPulse; host.style.animation = 'none'; user.style.animation = 'none'; if (shouldPulse) { void host.offsetWidth; host.style.animation = 'pulse-blue-border 1.5s infinite'; user.style.animation = 'pulse-blue-border 1.5s infinite'; } } } }
 
     // --- HTML圧縮用 I/O Bridge 動的生成 ---
     function generateIoHtml() {
+        const volL = `<svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M18.5 12A4.5 4.5 0 0 0 16 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg>`;
+        const volR = `<svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
         function buildSec(title, dLab, dId, items) {
             let h = `<div class="io-interface-section"><h4 class="interface-title">${title}</h4><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">`;
             [0, 1].forEach(i => {
@@ -377,7 +387,7 @@
                 h += `<div style="display: flex; gap: 10px;">`;
                 const targets = i===0 ? [items[0], items[1]] : [items[0], items[1]]; 
                 targets.forEach(item => {
-                    h += `<div class="setting-group" style="flex:1; align-items: stretch;"><label>${item.label}</label><select id="select-${item.id}" class="io-select"></select><div class="io-gain-slider-wrap"><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg><div class="vol-slider-wrap"><div class="vol-slider-track-bg"></div><div class="vol-slider-fill" id="fill-gain-${item.id}" style="width: 50%;"></div><input type="range" id="gain-${item.id}" min="0" max="200" value="100"></div><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></div><div class="io-meter-horizontal-bg"><div id="meter-${item.id}" class="io-meter-horizontal-fill"></div></div></div>`;
+                    h += `<div class="setting-group" style="flex:1; align-items: stretch;"><label>${item.label}</label><select id="select-${item.id}" class="io-select"></select><div class="io-gain-slider-wrap">${volL}<div class="vol-slider-wrap"><div class="vol-slider-track-bg"></div><div class="vol-slider-fill" id="fill-gain-${item.id}" style="width: 50%;"></div><input type="range" id="gain-${item.id}" min="0" max="200" value="100"></div>${volR}</div><div class="io-meter-horizontal-bg"><div id="meter-${item.id}" class="io-meter-horizontal-fill"></div></div></div>`;
                 });
                 h += `</div></div>`;
             });
@@ -899,8 +909,8 @@
             let isMicOn = false; let isSpkOn = false;
             if (isSelf) { isMicOn = state.talkStates[ch.id] === true; isSpkOn = state.listenStates[ch.id] === true; } else { isMicOn = state.remoteTalkStates[uid] && state.remoteTalkStates[uid][ch.id] === true; isSpkOn = state.remoteListenStates[uid] && state.remoteListenStates[uid][ch.id] === true; }
             const micActiveClass = isMicOn ? 'active' : ''; const spkActiveClass = isSpkOn ? 'active' : ''; 
-            let micBtnHtml = ''; if (ch.type !== 'Listen') { micBtnHtml = `<div class="circle-btn remote-mic-btn ${disabledClass} ${micActiveClass}" data-uid="${uid}" data-chid="${ch.id}"><i class="fa-solid fa-microphone"></i></div>`; } else { micBtnHtml = `<div style="width: 26px; height: 26px;"></div>`; }
-            let spkBtnHtml = `<div class="circle-btn remote-spk-btn ${disabledClass} ${spkActiveClass}" data-uid="${uid}" data-chid="${ch.id}"><i class="fa-solid fa-volume-high"></i></div>`;
+            let micBtnHtml = ''; if (ch.type !== 'Listen') { micBtnHtml = `<div class="circle-btn remote-mic-btn ${disabledClass} ${micActiveClass}" data-uid="${uid}" data-chid="${ch.id}"><svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg></div>`; } else { micBtnHtml = `<div style="width: 26px; height: 26px;"></div>`; }
+            let spkBtnHtml = `<div class="circle-btn remote-spk-btn ${disabledClass} ${spkActiveClass}" data-uid="${uid}" data-chid="${ch.id}"><svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></div>`;
             const remoteGroupStyle = (isSelf && isIoOn) ? `style="opacity: 0.3; pointer-events: none;"` : ''; const remoteLabelText = isSelf ? 'LOCAL' : 'REMOTE'; const dataIsLocal = isSelf ? `data-is-local="true"` : '';
             html += `<td style="width:140px; min-width:140px;"><div class="cell-layout"><div class="matrix-toggle ${activeClass}" data-uid="${uid}" data-chid="${ch.id}"></div><div class="remote-group" ${remoteGroupStyle} ${dataIsLocal}><div class="remote-label">${remoteLabelText}</div><div class="remote-buttons">${spkBtnHtml}${micBtnHtml}</div></div><div class="cp-meter-bg"><div class="cp-meter-bar" id="cp-meter-${uid}-${ch.id}"></div></div></div></td>`; 
           });
