@@ -40,16 +40,11 @@ export default {
     const payload = {
       iss: apiKey,
       sub: user,
-      jti: crypto.randomUUID(), // セキュリティ向上のための一意なID
       nbf: now,
       exp: now + 7200, // パスポートの有効期限（2時間）
       video: {
         roomJoin: true,
-        room: room,
-        // ★致命的エラーの原因（権限不足）をここで解消！
-        canPublish: true,       // マイクの音声をサーバーに送る権限
-        canSubscribe: true,     // 相手の声や状態を受け取る権限
-        canPublishData: true    // パッチパネルなどの同期データを送る権限
+        room: room
       }
     };
 
