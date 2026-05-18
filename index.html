@@ -11,6 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
+  <!-- LiveKitの安定バージョン -->
   <script src="https://cdn.jsdelivr.net/npm/livekit-client@2.5.9/dist/livekit-client.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
@@ -143,6 +144,7 @@
     #channel-list-wrap { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 10px; } 
     @media (min-width: 600px) { #channel-list-wrap { gap: 15px; } }
     
+    /* ★カードの美しいデザイン（完全復元） */
     .channel-card { background-color: var(--card-bg); border-radius: 8px; position: relative; overflow: hidden; display: flex; flex-direction: column; transition: background 0.3s ease; border: 1px solid var(--border-color); } .channel-card.expanded { background-color: var(--card-bg-expanded); }
     .channel-card::before, .channel-card::after { content: ""; position: absolute; top: 0; bottom: 0; width: 50%; opacity: 0; transition: opacity 0.3s ease; pointer-events: none; z-index: 0; }
     .channel-card::before { left: 0; background: linear-gradient(to right, rgba(74, 222, 128, 0.25) 0%, transparent 100%); } .channel-card::after { right: 0; background: linear-gradient(to left, rgba(220, 38, 38, 0.25) 0%, transparent 100%); }
@@ -150,7 +152,7 @@
     .status-line-bg { position: absolute; left: 0; top: 10%; bottom: 10%; width: 4px; background-color: #0a0b0d; border-radius: 0 4px 4px 0; overflow: hidden; z-index: 2; }
     .status-line-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to top, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); } .status-line-mask { position: absolute; top: 0; left: 0; right: 0; height: 100%; background-color: var(--bg-dark); transition: height 0.1s linear; }
     .volume-panel { display: none; padding: 5px 20px; align-items: center; gap: 10px; } .channel-card.expanded .volume-panel { display: flex; }
-    .vol-icon { font-size: 14px; color: var(--text-sub); flex-shrink: 0; } .vol-slider-wrap { flex: 1; position: relative; display: flex; align-items: center; touch-action: pan-x; }
+    .vol-icon { font-size: 14px; color: var(--text-sub); flex-shrink: 0; width: 14px; height: 14px; } .vol-slider-wrap { flex: 1; position: relative; display: flex; align-items: center; touch-action: pan-x; }
     .vol-slider-track-bg { position: absolute; left: 0; right: 0; height: 4px; background: var(--border-color); border-radius: 2px; z-index: 1; } .vol-slider-fill { position: absolute; left: 0; height: 4px; background: var(--orange); border-radius: 2px; z-index: 2; width: 50%; pointer-events: none; }
     input[type=range] { width: 100%; -webkit-appearance: none; background: transparent; height: 30px; position: relative; z-index: 3; margin: 0; outline: none; border: none; }
     input[type=range]:focus { outline: none; border: none; }
@@ -161,12 +163,13 @@
     .ch-name { font-size: 15px; font-weight: 500; margin-bottom: 0px; display: inline-block; padding: 2px 6px; border-radius: 4px; } .ch-type { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-sub); display: inline-block; padding: 0px 6px; border-radius: 4px; pointer-events: auto; }
     .btn-action { width: 50px; height: 50px; border-radius: 50%; border: 2px solid; display: flex; align-items: center; justify-content: center; background: #1c1d21; touch-action: none; z-index: 10; user-select: none; box-shadow: 0 4px 8px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.05); transition: background-color 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, color 0.2s ease; cursor: pointer; }
     .btn-action.disabled-btn { opacity: 0.3; cursor: not-allowed; pointer-events: none; border-color: var(--border-color) !important; color: var(--text-sub) !important; background: #15161a !important; box-shadow: none !important; }
-    .btn-icon { font-size: 20px; pointer-events: none; }
+    .btn-icon { width: 24px; height: 24px; fill: currentColor; pointer-events: none; }
     .btn-listen { border-color: var(--green); color: var(--green); } .btn-listen.active, .btn-listen.latched { background-color: var(--green); color: var(--bg-dark); box-shadow: inset 0 2px 4px rgba(255,255,255,0.4), 0 4px 15px rgba(74, 222, 128, 0.5); }
     .btn-talk { border-color: var(--red); color: var(--red); } .btn-talk.active, .btn-talk.latched { background-color: var(--red); color: var(--text-main); box-shadow: inset 0 2px 4px rgba(255,255,255,0.3), 0 4px 15px rgba(220, 38, 38, 0.5); }
     .ch-meter-container { height: 4px; background: var(--bg-dark); margin: 0 45px 0; border-radius: 2px; overflow: hidden; position: relative; opacity: 0.8; }
     .ch-meter-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); } .ch-meter-mask { position: absolute; right: 0; top: 0; bottom: 0; width: 100%; background-color: var(--bg-dark); transition: width 0.05s linear; }
     .btn-expand { display: inline-block; padding: 4px 40px; color: var(--text-sub); font-size: 14px; letter-spacing: 2px; cursor: grab; margin: 0 auto; border-radius: 20px; touch-action: none;} .btn-expand:active { cursor: grabbing; background-color: rgba(255,255,255,0.05); }
+    .sortable-ghost { opacity: 0.2 !important; background-color: #000 !important; } .sortable-drag { cursor: grabbing !important; box-shadow: 0 20px 40px rgba(0,0,0,0.8) !important; background-color: var(--card-bg-expanded) !important; border: 1px solid var(--border-color) !important; opacity: 1 !important; z-index: 9999 !important; }
     
     .master-meter-container { height: 8px; width: 100%; background: var(--bg-dark); position: relative; flex-shrink: 0; z-index: 10;}
     .master-meter-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); } .master-meter-mask { position: absolute; right: 0; top: 0; bottom: 0; width: 100%; background-color: var(--bg-dark); transition: width 0.05s linear; }
@@ -175,7 +178,7 @@
       .header { padding: 4px 15px; border-bottom: 1px solid #1e2128; min-height: 36px;} #app-logo { height: 18px; } 
       .global-controls { padding: 2px 15px 4px; gap: 8px; min-height: 36px;} .btn-global { padding: 4px 8px; font-size: 11px; height: 28px; }
       .channel-list-container { padding: 4px 15px 10px; gap: 6px;} #channel-list-wrap { grid-template-columns: 1fr 1fr; gap: 6px; } 
-      .main-controls { padding: 4px 10px; } .btn-action { width: 38px; height: 38px; border-width: 1.5px; } .btn-icon { font-size: 16px; }
+      .main-controls { padding: 4px 10px; } .btn-action { width: 38px; height: 38px; border-width: 1.5px; } .btn-icon { width: 18px; height: 18px; }
       .ch-name { font-size: 13px; } .ch-type { font-size: 9px; } .card-footer { padding: 0 10px 2px !important; } .btn-expand { padding: 2px 30px !important; font-size: 12px !important; }
       .master-meter-container { height: 6px; } .monitor-section { padding: 5px 0; }
       .video-wrapper { height: auto; max-height: 45vh; width: 100%; max-width: 80vh; aspect-ratio: 16 / 9; margin: 0 auto; }
@@ -183,7 +186,7 @@
     }
   </style>
 </head>
-<body onload="forceResize()">
+<body onload="if(window.forceResize) window.forceResize()">
 
   <!-- 🚨 デバッグ用 システムロガー 🚨 -->
   <div id="debug-logger" style="position: fixed; bottom: 0; left: 0; width: 100%; height: 120px; background: rgba(0,0,0,0.85); color: #4ade80; font-family: monospace; font-size: 11px; padding: 10px; overflow-y: auto; z-index: 99999; border-top: 1px solid #444; pointer-events: none;">
@@ -219,11 +222,11 @@
             <i class="fa-solid fa-satellite-dish" style="font-size: 19px; color: var(--blue); line-height: 1; transform: translateY(-1px);"></i>
           </div>
         </div>
-        <div style="width: 100%; margin-bottom: 8px;">
+        <div id="host-id-input-container" style="width: 100%; margin-bottom: 8px;">
             <label style="display: block; text-align: left; font-size: 11px; color: var(--text-sub); font-weight: bold; letter-spacing: 1px; margin-bottom: 5px;">ROOM NAME</label>
             <input type="text" id="host-id" class="login-input" placeholder="例: STUDIO_A">
         </div>
-        <div style="width: 100%; margin-bottom: 35px;">
+        <div id="join-userid-input-container" style="width: 100%; margin-bottom: 35px;">
             <label style="display: block; text-align: left; font-size: 11px; color: var(--text-sub); font-weight: bold; letter-spacing: 1px; margin-bottom: 5px;">USER ID</label>
             <input type="text" id="join-userid" class="login-input" placeholder="例: CAM1">
         </div>
@@ -308,8 +311,8 @@
     </div>
 
     <div class="global-controls">
-      <button id="btn-master-spk" class="btn-global btn-master-spk"><i class="fa-solid fa-volume-high"></i> SPK MUTE</button>
-      <button id="btn-master-mic" class="btn-global btn-master-mic"><i class="fa-solid fa-microphone"></i> MIC MUTE</button>
+      <button id="btn-master-spk" class="btn-global btn-master-spk"><span id="global-spk-icon"></span> SPK MUTE</button>
+      <button id="btn-master-mic" class="btn-global btn-master-mic"><span id="global-mic-icon"></span> MIC MUTE</button>
     </div>
 
     <div class="channel-list-container" id="channel-list-wrap"></div>
@@ -328,28 +331,31 @@
     window.onunhandledrejection = function(e) { uiLog(`PROMISE ERR: ${e.reason}`, '#ef4444'); };
     uiLog("System Script Loaded.");
 
-    function forceResize() {
+    // --- 安全なDOMアクセスのためのヘルパー ---
+    const $ = id => document.getElementById(id);
+
+    // ★ 欠落していた forceResize の確実な登録
+    window.forceResize = function() {
       const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
       document.documentElement.style.height = h + 'px'; document.body.style.height = h + 'px';
-      const container = document.getElementById('main-app-container');
-      if (container) container.style.height = h + 'px';
+      const c = $('main-app-container'); if (c) c.style.height = h + 'px';
       window.scrollTo(0, 0);
-    }
-    window.addEventListener('resize', forceResize);
-    window.addEventListener('orientationchange', () => { setTimeout(forceResize, 50); setTimeout(forceResize, 200); setTimeout(forceResize, 500); });
-    if (window.visualViewport) window.visualViewport.addEventListener('resize', forceResize);
+    };
+    window.addEventListener('resize', window.forceResize);
+    window.addEventListener('orientationchange', () => { setTimeout(window.forceResize, 50); setTimeout(window.forceResize, 200); setTimeout(window.forceResize, 500); });
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', window.forceResize);
 
     document.addEventListener('touchmove', function(e) { if (e.touches.length > 1) { e.preventDefault(); } }, { passive: false });
     let lastTouchEnd = 0; document.addEventListener('touchend', function(e) { const now = (new Date()).getTime(); if (now - lastTouchEnd <= 300) { e.preventDefault(); } lastTouchEnd = now; }, { passive: false });
     window.addEventListener('contextmenu', e => { if(e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') e.preventDefault(); });
 
     let isReloading = false;
-    function triggerAutoReconnect() { if (isReloading) return; isReloading = true; const overlay = document.getElementById('disconnect-overlay'); if (overlay) { overlay.style.display = 'flex'; const text = document.getElementById('disconnect-text'); if(text) text.textContent = '接続が完全に切断されました。自動復帰します...'; } setTimeout(() => location.reload(), 3000); }
-    window.addEventListener('offline', () => { const overlay = document.getElementById('disconnect-overlay'); if (overlay) { overlay.style.display = 'flex'; const text = document.getElementById('disconnect-text'); if(text) text.textContent = 'ネットワーク待機中...'; } });
-    window.addEventListener('online', () => { const overlay = document.getElementById('disconnect-overlay'); if (overlay) { const text = document.getElementById('disconnect-text'); if(text) text.textContent = '通信回復。再接続中...'; setTimeout(() => location.reload(), 1500); } });
+    function triggerAutoReconnect() { if (isReloading) return; isReloading = true; const overlay = $('disconnect-overlay'); if (overlay) { overlay.style.display = 'flex'; const text = $('disconnect-text'); if(text) text.textContent = '接続が完全に切断されました。自動復帰します...'; } setTimeout(() => location.reload(), 3000); }
+    window.addEventListener('offline', () => { const overlay = $('disconnect-overlay'); if (overlay) { overlay.style.display = 'flex'; const text = $('disconnect-text'); if(text) text.textContent = 'ネットワーク待機中...'; } });
+    window.addEventListener('online', () => { const overlay = $('disconnect-overlay'); if (overlay) { const text = $('disconnect-text'); if(text) text.textContent = '通信回復。再接続中...'; setTimeout(() => location.reload(), 1500); } });
 
     let isPulsing = false;
-    function syncPulse() { const host = document.getElementById('host-id'); const user = document.getElementById('join-userid'); if (host && user) { const shouldPulse = host.value === '' && user.value === ''; if (shouldPulse !== isPulsing) { isPulsing = shouldPulse; host.style.animation = 'none'; user.style.animation = 'none'; if (shouldPulse) { void host.offsetWidth; host.style.animation = 'pulse-blue-border 1.5s infinite'; user.style.animation = 'pulse-blue-border 1.5s infinite'; } } } }
+    function syncPulse() { const host = $('host-id'); const user = $('join-userid'); if (host && user) { const shouldPulse = host.value === '' && user.value === ''; if (shouldPulse !== isPulsing) { isPulsing = shouldPulse; host.style.animation = 'none'; user.style.animation = 'none'; if (shouldPulse) { void host.offsetWidth; host.style.animation = 'pulse-blue-border 1.5s infinite'; user.style.animation = 'pulse-blue-border 1.5s infinite'; } } } }
 
     // --- HTML圧縮用 I/O Bridge 動的生成 ---
     function generateIoHtml() {
@@ -359,15 +365,15 @@
                 h += `<div style="background: #111216; padding: 25px; border-radius: 12px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 15px;">`;
                 if(i===0) h += `<div class="setting-group" style="align-items: center; width: 100%; max-width: none;"><label>${dLab}</label><select id="${dId}" class="io-select" style="max-width: none;"></select></div>`;
                 h += `<div style="display: flex; gap: 10px;">`;
-                const targets = i===0 ? [items[0], items[1]] : [items[0], items[1]]; // Simplified for space
+                const targets = i===0 ? [items[0], items[1]] : [items[0], items[1]]; 
                 targets.forEach(item => {
-                    h += `<div class="setting-group" style="flex:1; align-items: stretch;"><label>${item.label}</label><select id="select-${item.id}" class="io-select"></select><div class="io-gain-slider-wrap"><i class="fa-solid fa-volume-low vol-icon"></i><div class="vol-slider-wrap"><div class="vol-slider-track-bg"></div><div class="vol-slider-fill" id="fill-gain-${item.id}" style="width: 50%;"></div><input type="range" id="gain-${item.id}" min="0" max="200" value="100"></div><i class="fa-solid fa-volume-high vol-icon"></i></div><div class="io-meter-horizontal-bg"><div id="meter-${item.id}" class="io-meter-horizontal-fill"></div></div></div>`;
+                    h += `<div class="setting-group" style="flex:1; align-items: stretch;"><label>${item.label}</label><select id="select-${item.id}" class="io-select"></select><div class="io-gain-slider-wrap"><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg><div class="vol-slider-wrap"><div class="vol-slider-track-bg"></div><div class="vol-slider-fill" id="fill-gain-${item.id}" style="width: 50%;"></div><input type="range" id="gain-${item.id}" min="0" max="200" value="100"></div><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></div><div class="io-meter-horizontal-bg"><div id="meter-${item.id}" class="io-meter-horizontal-fill"></div></div></div>`;
                 });
                 h += `</div></div>`;
             });
             h += `</div></div>`; return h;
         }
-        const container = document.getElementById('io-bridge-container');
+        const container = $('io-bridge-container');
         if(container) {
             container.innerHTML = 
               buildSec('4W INTERFACE (IN)', 'INPUT DEVICE (MIC)', 'select-4w-in-device', [{label:'IN 1(L) ➔ PL', id:'4w-in-l'}, {label:'IN 2(R) ➔ PL', id:'4w-in-r'}]) +
@@ -378,7 +384,7 @@
     generateIoHtml();
 
     function patchIoToggle() {
-        const toggleWrapper = document.getElementById('btn-io-toggle'); const sliderText = document.getElementById('io-slider-text'); const toggleText = toggleWrapper.querySelector('.io-toggle-text'); if(!toggleWrapper) return;
+        const toggleWrapper = $('btn-io-toggle'); const sliderText = $('io-slider-text'); const toggleText = toggleWrapper?.querySelector('.io-toggle-text'); if(!toggleWrapper) return;
         toggleWrapper.onpointerdown = (e) => { toggleWrapper.setPointerCapture(e.pointerId); toggleWrapper.isDragging = true; toggleWrapper.startX = e.clientX; toggleWrapper.moved = false; toggleWrapper.querySelector('.io-toggle-slider').style.transition = 'none'; toggleText.style.transition = 'none'; };
         toggleWrapper.onpointermove = (e) => {
           if (!toggleWrapper.isDragging) return; toggleWrapper.moved = true; let deltaX = e.clientX - toggleWrapper.startX; let currentLeft = state.ioBridge.enabled ? 188 : 0; let newLeft = currentLeft + deltaX; newLeft = Math.max(0, Math.min(newLeft, 188)); toggleWrapper.querySelector('.io-toggle-slider').style.left = `calc(2px + ${newLeft}px)`; let ratio = newLeft / 188; let textX = 24 - (ratio * 48); toggleText.style.transform = `translateX(${textX}px)`;
@@ -394,7 +400,7 @@
             if (state.ioBridge.enabled === newState) return; state.ioBridge.enabled = newState; sliderText.textContent = newState ? "ON" : "OFF"; if(newState) toggleWrapper.classList.add('active'); else toggleWrapper.classList.remove('active');
             if (typeof updateIoElementsState === 'function') updateIoElementsState(); if (typeof updatePttButtonsState === 'function') updatePttButtonsState();
             if (newState) {
-                let changed = false; state.channels?.forEach(ch => { if (state.talkStates[ch.id]) { state.talkStates[ch.id] = false; changed = true; } if (state.listenStates[ch.id]) { state.listenStates[ch.id] = false; changed = true; } const card = document.getElementById(`card-${ch.id}`); if (card) card.classList.remove('talk-on', 'listen-on'); const tBtn = document.getElementById(`talk-${ch.id}`); if (tBtn) tBtn.classList.remove('active', 'latched'); const lBtn = document.getElementById(`listen-${ch.id}`); if (lBtn) lBtn.classList.remove('active', 'latched'); });
+                let changed = false; state.channels?.forEach(ch => { if (state.talkStates[ch.id]) { state.talkStates[ch.id] = false; changed = true; } if (state.listenStates[ch.id]) { state.listenStates[ch.id] = false; changed = true; } const card = $(`card-${ch.id}`); if (card) card.classList.remove('talk-on', 'listen-on'); const tBtn = $(`talk-${ch.id}`); if (tBtn) tBtn.classList.remove('active', 'latched'); const lBtn = $(`listen-${ch.id}`); if (lBtn) lBtn.classList.remove('active', 'latched'); });
                 if(changed) { updateAudioRouting(); updateChannelIcons(); syncTalkStates(); syncListenStates(); }
             }
             saveRoomState(); sendData({ type: 'update-io-bridge', ioBridge: state.ioBridge }); await updateAudioDevices(); applyOutputDevice();
@@ -406,14 +412,14 @@
         const devices = await navigator.mediaDevices.enumerateDevices();
         if (state.ioBridge.outDevice4w && state.ioBridge.outDevice4w !== 'default' && state.ioBridge.outDevice4w !== '') {
             const exists = devices.some(d => d.deviceId === state.ioBridge.outDevice4w);
-            if (!exists) { state.ioBridge.outDevice4w = 'default'; if(document.getElementById('select-4w-out-device')) document.getElementById('select-4w-out-device').value = 'default'; applyOutputDevice(); uiLog("Warning: Audio output device lost."); saveRoomState(); }
+            if (!exists) { state.ioBridge.outDevice4w = 'default'; if($('select-4w-out-device')) $('select-4w-out-device').value = 'default'; applyOutputDevice(); uiLog("Warning: Audio output device lost."); saveRoomState(); }
         }
     });
 
-    const iconSpeaker = `<i class="fa-solid fa-volume-high btn-icon"></i>`;
-    const iconSpeakerOff = `<i class="fa-solid fa-volume-xmark btn-icon" style="opacity: 0.4;"></i>`;
-    const iconMic = `<i class="fa-solid fa-microphone btn-icon"></i>`;
-    const iconMicOff = `<i class="fa-solid fa-microphone-slash btn-icon" style="opacity: 0.4;"></i>`;
+    const iconSpeaker = `<svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
+    const iconSpeakerOff = `<svg class="btn-icon" viewBox="0 0 24 24"><path fill="currentColor" opacity="0.4" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/><line x1="4" y1="4" x2="20" y2="20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
+    const iconMic = `<svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>`;
+    const iconMicOff = `<svg class="btn-icon" viewBox="0 0 24 24"><path fill="currentColor" opacity="0.4" d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/><line x1="4" y1="4" x2="20" y2="20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
 
     const memStorage = {};
     const safeStorage = { 
@@ -423,6 +429,7 @@
     };
     const LocalProfile = { get: () => { try { return JSON.parse(safeStorage.get('yytalk_user_profile')); } catch(e) { return null; } }, set: (data) => { try { safeStorage.set('yytalk_user_profile', JSON.stringify(data)); } catch(e) {} }, clear: () => { try { safeStorage.remove('yytalk_user_profile'); } catch(e) {} } };
 
+    // ★ 状態管理（変数の統合によりバグを根絶）
     const state = {
       room: null, localStream: null, localMicTrack: null, roomId: '', myUserId: '', isAdmin: false,
       channels: [], registeredUsers: [], userAssignments: {}, tallyAssignments: {}, mediaCalls: {}, 
@@ -437,34 +444,42 @@
     const LIVEKIT_WS_URL = "wss://yy-talk-pe8z9ycq.livekit.cloud";
     const WORKER_AUTH_URL = "https://yy-talk.yoshimitsu-y.workers.dev";
 
-    document.getElementById('main-app-container').classList.add('layout-normal');
+    // CSSの初期適用
+    if($('main-app-container')) $('main-app-container').classList.add('layout-normal');
     
     window.addEventListener('DOMContentLoaded', () => {
         uiLog("DOM Loaded. Binding Events...");
-        document.getElementById('host-id')?.addEventListener('input', syncPulse); document.getElementById('join-userid')?.addEventListener('input', syncPulse); syncPulse();
+        const hId = $('host-id'); const jId = $('join-userid');
+        if(hId) hId.addEventListener('input', syncPulse); 
+        if(jId) jId.addEventListener('input', syncPulse); 
+        syncPulse();
         
-        document.getElementById('btn-layout').onclick = (e) => { e.stopPropagation(); document.getElementById('layout-dropdown').classList.toggle('show'); };
-        document.addEventListener('click', () => { document.getElementById('layout-dropdown').classList.remove('show'); });
+        const bLay = $('btn-layout');
+        if(bLay) bLay.onclick = (e) => { e.stopPropagation(); $('layout-dropdown')?.classList.toggle('show'); };
+        document.addEventListener('click', () => { $('layout-dropdown')?.classList.remove('show'); });
         document.querySelectorAll('.layout-item').forEach(item => { item.onclick = (e) => { applyLayout(item.getAttribute('data-layout')); state.layout = item.getAttribute('data-layout'); saveRoomState(); }; });
 
-        document.getElementById('btn-show-login').onclick = () => { document.getElementById('login-overlay').style.display = 'flex'; };
-        document.getElementById('btn-close-login').onclick = () => { document.getElementById('login-overlay').style.display = 'none'; };
+        const bsLog = $('btn-show-login'); if(bsLog) bsLog.onclick = () => { $('login-overlay').style.display = 'flex'; };
+        const bcLog = $('btn-close-login'); if(bcLog) bcLog.onclick = () => { $('login-overlay').style.display = 'none'; };
         
-        document.getElementById('tab-video').onclick = () => switchTab(document.getElementById('tab-video'), document.getElementById('admin-video-section'));
-        document.getElementById('tab-patch').onclick = () => switchTab(document.getElementById('tab-patch'), document.getElementById('admin-patch-section'));
-        document.getElementById('tab-io').onclick = () => { switchTab(document.getElementById('tab-io'), document.getElementById('admin-io-section')); buildIoUI(); };
+        const tVid = $('tab-video'); if(tVid) tVid.onclick = () => switchTab($('tab-video'), $('admin-video-section'));
+        const tPat = $('tab-patch'); if(tPat) tPat.onclick = () => switchTab($('tab-patch'), $('admin-patch-section'));
+        const tIo = $('tab-io'); if(tIo) tIo.onclick = () => { switchTab($('tab-io'), $('admin-io-section')); buildIoUI(); };
         
-        document.getElementById('btn-settings').onclick = () => { if (!state.isAdmin) return; document.getElementById('admin-overlay').style.display = 'flex'; document.getElementById('btn-settings').classList.add('active'); buildAdminMatrix(); buildTallyAssignmentUI(); updateVideoSources(); };
-        document.getElementById('btn-close-admin').onclick = () => { document.getElementById('admin-overlay').style.display = 'none'; document.getElementById('btn-settings').classList.remove('active'); };
+        const bSet = $('btn-settings');
+        if(bSet) bSet.onclick = () => { if (!state.isAdmin) return; $('admin-overlay').style.display = 'flex'; $('btn-settings').classList.add('active'); buildAdminMatrix(); buildTallyAssignmentUI(); updateVideoSources(); };
+        const bcAdm = $('btn-close-admin'); if(bcAdm) bcAdm.onclick = () => { $('admin-overlay').style.display = 'none'; $('btn-settings').classList.remove('active'); };
 
-        document.getElementById('btn-join-member').onclick = () => joinNetwork(false);
-        document.getElementById('btn-join-admin').onclick = () => joinNetwork(true);
-        document.getElementById('btn-enable-audio').onclick = () => { document.getElementById('audio-overlay').style.display = 'none'; state.audioEnabled = true; initAudioContext(); };
-        document.getElementById('btn-stop').onclick = () => { LocalProfile.clear(); location.reload(); };
+        const bjm = $('btn-join-member'); if(bjm) bjm.onclick = () => joinNetwork(false);
+        const bja = $('btn-join-admin'); if(bja) bja.onclick = () => joinNetwork(true);
+        const bea = $('btn-enable-audio'); if(bea) bea.onclick = () => { $('audio-overlay').style.display = 'none'; state.audioEnabled = true; initAudioContext(); };
+        const bStop = $('btn-stop'); if(bStop) bStop.onclick = () => { LocalProfile.clear(); location.reload(); };
 
-        if (typeof Sortable !== 'undefined') { new Sortable(document.getElementById('channel-list-wrap'), { animation: 200, handle: '.btn-expand', delay: 150, delayOnTouchOnly: true, touchStartThreshold: 5, ghostClass: 'sortable-ghost', dragClass: 'sortable-drag', onEnd: function (evt) { let newOrder = []; document.getElementById('channel-list-wrap').querySelectorAll('.channel-card').forEach(card => { newOrder.push(card.id.replace('card-', '')); }); safeStorage.set('yytalk-ch-order', JSON.stringify(newOrder)); } }); }
+        const cWrap = $('channel-list-wrap');
+        if (typeof Sortable !== 'undefined' && cWrap) { new Sortable(cWrap, { animation: 200, handle: '.btn-expand', delay: 150, delayOnTouchOnly: true, touchStartThreshold: 5, ghostClass: 'sortable-ghost', dragClass: 'sortable-drag', onEnd: function (evt) { let newOrder = []; cWrap.querySelectorAll('.channel-card').forEach(card => { newOrder.push(card.id.replace('card-', '')); }); safeStorage.set('yytalk-ch-order', JSON.stringify(newOrder)); } }); }
         
-        document.getElementById('btn-add-ch').onclick = () => {
+        const bAdd = $('btn-add-ch');
+        if(bAdd) bAdd.onclick = () => {
             try {
                 const id = 'ch' + Date.now(); const newCh = { id, name: 'NEW', type: 'PL' }; 
                 if (!state.channels.find(c => c.id === id)) state.channels.push(newCh); 
@@ -476,25 +491,26 @@
             } catch (err) { uiLog("Failed to add channel:" + err, '#f00'); }
         };
 
-        document.getElementById('btn-master-spk').onclick = toggleMasterSpk;
-        document.getElementById('btn-master-mic').onclick = toggleMasterMic;
+        const bms = $('btn-master-spk'); if(bms) bms.onclick = toggleMasterSpk;
+        const bmm = $('btn-master-mic'); if(bmm) bmm.onclick = toggleMasterMic;
 
-        const savedProfile = LocalProfile.get(); if (savedProfile) { document.getElementById('host-id').value = savedProfile.roomId || ''; document.getElementById('join-userid').value = savedProfile.userId || ''; }
+        const savedProfile = LocalProfile.get(); if (savedProfile) { if($('host-id')) $('host-id').value = savedProfile.roomId || ''; if($('join-userid')) $('join-userid').value = savedProfile.userId || ''; }
     });
 
     function applyLayout(layout) {
-        const appC = document.getElementById('main-app-container');
+        const appC = $('main-app-container');
         appC.classList.remove('layout-normal', 'layout-hybrid', 'layout-monitor'); appC.classList.add('layout-' + layout);
         document.querySelectorAll('.layout-item').forEach(btn => { if(btn.getAttribute('data-layout') === layout) btn.classList.add('active'); else btn.classList.remove('active'); });
-        if (layout === 'normal') document.getElementById('btn-layout').classList.remove('active'); else document.getElementById('btn-layout').classList.add('active'); setTimeout(forceResize, 100);
+        const bl = $('btn-layout'); if(bl) { if (layout === 'normal') bl.classList.remove('active'); else bl.classList.add('active'); }
+        setTimeout(window.forceResize, 100);
     }
     
-    function switchTab(activeTab, activeSec) { [document.getElementById('tab-video'), document.getElementById('tab-patch'), document.getElementById('tab-io')].forEach(t => t.classList.remove('active')); [document.getElementById('admin-video-section'), document.getElementById('admin-patch-section'), document.getElementById('admin-io-section')].forEach(s => s.style.display = 'none'); activeTab.classList.add('active'); activeSec.style.display = 'block'; }
+    function switchTab(activeTab, activeSec) { const tVid=$('tab-video'), tPat=$('tab-patch'), tIo=$('tab-io'); if(tVid && tPat && tIo) [tVid, tPat, tIo].forEach(t => t.classList.remove('active')); const sVid=$('admin-video-section'), sPat=$('admin-patch-section'), sIo=$('admin-io-section'); if(sVid && sPat && sIo) [sVid, sPat, sIo].forEach(s => s.style.display = 'none'); if(activeTab) activeTab.classList.add('active'); if(activeSec) activeSec.style.display = 'block'; }
 
     function updateUserCount() {
       if(!state.room) return;
       const count = state.room.remoteParticipants.size + 1;
-      const activeEl = document.getElementById('header-active-count'); const sepEl = document.getElementById('header-user-separator');
+      const activeEl = $('header-active-count'); const sepEl = $('header-user-separator');
       if(activeEl && sepEl) { activeEl.textContent = `ACTIVE: ${count}`; activeEl.style.display = 'block'; sepEl.style.display = 'block'; }
     }
 
@@ -529,31 +545,31 @@
     }
 
     function buildIoUI() {
-      const sliderText = document.getElementById('io-slider-text'); if(sliderText) sliderText.textContent = state.ioBridge.enabled ? "ON" : "OFF"; if(state.ioBridge.enabled) document.getElementById('btn-io-toggle').classList.add('active'); else document.getElementById('btn-io-toggle').classList.remove('active'); patchIoToggle();
+      const sliderText = $('io-slider-text'); if(sliderText) sliderText.textContent = state.ioBridge.enabled ? "ON" : "OFF"; const bIo=$('btn-io-toggle'); if(bIo){ if(state.ioBridge.enabled) bIo.classList.add('active'); else bIo.classList.remove('active'); } patchIoToggle();
       window.updateIoElementsState = function() { const isIoOn = state.ioBridge.enabled; document.querySelectorAll('#admin-io-section .io-interface-section').forEach(el => { el.style.opacity = isIoOn ? '1' : '0.4'; el.style.pointerEvents = isIoOn ? 'auto' : 'none'; }); }; updateIoElementsState();
       navigator.mediaDevices.enumerateDevices().then(devices => {
-        const defaultOpt = '<option value="default">System Default</option>'; const noneOpt = '<option value="">(None)</option>'; if(!document.getElementById('select-4w-out-device')) return; document.getElementById('select-4w-out-device').innerHTML = defaultOpt; document.getElementById('select-4w-in-device').innerHTML = defaultOpt; document.getElementById('select-pgm-in-device').innerHTML = noneOpt;
-        devices.forEach(d => { const opt = document.createElement('option'); opt.value = d.deviceId; opt.textContent = d.label || `${d.kind} ${d.deviceId.slice(0,5)}`; if (d.kind === 'audiooutput' && d.deviceId !== 'default') { document.getElementById('select-4w-out-device').appendChild(opt); } else if (d.kind === 'audioinput' && d.deviceId !== 'default') { document.getElementById('select-4w-in-device').appendChild(opt.cloneNode(true)); document.getElementById('select-pgm-in-device').appendChild(opt.cloneNode(true)); } });
-        document.getElementById('select-4w-out-device').value = state.ioBridge.outDevice4w || 'default'; document.getElementById('select-4w-in-device').value = state.ioBridge.inDevice4w || 'default'; document.getElementById('select-pgm-in-device').value = state.ioBridge.inDevicePgm || '';
+        const defaultOpt = '<option value="default">System Default</option>'; const noneOpt = '<option value="">(None)</option>'; if(!$('select-4w-out-device')) return; $('select-4w-out-device').innerHTML = defaultOpt; $('select-4w-in-device').innerHTML = defaultOpt; $('select-pgm-in-device').innerHTML = noneOpt;
+        devices.forEach(d => { const opt = document.createElement('option'); opt.value = d.deviceId; opt.textContent = d.label || `${d.kind} ${d.deviceId.slice(0,5)}`; if (d.kind === 'audiooutput' && d.deviceId !== 'default') { $('select-4w-out-device').appendChild(opt); } else if (d.kind === 'audioinput' && d.deviceId !== 'default') { $('select-4w-in-device').appendChild(opt.cloneNode(true)); $('select-pgm-in-device').appendChild(opt.cloneNode(true)); } });
+        $('select-4w-out-device').value = state.ioBridge.outDevice4w || 'default'; $('select-4w-in-device').value = state.ioBridge.inDevice4w || 'default'; $('select-pgm-in-device').value = state.ioBridge.inDevicePgm || '';
       }).catch(()=>{});
 
       const sendIoUpdate = () => { saveRoomState(); sendData({ type: 'update-io-bridge', ioBridge: state.ioBridge }); updateAudioRouting(); };
 
-      if(document.getElementById('select-4w-out-device')) {
-        if (document.getElementById('gain-4w-in-l')) {
-            const setIoGainUI = () => { document.getElementById('gain-4w-in-l').value = (state.ioBridge.inGain4wL ?? 1.0) * 100; document.getElementById('fill-gain-4w-in-l').style.width = (document.getElementById('gain-4w-in-l').value / 2) + '%'; document.getElementById('gain-4w-in-r').value = (state.ioBridge.inGain4wR ?? 1.0) * 100; document.getElementById('fill-gain-4w-in-r').style.width = (document.getElementById('gain-4w-in-r').value / 2) + '%'; document.getElementById('gain-4w-out-l').value = (state.ioBridge.outGain4wL ?? 1.0) * 100; document.getElementById('fill-gain-4w-out-l').style.width = (document.getElementById('gain-4w-out-l').value / 2) + '%'; document.getElementById('gain-4w-out-r').value = (state.ioBridge.outGain4wR ?? 1.0) * 100; document.getElementById('fill-gain-4w-out-r').style.width = (document.getElementById('gain-4w-out-r').value / 2) + '%'; document.getElementById('gain-pgm-in-l').value = (state.ioBridge.inGainPgmL ?? 1.0) * 100; document.getElementById('fill-gain-pgm-in-l').style.width = (document.getElementById('gain-pgm-in-l').value / 2) + '%'; document.getElementById('gain-pgm-in-r').value = (state.ioBridge.inGainPgmR ?? 1.0) * 100; document.getElementById('fill-gain-pgm-in-r').style.width = (document.getElementById('gain-pgm-in-r').value / 2) + '%'; }; setIoGainUI();
-            const updateGain = (key, val, nodeKey, fillId) => { state.ioBridge[key] = val / 100; if (state.ioNodes[nodeKey]) state.ioNodes[nodeKey].gain.setTargetAtTime(state.ioBridge[key], state.audioCtx.currentTime, 0.05); const fillEl = document.getElementById(fillId); if(fillEl) fillEl.style.width = (val / 2) + '%'; sendIoUpdate(); };
-            document.getElementById('gain-4w-in-l').oninput = (e) => updateGain('inGain4wL', e.target.value, 'gain4wL', 'fill-gain-4w-in-l'); document.getElementById('gain-4w-in-r').oninput = (e) => updateGain('inGain4wR', e.target.value, 'gain4wR', 'fill-gain-4w-in-r'); document.getElementById('gain-4w-out-l').oninput = (e) => updateGain('outGain4wL', e.target.value, 'gainOutL', 'fill-gain-4w-out-l'); document.getElementById('gain-4w-out-r').oninput = (e) => updateGain('outGain4wR', e.target.value, 'gainOutR', 'fill-gain-4w-out-r'); document.getElementById('gain-pgm-in-l').oninput = (e) => updateGain('inGainPgmL', e.target.value, 'gainPgmL', 'fill-gain-pgm-in-l'); document.getElementById('gain-pgm-in-r').oninput = (e) => updateGain('inGainPgmR', e.target.value, 'gainPgmR', 'fill-gain-pgm-in-r');
+      if($('select-4w-out-device')) {
+        if ($('gain-4w-in-l')) {
+            const setIoGainUI = () => { $('gain-4w-in-l').value = (state.ioBridge.inGain4wL ?? 1.0) * 100; $('fill-gain-4w-in-l').style.width = ($('gain-4w-in-l').value / 2) + '%'; $('gain-4w-in-r').value = (state.ioBridge.inGain4wR ?? 1.0) * 100; $('fill-gain-4w-in-r').style.width = ($('gain-4w-in-r').value / 2) + '%'; $('gain-4w-out-l').value = (state.ioBridge.outGain4wL ?? 1.0) * 100; $('fill-gain-4w-out-l').style.width = ($('gain-4w-out-l').value / 2) + '%'; $('gain-4w-out-r').value = (state.ioBridge.outGain4wR ?? 1.0) * 100; $('fill-gain-4w-out-r').style.width = ($('gain-4w-out-r').value / 2) + '%'; $('gain-pgm-in-l').value = (state.ioBridge.inGainPgmL ?? 1.0) * 100; $('fill-gain-pgm-in-l').style.width = ($('gain-pgm-in-l').value / 2) + '%'; $('gain-pgm-in-r').value = (state.ioBridge.inGainPgmR ?? 1.0) * 100; $('fill-gain-pgm-in-r').style.width = ($('gain-pgm-in-r').value / 2) + '%'; }; setIoGainUI();
+            const updateGain = (key, val, nodeKey, fillId) => { state.ioBridge[key] = val / 100; if (state.ioNodes[nodeKey]) state.ioNodes[nodeKey].gain.setTargetAtTime(state.ioBridge[key], state.audioCtx.currentTime, 0.05); const fillEl = $(fillId); if(fillEl) fillEl.style.width = (val / 2) + '%'; sendIoUpdate(); };
+            $('gain-4w-in-l').oninput = (e) => updateGain('inGain4wL', e.target.value, 'gain4wL', 'fill-gain-4w-in-l'); $('gain-4w-in-r').oninput = (e) => updateGain('inGain4wR', e.target.value, 'gain4wR', 'fill-gain-4w-in-r'); $('gain-4w-out-l').oninput = (e) => updateGain('outGain4wL', e.target.value, 'gainOutL', 'fill-gain-4w-out-l'); $('gain-4w-out-r').oninput = (e) => updateGain('outGain4wR', e.target.value, 'gainOutR', 'fill-gain-4w-out-r'); $('gain-pgm-in-l').oninput = (e) => updateGain('inGainPgmL', e.target.value, 'gainPgmL', 'fill-gain-pgm-in-l'); $('gain-pgm-in-r').oninput = (e) => updateGain('inGainPgmR', e.target.value, 'gainPgmR', 'fill-gain-pgm-in-r');
         }
-        document.getElementById('select-4w-out-device').onchange = (e) => { state.ioBridge.outDevice4w = e.target.value; sendIoUpdate(); applyOutputDevice(); }; document.getElementById('select-4w-in-device').onchange = (e) => { state.ioBridge.inDevice4w = e.target.value; sendIoUpdate(); if(state.ioBridge.enabled) updateAudioDevices(); }; document.getElementById('select-pgm-in-device').onchange = (e) => { state.ioBridge.inDevicePgm = e.target.value; sendIoUpdate(); if(state.ioBridge.enabled) updateAudioDevices(); };
-        ['select-4w-in-l', 'select-4w-in-r', 'select-4w-out-l', 'select-4w-out-r', 'select-pgm-in-l', 'select-pgm-in-r'].forEach(id => { const sel = document.getElementById(id); sel.innerHTML = '<option value="">(None)</option>'; state.channels.forEach(ch => { if(ch.id !== 'ch-video') { const opt = document.createElement('option'); opt.value = ch.id; opt.textContent = ch.name; sel.appendChild(opt); } }); });
-        document.getElementById('select-4w-in-l').value = state.ioBridge.inAssign4wL || ''; document.getElementById('select-4w-in-r').value = state.ioBridge.inAssign4wR || ''; document.getElementById('select-4w-out-l').value = state.ioBridge.outAssign4wL || ''; document.getElementById('select-4w-out-r').value = state.ioBridge.outAssign4wR || ''; document.getElementById('select-pgm-in-l').value = state.ioBridge.inAssignPgmL || ''; document.getElementById('select-pgm-in-r').value = state.ioBridge.inAssignPgmR || '';
-        document.getElementById('select-4w-in-l').onchange = (e) => { state.ioBridge.inAssign4wL = e.target.value; sendIoUpdate(); }; document.getElementById('select-4w-in-r').onchange = (e) => { state.ioBridge.inAssign4wR = e.target.value; sendIoUpdate(); }; document.getElementById('select-4w-out-l').onchange = (e) => { state.ioBridge.outAssign4wL = e.target.value; sendIoUpdate(); }; document.getElementById('select-4w-out-r').onchange = (e) => { state.ioBridge.outAssign4wR = e.target.value; sendIoUpdate(); }; document.getElementById('select-pgm-in-l').onchange = (e) => { state.ioBridge.inAssignPgmL = e.target.value; sendIoUpdate(); }; document.getElementById('select-pgm-in-r').onchange = (e) => { state.ioBridge.inAssignPgmR = e.target.value; sendIoUpdate(); };
+        $('select-4w-out-device').onchange = (e) => { state.ioBridge.outDevice4w = e.target.value; sendIoUpdate(); applyOutputDevice(); }; $('select-4w-in-device').onchange = (e) => { state.ioBridge.inDevice4w = e.target.value; sendIoUpdate(); if(state.ioBridge.enabled) updateAudioDevices(); }; $('select-pgm-in-device').onchange = (e) => { state.ioBridge.inDevicePgm = e.target.value; sendIoUpdate(); if(state.ioBridge.enabled) updateAudioDevices(); };
+        ['select-4w-in-l', 'select-4w-in-r', 'select-4w-out-l', 'select-4w-out-r', 'select-pgm-in-l', 'select-pgm-in-r'].forEach(id => { const sel = $(id); sel.innerHTML = '<option value="">(None)</option>'; state.channels.forEach(ch => { if(ch.id !== 'ch-video') { const opt = document.createElement('option'); opt.value = ch.id; opt.textContent = ch.name; sel.appendChild(opt); } }); });
+        $('select-4w-in-l').value = state.ioBridge.inAssign4wL || ''; $('select-4w-in-r').value = state.ioBridge.inAssign4wR || ''; $('select-4w-out-l').value = state.ioBridge.outAssign4wL || ''; $('select-4w-out-r').value = state.ioBridge.outAssign4wR || ''; $('select-pgm-in-l').value = state.ioBridge.inAssignPgmL || ''; $('select-pgm-in-r').value = state.ioBridge.inAssignPgmR || '';
+        $('select-4w-in-l').onchange = (e) => { state.ioBridge.inAssign4wL = e.target.value; sendIoUpdate(); }; $('select-4w-in-r').onchange = (e) => { state.ioBridge.inAssign4wR = e.target.value; sendIoUpdate(); }; $('select-4w-out-l').onchange = (e) => { state.ioBridge.outAssign4wL = e.target.value; sendIoUpdate(); }; $('select-4w-out-r').onchange = (e) => { state.ioBridge.outAssign4wR = e.target.value; sendIoUpdate(); }; $('select-pgm-in-l').onchange = (e) => { state.ioBridge.inAssignPgmL = e.target.value; sendIoUpdate(); }; $('select-pgm-in-r').onchange = (e) => { state.ioBridge.inAssignPgmR = e.target.value; sendIoUpdate(); };
       }
     }
 
     function buildTallyAssignmentUI() {
-      if(!document.getElementById('tally-assignment-list')) return; document.getElementById('tally-assignment-list').innerHTML = '';
+      const list = $('tally-assignment-list'); if(!list) return; list.innerHTML = '';
       state.registeredUsers?.forEach(uid => {
         const row = document.createElement('div'); row.className = 'tally-row';
         const isOnline = uid === state.myUserId || (state.room && state.room.remoteParticipants && state.room.remoteParticipants.has(uid));
@@ -565,51 +581,59 @@
           btn.onclick = () => { let current = state.tallyAssignments[uid] || []; if (current.includes(i)) { current = current.filter(id => id !== i); btn.classList.remove('active'); } else { current.push(i); btn.classList.add('active'); } state.tallyAssignments[uid] = current; saveRoomState(); sendData({ type: 'update-tally-assignments', assignments: state.tallyAssignments }); if(uid === state.myUserId) evaluateTallyGlow(); };
           btnGroup.appendChild(btn);
         }
-        row.appendChild(btnGroup); document.getElementById('tally-assignment-list').appendChild(row);
+        row.appendChild(btnGroup); list.appendChild(row);
       });
     }
 
     let activeTallies = new Set();
     function evaluateTallyGlow() {
       const myAssigned = state.tallyAssignments[state.myUserId] || []; const shouldGlow = myAssigned.some(id => activeTallies.has(id)); let fallbackGlow = false; if (myAssigned.length === 0 && activeTallies.has(1)) fallbackGlow = true;
-      if (shouldGlow || fallbackGlow) document.getElementById('monitor-video-wrapper').classList.add('tally-on'); else document.getElementById('monitor-video-wrapper').classList.remove('tally-on');
+      const wrap = $('monitor-video-wrapper'); if(!wrap) return;
+      if (shouldGlow || fallbackGlow) wrap.classList.add('tally-on'); else wrap.classList.remove('tally-on');
     }
 
-    document.getElementById('edit-monitor-title').addEventListener('input', (e) => { state.monitorTitle = e.target.value; document.getElementById('main-monitor-title').textContent = state.monitorTitle || 'MONITOR'; saveRoomState(); sendData({ type: 'update-monitor-title', title: state.monitorTitle }); });
-    document.getElementById('edit-video-quality').addEventListener('change', async (e) => { 
+    const editMonitorTitle = $('edit-monitor-title');
+    if(editMonitorTitle) { editMonitorTitle.addEventListener('input', (e) => { state.monitorTitle = e.target.value; const mt=$('main-monitor-title'); if(mt) mt.textContent = state.monitorTitle || 'MONITOR'; saveRoomState(); sendData({ type: 'update-monitor-title', title: state.monitorTitle }); }); }
+    
+    const editVideoQual = $('edit-video-quality');
+    if(editVideoQual) { editVideoQual.addEventListener('change', async (e) => { 
         state.videoQuality = e.target.value; saveRoomState(); 
         if (state.activeVideoSender === state.myUserId && state.currentLocalVideoTrack) {
-            document.getElementById('main-monitor-source-text').textContent = '[ SWITCHING QUALITY ]'; document.getElementById('main-monitor-source-text').style.display = 'block'; document.getElementById('edit-monitor-source').disabled = true; document.getElementById('edit-video-quality').disabled = true;
-            try { let targetBitrate = parseInt(state.videoQuality) || 512000; await state.room.localParticipant.unpublishTrack(state.currentLocalVideoTrack); await state.room.localParticipant.publishTrack(state.currentLocalVideoTrack, { name: 'camera', source: state.currentLocalVideoTrack.source || LivekitClient.Track.Source.Camera, simulcast: false, videoEncoding: { maxBitrate: targetBitrate } }); const videoEl = document.getElementById('monitor-video-wrapper').querySelector('video'); if (videoEl) state.currentLocalVideoTrack.attach(videoEl); } catch (err) {} finally { document.getElementById('main-monitor-source-text').style.display = 'none'; document.getElementById('edit-monitor-source').disabled = false; document.getElementById('edit-video-quality').disabled = false; }
+            const mst = $('main-monitor-source-text'); const es = $('edit-monitor-source');
+            if(mst) { mst.textContent = '[ SWITCHING QUALITY ]'; mst.style.display = 'block'; } if(es) es.disabled = true; editVideoQual.disabled = true;
+            try { let targetBitrate = parseInt(state.videoQuality) || 512000; await state.room.localParticipant.unpublishTrack(state.currentLocalVideoTrack); await state.room.localParticipant.publishTrack(state.currentLocalVideoTrack, { name: 'camera', source: state.currentLocalVideoTrack.source || LivekitClient.Track.Source.Camera, simulcast: false, videoEncoding: { maxBitrate: targetBitrate } }); const videoEl = $('monitor-video-wrapper')?.querySelector('video'); if (videoEl) state.currentLocalVideoTrack.attach(videoEl); } catch (err) {} finally { if(mst) mst.style.display = 'none'; if(es) es.disabled = false; editVideoQual.disabled = false; }
         }
-    });
+    }); }
 
     async function updateVideoSources() {
       if (!state.activeVideoSender || state.activeVideoSender === state.myUserId) {
-        const select = document.getElementById('edit-monitor-source'); const currentValue = select.value;
-        try { try { const tempStream = await navigator.mediaDevices.getUserMedia({ video: true }); tempStream.getTracks().forEach(track => track.stop()); } catch (e) {} const devices = await navigator.mediaDevices.enumerateDevices(); const videoInputs = devices.filter(device => device.kind === 'videoinput'); select.innerHTML = '<option value="off">OFF</option><option value="screen">画面共有</option>'; videoInputs.forEach((device, index) => { const option = document.createElement('option'); option.value = device.deviceId; option.text = device.label || `Camera ${index + 1}`; select.appendChild(option); }); if (Array.from(select.options).some(opt => opt.value === currentValue)) select.value = currentValue; else select.value = 'off'; } catch (e) {} document.getElementById('edit-video-quality').value = state.videoQuality || '512000';
+        const select = $('edit-monitor-source'); if(!select) return; const currentValue = select.value;
+        try { try { const tempStream = await navigator.mediaDevices.getUserMedia({ video: true }); tempStream.getTracks().forEach(track => track.stop()); } catch (e) {} const devices = await navigator.mediaDevices.enumerateDevices(); const videoInputs = devices.filter(device => device.kind === 'videoinput'); select.innerHTML = '<option value="off">OFF</option><option value="screen">画面共有</option>'; videoInputs.forEach((device, index) => { const option = document.createElement('option'); option.value = device.deviceId; option.text = device.label || `Camera ${index + 1}`; select.appendChild(option); }); if (Array.from(select.options).some(opt => opt.value === currentValue)) select.value = currentValue; else select.value = 'off'; } catch (e) {} 
+        const eq = $('edit-video-quality'); if(eq) eq.value = state.videoQuality || '512000';
       }
     }
 
-    document.getElementById('edit-monitor-source').addEventListener('change', async (e) => {
+    const editMonitorSrc = $('edit-monitor-source');
+    if(editMonitorSrc) { editMonitorSrc.addEventListener('change', async (e) => {
       if (!state.room || !state.room.localParticipant) return;
-      const deviceId = e.target.value; document.getElementById('edit-monitor-source').disabled = true; document.getElementById('edit-video-quality').disabled = true; document.getElementById('main-monitor-source-text').textContent = '[ VIDEO SWITCHING NOW ]'; document.getElementById('main-monitor-source-text').style.display = 'block';
+      const deviceId = e.target.value; const eq = $('edit-video-quality'); const mst = $('main-monitor-source-text');
+      editMonitorSrc.disabled = true; if(eq) eq.disabled = true; if(mst) { mst.textContent = '[ VIDEO SWITCHING NOW ]'; mst.style.display = 'block'; }
       try {
         if (state.currentLocalVideoTrack) { detachVideoTrack(state.currentLocalVideoTrack); state.currentLocalVideoTrack = null; }
         await state.room.localParticipant.setScreenShareEnabled(false); await state.room.localParticipant.setCameraEnabled(false);
         const existingPubs = Array.from(state.room.localParticipant.videoTrackPublications.values()); for (const pub of existingPubs) { if (pub.track) { pub.track.stop(); await state.room.localParticipant.unpublishTrack(pub.track); } }
-        document.getElementById('monitor-video-wrapper').querySelectorAll('video').forEach(v => v.remove()); await new Promise(resolve => setTimeout(resolve, 600));
-        if (deviceId === 'off') { state.activeVideoSender = null; saveRoomState(); sendData({ type: 'update-video-sender', senderId: null, sourceText: 'OFF' }); document.getElementById('main-monitor-source-text').textContent = '[ NO VIDEO ]'; document.getElementById('edit-monitor-source').disabled = false; document.getElementById('edit-video-quality').disabled = false; return; }
+        $('monitor-video-wrapper')?.querySelectorAll('video').forEach(v => v.remove()); await new Promise(resolve => setTimeout(resolve, 600));
+        if (deviceId === 'off') { state.activeVideoSender = null; saveRoomState(); sendData({ type: 'update-video-sender', senderId: null, sourceText: 'OFF' }); if(mst) mst.textContent = '[ NO VIDEO ]'; editMonitorSrc.disabled = false; if(eq) eq.disabled = false; return; }
         state.activeVideoSender = state.myUserId; const sourceText = deviceId === 'screen' ? 'SCREEN SHARE' : 'CAMERA'; let targetBitrate = parseInt(state.videoQuality) || 512000;
-        if (deviceId === 'screen') { await state.room.localParticipant.setScreenShareEnabled(true); const activePub = state.room.localParticipant.getTrackPublication(LivekitClient.Track.Source.ScreenShare); if (activePub && activePub.track) { state.currentLocalVideoTrack = activePub.track; attachVideoTrack(state.currentLocalVideoTrack); } else { document.getElementById('main-monitor-source-text').textContent = '[ NO VIDEO ]'; } } else { let stream; try { stream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: deviceId } } }); } catch (exactErr) { stream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: { ideal: deviceId } } }); } const rawTrack = stream.getVideoTracks()[0]; const localVideoTrack = new LivekitClient.LocalVideoTrack(rawTrack); await state.room.localParticipant.publishTrack(localVideoTrack, { name: 'camera', source: LivekitClient.Track.Source.Camera, simulcast: false, videoEncoding: { maxBitrate: targetBitrate } }); state.currentLocalVideoTrack = localVideoTrack; attachVideoTrack(state.currentLocalVideoTrack); }
+        if (deviceId === 'screen') { await state.room.localParticipant.setScreenShareEnabled(true); const activePub = state.room.localParticipant.getTrackPublication(LivekitClient.Track.Source.ScreenShare); if (activePub && activePub.track) { state.currentLocalVideoTrack = activePub.track; attachVideoTrack(state.currentLocalVideoTrack); } else { if(mst) mst.textContent = '[ NO VIDEO ]'; } } else { let stream; try { stream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: deviceId } } }); } catch (exactErr) { stream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: { ideal: deviceId } } }); } const rawTrack = stream.getVideoTracks()[0]; const localVideoTrack = new LivekitClient.LocalVideoTrack(rawTrack); await state.room.localParticipant.publishTrack(localVideoTrack, { name: 'camera', source: LivekitClient.Track.Source.Camera, simulcast: false, videoEncoding: { maxBitrate: targetBitrate } }); state.currentLocalVideoTrack = localVideoTrack; attachVideoTrack(state.currentLocalVideoTrack); }
         saveRoomState(); sendData({ type: 'update-video-sender', senderId: state.myUserId, sourceText: sourceText });
-      } catch (err) { document.getElementById('edit-monitor-source').value = 'off'; state.activeVideoSender = null; sendData({ type: 'update-video-sender', senderId: null, sourceText: 'OFF' }); document.getElementById('main-monitor-source-text').textContent = '[ NO VIDEO ]'; } finally { document.getElementById('edit-monitor-source').disabled = false; document.getElementById('edit-video-quality').disabled = false; }
-    });
+      } catch (err) { editMonitorSrc.value = 'off'; state.activeVideoSender = null; sendData({ type: 'update-video-sender', senderId: null, sourceText: 'OFF' }); if(mst) mst.textContent = '[ NO VIDEO ]'; } finally { editMonitorSrc.disabled = false; if(eq) eq.disabled = false; }
+    }); }
 
-    function attachVideoTrack(track) { document.getElementById('monitor-video-wrapper').querySelectorAll('video').forEach(v => v.remove()); const videoEl = track.attach(); videoEl.style.width = '100%'; videoEl.style.height = '100%'; videoEl.style.objectFit = 'contain'; videoEl.style.background = '#000'; videoEl.style.position = 'absolute'; videoEl.style.inset = '0'; videoEl.style.zIndex = '5'; document.getElementById('monitor-video-wrapper').appendChild(videoEl); document.getElementById('main-monitor-source-text').style.display = 'none'; }
-    function detachVideoTrack(track) { if (track) track.detach(); document.getElementById('monitor-video-wrapper').querySelectorAll('video').forEach(v => v.remove()); document.getElementById('main-monitor-source-text').style.display = 'block'; }
+    function attachVideoTrack(track) { const mw = $('monitor-video-wrapper'); if(!mw) return; mw.querySelectorAll('video').forEach(v => v.remove()); const videoEl = track.attach(); videoEl.style.width = '100%'; videoEl.style.height = '100%'; videoEl.style.objectFit = 'contain'; videoEl.style.background = '#000'; videoEl.style.position = 'absolute'; videoEl.style.inset = '0'; videoEl.style.zIndex = '5'; mw.appendChild(videoEl); const mst = $('main-monitor-source-text'); if(mst) mst.style.display = 'none'; }
+    function detachVideoTrack(track) { if (track) track.detach(); const mw = $('monitor-video-wrapper'); if(mw) mw.querySelectorAll('video').forEach(v => v.remove()); const mst = $('main-monitor-source-text'); if(mst) mst.style.display = 'block'; }
 
-    function updateChannelIcons() { document.getElementById('btn-master-spk').classList.toggle('active', state.isMasterSpkMuted); document.getElementById('btn-master-mic').classList.toggle('active', state.isMasterMicMuted); state.channels?.forEach(ch => { const lBtn = document.getElementById(`listen-${ch.id}`); const tBtn = document.getElementById(`talk-${ch.id}`); if (lBtn) { lBtn.innerHTML = state.isMasterSpkMuted ? iconSpeakerOff : iconSpeaker; lBtn.classList.toggle('muted-slash', state.isMasterSpkMuted); } if (tBtn) { tBtn.innerHTML = state.isMasterMicMuted ? iconMicOff : iconMic; tBtn.classList.toggle('muted-slash', state.isMasterMicMuted); } }); }
+    function updateChannelIcons() { const bs = $('btn-master-spk'); const bm = $('btn-master-mic'); if(bs) bs.classList.toggle('active', state.isMasterSpkMuted); if(bm) bm.classList.toggle('active', state.isMasterMicMuted); state.channels?.forEach(ch => { const lBtn = $(`listen-${ch.id}`); const tBtn = $(`talk-${ch.id}`); if (lBtn) { lBtn.innerHTML = state.isMasterSpkMuted ? iconSpeakerOff : iconSpeaker; lBtn.classList.toggle('muted-slash', state.isMasterSpkMuted); } if (tBtn) { tBtn.innerHTML = state.isMasterMicMuted ? iconMicOff : iconMic; tBtn.classList.toggle('muted-slash', state.isMasterMicMuted); } }); }
     function toggleMasterSpk() { state.isMasterSpkMuted = !state.isMasterSpkMuted; updateAudioRouting(); updateChannelIcons(); } function toggleMasterMic() { state.isMasterMicMuted = !state.isMasterMicMuted; updateAudioRouting(); updateChannelIcons(); syncTalkStates(); }
 
     function saveRoomState() { 
@@ -632,7 +656,7 @@
 
     function loadRoomState(roomId) {
       const saved = safeStorage.get('yytalk_room_' + roomId);
-      if (saved) { try { const parsed = JSON.parse(saved); if(parsed.monitorTitle) { state.monitorTitle = parsed.monitorTitle; document.getElementById('main-monitor-title').textContent = state.monitorTitle; document.getElementById('edit-monitor-title').value = state.monitorTitle; } if(parsed.videoQuality) { state.videoQuality = parsed.videoQuality; document.getElementById('edit-video-quality').value = state.videoQuality; } if(parsed.ioBridge) state.ioBridge = parsed.ioBridge; if(parsed.layout) { state.layout = parsed.layout; applyLayout(state.layout); } if (parsed?.channels?.length > 0) { resetAndApplyChannels(parsed.channels, parsed.userAssignments, parsed.tallyAssignments, parsed.registeredUsers); return; } } catch(e){} }
+      if (saved) { try { const parsed = JSON.parse(saved); if(parsed.monitorTitle) { state.monitorTitle = parsed.monitorTitle; const mt = $('main-monitor-title'); if(mt) mt.textContent = state.monitorTitle; const et = $('edit-monitor-title'); if(et) et.value = state.monitorTitle; } if(parsed.videoQuality) { state.videoQuality = parsed.videoQuality; const ev = $('edit-video-quality'); if(ev) ev.value = state.videoQuality; } if(parsed.ioBridge) state.ioBridge = parsed.ioBridge; if(parsed.layout) { state.layout = parsed.layout; applyLayout(state.layout); } if (parsed?.channels?.length > 0) { resetAndApplyChannels(parsed.channels, parsed.userAssignments, parsed.tallyAssignments, parsed.registeredUsers); return; } } catch(e){} }
       const defaultChannels = [ { id: 'ch-video', name: 'VIDEO', type: 'Listen', fixed: true }, { id: 'ch1', name: 'NEW', type: 'PL' } ];
       resetAndApplyChannels(defaultChannels, {}, {}, []);
     }
@@ -645,8 +669,8 @@
       const lMuted = state.isMasterSpkMuted ? 'muted-slash' : ''; const tMuted = state.isMasterMicMuted ? 'muted-slash' : '';
 
       const card = document.createElement('div'); card.className = `channel-card ${listenClass} ${talkClass}`; card.id = `card-${ch.id}`;
-      card.innerHTML = `<div class="status-line-bg"><div class="status-line-grad"></div><div class="status-line-mask" id="meter-${ch.id}"></div></div><div class="volume-panel"><svg class="vol-icon" viewBox="0 0 24 24"><path d="M18.5 12A4.5 4.5 0 0 0 16 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg><div class="vol-slider-wrap"><div class="vol-slider-track-bg"></div><div class="vol-slider-fill" id="fill-${ch.id}"></div><input type="range" id="vol-${ch.id}" min="0" max="100" value="50"></div><svg class="vol-icon" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></div><div class="main-controls"><div class="btn-action btn-listen ${state.listenStates[ch.id] ? 'active latched' : ''} ${lMuted}" id="listen-${ch.id}">${curListenIcon}</div><div class="ch-info"><div class="ch-name" id="name-${ch.id}">${ch.name || 'Unknown'}</div><div class="ch-type" id="type-${ch.id}">${ch.type || 'PL'}</div></div>${ch.type === 'Listen' ? `<div style="width: 50px; height: 50px;"></div>` : `<div class="btn-action btn-talk ${state.talkStates[ch.id] ? 'active latched' : ''} ${tMuted}" id="talk-${ch.id}">${curTalkIcon}</div>`}</div><div class="ch-meter-container"><div class="ch-meter-grad"></div><div class="ch-meter-mask" id="ch-meter-fill-${ch.id}"></div></div><div class="card-footer" style="display: flex; justify-content: center; align-items: center; padding: 0 15px 4px; position: relative; z-index: 5;"><div class="btn-expand" id="expand-${ch.id}">○ ○ ○</div></div>`;
-      document.getElementById('channel-list-wrap').appendChild(card);
+      card.innerHTML = `<div class="status-line-bg"><div class="status-line-grad"></div><div class="status-line-mask" id="meter-${ch.id}"></div></div><div class="volume-panel"><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M18.5 12A4.5 4.5 0 0 0 16 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg><div class="vol-slider-wrap"><div class="vol-slider-track-bg"></div><div class="vol-slider-fill" id="fill-${ch.id}"></div><input type="range" id="vol-${ch.id}" min="0" max="100" value="50"></div><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></div><div class="main-controls"><div class="btn-action btn-listen ${state.listenStates[ch.id] ? 'active latched' : ''} ${lMuted}" id="listen-${ch.id}">${curListenIcon}</div><div class="ch-info"><div class="ch-name" id="name-${ch.id}">${ch.name || 'Unknown'}</div><div class="ch-type" id="type-${ch.id}">${ch.type || 'PL'}</div></div>${ch.type === 'Listen' ? `<div style="width: 50px; height: 50px;"></div>` : `<div class="btn-action btn-talk ${state.talkStates[ch.id] ? 'active latched' : ''} ${tMuted}" id="talk-${ch.id}">${curTalkIcon}</div>`}</div><div class="ch-meter-container"><div class="ch-meter-grad"></div><div class="ch-meter-mask" id="ch-meter-fill-${ch.id}"></div></div><div class="card-footer" style="display: flex; justify-content: center; align-items: center; padding: 0 15px 4px; position: relative; z-index: 5;"><div class="btn-expand" id="expand-${ch.id}">○ ○ ○</div></div>`;
+      const cw = $('channel-list-wrap'); if(cw) cw.appendChild(card);
       const slider = card.querySelector(`#vol-${ch.id}`); const fill = card.querySelector(`#fill-${ch.id}`); const leftMeter = card.querySelector(`#meter-${ch.id}`);
       slider.value = (state.channelVolumes[ch.id] / 3.0) * 100; fill.style.width = slider.value + '%'; leftMeter.style.height = (100 - slider.value) + '%'; 
       slider.addEventListener('input', (e) => { fill.style.width = e.target.value + '%'; leftMeter.style.height = (100 - e.target.value) + '%'; state.channelVolumes[ch.id] = (e.target.value / 100) * 3.0; updateAudioRouting(); });
@@ -657,12 +681,13 @@
 
     window.updatePttButtonsState = function() {
         const isIoOn = state.ioBridge && state.ioBridge.enabled;
-        state.channels?.forEach(ch => { const lBtn = document.getElementById(`listen-${ch.id}`); const tBtn = document.getElementById(`talk-${ch.id}`); if (lBtn) { if (isIoOn) lBtn.classList.add('disabled-btn'); else lBtn.classList.remove('disabled-btn'); } if (tBtn) { if (isIoOn) tBtn.classList.add('disabled-btn'); else tBtn.classList.remove('disabled-btn'); } });
-        if (state.isAdmin) { const adminContainer = document.getElementById('admin-matrix-container'); if (adminContainer) { adminContainer.querySelectorAll('.remote-group').forEach(group => { if (group.getAttribute('data-is-local') === 'true') { group.style.opacity = isIoOn ? '0.3' : '1'; group.style.pointerEvents = isIoOn ? 'none' : 'auto'; } }); } }
+        state.channels?.forEach(ch => { const lBtn = $(`listen-${ch.id}`); const tBtn = $(`talk-${ch.id}`); if (lBtn) { if (isIoOn) lBtn.classList.add('disabled-btn'); else lBtn.classList.remove('disabled-btn'); } if (tBtn) { if (isIoOn) tBtn.classList.add('disabled-btn'); else tBtn.classList.remove('disabled-btn'); } });
+        if (state.isAdmin) { const adminContainer = $('admin-matrix-container'); if (adminContainer) { adminContainer.querySelectorAll('.remote-group').forEach(group => { if (group.getAttribute('data-is-local') === 'true') { group.style.opacity = isIoOn ? '0.3' : '1'; group.style.pointerEvents = isIoOn ? 'none' : 'auto'; } }); } }
     };
 
     function initChannelsDOM() {
-      document.getElementById('channel-list-wrap').innerHTML = ''; let order = JSON.parse(safeStorage.get('yytalk-ch-order')) || []; state.channels?.forEach(ch => { if (!order.includes(ch.id)) order.push(ch.id); }); order = order.filter(id => state.channels?.some(c => c?.id === id));
+      const cw = $('channel-list-wrap'); if(!cw) return;
+      cw.innerHTML = ''; let order = JSON.parse(safeStorage.get('yytalk-ch-order')) || []; state.channels?.forEach(ch => { if (!order.includes(ch.id)) order.push(ch.id); }); order = order.filter(id => state.channels?.some(c => c?.id === id));
       if(order.includes('ch-video')) { order = order.filter(id => id !== 'ch-video'); order.unshift('ch-video'); } safeStorage.set('yytalk-ch-order', JSON.stringify(order));
       order.forEach(id => { const ch = state.channels?.find(c => c?.id === id); if (ch) createChannelCard(ch); }); if (typeof updatePttButtonsState === 'function') updatePttButtonsState();
     }
@@ -679,7 +704,7 @@
     }
 
     function removeChannel(chId) {
-      state.channels = state.channels.filter(c => c?.id !== chId); const card = document.getElementById(`card-${chId}`); if(card) card.remove(); delete state.listenStates[chId]; delete state.talkStates[chId];
+      state.channels = state.channels.filter(c => c?.id !== chId); const card = $(`card-${chId}`); if(card) card.remove(); delete state.listenStates[chId]; delete state.talkStates[chId];
       if (state.channelNodes[chId] && state.audioCtx) { state.channelNodes[chId].masterGain.disconnect(); delete state.channelNodes[chId]; }
       Object.keys(state.userAssignments || {}).forEach(uid => { state.userAssignments[uid] = state.userAssignments[uid].filter(id => id !== chId); });
       updateAudioRouting(); updateChannelIcons(); let order = JSON.parse(safeStorage.get('yytalk-ch-order')) || []; order = order.filter(id => id !== chId); safeStorage.set('yytalk-ch-order', JSON.stringify(order));
@@ -739,12 +764,12 @@
       function draw(timestamp) {
         requestAnimationFrame(draw); if (timestamp - lastDrawTime < 30) return; lastDrawTime = timestamp;
         state.masterAnalyser.getByteFrequencyData(masterData); let sum = 0; for(let i=0; i<masterData.length; i++) sum += masterData[i];
-        const masterPercent = Math.min(((sum / masterData.length) / 255) * 100 * 2.0, 100); document.getElementById('master-meter-fill').style.width = Math.max(100 - masterPercent, 0) + '%';
+        const masterPercent = Math.min(((sum / masterData.length) / 255) * 100 * 2.0, 100); const mf = $('master-meter-fill'); if(mf) mf.style.width = Math.max(100 - masterPercent, 0) + '%';
         let localPercent = 0; if (state.localMicAnalyser && localData) { state.localMicAnalyser.getByteFrequencyData(localData); let lSum = 0; for(let i=0; i<localData.length; i++) lSum += localData[i]; localPercent = ((lSum / localData.length) / 255) * 100 * 2.0; }
-        state.channels?.forEach(ch => { if (state.channelNodes[ch.id]) { const chData = new Uint8Array(state.channelNodes[ch.id].analyser.frequencyBinCount); state.channelNodes[ch.id].analyser.getByteFrequencyData(chData); let chSum = 0; for(let i=0; i<chData.length; i++) chSum += chData[i]; let chPercent = ((chSum / chData.length) / 255) * 100 * 2.5; if (state.talkStates[ch.id]) chPercent = Math.max(chPercent, localPercent); const meterEl = document.getElementById(`ch-meter-fill-${ch.id}`); if (meterEl) meterEl.style.width = Math.max(100 - Math.min(chPercent, 100), 0) + '%'; } });
+        state.channels?.forEach(ch => { if (state.channelNodes[ch.id]) { const chData = new Uint8Array(state.channelNodes[ch.id].analyser.frequencyBinCount); state.channelNodes[ch.id].analyser.getByteFrequencyData(chData); let chSum = 0; for(let i=0; i<chData.length; i++) chSum += chData[i]; let chPercent = ((chSum / chData.length) / 255) * 100 * 2.5; if (state.talkStates[ch.id]) chPercent = Math.max(chPercent, localPercent); const meterEl = $(`ch-meter-fill-${ch.id}`); if (meterEl) meterEl.style.width = Math.max(100 - Math.min(chPercent, 100), 0) + '%'; } });
         
         if (state.isAdmin && state.ioBridge.enabled) {
-            const updateIoMeterHorizontal = (analyser, meterId) => { if (!analyser) return; const meterEl = document.getElementById(meterId); if (!meterEl) return; const data = new Uint8Array(analyser.frequencyBinCount); analyser.getByteFrequencyData(data); let peak = 0; for(let i=0; i<data.length; i++) { if(data[i] > peak) peak = data[i]; } const volPercent = Math.min((peak / 255) * 100 * 1.5, 100); meterEl.style.width = `${volPercent}%`; };
+            const updateIoMeterHorizontal = (analyser, meterId) => { if (!analyser) return; const meterEl = $(meterId); if (!meterEl) return; const data = new Uint8Array(analyser.frequencyBinCount); analyser.getByteFrequencyData(data); let peak = 0; for(let i=0; i<data.length; i++) { if(data[i] > peak) peak = data[i]; } const volPercent = Math.min((peak / 255) * 100 * 1.5, 100); meterEl.style.width = `${volPercent}%`; };
             updateIoMeterHorizontal(state.ioNodes.analyser4wL, 'meter-4w-in-l'); updateIoMeterHorizontal(state.ioNodes.analyser4wR, 'meter-4w-in-r'); updateIoMeterHorizontal(state.ioNodes.analyserOutL, 'meter-4w-out-l'); updateIoMeterHorizontal(state.ioNodes.analyserOutR, 'meter-4w-out-r'); updateIoMeterHorizontal(state.ioNodes.analyserPgmL, 'meter-pgm-in-l'); updateIoMeterHorizontal(state.ioNodes.analyserPgmR, 'meter-pgm-in-r');
         }
 
@@ -754,8 +779,8 @@
             if (uid === state.myUserId) { if (state.localMicAnalyser && localData) { let peak = 0; for(let i=0; i<localData.length; i++) { if(localData[i] > peak) peak = localData[i]; } userVolRatio = peak / 255; } }
             else { const callInfo = state.mediaCalls[uid]; if (callInfo && callInfo.analyser && !callInfo.isIOTrack) { const pData = new Uint8Array(callInfo.analyser.frequencyBinCount); callInfo.analyser.getByteFrequencyData(pData); let peak = 0; for(let i=0; i<pData.length; i++) { if(pData[i] > peak) peak = pData[i]; } userVolRatio = peak / 255; } }
             if (userVolRatio < 0.05) userVolRatio = 0;
-            const userMeter = document.getElementById(`user-meter-${uid}`); if (userMeter) userMeter.style.transform = `scaleY(${userVolRatio})`;
-            state.channels?.forEach(ch => { const cpMeter = document.getElementById(`cp-meter-${uid}-${ch.id}`); if (cpMeter) { let isTalking = false; if (uid === state.myUserId) isTalking = state.talkStates[ch.id] === true && !state.isMasterMicMuted; else isTalking = state.remoteTalkStates[uid] && state.remoteTalkStates[uid][ch.id] === true; cpMeter.style.transform = `scaleY(${isTalking ? userVolRatio : 0})`; } });
+            const userMeter = $(`user-meter-${uid}`); if (userMeter) userMeter.style.transform = `scaleY(${userVolRatio})`;
+            state.channels?.forEach(ch => { const cpMeter = $(`cp-meter-${uid}-${ch.id}`); if (cpMeter) { let isTalking = false; if (uid === state.myUserId) isTalking = state.talkStates[ch.id] === true && !state.isMasterMicMuted; else isTalking = state.remoteTalkStates[uid] && state.remoteTalkStates[uid][ch.id] === true; cpMeter.style.transform = `scaleY(${isTalking ? userVolRatio : 0})`; } });
           });
         }
       } draw(0);
@@ -821,7 +846,7 @@
     function setupPTTButton(btn, type, channelId) {
       if(!btn) return; let isDown = false, startX = 0; let isLatched = btn.classList.contains('latched'); const slideDir = type === 'listen' ? 1 : -1;
       function applyState(active) {
-        let changed = false; const card = document.getElementById(`card-${channelId}`);
+        let changed = false; const card = $(`card-${channelId}`);
         if (type === 'talk' && state.talkStates[channelId] !== active) { state.talkStates[channelId] = active; changed = true; if (card) { if(active) card.classList.add('talk-on'); else card.classList.remove('talk-on'); } if (state.isAdmin) { const adminMicBtn = document.querySelector(`.remote-mic-btn[data-uid="${state.myUserId}"][data-chid="${channelId}"]`); if (adminMicBtn) { if(active) adminMicBtn.classList.add('active'); else adminMicBtn.classList.remove('active'); } } }
         if (type === 'listen' && state.listenStates[channelId] !== active) { state.listenStates[channelId] = active; changed = true; if (card) { if(active) card.classList.add('listen-on'); else card.classList.remove('listen-on'); } if (state.isAdmin) { const adminSpkBtn = document.querySelector(`.remote-spk-btn[data-uid="${state.myUserId}"][data-chid="${channelId}"]`); if (adminSpkBtn) { if(active) adminSpkBtn.classList.add('active'); else adminSpkBtn.classList.remove('active'); } } }
         updateAudioRouting(); updateChannelIcons(); if (changed && type === 'talk') syncTalkStates(); if (changed && type === 'listen') syncListenStates();
@@ -829,7 +854,7 @@
       btn.addEventListener('pointerdown', (e) => { 
           if (state.ioBridge && state.ioBridge.enabled) return;
           if (type === 'talk') { const ch = state.channels.find(c => c.id === channelId); if (ch && ch.type === 'Local') { let activeTalkers = 0; state.registeredUsers.forEach(uid => { if (state.room && state.room.remoteParticipants && state.room.remoteParticipants.has(uid) && state.remoteTalkStates[uid] && state.remoteTalkStates[uid][channelId]) activeTalkers++; }); if (activeTalkers >= 2) { btn.style.opacity = '0.3'; setTimeout(() => btn.style.opacity = '1', 300); return; } } }
-          btn.setPointerCapture(e.pointerId); isDown = true; startX = e.clientX; document.getElementById('dummy-audio')?.play().catch(()=>{}); btn.style.transition = 'none'; if (!isLatched) { btn.classList.add('active'); applyState(true); } 
+          btn.setPointerCapture(e.pointerId); isDown = true; startX = e.clientX; $('dummy-audio')?.play().catch(()=>{}); btn.style.transition = 'none'; if (!isLatched) { btn.classList.add('active'); applyState(true); } 
       });
       btn.addEventListener('pointermove', (e) => { if (!isDown) return; let deltaX = e.clientX - startX; if ((slideDir === 1 && deltaX < 0) || (slideDir === -1 && deltaX > 0)) { deltaX = 0; } const targetDistance = 120; let visualMoveX = deltaX; if (Math.abs(deltaX) > 20) { const sign = Math.sign(deltaX); const over = Math.abs(deltaX) - 20; visualMoveX = sign * (20 + Math.pow(over, 0.4) * 15); } if (Math.abs(deltaX) > targetDistance && Math.sign(deltaX) === slideDir) { isDown = false; btn.releasePointerCapture(e.pointerId); btn.style.transition = 'transform 0.15s ease-out'; btn.style.transform = `translateX(0px)`; if (isLatched) { isLatched = false; btn.classList.remove('latched', 'active'); if (navigator.vibrate) navigator.vibrate([30, 50, 30]); applyState(false); } else { isLatched = true; btn.classList.add('latched'); if (navigator.vibrate) navigator.vibrate(50); applyState(true); } return; } btn.style.transform = `translateX(${visualMoveX}px)`; });
       const release = (e) => { if (!isDown) return; isDown = false; btn.style.transition = 'transform 0.15s ease-out'; btn.style.transform = `translateX(0px)`; if (Math.abs(e.clientX - startX) < 5) { if (isLatched) { isLatched = false; btn.classList.remove('latched', 'active'); applyState(false); } else { btn.classList.remove('active'); applyState(false); } } else { if (!isLatched) { btn.classList.remove('active'); applyState(false); } } };
@@ -845,7 +870,7 @@
     };
 
     function buildAdminMatrix() {
-      if (!state.isAdmin) return; const container = document.getElementById('admin-matrix-container'); if(!container) return;
+      if (!state.isAdmin) return; const container = $('admin-matrix-container'); if(!container) return;
       let headerHtml = `<thead><tr><th class="diagonal-header" style="min-width:180px;"><span class="dh-member" style="color:var(--text-sub);">USER</span><span class="dh-party" style="color:var(--text-sub);">PARTY</span></th>`;
       state.registeredUsers?.forEach(uid => {
           const isOnline = uid === state.myUserId || (state.room && state.room.remoteParticipants && state.room.remoteParticipants.has(uid)); const statusColor = isOnline ? 'var(--green)' : 'var(--text-sub)';
@@ -884,7 +909,7 @@
         btn.onclick = (e) => {
           if (btn.classList.contains('disabled')) return; const uid = btn.getAttribute('data-uid'); const chid = btn.getAttribute('data-chid'); const willBeActive = !btn.classList.contains('active');
           if(willBeActive) btn.classList.add('active'); else btn.classList.remove('active');
-          if (uid === state.myUserId) { const lBtn = document.getElementById(`listen-${chid}`); if (lBtn) { if(willBeActive) lBtn.classList.add('active', 'latched'); else lBtn.classList.remove('active', 'latched'); } state.listenStates[chid] = willBeActive; const card = document.getElementById(`card-${chid}`); if (card) { if(willBeActive) card.classList.add('listen-on'); else card.classList.remove('listen-on'); } updateAudioRouting(); updateChannelIcons(); syncListenStates(); } else { sendData({ type: 'force-listen', targetUid: uid, chId: chid, active: willBeActive }); }
+          if (uid === state.myUserId) { const lBtn = $(`listen-${chid}`); if (lBtn) { if(willBeActive) lBtn.classList.add('active', 'latched'); else lBtn.classList.remove('active', 'latched'); } state.listenStates[chid] = willBeActive; const card = $(`card-${chid}`); if (card) { if(willBeActive) card.classList.add('listen-on'); else card.classList.remove('listen-on'); } updateAudioRouting(); updateChannelIcons(); syncListenStates(); } else { sendData({ type: 'force-listen', targetUid: uid, chId: chid, active: willBeActive }); }
         };
       });
 
@@ -892,11 +917,11 @@
         btn.onclick = (e) => {
           if (btn.classList.contains('disabled')) return; const uid = btn.getAttribute('data-uid'); const chid = btn.getAttribute('data-chid'); const willBeActive = !btn.classList.contains('active');
           if(willBeActive) btn.classList.add('active'); else btn.classList.remove('active');
-          if (uid === state.myUserId) { const tBtn = document.getElementById(`talk-${chid}`); if (tBtn) { if(willBeActive) tBtn.classList.add('active', 'latched'); else tBtn.classList.remove('active', 'latched'); } state.talkStates[chid] = willBeActive; const card = document.getElementById(`card-${chid}`); if (card) { if(willBeActive) card.classList.add('talk-on'); else card.classList.remove('talk-on'); } updateAudioRouting(); updateChannelIcons(); syncTalkStates(); } else { sendData({ type: 'force-talk', targetUid: uid, chId: chid, active: willBeActive }); }
+          if (uid === state.myUserId) { const tBtn = $(`talk-${chid}`); if (tBtn) { if(willBeActive) tBtn.classList.add('active', 'latched'); else tBtn.classList.remove('active', 'latched'); } state.talkStates[chid] = willBeActive; const card = $(`card-${chid}`); if (card) { if(willBeActive) card.classList.add('talk-on'); else card.classList.remove('talk-on'); } updateAudioRouting(); updateChannelIcons(); syncTalkStates(); } else { sendData({ type: 'force-talk', targetUid: uid, chId: chid, active: willBeActive }); }
         };
       });
 
-      const btnAddUser = document.getElementById('btn-add-user');
+      const btnAddUser = $('btn-add-user');
       if(btnAddUser) { btnAddUser.onclick = () => { const uid = prompt('事前登録するメンバーのユーザーIDを入力してください:'); if (uid && uid.trim() !== '' && !state.registeredUsers.includes(uid)) { state.registeredUsers.push(uid); state.userAssignments[uid] = state.channels?.map(c => c.id) || []; state.tallyAssignments[uid] = []; saveRoomState(); buildAdminMatrix(); buildTallyAssignmentUI(); sendData({ type: 'update-registered', registered: state.registeredUsers }); sendData({ type: 'update-tally-assignments', assignments: state.tallyAssignments }); } }; }
 
       container.querySelectorAll('.btn-delete-col').forEach(btn => { btn.onclick = (e) => { const uid = e.target.getAttribute('data-uid'); if(confirm(`ユーザー「${uid}」をリストから削除しますか？`)) { state.registeredUsers = state.registeredUsers.filter(u => u !== uid); delete state.userAssignments[uid]; delete state.tallyAssignments[uid]; saveRoomState(); buildAdminMatrix(); buildTallyAssignmentUI(); sendData({ type: 'update-registered', registered: state.registeredUsers }); sendData({ type: 'update-tally-assignments', assignments: state.tallyAssignments }); } }; });
@@ -912,7 +937,7 @@
             for(let u in state.remoteTalkStates) if(state.remoteTalkStates[u]) state.remoteTalkStates[u][chId] = false;
             for(let u in state.remoteListenStates) if(state.remoteListenStates[u]) state.remoteListenStates[u][chId] = false;
           }
-          const nameEl = document.getElementById(`name-${chId}`); const typeEl = document.getElementById(`type-${chId}`); 
+          const nameEl = $(`name-${chId}`); const typeEl = $(`type-${chId}`); 
           if (nameEl) nameEl.textContent = ch.name; if (typeEl) typeEl.textContent = ch.type; 
           saveRoomState(); syncChannelInfo(); 
           if (e.target.classList.contains('admin-edit-type')) { applyAssignments(state.userAssignments[state.myUserId]); buildAdminMatrix(); initChannelsDOM(); updateAudioRouting(); sendData({ type: 'init-state', channels: state.channels, assignments: state.userAssignments, tallyAssignments: state.tallyAssignments, registered: state.registeredUsers, ioBridge: state.ioBridge }); }
@@ -924,10 +949,10 @@
     function applyAssignments(assignedIds) {
       if (!assignedIds) return;
       state.channels?.forEach(ch => {
-        if(!ch) return; const card = document.getElementById(`card-${ch.id}`);
+        if(!ch) return; const card = $(`card-${ch.id}`);
         if(card) {
           if(assignedIds.includes(ch.id)) { card.style.display = 'flex'; } 
-          else { card.style.display = 'none'; state.listenStates[ch.id] = false; state.talkStates[ch.id] = false; card.classList.remove('listen-on', 'talk-on'); const lBtn = document.getElementById(`listen-${ch.id}`); const tBtn = document.getElementById(`talk-${ch.id}`); if(lBtn) { lBtn.classList.remove('active', 'latched'); lBtn.style.transform = 'translateX(0px)'; } if(tBtn) { tBtn.classList.remove('active', 'latched'); tBtn.style.transform = 'translateX(0px)'; } }
+          else { card.style.display = 'none'; state.listenStates[ch.id] = false; state.talkStates[ch.id] = false; card.classList.remove('listen-on', 'talk-on'); const lBtn = $(`listen-${ch.id}`); const tBtn = $(`talk-${ch.id}`); if(lBtn) { lBtn.classList.remove('active', 'latched'); lBtn.style.transform = 'translateX(0px)'; } if(tBtn) { tBtn.classList.remove('active', 'latched'); tBtn.style.transform = 'translateX(0px)'; } }
         }
       });
       updateAudioRouting(); updateChannelIcons(); syncTalkStates(); syncListenStates();
@@ -938,7 +963,7 @@
         uiLog(`[RECV] ${data.type} from ${senderId}`);
         if (data.type === 'hello') {
           if (senderId !== state.myUserId && !state.registeredUsers.includes(senderId)) { state.registeredUsers.push(senderId); state.userAssignments[senderId] = state.channels?.map(c => c.id) || []; if (!state.tallyAssignments[senderId]) state.tallyAssignments[senderId] = []; saveRoomState(); if (state.isAdmin) { buildAdminMatrix(); buildTallyAssignmentUI(); } }
-          if(state.isAdmin) { sendData({ type: 'init-state', channels: state.channels, assignments: state.userAssignments, tallyAssignments: state.tallyAssignments, registered: state.registeredUsers, ioBridge: state.ioBridge }); if(state.activeVideoSender === state.myUserId) { const sourceText = document.getElementById('main-monitor-source-text').textContent.replace('[ VIDEO SWITCHING NOW ]', '').replace('[ NO VIDEO ]', 'CAMERA').trim(); sendData({ type: 'update-video-sender', senderId: state.myUserId, sourceText: sourceText }); } }
+          if(state.isAdmin) { sendData({ type: 'init-state', channels: state.channels, assignments: state.userAssignments, tallyAssignments: state.tallyAssignments, registered: state.registeredUsers, ioBridge: state.ioBridge }); if(state.activeVideoSender === state.myUserId) { const sourceText = $('main-monitor-source-text')?.textContent.replace('[ VIDEO SWITCHING NOW ]', '').replace('[ NO VIDEO ]', 'CAMERA').trim() || 'OFF'; sendData({ type: 'update-video-sender', senderId: state.myUserId, sourceText: sourceText }); } }
         }
         else if (data.type === 'init-state') { 
             if(data.channels && Array.isArray(data.channels)) {
@@ -947,7 +972,7 @@
             }
         }
         else if (data.type === 'update-ch-info') { 
-            if(data.data && Array.isArray(data.data)) { state.channels = data.data; state.channels.forEach((ch) => { if(!ch) return; const nameEl = document.getElementById(`name-${ch.id}`); const typeEl = document.getElementById(`type-${ch.id}`); if(nameEl) nameEl.textContent = ch.name; if(typeEl) typeEl.textContent = ch.type; }); saveRoomState(); if(state.isAdmin) { document.querySelectorAll('.admin-edit-name').forEach(input => { const ch = state.channels.find(c => c?.id === input.getAttribute('data-id')); if(ch) input.value = ch.name; }); document.querySelectorAll('.admin-edit-type').forEach(input => { const ch = state.channels.find(c => c?.id === input.getAttribute('data-id')); if(ch) input.value = ch.type; }); } initChannelsDOM(); buildAdminMatrix(); }
+            if(data.data && Array.isArray(data.data)) { state.channels = data.data; state.channels.forEach((ch) => { if(!ch) return; const nameEl = $(`name-${ch.id}`); const typeEl = $(`type-${ch.id}`); if(nameEl) nameEl.textContent = ch.name; if(typeEl) typeEl.textContent = ch.type; }); saveRoomState(); if(state.isAdmin) { document.querySelectorAll('.admin-edit-name').forEach(input => { const ch = state.channels.find(c => c?.id === input.getAttribute('data-id')); if(ch) input.value = ch.name; }); document.querySelectorAll('.admin-edit-type').forEach(input => { const ch = state.channels.find(c => c?.id === input.getAttribute('data-id')); if(ch) input.value = ch.type; }); } initChannelsDOM(); buildAdminMatrix(); }
         }
         else if (data.type === 'update-registered') { 
             if(data.registered && Array.isArray(data.registered)) { state.registeredUsers = data.registered; saveRoomState(); if(state.isAdmin) { buildAdminMatrix(); buildTallyAssignmentUI(); } }
@@ -955,8 +980,8 @@
         else if (data.type === 'update-tally-assignments') { state.tallyAssignments = data.assignments || {}; saveRoomState(); if (state.isAdmin) buildTallyAssignmentUI(); if (state.myUserId) evaluateTallyGlow(); }
         else if (data.type === 'update-talk-states') { state.remoteTalkStates[senderId] = data.states || {}; updateAudioRouting(); if (state.isAdmin) { Object.keys(data.states).forEach(chid => { const micBtn = document.querySelector(`.remote-mic-btn[data-uid="${senderId}"][data-chid="${chid}"]`); if (micBtn) { if (data.states[chid]) micBtn.classList.add('active'); else micBtn.classList.remove('active'); } }); } }
         else if (data.type === 'update-listen-states') { state.remoteListenStates[senderId] = data.states || {}; if (state.isAdmin) { Object.keys(data.states).forEach(chid => { const spkBtn = document.querySelector(`.remote-spk-btn[data-uid="${senderId}"][data-chid="${chid}"]`); if (spkBtn) { if (data.states[chid]) spkBtn.classList.add('active'); else spkBtn.classList.remove('active'); } }); } }
-        else if (data.type === 'force-talk') { if (data.targetUid === state.myUserId) { state.talkStates[data.chId] = data.active; const card = document.getElementById(`card-${data.chId}`); if (card) { if(data.active) card.classList.add('talk-on'); else card.classList.remove('talk-on'); } const tBtn = document.getElementById(`talk-${data.chId}`); if (tBtn) { if(data.active) tBtn.classList.add('active', 'latched'); else tBtn.classList.remove('active', 'latched'); } updateAudioRouting(); updateChannelIcons(); syncTalkStates(); } }
-        else if (data.type === 'force-listen') { if (data.targetUid === state.myUserId) { state.listenStates[data.chId] = data.active; const card = document.getElementById(`card-${data.chId}`); if (card) { if(data.active) card.classList.add('listen-on'); else card.classList.remove('listen-on'); } const lBtn = document.getElementById(`listen-${data.chId}`); if (lBtn) { if(data.active) lBtn.classList.add('active', 'latched'); else lBtn.classList.remove('active', 'latched'); } updateAudioRouting(); updateChannelIcons(); syncListenStates(); } }
+        else if (data.type === 'force-talk') { if (data.targetUid === state.myUserId) { state.talkStates[data.chId] = data.active; const card = $(`card-${data.chId}`); if (card) { if(data.active) card.classList.add('talk-on'); else card.classList.remove('talk-on'); } const tBtn = $(`talk-${data.chId}`); if (tBtn) { if(data.active) tBtn.classList.add('active', 'latched'); else tBtn.classList.remove('active', 'latched'); } updateAudioRouting(); updateChannelIcons(); syncTalkStates(); } }
+        else if (data.type === 'force-listen') { if (data.targetUid === state.myUserId) { state.listenStates[data.chId] = data.active; const card = $(`card-${data.chId}`); if (card) { if(data.active) card.classList.add('listen-on'); else card.classList.remove('listen-on'); } const lBtn = $(`listen-${data.chId}`); if (lBtn) { if(data.active) lBtn.classList.add('active', 'latched'); else lBtn.classList.remove('active', 'latched'); } updateAudioRouting(); updateChannelIcons(); syncListenStates(); } }
         else if (data.type === 'assign-channels') {
           if (data.channels && Array.isArray(data.channels)) {
               if (data.targetUid === state.myUserId) { applyAssignments(data.channels); }
@@ -969,15 +994,16 @@
             Object.values(state.mediaCalls || {}).forEach(call => { if (call?.source && state.audioCtx && data.ch && !call.isIOTrack) { const splitGain = state.audioCtx.createGain(); const panner = state.audioCtx.createStereoPanner(); splitGain.gain.value = 0; call.source.connect(panner); panner.connect(splitGain); if(state.channelNodes[data.ch.id]) splitGain.connect(state.channelNodes[data.ch.id].analyser); call.chGains[data.ch.id] = {gain: splitGain, panner: panner}; } }); if(data.registered) state.registeredUsers = data.registered; if(data.assignments) state.userAssignments = data.assignments; if(state.userAssignments && state.userAssignments[state.myUserId]) { applyAssignments(state.userAssignments[state.myUserId]); } saveRoomState(); if(state.isAdmin) buildAdminMatrix(); 
         }
         else if (data.type === 'remove-channel') { if(data.chId) removeChannel(data.chId); saveRoomState(); if(state.isAdmin) buildAdminMatrix(); }
-        else if (data.type === 'update-monitor-title') { state.monitorTitle = data.title; document.getElementById('main-monitor-title').textContent = data.title || 'MONITOR'; if (state.isAdmin) document.getElementById('edit-monitor-title').value = data.title; saveRoomState(); }
+        else if (data.type === 'update-monitor-title') { state.monitorTitle = data.title; const mmt=$('main-monitor-title'); if(mmt) mmt.textContent = data.title || 'MONITOR'; if (state.isAdmin) {const emt=$('edit-monitor-title'); if(emt) emt.value = data.title;} saveRoomState(); }
         else if (data.type === 'update-video-sender') {
           state.activeVideoSender = data.senderId;
+          const mst = $('main-monitor-source-text'); const es = $('edit-monitor-source');
           if (data.senderId && data.senderId !== state.myUserId) {
-            document.getElementById('main-monitor-source-text').textContent = `[ VIDEO SWITCHING NOW ]`;
-            if (state.isAdmin) { document.getElementById('edit-monitor-source').disabled = true; if (document.getElementById('edit-monitor-source').options[0].value === 'locked') { document.getElementById('edit-monitor-source').options[0].text = `[Locked by ${data.senderId}]`; } else { const opt = document.createElement('option'); opt.value = 'locked'; opt.text = `[Locked by ${data.senderId}]`; document.getElementById('edit-monitor-source').add(opt, document.getElementById('edit-monitor-source')[0]); } document.getElementById('edit-monitor-source').value = 'locked'; }
+            if(mst) mst.textContent = `[ VIDEO SWITCHING NOW ]`;
+            if (state.isAdmin && es) { es.disabled = true; if (es.options[0].value === 'locked') { es.options[0].text = `[Locked by ${data.senderId}]`; } else { const opt = document.createElement('option'); opt.value = 'locked'; opt.text = `[Locked by ${data.senderId}]`; es.add(opt, es[0]); } es.value = 'locked'; }
           } else if (!data.senderId) {
-            document.getElementById('main-monitor-source-text').textContent = '[ NO VIDEO ]';
-            if (state.isAdmin) { document.getElementById('edit-monitor-source').disabled = false; if (document.getElementById('edit-monitor-source').options[0].value === 'locked') { document.getElementById('edit-monitor-source').remove(0); } document.getElementById('edit-monitor-source').value = 'off'; }
+            if(mst) mst.textContent = '[ NO VIDEO ]';
+            if (state.isAdmin && es) { es.disabled = false; if (es.options[0].value === 'locked') { es.remove(0); } es.value = 'off'; }
           }
         }
         else if (data.type === 'update-io-bridge') {
@@ -985,14 +1011,14 @@
           updateAudioRouting();
           if (state.isAdmin) {
               const u = state.ioBridge;
-              if (document.getElementById('select-4w-in-l')) {
-                  document.getElementById('select-4w-in-l').value = u.inAssign4wL; document.getElementById('select-4w-in-r').value = u.inAssign4wR; document.getElementById('select-4w-out-l').value = u.outAssign4wL; document.getElementById('select-4w-out-r').value = u.outAssign4wR; document.getElementById('select-pgm-in-l').value = u.inAssignPgmL; document.getElementById('select-pgm-in-r').value = u.inAssignPgmR;
-                  document.getElementById('gain-4w-in-l').value = u.inGain4wL * 100; document.getElementById('fill-gain-4w-in-l').style.width = (document.getElementById('gain-4w-in-l').value / 2) + '%';
-                  document.getElementById('gain-4w-in-r').value = u.inGain4wR * 100; document.getElementById('fill-gain-4w-in-r').style.width = (document.getElementById('gain-4w-in-r').value / 2) + '%';
-                  document.getElementById('gain-4w-out-l').value = u.outGain4wL * 100; document.getElementById('fill-gain-4w-out-l').style.width = (document.getElementById('gain-4w-out-l').value / 2) + '%';
-                  document.getElementById('gain-4w-out-r').value = u.outGain4wR * 100; document.getElementById('fill-gain-4w-out-r').style.width = (document.getElementById('gain-4w-out-r').value / 2) + '%';
-                  document.getElementById('gain-pgm-in-l').value = u.inGainPgmL * 100; document.getElementById('fill-gain-pgm-in-l').style.width = (document.getElementById('gain-pgm-in-l').value / 2) + '%';
-                  document.getElementById('gain-pgm-in-r').value = u.inGainPgmR * 100; document.getElementById('fill-gain-pgm-in-r').style.width = (document.getElementById('gain-pgm-in-r').value / 2) + '%';
+              if ($('select-4w-in-l')) {
+                  $('select-4w-in-l').value = u.inAssign4wL; $('select-4w-in-r').value = u.inAssign4wR; $('select-4w-out-l').value = u.outAssign4wL; $('select-4w-out-r').value = u.outAssign4wR; $('select-pgm-in-l').value = u.inAssignPgmL; $('select-pgm-in-r').value = u.inAssignPgmR;
+                  $('gain-4w-in-l').value = u.inGain4wL * 100; $('fill-gain-4w-in-l').style.width = ($('gain-4w-in-l').value / 2) + '%';
+                  $('gain-4w-in-r').value = u.inGain4wR * 100; $('fill-gain-4w-in-r').style.width = ($('gain-4w-in-r').value / 2) + '%';
+                  $('gain-4w-out-l').value = u.outGain4wL * 100; $('fill-gain-4w-out-l').style.width = ($('gain-4w-out-l').value / 2) + '%';
+                  $('gain-4w-out-r').value = u.outGain4wR * 100; $('fill-gain-4w-out-r').style.width = ($('gain-4w-out-r').value / 2) + '%';
+                  $('gain-pgm-in-l').value = u.inGainPgmL * 100; $('fill-gain-pgm-in-l').style.width = ($('gain-pgm-in-l').value / 2) + '%';
+                  $('gain-pgm-in-r').value = u.inGainPgmR * 100; $('fill-gain-pgm-in-r').style.width = ($('gain-pgm-in-r').value / 2) + '%';
               }
               if (state.ioNodes.gain4wL) state.ioNodes.gain4wL.gain.setTargetAtTime(u.inGain4wL, state.audioCtx.currentTime, 0.05); if (state.ioNodes.gain4wR) state.ioNodes.gain4wR.gain.setTargetAtTime(u.inGain4wR, state.audioCtx.currentTime, 0.05);
               if (state.ioNodes.gainOutL) state.ioNodes.gainOutL.gain.setTargetAtTime(u.outGain4wL, state.audioCtx.currentTime, 0.05); if (state.ioNodes.gainOutR) state.ioNodes.gainOutR.gain.setTargetAtTime(u.outGain4wR, state.audioCtx.currentTime, 0.05);
@@ -1002,12 +1028,12 @@
     }
 
     const joinNetwork = async function(isAdmin) {
-      const rawRoomId = document.getElementById('host-id').value.trim(); const myName = document.getElementById('join-userid').value.trim();
-      if (!rawRoomId || !myName) { document.getElementById('status-msg').textContent = "ルーム名とユーザーIDを入力してください"; document.getElementById('status-msg').style.color = "var(--alert)"; setTimeout(() => { document.getElementById('status-msg').textContent = "待機中... ルーム名とユーザーIDを入力して接続"; document.getElementById('status-msg').style.color = "var(--text-sub)"; }, 3000); return; }
-      if (isAdmin && myName.toLowerCase() !== 'debug') { const pass = prompt("管理者パスワードを入力してください (ヒント: tmax)"); if (pass !== "tmax") { if(pass !== null) alert("パスワードが違います。"); return; } }
+      const rawRoomId = $('host-id')?.value.trim(); const myName = $('join-userid')?.value.trim();
+      if (!rawRoomId || !myName) { const sm=$('status-msg'); if(sm){sm.textContent = "ルーム名とIDを入力してください"; sm.style.color = "var(--alert)"; setTimeout(() => { sm.textContent = "待機中... ルーム名とIDを入力"; sm.style.color = "var(--text-sub)"; }, 3000);} return; }
+      if (isAdmin && myName.toLowerCase() !== 'debug') { const pass = prompt("管理者パスワードを入力してください"); if (pass !== "tmax") { if(pass !== null) alert("パスワードが違います。"); return; } }
 
-      const btn = isAdmin ? document.getElementById('btn-join-admin') : document.getElementById('btn-join-member'); const originalText = btn.textContent;
-      document.getElementById('btn-join-member').disabled = true; document.getElementById('btn-join-admin').disabled = true; btn.textContent = "認証中..."; btn.style.opacity = "0.5";
+      const btn = isAdmin ? $('btn-join-admin') : $('btn-join-member'); const originalText = btn?.textContent;
+      if($('btn-join-member')) $('btn-join-member').disabled = true; if($('btn-join-admin')) $('btn-join-admin').disabled = true; if(btn){btn.textContent = "認証中..."; btn.style.opacity = "0.5";}
 
       if (myName.toLowerCase() !== 'debug') {
           try {
@@ -1017,26 +1043,26 @@
       }
 
       state.roomId = rawRoomId; state.myUserId = myName; state.isAdmin = isAdmin;
-      document.getElementById('header-room-name').textContent = rawRoomId;
-      if (document.getElementById('header-user-id')) { document.getElementById('header-user-id').textContent = myName; document.getElementById('header-user-id').style.display = 'block'; }
+      if($('header-room-name')) $('header-room-name').textContent = rawRoomId;
+      if ($('header-user-id')) { $('header-user-id').textContent = myName; $('header-user-id').style.display = 'block'; }
       if (isAdmin) { document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex'); } else { document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none'); }
       LocalProfile.set({ roomId: rawRoomId, userId: myName, isAdmin });
 
-      document.getElementById('login-overlay').style.display = 'none'; 
-      btn.textContent = originalText; btn.style.opacity = "1"; document.getElementById('btn-join-member').disabled = false; document.getElementById('btn-join-admin').disabled = false;
-      document.getElementById('btn-show-login').textContent = "CONNECT"; document.getElementById('btn-show-login').classList.add('online');
-      document.getElementById('btn-join-member').style.display = 'none'; document.getElementById('btn-join-admin').style.display = 'none';
-      const hostContainer = document.getElementById('host-id-input-container'); if(hostContainer) hostContainer.style.display = 'none';
-      const userContainer = document.getElementById('join-userid-input-container'); if(userContainer) userContainer.style.display = 'none';
-      document.getElementById('btn-stop').style.display = 'block'; const closeBtn = document.getElementById('btn-close-login'); if (closeBtn) closeBtn.style.display = 'block';
-      document.getElementById('status-msg').textContent = "接続完了 (Connected)"; document.getElementById('status-msg').style.color = "var(--green)";
+      if($('login-overlay')) $('login-overlay').style.display = 'none'; 
+      if(btn){btn.textContent = originalText; btn.style.opacity = "1";} if($('btn-join-member')) $('btn-join-member').disabled = false; if($('btn-join-admin')) $('btn-join-admin').disabled = false;
+      const bsl = $('btn-show-login'); if(bsl){ bsl.textContent = "CONNECT"; bsl.classList.add('online'); }
+      if($('btn-join-member')) $('btn-join-member').style.display = 'none'; if($('btn-join-admin')) $('btn-join-admin').style.display = 'none';
+      const hostContainer = $('host-id-input-container'); if(hostContainer) hostContainer.style.display = 'none';
+      const userContainer = $('join-userid-input-container'); if(userContainer) userContainer.style.display = 'none';
+      if($('btn-stop')) $('btn-stop').style.display = 'block'; const closeBtn = $('btn-close-login'); if (closeBtn) closeBtn.style.display = 'flex';
+      const sm=$('status-msg'); if(sm){sm.textContent = "接続完了 (Connected)"; sm.style.color = "var(--green)";}
       
-      let subText = document.getElementById('header-status-sub');
-      if (!subText) { subText = document.createElement('div'); subText.id = 'header-status-sub'; subText.style.position = 'absolute'; subText.style.bottom = '-18px'; subText.style.right = '0'; subText.style.fontSize = '10px'; subText.style.color = 'var(--text-sub)'; subText.style.fontFamily = "'JetBrains Mono', monospace"; document.getElementById('btn-show-login').parentElement.appendChild(subText); }
-      subText.textContent = "接続完了";
+      let subText = $('header-status-sub');
+      if (!subText && bsl) { subText = document.createElement('div'); subText.id = 'header-status-sub'; subText.style.position = 'absolute'; subText.style.bottom = '-18px'; subText.style.right = '0'; subText.style.fontSize = '10px'; subText.style.color = 'var(--text-sub)'; subText.style.fontFamily = "'JetBrains Mono', monospace"; bsl.parentElement.appendChild(subText); }
+      if(subText) subText.textContent = "接続完了";
 
-      const sr = document.getElementById('status-role'); if (sr) sr.style.display = 'none'; 
-      document.getElementById('audio-overlay').style.display = 'flex';
+      const sr = $('status-role'); if (sr) sr.style.display = 'none'; 
+      if($('audio-overlay')) $('audio-overlay').style.display = 'flex';
       
       // ★ 過去のデータを確実にロードし、自身のユーザー名を登録・即時セーブする
       loadRoomState(state.roomId);
@@ -1095,14 +1121,14 @@
           } catch (e) { 
               uiLog(`Token Fetch Error: ${e.message}`, '#ef4444');
               alert("【致命的エラー】\n認証サーバーからのトークン取得に失敗しました。\n\n詳細: " + e.message); 
-              document.getElementById('status-msg').textContent = "接続エラー"; document.getElementById('status-msg').style.color = "var(--alert)"; document.getElementById('btn-stop').style.display = 'block';
+              const sm=$('status-msg'); if(sm){sm.textContent = "接続エラー"; sm.style.color = "var(--alert)";} if($('btn-stop')) $('btn-stop').style.display = 'block';
               return; 
           }
 
           const room = new LivekitClient.Room({ adaptiveStream: false, dynacast: false }); state.room = room;
 
-          room.on(LivekitClient.RoomEvent.Reconnecting, () => { document.getElementById('disconnect-overlay').style.display = 'flex'; document.getElementById('disconnect-text').textContent = '自動再接続を試行中...'; });
-          room.on(LivekitClient.RoomEvent.Reconnected, () => { document.getElementById('disconnect-overlay').style.display = 'none'; });
+          room.on(LivekitClient.RoomEvent.Reconnecting, () => { const ov=$('disconnect-overlay'); if(ov) ov.style.display = 'flex'; const dt=$('disconnect-text'); if(dt) dt.textContent = '自動再接続を試行中...'; });
+          room.on(LivekitClient.RoomEvent.Reconnected, () => { const ov=$('disconnect-overlay'); if(ov) ov.style.display = 'none'; });
           room.on(LivekitClient.RoomEvent.Disconnected, () => { if (state.hasSuccessfullyConnected) triggerAutoReconnect(); });
 
           room.on(LivekitClient.RoomEvent.TrackSubscribed, (track, publication, participant) => {
@@ -1181,7 +1207,7 @@
 
     // RTT遅延表示
     setInterval(async () => {
-        const rttEl = document.getElementById('status-rtt'); if (!rttEl) return;
+        const rttEl = $('status-rtt'); if (!rttEl) return;
         if (state.myUserId && state.myUserId.toLowerCase() === 'debug') { const fakeRtt = Math.floor(Math.random() * 10) + 12; rttEl.style.display = 'block'; rttEl.textContent = `${fakeRtt} ms`; rttEl.style.color = 'var(--green)'; return; }
         if (!state.room || state.room.state !== 'connected') { rttEl.style.display = 'none'; return; }
         try {
