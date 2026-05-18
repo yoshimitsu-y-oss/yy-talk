@@ -12,9 +12,10 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <script>
+    // 致命的なエラーを握りつぶさず、デバッグ可能な状態にする
     window.onerror = function(message, source, lineno) {
       if (typeof message === 'string' && message.includes("Cannot assign to read only property 'getUserMedia'")) return true;
-      return false;
+      console.error("System Error: ", message, "Line:", lineno); return false;
     };
     try {
       if (typeof navigator !== 'undefined' && navigator.mediaDevices) {
@@ -416,6 +417,7 @@
     const iconMic = `<i class="fa-solid fa-microphone btn-icon"></i>`;
     const iconMicOff = `<i class="fa-solid fa-microphone-slash btn-icon" style="opacity: 0.4;"></i>`;
 
+    // ★修正4: localStorage のエラー回避（防弾仕様）
     const memStorage = {};
     const safeStorage = { 
         get: (key) => { try { return localStorage.getItem(key) || memStorage[key] || null; } catch(e) { return memStorage[key] || null; } }, 
@@ -494,7 +496,7 @@
                 state.localStream = stream;
                 const audioTrack = stream.getAudioTracks()[0];
                 if (audioTrack) {
-                    const localMicTrack = new LivekitClient.LocalAudioTrack(audioTrack.clone());
+                    const localMicTrack = new LivekitClient.LocalAudioTrack(audioTrack);
                     state.localMicTrack = localMicTrack;
                     await state.room.localParticipant.publishTrack(localMicTrack, { name: 'mic', source: LivekitClient.Track.Source.Microphone });
                     const isAnyTalking = Object.values(state.talkStates).some(v => v === true) && !state.isMasterMicMuted;
@@ -507,7 +509,7 @@
         const handleIOTracks = async () => {
             if (!state.ioBridge.enabled) { ['ioTrack4wL', 'ioTrack4wR', 'ioTrackPgmL', 'ioTrackPgmR'].forEach(async key => { if (state[key]) { await state.room.localParticipant.unpublishTrack(state[key].track); state[key].track.stop(); state[key] = null; } }); return; }
             if (state.ioBridge.inDevice4w) { try { let audioConst = { echoCancellation: false, noiseSuppression: false, autoGainControl: false }; if (state.ioBridge.inDevice4w !== 'default') audioConst.deviceId = { exact: state.ioBridge.inDevice4w }; const stream = await navigator.mediaDevices.getUserMedia({ audio: audioConst }); const source = audioCtx.createMediaStreamSource(stream); const splitter = audioCtx.createChannelSplitter(2); source.connect(splitter); const gainL = audioCtx.createGain(); gainL.gain.value = state.ioBridge.inGain4wL ?? 1.0; state.ioNodes.gain4wL = gainL; const analyserL = audioCtx.createAnalyser(); analyserL.fftSize = 256; state.ioNodes.analyser4wL = analyserL; const destL = audioCtx.createMediaStreamDestination(); splitter.connect(gainL, 0); gainL.connect(analyserL); gainL.connect(destL); const gainR = audioCtx.createGain(); gainR.gain.value = state.ioBridge.inGain4wR ?? 1.0; state.ioNodes.gain4wR = gainR; const analyserR = audioCtx.createAnalyser(); analyserR.fftSize = 256; state.ioNodes.analyser4wR = analyserR; const destR = audioCtx.createMediaStreamDestination(); splitter.connect(gainR, 1); gainR.connect(analyserR); gainR.connect(destR); const trackL = new LivekitClient.LocalAudioTrack(destL.stream.getAudioTracks()[0]); const trackR = new LivekitClient.LocalAudioTrack(destR.stream.getAudioTracks()[0]); if(state.ioTrack4wL) await state.room.localParticipant.unpublishTrack(state.ioTrack4wL.track); if(state.ioTrack4wR) await state.room.localParticipant.unpublishTrack(state.ioTrack4wR.track); state.ioTrack4wL = await state.room.localParticipant.publishTrack(trackL, { name: 'io_4w_l', source: LivekitClient.Track.Source.Unknown }); state.ioTrack4wR = await state.room.localParticipant.publishTrack(trackR, { name: 'io_4w_r', source: LivekitClient.Track.Source.Unknown }); } catch(e) { } }
-            if (state.ioBridge.inDevicePgm) { try { let audioConst = { echoCancellation: false, noiseSuppression: false, autoGainControl: false }; if (state.ioBridge.inDevicePgm !== 'default') audioConst.deviceId = { exact: state.ioBridge.inDevicePgm }; const stream = await navigator.mediaDevices.getUserMedia({ audio: audioConst }); const source = audioCtx.createMediaStreamSource(stream); const splitter = audioCtx.createChannelSplitter(2); source.connect(splitter); const gainL = audioCtx.createGain(); gainL.gain.value = state.ioBridge.inGainPgmL ?? 1.0; state.ioNodes.gainPgmL = gainL; const analyserL = audioCtx.createAnalyser(); analyserL.fftSize = 256; state.ioNodes.analyserPgmL = analyserL; const destL = audioCtx.createMediaStreamDestination(); splitter.connect(gainL, 0); gainL.connect(analyserL); gainL.connect(destL); const gainR = audioCtx.createGain(); gainR.gain.value = state.ioBridge.inGainPgmR ?? 1.0; state.ioNodes.gainPgmR = gainR; const analyserR = audioCtx.createAnalyser(); analyserR.fftSize = 256; state.ioNodes.analyserPgmR = analyserR; const destR = audioCtx.createMediaStreamDestination(); splitter.connect(gainR, 1); gainR.connect(analyserR); gainR.connect(destR); const trackL = new LivekitClient.LocalAudioTrack(destL.stream.getAudioTracks()[0]); const trackR = new LivekitClient.LocalAudioTrack(destR.stream.getAudioTracks()[0]); if(state.ioTrackPgmL) await state.room.localParticipant.unpublishTrack(state.ioTrackPgmL.track); if(state.ioTrackPgmR) await state.room.localParticipant.unpublishTrack(state.ioTrackPgmR.track); state.ioTrackPgmL = await state.room.localParticipant.publishTrack(trackL, { name: 'io_pgm_l', source: LivekitClient.Track.Source.Unknown }); state.ioTrackPgmR = await state.room.localParticipant.publishTrack(trackR, { name: 'io_pgm_r', source: LivekitClient.Track.Source.Unknown }); } catch(e) { } }
+            if (state.ioBridge.inDevicePgm) { try { let audioConst = { echoCancellation: false, noiseSuppression: false, autoGainControl: false }; if (state.ioBridge.inDevicePgm !== 'default') audioConst.deviceId = { exact: state.ioBridge.inDevicePgm }; const stream = await navigator.mediaDevices.getUserMedia({ audio: audioConst }); const source = audioCtx.createMediaStreamSource(stream); const splitter = audioCtx.createChannelSplitter(2); source.connect(splitter); const gainL = audioCtx.createGain(); gainL.gain.value = state.ioBridge.inGainPgmL ?? 1.0; state.ioNodes.gainPgmL = gainL; const analyserL = audioCtx.createAnalyser(); analyserL.fftSize = 256; state.ioNodes.analyserPgmL = analyserL; const destL = audioCtx.createMediaStreamDestination(); splitter.connect(gainL, 0); gainL.connect(analyserL); gainL.connect(destL); const gainR = audioCtx.createGain(); gainR.gain.value = state.ioBridge.inGainPgmR ?? 1.0; state.ioNodes.gainPgmR = gainR; const analyserR = audioCtx.createAnalyser(); analyserR.fftSize = 256; state.ioNodes.analyserPgmR = analyserR; const destR = audioCtx.createMediaStreamDestination(); splitter.connect(gainR, 1); gainR.connect(analyserR); connect(destR); const trackL = new LivekitClient.LocalAudioTrack(destL.stream.getAudioTracks()[0]); const trackR = new LivekitClient.LocalAudioTrack(destR.stream.getAudioTracks()[0]); if(state.ioTrackPgmL) await state.room.localParticipant.unpublishTrack(state.ioTrackPgmL.track); if(state.ioTrackPgmR) await state.room.localParticipant.unpublishTrack(state.ioTrackPgmR.track); state.ioTrackPgmL = await state.room.localParticipant.publishTrack(trackL, { name: 'io_pgm_l', source: LivekitClient.Track.Source.Unknown }); state.ioTrackPgmR = await state.room.localParticipant.publishTrack(trackR, { name: 'io_pgm_r', source: LivekitClient.Track.Source.Unknown }); } catch(e) { } }
         };
         await handleIOTracks(); updateAudioRouting();
     }
@@ -652,15 +654,16 @@
       const savedProfile = LocalProfile.get(); if (savedProfile) { els.hostIdInput.value = savedProfile.roomId || ''; els.joinUserIdInput.value = savedProfile.userId || ''; }
     });
 
-    // ★修正1: 通信の完全復旧（フェイルセーフ対応）
+    // ★修正1: LiveKitの非同期・フェイルセーフデータ送信
     async function sendData(payload) { 
         if (state.room && state.room.localParticipant) { 
             try {
-                const str = JSON.stringify(payload); const payloadData = new TextEncoder().encode(str); 
-                // 最新の形式で送り、ダメなら古い形式の 0(RELIABLE) で送る
-                if(typeof state.room.localParticipant.publishData === 'function') {
-                    try { await state.room.localParticipant.publishData(payloadData, { reliable: true }); } 
-                    catch (e) { await state.room.localParticipant.publishData(payloadData, 0); }
+                const str = JSON.stringify(payload); 
+                const payloadData = new TextEncoder().encode(str); 
+                try {
+                    await state.room.localParticipant.publishData(payloadData, { reliable: true });
+                } catch (e) {
+                    await state.room.localParticipant.publishData(payloadData, 1); 
                 }
             } catch (err) { console.error("Data Publish Error", err); }
         } 
@@ -870,9 +873,19 @@
           const typeSelect = `<select class="admin-edit-type" data-id="${ch.id}"><option value="PL" ${ch.type==='PL'?'selected':''}>PL</option><option value="Local" ${ch.type==='Local'?'selected':''}>Local</option><option value="Listen" ${ch.type==='Listen'?'selected':''}>Listen</option></select>`;
           html += `<tr><td class="ch-cell" style="vertical-align: middle;"><div style="display:flex; gap:6px; align-items:center; justify-content:space-between; width:100%; height:100%;"><div style="display:flex; gap:4px; flex:1; align-items:center;"><input type="text" class="admin-edit-name" data-id="${ch.id}" value="${ch.name}" style="width:80px; font-size:12px; font-family:'JetBrains Mono', monospace; text-transform:uppercase; text-align:center;" ${ch.fixed?'disabled':''}>${typeSelect}</div>${ch.fixed?'<div style="width:48px;"></div>':`<button class="btn-delete-row" data-id="${ch.id}">削除</button>`}</div></td>`;
           state.registeredUsers?.forEach(uid => { 
-            const isSelf = uid === state.myUserId; const isIoOn = state.ioBridge && state.ioBridge.enabled; const isAssigned = (state.userAssignments[uid] || []).includes(ch.id); const activeClass = isAssigned ? 'active' : ''; const disabledClass = isAssigned ? '' : 'disabled';
+            const isSelf = uid === state.myUserId; const isIoOn = state.ioBridge && state.ioBridge.enabled; 
+            const isAssigned = (state.userAssignments[uid] || []).includes(ch.id); const activeClass = isAssigned ? 'active' : ''; const disabledClass = isAssigned ? '' : 'disabled';
             let isMicOn = false; let isSpkOn = false;
-            if (isSelf) { isMicOn = state.talkStates[ch.id] === true; isSpkOn = state.listenStates[ch.id] === true; } else { isMicOn = state.remoteTalkStates[uid] && state.remoteTalkStates[uid][ch.id] === true; isSpkOn = state.remoteListenStates[uid] && state.remoteListenStates[uid][ch.id] === true; }
+            
+            // 安全な状態取得
+            if (isSelf) { 
+                isMicOn = state.talkStates[ch.id] === true; 
+                isSpkOn = state.listenStates[ch.id] === true; 
+            } else { 
+                isMicOn = state.remoteTalkStates && state.remoteTalkStates[uid] && state.remoteTalkStates[uid][ch.id] === true; 
+                isSpkOn = state.remoteListenStates && state.remoteListenStates[uid] && state.remoteListenStates[uid][ch.id] === true; 
+            }
+            
             const micActiveClass = isMicOn ? 'active' : ''; const spkActiveClass = isSpkOn ? 'active' : ''; 
             let micBtnHtml = ''; if (ch.type !== 'Listen') { micBtnHtml = `<div class="circle-btn remote-mic-btn ${disabledClass} ${micActiveClass}" data-uid="${uid}" data-chid="${ch.id}"><i class="fa-solid fa-microphone"></i></div>`; } else { micBtnHtml = `<div style="width: 26px; height: 26px;"></div>`; }
             let spkBtnHtml = `<div class="circle-btn remote-spk-btn ${disabledClass} ${spkActiveClass}" data-uid="${uid}" data-chid="${ch.id}"><i class="fa-solid fa-volume-high"></i></div>`;
@@ -912,6 +925,7 @@
 
       container.querySelectorAll('.btn-delete-col').forEach(btn => { btn.onclick = (e) => { const uid = e.target.getAttribute('data-uid'); if(confirm(`ユーザー「${uid}」をリストから削除しますか？`)) { state.registeredUsers = state.registeredUsers.filter(u => u !== uid); delete state.userAssignments[uid]; delete state.tallyAssignments[uid]; saveRoomState(); buildAdminMatrix(); buildTallyAssignmentUI(); sendData({ type: 'update-registered', registered: state.registeredUsers }); sendData({ type: 'update-tally-assignments', assignments: state.tallyAssignments }); } }; });
 
+      // ★修正: 他端末へ確実な同期データを送る
       container.querySelectorAll('.admin-edit-name, .admin-edit-type').forEach(input => { 
         input.addEventListener('change', (e) => { 
           const chId = e.target.getAttribute('data-id'); const ch = channels?.find(c => c?.id === chId); if(!ch) return; 
@@ -1047,7 +1061,15 @@
 
       els.roleDisplay.style.display = 'none'; els.audioOverlay.style.display = 'flex';
       
+      // ★修正3: ここでUIを描画しておく。これで接続エラーが起きてもパッチパネルは必ず表示される。
       loadRoomState(state.roomId);
+      if (!state.registeredUsers.includes(state.myUserId)) {
+          state.registeredUsers.push(state.myUserId);
+          if (!state.userAssignments[state.myUserId]) state.userAssignments[state.myUserId] = channels?.map(c => c.id) || [];
+          if (!state.tallyAssignments[state.myUserId]) state.tallyAssignments[state.myUserId] = [];
+          saveRoomState();
+      }
+      if (state.isAdmin) { buildAdminMatrix(); buildTallyAssignmentUI(); }
 
       (async () => {
           if (myName.toLowerCase() === 'debug') {
@@ -1073,23 +1095,26 @@
             return;
           }
 
-          const tallyTopic = "yytalk/tally/" + rawRoomId;
-          const mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
-          mqttClient.on('connect', () => { mqttClient.subscribe(tallyTopic); });
-          mqttClient.on('reconnect', () => { mqttClient.subscribe(tallyTopic); }); 
-          mqttClient.on('message', (topic, message) => {
-            try {
-              const rawMsg = message.toString().trim(); let tId = 1; let act = rawMsg;
-              if (rawMsg.includes(':')) { const parts = rawMsg.split(':'); tId = parseInt(parts[0], 10); act = parts[1]; }
-              if (act === "ON") activeTallies.add(tId); else if (act === "OFF") activeTallies.delete(tId);
-              evaluateTallyGlow();
-            } catch(e) {}
-          });
+          // ★修正4: MQTT通信を独立させ、エラーが波及しないようにする
+          try {
+              const tallyTopic = "yytalk/tally/" + rawRoomId;
+              const mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
+              mqttClient.on('connect', () => { mqttClient.subscribe(tallyTopic); });
+              mqttClient.on('reconnect', () => { mqttClient.subscribe(tallyTopic); }); 
+              mqttClient.on('message', (topic, message) => {
+                try {
+                  const rawMsg = message.toString().trim(); let tId = 1; let act = rawMsg;
+                  if (rawMsg.includes(':')) { const parts = rawMsg.split(':'); tId = parseInt(parts[0], 10); act = parts[1]; }
+                  if (act === "ON") activeTallies.add(tId); else if (act === "OFF") activeTallies.delete(tId);
+                  evaluateTallyGlow();
+                } catch(e) {}
+              });
+          } catch(e) { console.warn("MQTT setup failed", e); }
 
           let token = "";
           try {
             const res = await fetch(`${WORKER_AUTH_URL}/?room=${encodeURIComponent(rawRoomId)}&user=${encodeURIComponent(myName)}`);
-            if (!res.ok) throw new Error("認証に失敗しました");
+            if (!res.ok) throw new Error("HTTP Error: " + res.status);
             const data = await res.json(); token = data.token;
           } catch (e) { 
               alert("【致命的エラー】\n認証サーバーからのトークン取得に失敗しました。\n\n詳細: " + e.message); 
@@ -1145,14 +1170,6 @@
           try {
               await room.connect(LIVEKIT_WS_URL, token);
               state.hasSuccessfullyConnected = true;
-              
-              if (!state.registeredUsers.includes(state.myUserId)) {
-                  state.registeredUsers.push(state.myUserId);
-                  if (!state.userAssignments[state.myUserId]) state.userAssignments[state.myUserId] = channels?.map(c => c.id) || [];
-                  if (!state.tallyAssignments[state.myUserId]) state.tallyAssignments[state.myUserId] = [];
-                  saveRoomState();
-              }
-              
               updateUserCount(); 
               
               if (state.isAdmin) { buildAdminMatrix(); buildTallyAssignmentUI(); }
@@ -1166,18 +1183,15 @@
                   try {
                       const audioTrack = state.localStream.getAudioTracks()[0];
                       if(audioTrack) {
-                          const clonedTrack = audioTrack.clone();
-                          const localMicTrack = new LivekitClient.LocalAudioTrack(clonedTrack);
-                          state.localMicTrack = localMicTrack;
-                          await room.localParticipant.publishTrack(localMicTrack, { name: 'mic', source: LivekitClient.Track.Source.Microphone });
-                          await localMicTrack.mute(); // 送信用マイクは初期状態でミュート
+                          // トラックを直接LiveKitにPublishしてラッパーを受け取る
+                          const pub = await room.localParticipant.publishTrack(audioTrack, { name: 'mic', source: LivekitClient.Track.Source.Microphone });
+                          state.localMicTrack = pub.track;
+                          await state.localMicTrack.mute(); // 送信用マイクは初期状態でミュート
                           state.audioEnabled = true; 
-                          // サーバーへの接続・マイク登録が全て完了した後に初めて音声システムを起動する
-                          // このタイミングであれば、メーター用のマイクも安全に取得できる
+                          // ここまで完了したのちに、手元のメーター用オーディオシステムを安全に起動
+                          initAudioContext();
                       }
-                  } catch (err) {
-                      console.error("Mic Publish Error:", err);
-                  }
+                  } catch (err) { console.error("Mic Publish Error:", err); }
               }
           } catch (e) { 
               alert("【LiveKit接続エラー】\nSFUサーバーへの接続に失敗しました。\n\n詳細: " + e.message); 
@@ -1189,7 +1203,6 @@
     els.btnJoinMember.onclick = () => joinNetwork(false);
     els.btnJoinAdmin.onclick = () => joinNetwork(true);
     
-    // ★修正6: 音声再生のトリガータイミングを厳密に固定し、ブラウザの自動ミュートを回避する
     document.getElementById('btn-enable-audio').onclick = () => { 
         els.audioOverlay.style.display = 'none'; 
         state.audioEnabled = true; 
