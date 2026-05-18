@@ -328,6 +328,17 @@
     window.onunhandledrejection = function(e) { uiLog(`PROMISE ERR: ${e.reason}`, '#ef4444'); };
     uiLog("System Script Loaded.");
 
+    function forceResize() {
+      const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      document.documentElement.style.height = h + 'px'; document.body.style.height = h + 'px';
+      const container = document.getElementById('main-app-container');
+      if (container) container.style.height = h + 'px';
+      window.scrollTo(0, 0);
+    }
+    window.addEventListener('resize', forceResize);
+    window.addEventListener('orientationchange', () => { setTimeout(forceResize, 50); setTimeout(forceResize, 200); setTimeout(forceResize, 500); });
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', forceResize);
+
     document.addEventListener('touchmove', function(e) { if (e.touches.length > 1) { e.preventDefault(); } }, { passive: false });
     let lastTouchEnd = 0; document.addEventListener('touchend', function(e) { const now = (new Date()).getTime(); if (now - lastTouchEnd <= 300) { e.preventDefault(); } lastTouchEnd = now; }, { passive: false });
     window.addEventListener('contextmenu', e => { if(e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') e.preventDefault(); });
@@ -1024,7 +1035,8 @@
       if (!subText) { subText = document.createElement('div'); subText.id = 'header-status-sub'; subText.style.position = 'absolute'; subText.style.bottom = '-18px'; subText.style.right = '0'; subText.style.fontSize = '10px'; subText.style.color = 'var(--text-sub)'; subText.style.fontFamily = "'JetBrains Mono', monospace"; document.getElementById('btn-show-login').parentElement.appendChild(subText); }
       subText.textContent = "接続完了";
 
-      document.getElementById('status-role').style.display = 'none'; document.getElementById('audio-overlay').style.display = 'flex';
+      const sr = document.getElementById('status-role'); if (sr) sr.style.display = 'none'; 
+      document.getElementById('audio-overlay').style.display = 'flex';
       
       // ★ 過去のデータを確実にロードし、自身のユーザー名を登録・即時セーブする
       loadRoomState(state.roomId);
