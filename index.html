@@ -111,10 +111,10 @@
     .video-dummy-text { color: #555; font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: bold; z-index: 1;} .video-wrapper video { width: 100%; height: 100%; object-fit: contain; background: #000; position: absolute; inset: 0; z-index: 5;}
     
     /* Admin Modal */
-    .admin-modal { width: 98%; max-width: 1100px; height: 90vh; max-height: 90vh; display: flex; flex-direction: column; padding: 25px 15px 15px; margin: auto; position: relative; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);}
-    .btn-close-modal { position: absolute; top: 10px; right: 15px; background: transparent; border: none; color: #7a7e85; cursor: pointer; z-index: 200; transition: color 0.2s ease; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 28px; padding: 0;}
+    .admin-modal { width: 98%; max-width: 1100px; height: 90vh; max-height: 90vh; display: flex; flex-direction: column; padding: 25px 25px 15px 25px; padding-top: 60px; margin: auto; position: relative; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);}
+    .btn-close-modal { position: absolute; top: 10px; right: 10px; background: transparent; border: none; color: #7a7e85; cursor: pointer; z-index: 200; transition: color 0.2s ease; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; font-size: 28px; padding: 0;}
     .btn-close-modal:hover { color: #ffffff; }
-    .admin-tabs-container { display: flex; gap: 8px; padding: 0 10px; margin-bottom: 20px; margin-top: 15px; width: 100%; flex-shrink: 0;}
+    .admin-tabs-container { display: flex; gap: 8px; margin-bottom: 20px; width: 100%; flex-shrink: 0;}
     .admin-tab-btn { flex: 1; min-width: 0; background: rgba(0, 0, 0, 0.4); border: 1px solid transparent; color: #555 !important; padding: 12px 4px; font-size: 13px; font-weight: bold; border-radius: 8px 8px 0 0; cursor: pointer; transition: all 0.2s ease; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; line-height: 1.2; text-align: center; position: relative; z-index: 1; margin-bottom: 0; }
     .admin-tab-btn i { font-size: 20px; opacity: 0.6; transition: all 0.2s; } .admin-tab-btn:hover { color: #aaa !important; }
     .admin-tab-btn.active { background-color: var(--card-bg); background-image: linear-gradient(to bottom, rgba(96, 165, 250, 0.15) 0%, rgba(96, 165, 250, 0) 100%); border: 1px solid var(--border-color); color: #ffffff !important; box-shadow: none; text-shadow: 0 0 6px rgba(255,255,255,0.4); z-index: 2; border-radius: 8px 8px 0 0; }
@@ -130,10 +130,10 @@
     
     .io-panel { display: flex; flex-direction: column; gap: 30px; margin-bottom: 20px;}
     .io-toggle-wrapper { width: 240px; height: 56px; background: #111216; border-radius: 28px; border: 2px solid var(--border-color); position: relative; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; box-shadow: inset 0 2px 8px rgba(0,0,0,0.8); margin: 0 auto; touch-action: none;}
-    .io-toggle-slider { width: 48px; height: 48px; background: #7a7e85; border-radius: 50%; position: absolute; left: 2px; transition: left 0.3s cubic-bezier(0.4, 0.0, 0.2, 1), background-color 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.6); z-index: 2; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: bold; color: #fff;}
+    .io-toggle-slider { width: 48px; height: 48px; background: #7a7e85; border-radius: 50%; position: absolute; left: 2px; transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.6); z-index: 2; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: bold; color: #fff;}
     .io-toggle-wrapper.active { background: var(--green); border-color: var(--green); box-shadow: inset 0 2px 8px rgba(0,0,0,0.4), 0 0 15px rgba(74, 222, 128, 0.3); }
-    .io-toggle-wrapper.active .io-toggle-slider { left: calc(100% - 50px); background: #ffffff; color: #000;}
-    .io-toggle-text { position: absolute; width: 100%; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: bold; transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1), color 0.3s ease; z-index: 1; pointer-events: none; margin-top: 1px; letter-spacing: 1px;}
+    .io-toggle-wrapper.active .io-toggle-slider { left: calc(100% - 52px); background: #ffffff; color: #000;}
+    .io-toggle-text { position: absolute; width: 100%; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: bold; transition: transform 0.3s ease, color 0.3s ease; z-index: 1; pointer-events: none; margin-top: 1px; letter-spacing: 1px;}
     .io-toggle-wrapper.active .io-toggle-text { color: #000; transform: translateX(-24px); } .io-toggle-wrapper:not(.active) .io-toggle-text { color: #7a7e85; transform: translateX(24px); }
     .io-select { width: 100%; height: 32px; background: #1c1d21; border: 1px solid var(--border-color); color: #fff; border-radius: 6px; font-size: 13px; padding: 0 10px; font-family: 'JetBrains Mono', monospace; cursor: pointer; transition: all 0.2s; text-align: center; text-align-last: center;}
     .io-select:focus { outline: none; border-color: var(--text-sub); }
@@ -144,14 +144,14 @@
     
     .io-interface-section { display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px;} .interface-title { font-size: 13px; font-weight: bold; color: var(--text-main); letter-spacing: 2px; margin: 0; padding-left: 10px; border-left: 3px solid var(--blue); font-family: 'JetBrains Mono', monospace; }
     .tally-row { display: flex; align-items: center; justify-content: center; padding: 10px 15px; background: #1c1d21; border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 8px; gap: 20px; flex-wrap: wrap; }
-    .tally-member-info { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-shrink: 0; width: 100px;}
+    .tally-member-info { display: flex; align-items: center; justify-content: center; gap: 8px; flex-shrink: 0; width: 100px;}
     .tally-btn-group { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; width: 240px; }
     .tally-btn { width: 100%; aspect-ratio: 1/1; max-height: 32px; border-radius: 4px; background: #121418; border: 1px solid #444; color: #888; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; transition: all 0.1s; }
     .tally-btn.active { background: var(--alert); color: #fff; border-color: var(--alert); box-shadow: 0 0 8px rgba(239, 68, 68, 0.6); }
     
     .io-gain-slider-wrap { display: flex; align-items: center; gap: 8px; width: 100%; margin-top: 5px; margin-bottom: 5px; }
     .io-meter-horizontal-bg { width: 100%; height: 8px; background: #000; border-radius: 4px; position: relative; overflow: hidden; box-shadow: inset 0 0 3px rgba(0,0,0,0.8); margin-bottom: 5px;}
-    .io-meter-horizontal-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #22c55e 0%, #eab308 75%, #ef4444 100%); transition: width 0.05s ease-out; }
+    .io-meter-horizontal-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #22c55e 0%, #eab308 75%, #ef4444 100%); transition: width 0.1s ease-out; }
 
     .admin-matrix-wrapper { width: 100%; overflow-x: auto; overscroll-behavior-x: none; -webkit-overflow-scrolling: touch; border-radius: 12px; background: #111216; border: 1px solid var(--border-color); position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin-bottom: 15px;}
     .admin-matrix { width: 100%; border-collapse: separate; border-spacing: 0; min-width: max-content; text-align: center; font-size: 13px; }
@@ -175,10 +175,10 @@
     .remote-group { display: flex; flex-direction: column; align-items: center; background: #111216; border: 1px solid #2a2c33; border-radius: 6px; padding: 4px 6px 6px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.5); }
     .remote-label { font-family: 'JetBrains Mono', monospace; font-size: 8px; font-weight: bold; color: #666; margin-bottom: 4px; letter-spacing: 1px; } .remote-buttons { display: flex; gap: 6px; }
     .circle-btn { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #1c1d21; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.05); }
-    .circle-btn i { font-size: 12px; pointer-events: none; } .circle-btn.disabled { border-color: #444 !important; color: #444 !important; background: #15161a; box-shadow: none; cursor: not-allowed; opacity: 0.5; }
+    .circle-btn svg { width: 12px; height: 12px; fill: currentColor; pointer-events: none; } .circle-btn.disabled { border-color: #444 !important; color: #444 !important; background: #15161a; box-shadow: none; cursor: not-allowed; opacity: 0.5; }
     .remote-spk-btn { border: 1.5px solid var(--green); color: var(--green); } .remote-spk-btn.active { background-color: var(--green); color: #000; box-shadow: inset 0 2px 4px rgba(255,255,255,0.4), 0 0 10px rgba(74, 222, 128, 0.5); }
     .remote-mic-btn { border: 1.5px solid var(--red); color: var(--red); } .remote-mic-btn.active { background-color: var(--red); color: #fff; box-shadow: inset 0 2px 4px rgba(255,255,255,0.3), 0 0 10px rgba(220, 38, 38, 0.5); }
-    .cp-meter-bg { width: 6px; height: 36px; background: #000; border-radius: 2px; position: relative; box-shadow: inset 0 0 3px rgba(0,0,0,0.8); overflow: hidden; margin-left: 2px;} .cp-meter-bar { width: 100%; height: 100%; background: linear-gradient(to top, #22c55e, #eab308, #ef4444); position: absolute; bottom: 0; left: 0; transform-origin: bottom; transform: scaleY(0); transition: transform 0.05s ease-out; }
+    .cp-meter-bg { width: 6px; height: 36px; background: #000; border-radius: 2px; position: relative; box-shadow: inset 0 0 3px rgba(0,0,0,0.8); overflow: hidden; margin-left: 2px;} .cp-meter-bar { width: 100%; height: 100%; background: linear-gradient(to top, #22c55e, #eab308, #ef4444); position: absolute; bottom: 0; left: 0; transform-origin: bottom; transform: scaleY(0); transition: transform 0.1s ease-out; }
     
     .global-controls { display: flex; gap: 10px; padding: 5px 15px 10px; background: var(--bg-dark); border-bottom: 2px solid var(--green); flex-shrink: 0; z-index: 10;}
     .btn-global { flex: 1; padding: 8px 10px; border: none; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; font-family: 'JetBrains Mono', monospace; }
@@ -197,7 +197,7 @@
     .channel-card::before { left: 0; background: linear-gradient(to right, rgba(74, 222, 128, 0.25) 0%, transparent 100%); } .channel-card::after { right: 0; background: linear-gradient(to left, rgba(220, 38, 38, 0.25) 0%, transparent 100%); }
     .channel-card.listen-on::before { opacity: 1; } .channel-card.talk-on::after { opacity: 1; } .channel-card > * { position: relative; z-index: 1; }
     .status-line-bg { position: absolute; left: 0; top: 10%; bottom: 10%; width: 4px; background-color: #0a0b0d; border-radius: 0 4px 4px 0; overflow: hidden; z-index: 2; }
-    .status-line-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to top, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); } .status-line-mask { position: absolute; top: 0; left: 0; right: 0; height: 100%; background-color: var(--bg-dark); transition: height 0.1s linear; }
+    .status-line-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to top, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); } .status-line-mask { position: absolute; top: 0; left: 0; right: 0; height: 100%; background-color: var(--bg-dark); transition: height 0.1s ease-out; }
     .volume-panel { display: none; padding: 5px 20px; align-items: center; gap: 10px; } .channel-card.expanded .volume-panel { display: flex; }
     .vol-icon { font-size: 14px; color: var(--text-sub); flex-shrink: 0; width: 14px; height: 14px; } .vol-slider-wrap { flex: 1; position: relative; display: flex; align-items: center; touch-action: pan-x; }
     .vol-slider-track-bg { position: absolute; left: 0; right: 0; height: 4px; background: var(--border-color); border-radius: 2px; z-index: 1; } .vol-slider-fill { position: absolute; left: 0; height: 4px; background: var(--orange); border-radius: 2px; z-index: 2; width: 50%; pointer-events: none; }
@@ -215,16 +215,16 @@
     .btn-listen { border-color: var(--green); color: var(--green); } .btn-listen.active, .btn-listen.latched { background-color: var(--green); color: var(--bg-dark); box-shadow: inset 0 2px 4px rgba(255,255,255,0.4), 0 4px 15px rgba(74, 222, 128, 0.5); }
     .btn-talk { border-color: var(--red); color: var(--red); } .btn-talk.active, .btn-talk.latched { background-color: var(--red); color: var(--text-main); box-shadow: inset 0 2px 4px rgba(255,255,255,0.3), 0 4px 15px rgba(220, 38, 38, 0.5); }
     .ch-meter-container { height: 4px; background: var(--bg-dark); margin: 0 45px 0; border-radius: 2px; overflow: hidden; position: relative; opacity: 0.8; z-index: 2;}
-    .ch-meter-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); } .ch-meter-mask { position: absolute; right: 0; top: 0; bottom: 0; width: 100%; background-color: var(--bg-dark); transition: width 0.05s linear; }
+    .ch-meter-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); } .ch-meter-mask { position: absolute; right: 0; top: 0; bottom: 0; width: 100%; background-color: var(--bg-dark); transition: width 0.1s ease-out; }
     .card-footer { display: flex; justify-content: center; align-items: center; padding: 0 15px 4px; position: relative; z-index: 5;}
     .btn-expand { display: inline-block; padding: 4px 40px; color: var(--text-sub); font-size: 14px; letter-spacing: 2px; cursor: grab; margin: 0 auto; border-radius: 20px; touch-action: none;} .btn-expand:active { cursor: grabbing; background-color: rgba(255,255,255,0.05); }
     .sortable-ghost { opacity: 0.2 !important; background-color: #000 !important; } .sortable-drag { cursor: grabbing !important; box-shadow: 0 20px 40px rgba(0,0,0,0.8) !important; background-color: var(--card-bg-expanded) !important; border: 1px solid var(--border-color) !important; opacity: 1 !important; z-index: 9999 !important; }
     
     .master-meter-container { height: 8px; width: 100%; background: var(--bg-dark); position: relative; flex-shrink: 0; z-index: 10;}
-    .master-meter-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); } .master-meter-mask { position: absolute; right: 0; top: 0; bottom: 0; width: 100%; background-color: var(--bg-dark); transition: width 0.05s linear; }
+    .master-meter-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); } .master-meter-mask { position: absolute; right: 0; top: 0; bottom: 0; width: 100%; background-color: var(--bg-dark); transition: width 0.1s ease-out; }
 
     @media (max-width: 600px) {
-      .admin-modal { padding: 50px 15px 15px; width: 100%; height: 100dvh; max-height: 100dvh; border-radius: 0; margin: 0;}
+      .admin-modal { padding: 15px; padding-top: 60px; width: 100%; height: 100dvh; max-height: 100dvh; border-radius: 0; margin: 0;}
       .admin-settings-row { flex-direction: column; padding: 15px; }
       .io-grid { grid-template-columns: 1fr; }
       .io-ch-row { flex-direction: column; gap: 15px; }
@@ -254,7 +254,6 @@
   </div>
 
   <div class="app-container" id="main-app-container">
-    <div id="audio-overlay" class="overlay-base"><p style="font-weight:bold;margin-bottom:20px;font-size:18px;">通話に参加しますか？</p><button id="btn-enable-audio" class="btn-green-solid">音声を有効にして参加</button></div>
     
     <div id="disconnect-overlay" class="overlay-base">
       <div class="loader-spinner" style="border: 4px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px;"></div>
@@ -263,7 +262,7 @@
     </div>
 
     <!-- ログイン画面 -->
-    <div id="login-overlay" class="overlay-base">
+    <div id="login-overlay" class="overlay-base" style="display: flex;">
       <div class="login-modal">
         <button class="btn-close-login" id="btn-close-login"><i class="fa-solid fa-xmark"></i></button>
         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 30px; width: 100%;">
@@ -300,22 +299,20 @@
     <!-- 管理者パネル -->
     <div id="admin-overlay" class="overlay-base">
       <div class="login-modal admin-modal">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; position: relative;">
-          <div class="admin-tabs-container" style="margin: 0; padding: 0; flex-grow: 1; margin-right: 20px;">
-            <button id="tab-video" class="admin-tab-btn active"><i class="fa-solid fa-tv"></i><span>VIDEO TALLY</span></button>
-            <button id="tab-patch" class="admin-tab-btn"><i class="fa-solid fa-network-wired"></i><span>PATCH PANEL</span></button>
-            <button id="tab-io" class="admin-tab-btn"><i class="fa-solid fa-sliders"></i><span>I/O BRIDGE</span></button>
-          </div>
-          <button id="btn-close-admin" class="btn-close-modal" style="position: static; margin-top: -5px;"><i class="fa-solid fa-xmark"></i></button>
+        <button id="btn-close-admin" class="btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
+        <div class="admin-tabs-container">
+          <button id="tab-video" class="admin-tab-btn active"><i class="fa-solid fa-tv"></i><span>VIDEO TALLY</span></button>
+          <button id="tab-patch" class="admin-tab-btn"><i class="fa-solid fa-network-wired"></i><span>PATCH PANEL</span></button>
+          <button id="tab-io" class="admin-tab-btn"><i class="fa-solid fa-sliders"></i><span>I/O BRIDGE</span></button>
         </div>
         <div class="scroll-area">
           <div id="admin-video-section">
-            <div class="io-interface-section">
+            <div class="io-interface-section" style="margin-bottom: 25px;">
               <h4 class="interface-title">MONITOR SETTINGS</h4>
               <div class="admin-settings-row">
                 <div class="setting-group"><label>MONITOR NAME</label><input type="text" id="edit-monitor-title" value="MONITOR"></div>
                 <div class="setting-group"><label>VIDEO SOURCE</label><select id="edit-monitor-source"><option value="off">OFF</option><option value="screen">画面共有</option></select></div>
-                <div class="setting-group"><label>VIDEO QUALITY</label><select id="edit-video-quality"><option value="128000">128 Kbps</option><option value="256000">256 Kbps</option><option value="512000" selected>512 Kbps</option><option value="1000000">1 Mbps</option><option value="5000000">5 Mbps</option></select></div>
+                <div class="setting-group"><label>VIDEO QUALITY</label><select id="edit-video-quality"><option value="128000">128 Kbps (~57MB/h)</option><option value="256000">256 Kbps (~115MB/h)</option><option value="512000" selected>512 Kbps (~230MB/h)</option><option value="1000000">1 Mbps (~450MB/h)</option><option value="5000000">5 Mbps (~2.2GB/h)</option></select></div>
               </div>
             </div>
             <div class="io-interface-section">
@@ -480,6 +477,11 @@
         }
     });
 
+    const iconSpeaker = `<svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
+    const iconSpeakerOff = `<svg class="btn-icon" viewBox="0 0 24 24"><path fill="currentColor" opacity="0.4" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/><line x1="4" y1="4" x2="20" y2="20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
+    const iconMic = `<svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>`;
+    const iconMicOff = `<svg class="btn-icon" viewBox="0 0 24 24"><path fill="currentColor" opacity="0.4" d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/><line x1="4" y1="4" x2="20" y2="20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
+
     const memStorage = {};
     const safeStorage = { 
         get: (key) => { try { return localStorage.getItem(key) || memStorage[key] || null; } catch(e) { return memStorage[key] || null; } }, 
@@ -542,34 +544,6 @@
         const bja = $('btn-join-admin'); if(bja) bja.onclick = () => joinNetwork(true);
         const bStop = $('btn-stop'); if(bStop) bStop.onclick = () => { LocalProfile.clear(); location.reload(); };
 
-        const bea = $('btn-enable-audio'); if(bea) bea.onclick = () => { 
-            $('audio-overlay').style.display = 'none'; 
-            state.audioEnabled = true; 
-            initAudioContext(); 
-            $('dummy-audio')?.play().catch(()=>{});
-            
-            // Audio Context開始後にマイク取得
-            if (state.myUserId.toLowerCase() !== 'debug') {
-                const constraints = state.ioBridge.enabled ? { echoCancellation: false, noiseSuppression: false, autoGainControl: false } : { echoCancellation: true, noiseSuppression: true };
-                navigator.mediaDevices.getUserMedia({ audio: constraints })
-                .then(stream => {
-                    state.localStream = stream;
-                    // --- ★メーター動作用のアナライザー接続を追加 ---
-                    if (state.audioCtx) { 
-                        if (state.localMicAnalyser) state.localMicAnalyser.disconnect(); 
-                        const localSrc = state.audioCtx.createMediaStreamSource(state.localStream); 
-                        state.localMicAnalyser = state.audioCtx.createAnalyser(); 
-                        state.localMicAnalyser.fftSize = 256; 
-                        localSrc.connect(state.localMicAnalyser); 
-                    }
-                    if(state.room && state.room.state === 'connected') {
-                        publishLocalMic();
-                    }
-                })
-                .catch(err => uiLog("マイクアクセス拒否:" + err.message, '#f97316'));
-            }
-        };
-
         const cWrap = $('channel-list-wrap');
         if (typeof Sortable !== 'undefined' && cWrap) { new Sortable(cWrap, { animation: 200, handle: '.btn-expand', delay: 150, delayOnTouchOnly: true, touchStartThreshold: 5, ghostClass: 'sortable-ghost', dragClass: 'sortable-drag', onEnd: function (evt) { let newOrder = []; cWrap.querySelectorAll('.channel-card').forEach(card => { newOrder.push(card.id.replace('card-', '')); }); safeStorage.set('yytalk-ch-order', JSON.stringify(newOrder)); } }); }
         
@@ -591,6 +565,36 @@
         updateChannelIcons();
 
         const savedProfile = LocalProfile.get(); if (savedProfile) { if($('host-id')) $('host-id').value = savedProfile.roomId || ''; if($('join-userid')) $('join-userid').value = savedProfile.userId || ''; syncPulse(); }
+        
+        // ★ ページロード直後に既存のオーディオオーバーレイがあればリスナーを付与
+        const bea = $('btn-enable-audio'); 
+        if(bea) {
+            bea.onclick = () => { 
+                $('audio-overlay').style.display = 'none'; 
+                state.audioEnabled = true; 
+                initAudioContext(); 
+                $('dummy-audio')?.play().catch(()=>{});
+                
+                if (state.myUserId.toLowerCase() !== 'debug') {
+                    const constraints = state.ioBridge.enabled ? { echoCancellation: false, noiseSuppression: false, autoGainControl: false } : { echoCancellation: true, noiseSuppression: true };
+                    navigator.mediaDevices.getUserMedia({ audio: constraints })
+                    .then(stream => {
+                        state.localStream = stream;
+                        if (state.audioCtx) { 
+                            if (state.localMicAnalyser) state.localMicAnalyser.disconnect(); 
+                            const localSrc = state.audioCtx.createMediaStreamSource(state.localStream); 
+                            state.localMicAnalyser = state.audioCtx.createAnalyser(); 
+                            state.localMicAnalyser.fftSize = 256; 
+                            localSrc.connect(state.localMicAnalyser); 
+                        }
+                        if(state.room && state.room.state === 'connected') {
+                            publishLocalMic();
+                        }
+                    })
+                    .catch(err => uiLog("マイクアクセス拒否:" + err.message, '#f97316'));
+                }
+            };
+        }
     });
 
     function applyLayout(layout) {
@@ -601,7 +605,17 @@
         setTimeout(window.forceResize, 100);
     }
     
-    function switchTab(activeTab, activeSec) { const tVid=$('tab-video'), tPat=$('tab-patch'), tIo=$('tab-io'); if(tVid && tPat && tIo) [tVid, tPat, tIo].forEach(t => t.classList.remove('active')); const sVid=$('admin-video-section'), sPat=$('admin-patch-section'), sIo=$('admin-io-section'); if(sVid && sPat && sIo) [sVid, sPat, sIo].forEach(s => s.style.display = 'none'); if(activeTab) activeTab.classList.add('active'); if(activeSec) activeSec.style.display = 'block'; }
+    function switchTab(activeTab, activeSec) { 
+        const tVid=$('tab-video'), tPat=$('tab-patch'), tIo=$('tab-io'); 
+        if(tVid && tPat && tIo) [tVid, tPat, tIo].forEach(t => t.classList.remove('active')); 
+        const sVid=$('admin-video-section'), sPat=$('admin-patch-section'), sIo=$('admin-io-section'); 
+        if(sVid && sPat && sIo) [sVid, sPat, sIo].forEach(s => s.style.display = 'none'); 
+        if(activeTab) activeTab.classList.add('active'); 
+        if(activeSec) activeSec.style.display = 'block'; 
+        // ★ タブ切り替え時にスクロールを上に戻す
+        const scrollArea = document.querySelector('.scroll-area');
+        if(scrollArea) scrollArea.scrollTop = 0;
+    }
 
     function updateUserCount() {
       if(!state.room) return;
@@ -741,7 +755,7 @@
     function attachVideoTrack(track) { const mw = $('monitor-video-wrapper'); if(!mw) return; mw.querySelectorAll('video').forEach(v => v.remove()); const videoEl = track.attach(); videoEl.style.width = '100%'; videoEl.style.height = '100%'; videoEl.style.objectFit = 'contain'; videoEl.style.background = '#000'; videoEl.style.position = 'absolute'; videoEl.style.inset = '0'; videoEl.style.zIndex = '5'; mw.appendChild(videoEl); const mst = $('main-monitor-source-text'); if(mst) mst.style.display = 'none'; }
     function detachVideoTrack(track) { if (track) track.detach(); const mw = $('monitor-video-wrapper'); if(mw) mw.querySelectorAll('video').forEach(v => v.remove()); const mst = $('main-monitor-source-text'); if(mst) mst.style.display = 'block'; }
 
-    function updateChannelIcons() { const bs = $('btn-master-spk'); const bm = $('btn-master-mic'); if(bs) bs.classList.toggle('active', state.isMasterSpkMuted); if(bm) bm.classList.toggle('active', state.isMasterMicMuted); state.channels?.forEach(ch => { const lBtn = $(`listen-${ch.id}`); const tBtn = $(`talk-${ch.id}`); if (lBtn) { lBtn.innerHTML = state.isMasterSpkMuted ? `<i class="fa-solid fa-volume-xmark btn-icon" style="opacity: 0.4;"></i>` : `<i class="fa-solid fa-volume-high btn-icon"></i>`; lBtn.classList.toggle('muted-slash', state.isMasterSpkMuted); } if (tBtn) { tBtn.innerHTML = state.isMasterMicMuted ? `<i class="fa-solid fa-microphone-slash btn-icon" style="opacity: 0.4;"></i>` : `<i class="fa-solid fa-microphone btn-icon"></i>`; tBtn.classList.toggle('muted-slash', state.isMasterMicMuted); } }); }
+    function updateChannelIcons() { const bs = $('btn-master-spk'); const bm = $('btn-master-mic'); if(bs) bs.classList.toggle('active', state.isMasterSpkMuted); if(bm) bm.classList.toggle('active', state.isMasterMicMuted); state.channels?.forEach(ch => { const lBtn = $(`listen-${ch.id}`); const tBtn = $(`talk-${ch.id}`); if (lBtn) { lBtn.innerHTML = state.isMasterSpkMuted ? iconSpeakerOff : iconSpeaker; lBtn.classList.toggle('muted-slash', state.isMasterSpkMuted); } if (tBtn) { tBtn.innerHTML = state.isMasterMicMuted ? iconMicOff : iconMic; tBtn.classList.toggle('muted-slash', state.isMasterMicMuted); } }); }
     function toggleMasterSpk() { state.isMasterSpkMuted = !state.isMasterSpkMuted; updateAudioRouting(); updateChannelIcons(); } function toggleMasterMic() { state.isMasterMicMuted = !state.isMasterMicMuted; updateAudioRouting(); updateChannelIcons(); syncTalkStates(); }
 
     function saveRoomState() { 
@@ -773,8 +787,7 @@
       if(!ch || ch.id === 'ch-video') return; 
       if(state.listenStates[ch.id] === undefined) state.listenStates[ch.id] = false; if(state.talkStates[ch.id] === undefined) state.talkStates[ch.id] = false; if(state.channelVolumes[ch.id] === undefined) state.channelVolumes[ch.id] = 1.5;
       const listenClass = state.listenStates[ch.id] ? 'listen-on' : ''; const talkClass = state.talkStates[ch.id] ? 'talk-on' : '';
-      const curListenIcon = state.isMasterSpkMuted ? `<i class="fa-solid fa-volume-xmark btn-icon" style="opacity: 0.4;"></i>` : `<i class="fa-solid fa-volume-high btn-icon"></i>`; 
-      const curTalkIcon = state.isMasterMicMuted ? `<i class="fa-solid fa-microphone-slash btn-icon" style="opacity: 0.4;"></i>` : `<i class="fa-solid fa-microphone btn-icon"></i>`;
+      const curListenIcon = state.isMasterSpkMuted ? iconSpeakerOff : iconSpeaker; const curTalkIcon = state.isMasterMicMuted ? iconMicOff : iconMic;
       const lMuted = state.isMasterSpkMuted ? 'muted-slash' : ''; const tMuted = state.isMasterMicMuted ? 'muted-slash' : '';
 
       const card = document.createElement('div'); card.className = `channel-card ${listenClass} ${talkClass}`; card.id = `card-${ch.id}`;
@@ -1042,8 +1055,8 @@
             let isMicOn = false; let isSpkOn = false;
             if (isSelf) { isMicOn = state.talkStates[ch.id] === true; isSpkOn = state.listenStates[ch.id] === true; } else { isMicOn = state.remoteTalkStates[uid] && state.remoteTalkStates[uid][ch.id] === true; isSpkOn = state.remoteListenStates[uid] && state.remoteListenStates[uid][ch.id] === true; }
             const micActiveClass = isMicOn ? 'active' : ''; const spkActiveClass = isSpkOn ? 'active' : ''; 
-            let micBtnHtml = ''; if (ch.type !== 'Listen') { micBtnHtml = `<div class="circle-btn remote-mic-btn ${disabledClass} ${micActiveClass}" data-uid="${uid}" data-chid="${ch.id}"><i class="fa-solid fa-microphone"></i></div>`; } else { micBtnHtml = `<div style="width: 26px; height: 26px;"></div>`; }
-            let spkBtnHtml = `<div class="circle-btn remote-spk-btn ${disabledClass} ${spkActiveClass}" data-uid="${uid}" data-chid="${ch.id}"><i class="fa-solid fa-volume-high"></i></div>`;
+            let micBtnHtml = ''; if (ch.type !== 'Listen') { micBtnHtml = `<div class="circle-btn remote-mic-btn ${disabledClass} ${micActiveClass}" data-uid="${uid}" data-chid="${ch.id}">${iconMic}</div>`; } else { micBtnHtml = `<div style="width: 26px; height: 26px;"></div>`; }
+            let spkBtnHtml = `<div class="circle-btn remote-spk-btn ${disabledClass} ${spkActiveClass}" data-uid="${uid}" data-chid="${ch.id}">${iconSpeaker}</div>`;
             const remoteGroupStyle = (isSelf && isIoOn) ? `style="opacity: 0.3; pointer-events: none;"` : ''; const remoteLabelText = isSelf ? 'LOCAL' : 'REMOTE'; const dataIsLocal = isSelf ? `data-is-local="true"` : '';
             html += `<td style="width:140px; min-width:140px;"><div class="cell-layout"><div class="matrix-toggle ${activeClass}" data-uid="${uid}" data-chid="${ch.id}"></div><div class="remote-group" ${remoteGroupStyle} ${dataIsLocal}><div class="remote-label">${remoteLabelText}</div><div class="remote-buttons">${spkBtnHtml}${micBtnHtml}</div></div><div class="cp-meter-bg"><div class="cp-meter-bar" id="cp-meter-${uid}-${ch.id}"></div></div></div></td>`; 
           });
@@ -1199,8 +1212,6 @@
       if(btn){btn.textContent = originalText; btn.style.opacity = "1";} if($('btn-join-member')) $('btn-join-member').disabled = false; if($('btn-join-admin')) $('btn-join-admin').disabled = false;
       const bsl = $('btn-show-login'); if(bsl){ bsl.classList.add('online'); }
       
-      const sr = $('status-role'); if (sr) sr.style.display = 'none'; 
-      
       loadRoomState(state.roomId);
       if (!state.registeredUsers.includes(state.myUserId)) {
           state.registeredUsers.push(state.myUserId);
@@ -1328,9 +1339,6 @@
               sendData({ type: 'hello', userId: state.myUserId }); 
               syncTalkStates(); 
               syncListenStates();
-              
-              // マイクのパブリッシュは「音声を有効にして参加」が押されたタイミング(publishLocalMic)で行われる
-              if(state.localStream) publishLocalMic();
 
           } catch (e) { 
               uiLog(`LiveKit Connect Error: ${e.message}`, '#ef4444');
@@ -1338,6 +1346,23 @@
           }
       })();
     };
+
+    function publishLocalMic() {
+        if (!state.room || !state.localStream || state.room.state !== 'connected') return;
+        const audioTrack = state.localStream.getAudioTracks()[0];
+        if (audioTrack && !state.localMicTrack) {
+            try {
+                state.room.localParticipant.publishTrack(audioTrack, { name: 'mic', source: LivekitClient.Track.Source.Microphone }).then(pub => {
+                    state.localMicTrack = pub.track;
+                    const isAnyTalking = Object.values(state.talkStates).some(v => v === true) && !state.isMasterMicMuted;
+                    if(state.localMicTrack && state.localMicTrack.mediaStreamTrack) {
+                        state.localMicTrack.mediaStreamTrack.enabled = isAnyTalking;
+                    }
+                    uiLog("Mic Track Published.");
+                }).catch(err => uiLog(`Mic Publish Error: ${err.message}`, '#ef4444'));
+            } catch (err) { uiLog(`Mic Publish Error: ${err.message}`, '#ef4444'); }
+        }
+    }
 
     setInterval(async () => {
         const rttEl = $('status-rtt'); if (!rttEl) return;
