@@ -111,12 +111,10 @@
     .video-dummy-text { color: #555; font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: bold; z-index: 1;} .video-wrapper video { width: 100%; height: 100%; object-fit: contain; background: #000; position: absolute; inset: 0; z-index: 5;}
     
     /* Admin Modal */
-    .admin-modal { width: 98%; max-width: 1100px; height: 90vh; max-height: 90vh; display: flex; flex-direction: column; padding: 25px; margin: auto; position: relative; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);}
-    .admin-header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; width: 100%; flex-shrink: 0;}
-    .admin-tabs-container { display: flex; gap: 8px; flex-grow: 1; margin-right: 15px;}
-    .btn-close-modal { background: transparent; border: none; color: #7a7e85; cursor: pointer; transition: color 0.2s ease; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; font-size: 28px; padding: 0; flex-shrink: 0;}
+    .admin-modal { width: 98%; max-width: 1100px; height: 90vh; max-height: 90vh; display: flex; flex-direction: column; padding: 25px 15px 15px; margin: auto; position: relative; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);}
+    .btn-close-modal { position: absolute; top: 10px; right: 15px; background: transparent; border: none; color: #7a7e85; cursor: pointer; z-index: 200; transition: color 0.2s ease; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 28px; padding: 0;}
     .btn-close-modal:hover { color: #ffffff; }
-    
+    .admin-tabs-container { display: flex; gap: 8px; padding: 0 10px; margin-bottom: 20px; margin-top: 15px; width: 100%; flex-shrink: 0;}
     .admin-tab-btn { flex: 1; min-width: 0; background: rgba(0, 0, 0, 0.4); border: 1px solid transparent; color: #555 !important; padding: 12px 4px; font-size: 13px; font-weight: bold; border-radius: 8px 8px 0 0; cursor: pointer; transition: all 0.2s ease; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; line-height: 1.2; text-align: center; position: relative; z-index: 1; margin-bottom: 0; }
     .admin-tab-btn i { font-size: 20px; opacity: 0.6; transition: all 0.2s; } .admin-tab-btn:hover { color: #aaa !important; }
     .admin-tab-btn.active { background-color: var(--card-bg); background-image: linear-gradient(to bottom, rgba(96, 165, 250, 0.15) 0%, rgba(96, 165, 250, 0) 100%); border: 1px solid var(--border-color); color: #ffffff !important; box-shadow: none; text-shadow: 0 0 6px rgba(255,255,255,0.4); z-index: 2; border-radius: 8px 8px 0 0; }
@@ -131,11 +129,11 @@
     .setting-group input:not([type="range"]):focus, .setting-group select:focus { outline: none; border-color: var(--blue); } .setting-group select:disabled { opacity: 0.5; cursor: not-allowed; }
     
     .io-panel { display: flex; flex-direction: column; gap: 30px; margin-bottom: 20px;}
-    .io-toggle-wrapper { width: 240px; height: 56px; background: #111216; border-radius: 28px; border: 2px solid var(--border-color); position: relative; cursor: pointer; display: flex; align-items: center; box-shadow: inset 0 2px 8px rgba(0,0,0,0.8); margin: 0 auto; touch-action: none;}
-    .io-toggle-slider { width: 48px; height: 48px; background: #7a7e85; border-radius: 50%; position: absolute; left: 2px; transition: left 0.3s ease, background-color 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.6); z-index: 2; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: bold; color: #fff;}
+    .io-toggle-wrapper { width: 240px; height: 56px; background: #111216; border-radius: 28px; border: 2px solid var(--border-color); position: relative; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; box-shadow: inset 0 2px 8px rgba(0,0,0,0.8); margin: 0 auto; touch-action: none;}
+    .io-toggle-slider { width: 48px; height: 48px; background: #7a7e85; border-radius: 50%; position: absolute; left: 2px; transition: left 0.3s cubic-bezier(0.4, 0.0, 0.2, 1), background-color 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.6); z-index: 2; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: bold; color: #fff;}
     .io-toggle-wrapper.active { background: var(--green); border-color: var(--green); box-shadow: inset 0 2px 8px rgba(0,0,0,0.4), 0 0 15px rgba(74, 222, 128, 0.3); }
-    .io-toggle-wrapper.active .io-toggle-slider { left: calc(100% - 52px); background: #ffffff; color: #000;}
-    .io-toggle-text { position: absolute; width: 100%; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: bold; transition: transform 0.3s ease, color 0.3s ease; z-index: 1; pointer-events: none; margin-top: 1px; letter-spacing: 1px;}
+    .io-toggle-wrapper.active .io-toggle-slider { left: calc(100% - 50px); background: #ffffff; color: #000;}
+    .io-toggle-text { position: absolute; width: 100%; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: bold; transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1), color 0.3s ease; z-index: 1; pointer-events: none; margin-top: 1px; letter-spacing: 1px;}
     .io-toggle-wrapper.active .io-toggle-text { color: #000; transform: translateX(-24px); } .io-toggle-wrapper:not(.active) .io-toggle-text { color: #7a7e85; transform: translateX(24px); }
     .io-select { width: 100%; height: 32px; background: #1c1d21; border: 1px solid var(--border-color); color: #fff; border-radius: 6px; font-size: 13px; padding: 0 10px; font-family: 'JetBrains Mono', monospace; cursor: pointer; transition: all 0.2s; text-align: center; text-align-last: center;}
     .io-select:focus { outline: none; border-color: var(--text-sub); }
@@ -146,7 +144,7 @@
     
     .io-interface-section { display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px;} .interface-title { font-size: 13px; font-weight: bold; color: var(--text-main); letter-spacing: 2px; margin: 0; padding-left: 10px; border-left: 3px solid var(--blue); font-family: 'JetBrains Mono', monospace; }
     .tally-row { display: flex; align-items: center; justify-content: center; padding: 10px 15px; background: #1c1d21; border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 8px; gap: 20px; flex-wrap: wrap; }
-    .tally-member-info { display: flex; align-items: center; justify-content: center; gap: 8px; flex-shrink: 0; width: 100px;}
+    .tally-member-info { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-shrink: 0; width: 100px;}
     .tally-btn-group { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; width: 240px; }
     .tally-btn { width: 100%; aspect-ratio: 1/1; max-height: 32px; border-radius: 4px; background: #121418; border: 1px solid #444; color: #888; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; transition: all 0.1s; }
     .tally-btn.active { background: var(--alert); color: #fff; border-color: var(--alert); box-shadow: 0 0 8px rgba(239, 68, 68, 0.6); }
@@ -177,7 +175,7 @@
     .remote-group { display: flex; flex-direction: column; align-items: center; background: #111216; border: 1px solid #2a2c33; border-radius: 6px; padding: 4px 6px 6px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.5); }
     .remote-label { font-family: 'JetBrains Mono', monospace; font-size: 8px; font-weight: bold; color: #666; margin-bottom: 4px; letter-spacing: 1px; } .remote-buttons { display: flex; gap: 6px; }
     .circle-btn { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #1c1d21; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.05); }
-    .circle-btn svg { width: 14px; height: 14px; fill: currentColor; pointer-events: none; } .circle-btn.disabled { border-color: #444 !important; color: #444 !important; background: #15161a; box-shadow: none; cursor: not-allowed; opacity: 0.5; }
+    .circle-btn i { font-size: 12px; pointer-events: none; } .circle-btn.disabled { border-color: #444 !important; color: #444 !important; background: #15161a; box-shadow: none; cursor: not-allowed; opacity: 0.5; }
     .remote-spk-btn { border: 1.5px solid var(--green); color: var(--green); } .remote-spk-btn.active { background-color: var(--green); color: #000; box-shadow: inset 0 2px 4px rgba(255,255,255,0.4), 0 0 10px rgba(74, 222, 128, 0.5); }
     .remote-mic-btn { border: 1.5px solid var(--red); color: var(--red); } .remote-mic-btn.active { background-color: var(--red); color: #fff; box-shadow: inset 0 2px 4px rgba(255,255,255,0.3), 0 0 10px rgba(220, 38, 38, 0.5); }
     .cp-meter-bg { width: 6px; height: 36px; background: #000; border-radius: 2px; position: relative; box-shadow: inset 0 0 3px rgba(0,0,0,0.8); overflow: hidden; margin-left: 2px;} .cp-meter-bar { width: 100%; height: 100%; background: linear-gradient(to top, #22c55e, #eab308, #ef4444); position: absolute; bottom: 0; left: 0; transform-origin: bottom; transform: scaleY(0); transition: transform 0.05s ease-out; }
@@ -210,10 +208,10 @@
     input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 18px; width: 18px; border-radius: 50%; background: #ffffff; box-shadow: 0 0 8px rgba(0,0,0,0.6); cursor: pointer; margin-top: 6px; border: none; }
     
     .card-main { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; position: relative; z-index: 2;} .ch-info { text-align: center; flex: 1; padding: 0 5px; }
-    .ch-name { font-size: 15px; font-weight: 500; margin-bottom: 0px; display: inline-block; padding: 2px 6px; border-radius: 4px; } .ch-type { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-sub); display: inline-block; padding: 0px 6px; border-radius: 4px; pointer-events: auto; }
-    .btn-action { width: 50px; height: 50px; border-radius: 50%; border: 2px solid; display: flex; align-items: center; justify-content: center; background: #1c1d21; touch-action: none; z-index: 10; user-select: none; box-shadow: 0 4px 8px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.05); transition: background-color 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, color 0.2s ease; cursor: pointer; font-size: 20px;}
+    .ch-name { font-size: 14px; font-weight: 500; margin-bottom: 2px; display: inline-block; padding: 2px 6px; border-radius: 4px; } .ch-type { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-sub); display: inline-block; padding: 0px 6px; border-radius: 4px; pointer-events: auto; }
+    .btn-action { width: 44px; height: 44px; border-radius: 50%; border: 2px solid; display: flex; align-items: center; justify-content: center; background: #1c1d21; touch-action: none; z-index: 10; user-select: none; box-shadow: 0 4px 8px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.05); transition: background-color 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, color 0.2s ease; cursor: pointer; font-size: 16px;}
     .btn-action.disabled-btn { opacity: 0.3; cursor: not-allowed; pointer-events: none; border-color: var(--border-color) !important; color: var(--text-sub) !important; background: #15161a !important; box-shadow: none !important; }
-    .btn-icon { width: 24px; height: 24px; fill: currentColor; pointer-events: none; }
+    .btn-icon { width: 20px; height: 20px; fill: currentColor; pointer-events: none; }
     .btn-listen { border-color: var(--green); color: var(--green); } .btn-listen.active, .btn-listen.latched { background-color: var(--green); color: var(--bg-dark); box-shadow: inset 0 2px 4px rgba(255,255,255,0.4), 0 4px 15px rgba(74, 222, 128, 0.5); }
     .btn-talk { border-color: var(--red); color: var(--red); } .btn-talk.active, .btn-talk.latched { background-color: var(--red); color: var(--text-main); box-shadow: inset 0 2px 4px rgba(255,255,255,0.3), 0 4px 15px rgba(220, 38, 38, 0.5); }
     .ch-meter-container { height: 4px; background: var(--bg-dark); margin: 0 45px 0; border-radius: 2px; overflow: hidden; position: relative; opacity: 0.8; z-index: 2;}
@@ -226,7 +224,7 @@
     .master-meter-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); } .master-meter-mask { position: absolute; right: 0; top: 0; bottom: 0; width: 100%; background-color: var(--bg-dark); transition: width 0.05s linear; }
 
     @media (max-width: 600px) {
-      .admin-modal { padding: 25px 15px; width: 100%; height: 100dvh; max-height: 100dvh; border-radius: 0; margin: 0;}
+      .admin-modal { padding: 50px 15px 15px; width: 100%; height: 100dvh; max-height: 100dvh; border-radius: 0; margin: 0;}
       .admin-settings-row { flex-direction: column; padding: 15px; }
       .io-grid { grid-template-columns: 1fr; }
       .io-ch-row { flex-direction: column; gap: 15px; }
@@ -240,7 +238,7 @@
       .header { padding: 4px 15px; border-bottom: 1px solid #1e2128; min-height: 36px;} #app-logo { height: 18px; } 
       .global-controls { padding: 2px 15px 4px; gap: 8px; min-height: 36px;} .btn-global { padding: 4px 8px; font-size: 11px; height: 28px; }
       .channel-list-container { padding: 4px 15px 10px; gap: 6px;} #channel-list-wrap { grid-template-columns: 1fr 1fr; gap: 6px; } 
-      .card-main { padding: 4px 10px; } .btn-action { width: 38px; height: 38px; border-width: 1.5px; } .btn-icon { width: 18px; height: 18px; }
+      .card-main { padding: 4px 10px; } .btn-action { width: 34px; height: 34px; border-width: 1.5px; } .btn-icon { width: 16px; height: 16px; }
       .ch-name { font-size: 13px; } .ch-type { font-size: 9px; } .card-footer { padding: 0 10px 2px !important; } .btn-expand { padding: 2px 30px !important; font-size: 12px !important; }
       .master-meter-container { height: 6px; } .monitor-section { padding: 5px 0; }
       .video-wrapper { height: auto; max-height: 45vh; width: 100%; max-width: 80vh; aspect-ratio: 16 / 9; margin: 0 auto; }
@@ -482,11 +480,6 @@
         }
     });
 
-    const iconSpeaker = `<svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
-    const iconSpeakerOff = `<svg class="btn-icon" viewBox="0 0 24 24"><path fill="currentColor" opacity="0.4" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/><line x1="4" y1="4" x2="20" y2="20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
-    const iconMic = `<svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>`;
-    const iconMicOff = `<svg class="btn-icon" viewBox="0 0 24 24"><path fill="currentColor" opacity="0.4" d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/><line x1="4" y1="4" x2="20" y2="20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
-
     const memStorage = {};
     const safeStorage = { 
         get: (key) => { try { return localStorage.getItem(key) || memStorage[key] || null; } catch(e) { return memStorage[key] || null; } }, 
@@ -555,11 +548,20 @@
             initAudioContext(); 
             $('dummy-audio')?.play().catch(()=>{});
             
+            // Audio Context開始後にマイク取得
             if (state.myUserId.toLowerCase() !== 'debug') {
                 const constraints = state.ioBridge.enabled ? { echoCancellation: false, noiseSuppression: false, autoGainControl: false } : { echoCancellation: true, noiseSuppression: true };
                 navigator.mediaDevices.getUserMedia({ audio: constraints })
                 .then(stream => {
                     state.localStream = stream;
+                    // --- ★メーター動作用のアナライザー接続を追加 ---
+                    if (state.audioCtx) { 
+                        if (state.localMicAnalyser) state.localMicAnalyser.disconnect(); 
+                        const localSrc = state.audioCtx.createMediaStreamSource(state.localStream); 
+                        state.localMicAnalyser = state.audioCtx.createAnalyser(); 
+                        state.localMicAnalyser.fftSize = 256; 
+                        localSrc.connect(state.localMicAnalyser); 
+                    }
                     if(state.room && state.room.state === 'connected') {
                         publishLocalMic();
                     }
@@ -606,11 +608,12 @@
       const count = state.room.remoteParticipants.size + 1;
       const activeEl = $('header-active-count');
       if(activeEl) { 
-          activeEl.innerHTML = `<i class="fa-solid fa-users"></i> <span>${count}</span>`; 
+          activeEl.innerHTML = `<i class="fa-solid fa-users"></i> <span id="active-num">${count}</span>`; 
           activeEl.style.display = 'block'; 
       }
     }
 
+    // --- 切断時の即時反応 ---
     function showDisconnectOverlay(msg) {
         const ov = $('disconnect-overlay'); if(!ov) return;
         ov.style.display = 'flex';
@@ -627,6 +630,16 @@
             if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: micConstraints });
                 state.localStream = stream;
+                
+                // メーター用結線
+                if (state.audioCtx) { 
+                    if (state.localMicAnalyser) state.localMicAnalyser.disconnect(); 
+                    const localSrc = state.audioCtx.createMediaStreamSource(state.localStream); 
+                    state.localMicAnalyser = state.audioCtx.createAnalyser(); 
+                    state.localMicAnalyser.fftSize = 256; 
+                    localSrc.connect(state.localMicAnalyser); 
+                }
+                
                 publishLocalMic();
             }
         } catch(e) { uiLog("Mic Update Error", '#f00'); }
@@ -728,7 +741,7 @@
     function attachVideoTrack(track) { const mw = $('monitor-video-wrapper'); if(!mw) return; mw.querySelectorAll('video').forEach(v => v.remove()); const videoEl = track.attach(); videoEl.style.width = '100%'; videoEl.style.height = '100%'; videoEl.style.objectFit = 'contain'; videoEl.style.background = '#000'; videoEl.style.position = 'absolute'; videoEl.style.inset = '0'; videoEl.style.zIndex = '5'; mw.appendChild(videoEl); const mst = $('main-monitor-source-text'); if(mst) mst.style.display = 'none'; }
     function detachVideoTrack(track) { if (track) track.detach(); const mw = $('monitor-video-wrapper'); if(mw) mw.querySelectorAll('video').forEach(v => v.remove()); const mst = $('main-monitor-source-text'); if(mst) mst.style.display = 'block'; }
 
-    function updateChannelIcons() { const bs = $('btn-master-spk'); const bm = $('btn-master-mic'); if(bs) bs.classList.toggle('active', state.isMasterSpkMuted); if(bm) bm.classList.toggle('active', state.isMasterMicMuted); state.channels?.forEach(ch => { const lBtn = $(`listen-${ch.id}`); const tBtn = $(`talk-${ch.id}`); if (lBtn) { lBtn.innerHTML = state.isMasterSpkMuted ? iconSpeakerOff : iconSpeaker; lBtn.classList.toggle('muted-slash', state.isMasterSpkMuted); } if (tBtn) { tBtn.innerHTML = state.isMasterMicMuted ? iconMicOff : iconMic; tBtn.classList.toggle('muted-slash', state.isMasterMicMuted); } }); }
+    function updateChannelIcons() { const bs = $('btn-master-spk'); const bm = $('btn-master-mic'); if(bs) bs.classList.toggle('active', state.isMasterSpkMuted); if(bm) bm.classList.toggle('active', state.isMasterMicMuted); state.channels?.forEach(ch => { const lBtn = $(`listen-${ch.id}`); const tBtn = $(`talk-${ch.id}`); if (lBtn) { lBtn.innerHTML = state.isMasterSpkMuted ? `<i class="fa-solid fa-volume-xmark btn-icon" style="opacity: 0.4;"></i>` : `<i class="fa-solid fa-volume-high btn-icon"></i>`; lBtn.classList.toggle('muted-slash', state.isMasterSpkMuted); } if (tBtn) { tBtn.innerHTML = state.isMasterMicMuted ? `<i class="fa-solid fa-microphone-slash btn-icon" style="opacity: 0.4;"></i>` : `<i class="fa-solid fa-microphone btn-icon"></i>`; tBtn.classList.toggle('muted-slash', state.isMasterMicMuted); } }); }
     function toggleMasterSpk() { state.isMasterSpkMuted = !state.isMasterSpkMuted; updateAudioRouting(); updateChannelIcons(); } function toggleMasterMic() { state.isMasterMicMuted = !state.isMasterMicMuted; updateAudioRouting(); updateChannelIcons(); syncTalkStates(); }
 
     function saveRoomState() { 
@@ -760,11 +773,12 @@
       if(!ch || ch.id === 'ch-video') return; 
       if(state.listenStates[ch.id] === undefined) state.listenStates[ch.id] = false; if(state.talkStates[ch.id] === undefined) state.talkStates[ch.id] = false; if(state.channelVolumes[ch.id] === undefined) state.channelVolumes[ch.id] = 1.5;
       const listenClass = state.listenStates[ch.id] ? 'listen-on' : ''; const talkClass = state.talkStates[ch.id] ? 'talk-on' : '';
-      const curListenIcon = state.isMasterSpkMuted ? iconSpeakerOff : iconSpeaker; const curTalkIcon = state.isMasterMicMuted ? iconMicOff : iconMic;
+      const curListenIcon = state.isMasterSpkMuted ? `<i class="fa-solid fa-volume-xmark btn-icon" style="opacity: 0.4;"></i>` : `<i class="fa-solid fa-volume-high btn-icon"></i>`; 
+      const curTalkIcon = state.isMasterMicMuted ? `<i class="fa-solid fa-microphone-slash btn-icon" style="opacity: 0.4;"></i>` : `<i class="fa-solid fa-microphone btn-icon"></i>`;
       const lMuted = state.isMasterSpkMuted ? 'muted-slash' : ''; const tMuted = state.isMasterMicMuted ? 'muted-slash' : '';
 
       const card = document.createElement('div'); card.className = `channel-card ${listenClass} ${talkClass}`; card.id = `card-${ch.id}`;
-      card.innerHTML = `<div class="status-line-bg"><div class="status-line-grad"></div><div class="status-line-mask" id="meter-${ch.id}"></div></div><div class="card-main"><div class="btn-action btn-listen ${state.listenStates[ch.id] ? 'active latched' : ''} ${lMuted}" id="listen-${ch.id}">${curListenIcon}</div><div class="ch-info"><div class="ch-name" id="name-${ch.id}">${ch.name || 'Unknown'}</div><div class="ch-type" id="type-${ch.id}">${ch.type || 'PL'}</div></div>${ch.type === 'Listen' ? `<div style="width: 50px; height: 50px;"></div>` : `<div class="btn-action btn-talk ${state.talkStates[ch.id] ? 'active latched' : ''} ${tMuted}" id="talk-${ch.id}">${curTalkIcon}</div>`}</div><div class="ch-meter-container"><div class="ch-meter-grad"></div><div class="ch-meter-mask" id="ch-meter-fill-${ch.id}"></div></div><div class="volume-panel"><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M18.5 12A4.5 4.5 0 0 0 16 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg><div class="vol-slider-wrap"><div class="vol-slider-track-bg"></div><div class="vol-slider-fill" id="fill-${ch.id}"></div><input type="range" id="vol-${ch.id}" min="0" max="100" value="50"></div><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></div><div class="card-footer"><div class="btn-expand" id="expand-${ch.id}">○ ○ ○</div></div>`;
+      card.innerHTML = `<div class="status-line-bg"><div class="status-line-grad"></div><div class="status-line-mask" id="ch-meter-fill-${ch.id}"></div></div><div class="card-main"><div class="btn-action btn-listen ${state.listenStates[ch.id] ? 'active latched' : ''} ${lMuted}" id="listen-${ch.id}">${curListenIcon}</div><div class="ch-info"><div class="ch-name" id="name-${ch.id}">${ch.name || 'Unknown'}</div><div class="ch-type" id="type-${ch.id}">${ch.type || 'PL'}</div></div>${ch.type === 'Listen' ? `<div style="width: 44px; height: 44px;"></div>` : `<div class="btn-action btn-talk ${state.talkStates[ch.id] ? 'active latched' : ''} ${tMuted}" id="talk-${ch.id}">${curTalkIcon}</div>`}</div><div class="ch-meter-container"><div class="ch-meter-grad"></div><div class="ch-meter-mask" id="meter-${ch.id}"></div></div><div class="volume-panel"><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M18.5 12A4.5 4.5 0 0 0 16 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg><div class="vol-slider-wrap"><div class="vol-slider-track-bg"></div><div class="vol-slider-fill" id="fill-${ch.id}"></div><input type="range" id="vol-${ch.id}" min="0" max="100" value="50"></div><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></div><div class="card-footer"><div class="btn-expand" id="expand-${ch.id}">○ ○ ○</div></div>`;
       const cw = $('channel-list-wrap'); if(cw) cw.appendChild(card);
       const slider = card.querySelector(`#vol-${ch.id}`); const fill = card.querySelector(`#fill-${ch.id}`); const leftMeter = card.querySelector(`#meter-${ch.id}`);
       slider.value = (state.channelVolumes[ch.id] / 3.0) * 100; fill.style.width = slider.value + '%'; leftMeter.style.height = (100 - slider.value) + '%'; 
@@ -833,13 +847,10 @@
           state.masterAudioEl = new Audio(); state.masterAudioEl.srcObject = masterDest.stream; state.masterAudioEl.play().catch(e => {});
           
           if (state.localStream) { 
-              const audioTrack = state.localStream.getAudioTracks()[0];
-              if(audioTrack) {
-                  const localSrc = state.audioCtx.createMediaStreamSource(new MediaStream([audioTrack.clone()])); 
-                  state.localMicAnalyser = state.audioCtx.createAnalyser(); 
-                  state.localMicAnalyser.fftSize = 256; 
-                  localSrc.connect(state.localMicAnalyser);
-              }
+              const localSrc = state.audioCtx.createMediaStreamSource(state.localStream); 
+              state.localMicAnalyser = state.audioCtx.createAnalyser(); 
+              state.localMicAnalyser.fftSize = 256; 
+              localSrc.connect(state.localMicAnalyser);
           } 
           startMeterDraw(); state.channels?.forEach(ch => setupChannelAudio(ch.id)); applyOutputDevice();
       }
@@ -851,6 +862,7 @@
         const audioTrack = state.localStream.getAudioTracks()[0];
         if (audioTrack && !state.localMicTrack) {
             try {
+                // 生のTrackをパブリッシュし、返り値のパブリケーションからTrackオブジェクトを保持する
                 state.room.localParticipant.publishTrack(audioTrack, { name: 'mic', source: LivekitClient.Track.Source.Microphone }).then(pub => {
                     state.localMicTrack = pub.track;
                     const isAnyTalking = Object.values(state.talkStates).some(v => v === true) && !state.isMasterMicMuted;
@@ -879,13 +891,45 @@
 
     let lastDrawTime = 0;
     function startMeterDraw() {
-      const masterData = new Uint8Array(state.masterAnalyser.frequencyBinCount); let localData = state.localMicAnalyser ? new Uint8Array(state.localMicAnalyser.frequencyBinCount) : null;
+      const masterData = new Uint8Array(state.masterAnalyser.frequencyBinCount); 
+      let localData = state.localMicAnalyser ? new Uint8Array(state.localMicAnalyser.frequencyBinCount) : null;
       function draw(timestamp) {
         requestAnimationFrame(draw); if (timestamp - lastDrawTime < 30) return; lastDrawTime = timestamp;
-        state.masterAnalyser.getByteFrequencyData(masterData); let sum = 0; for(let i=0; i<masterData.length; i++) sum += masterData[i];
-        const masterPercent = Math.min(((sum / masterData.length) / 255) * 100 * 2.0, 100); const mf = $('master-meter-fill'); if(mf) mf.style.width = Math.max(100 - masterPercent, 0) + '%';
-        let localPercent = 0; if (state.localMicAnalyser && localData) { state.localMicAnalyser.getByteFrequencyData(localData); let lSum = 0; for(let i=0; i<localData.length; i++) lSum += localData[i]; localPercent = ((lSum / localData.length) / 255) * 100 * 2.0; }
-        state.channels?.forEach(ch => { if (state.channelNodes[ch.id]) { const chData = new Uint8Array(state.channelNodes[ch.id].analyser.frequencyBinCount); state.channelNodes[ch.id].analyser.getByteFrequencyData(chData); let chSum = 0; for(let i=0; i<chData.length; i++) chSum += chData[i]; let chPercent = ((chSum / chData.length) / 255) * 100 * 2.5; if (state.talkStates[ch.id]) chPercent = Math.max(chPercent, localPercent); const meterEl = $(`ch-meter-fill-${ch.id}`); if (meterEl) meterEl.style.width = Math.max(100 - Math.min(chPercent, 100), 0) + '%'; } });
+        
+        state.masterAnalyser.getByteFrequencyData(masterData); 
+        let mPeak = 0; for(let i=0; i<masterData.length; i++) { if(masterData[i] > mPeak) mPeak = masterData[i]; }
+        const masterPercent = Math.min((mPeak / 255) * 100 * 1.5, 100); 
+        const mf = $('master-meter-fill'); if(mf) mf.style.width = Math.max(100 - masterPercent, 0) + '%';
+        
+        let localPercent = 0; 
+        if (state.localMicAnalyser && localData) { 
+            state.localMicAnalyser.getByteFrequencyData(localData); 
+            let lPeak = 0; for(let i=0; i<localData.length; i++) { if(localData[i] > lPeak) lPeak = localData[i]; } 
+            localPercent = (lPeak / 255) * 100 * 1.5; 
+        }
+        
+        state.channels?.forEach(ch => { 
+            if (state.channelNodes[ch.id]) { 
+                const chData = new Uint8Array(state.channelNodes[ch.id].analyser.frequencyBinCount); 
+                state.channelNodes[ch.id].analyser.getByteFrequencyData(chData); 
+                let chPeak = 0; for(let i=0; i<chData.length; i++) { if(chData[i] > chPeak) chPeak = chData[i]; } 
+                let chPercent = (chPeak / 255) * 100 * 1.5; 
+                
+                // 他の人が喋っている場合のメーター反映
+                for (let pid in state.mediaCalls) {
+                    if (state.remoteTalkStates[pid] && state.remoteTalkStates[pid][ch.id] && state.mediaCalls[pid].analyser && !state.mediaCalls[pid].isIOTrack) {
+                        const pData = new Uint8Array(state.mediaCalls[pid].analyser.frequencyBinCount);
+                        state.mediaCalls[pid].analyser.getByteFrequencyData(pData);
+                        let pPeak = 0; for(let j=0; j<pData.length; j++) { if(pData[j] > pPeak) pPeak = pData[j]; }
+                        const pPercent = (pPeak / 255) * 100 * 1.5;
+                        chPercent = Math.max(chPercent, pPercent);
+                    }
+                }
+
+                if (state.talkStates[ch.id]) chPercent = Math.max(chPercent, localPercent); 
+                const meterEl = $(`ch-meter-fill-${ch.id}`); if (meterEl) meterEl.style.width = Math.max(100 - Math.min(chPercent, 100), 0) + '%'; 
+            } 
+        });
         
         if (state.isAdmin && state.ioBridge.enabled) {
             const updateIoMeterHorizontal = (analyser, meterId) => { if (!analyser) return; const meterEl = $(meterId); if (!meterEl) return; const data = new Uint8Array(analyser.frequencyBinCount); analyser.getByteFrequencyData(data); let peak = 0; for(let i=0; i<data.length; i++) { if(data[i] > peak) peak = data[i]; } const volPercent = Math.min((peak / 255) * 100 * 1.5, 100); meterEl.style.width = `${volPercent}%`; };
@@ -998,8 +1042,8 @@
             let isMicOn = false; let isSpkOn = false;
             if (isSelf) { isMicOn = state.talkStates[ch.id] === true; isSpkOn = state.listenStates[ch.id] === true; } else { isMicOn = state.remoteTalkStates[uid] && state.remoteTalkStates[uid][ch.id] === true; isSpkOn = state.remoteListenStates[uid] && state.remoteListenStates[uid][ch.id] === true; }
             const micActiveClass = isMicOn ? 'active' : ''; const spkActiveClass = isSpkOn ? 'active' : ''; 
-            let micBtnHtml = ''; if (ch.type !== 'Listen') { micBtnHtml = `<div class="circle-btn remote-mic-btn ${disabledClass} ${micActiveClass}" data-uid="${uid}" data-chid="${ch.id}">${iconMic}</div>`; } else { micBtnHtml = `<div style="width: 26px; height: 26px;"></div>`; }
-            let spkBtnHtml = `<div class="circle-btn remote-spk-btn ${disabledClass} ${spkActiveClass}" data-uid="${uid}" data-chid="${ch.id}">${iconSpeaker}</div>`;
+            let micBtnHtml = ''; if (ch.type !== 'Listen') { micBtnHtml = `<div class="circle-btn remote-mic-btn ${disabledClass} ${micActiveClass}" data-uid="${uid}" data-chid="${ch.id}"><i class="fa-solid fa-microphone"></i></div>`; } else { micBtnHtml = `<div style="width: 26px; height: 26px;"></div>`; }
+            let spkBtnHtml = `<div class="circle-btn remote-spk-btn ${disabledClass} ${spkActiveClass}" data-uid="${uid}" data-chid="${ch.id}"><i class="fa-solid fa-volume-high"></i></div>`;
             const remoteGroupStyle = (isSelf && isIoOn) ? `style="opacity: 0.3; pointer-events: none;"` : ''; const remoteLabelText = isSelf ? 'LOCAL' : 'REMOTE'; const dataIsLocal = isSelf ? `data-is-local="true"` : '';
             html += `<td style="width:140px; min-width:140px;"><div class="cell-layout"><div class="matrix-toggle ${activeClass}" data-uid="${uid}" data-chid="${ch.id}"></div><div class="remote-group" ${remoteGroupStyle} ${dataIsLocal}><div class="remote-label">${remoteLabelText}</div><div class="remote-buttons">${spkBtnHtml}${micBtnHtml}</div></div><div class="cp-meter-bg"><div class="cp-meter-bar" id="cp-meter-${uid}-${ch.id}"></div></div></div></td>`; 
           });
@@ -1155,6 +1199,8 @@
       if(btn){btn.textContent = originalText; btn.style.opacity = "1";} if($('btn-join-member')) $('btn-join-member').disabled = false; if($('btn-join-admin')) $('btn-join-admin').disabled = false;
       const bsl = $('btn-show-login'); if(bsl){ bsl.classList.add('online'); }
       
+      const sr = $('status-role'); if (sr) sr.style.display = 'none'; 
+      
       loadRoomState(state.roomId);
       if (!state.registeredUsers.includes(state.myUserId)) {
           state.registeredUsers.push(state.myUserId);
@@ -1183,7 +1229,7 @@
                     publishData: () => {}, setMicrophoneEnabled: async () => {}, setScreenShareEnabled: async () => {},
                     setCameraEnabled: async () => {}, unpublishTrack: async () => {}, publishTrack: async () => {}, getTrackPublication: () => { return null; }
                 },
-                engine: { pcManager: { subscriber: { pc: { getStats: async () => [] } } } } 
+                engine: { pcManager: { subscriber: { pc: { getStats: async () => [] } } } } // RTT用ダミー
             };
             if (state.channels.length > 1) state.remoteTalkStates = { 'Cam1': { [state.channels[1].id]: true } };
             
