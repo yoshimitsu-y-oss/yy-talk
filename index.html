@@ -68,9 +68,11 @@
     .app-container { width: 100%; height: 100dvh; display: flex; flex-direction: column; position: relative; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); margin: 0; }
     
     .overlay-base { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; flex-direction: column; backdrop-filter: blur(4px); z-index: 1000;}
-    #login-overlay { z-index: 2000; display: flex; } #disconnect-overlay { z-index: 3000; background: rgba(220, 38, 38, 0.95); }
+    #login-overlay { z-index: 2000; display: flex; } #disconnect-overlay { z-index: 3000; background: rgba(220, 38, 38, 0.95); } #audio-overlay { z-index: 1100; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     
+    .btn-green-solid { background: var(--green); color: #000; border: none; padding: 15px 30px; font-size: 18px; font-weight: bold; border-radius: 30px; cursor: pointer; transition: 0.2s;}
+    .btn-green-solid:hover { background: #34d399; }
     .login-modal { background: var(--card-bg); padding: 40px 50px; border-radius: 16px; width: 90%; max-width: 480px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 15px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); margin: auto; position: relative;}
     .login-modal .btn-close-login { position: absolute; top: 10px; right: 10px; background: transparent; border: none; color: #9ca3af; font-size: 24px; cursor: pointer; padding: 15px; display: none; align-items: center; justify-content: center; z-index: 2010; font-weight: normal; }
     .login-modal button:not(.btn-close-login) { padding: 16px; border: none; border-radius: 8px; font-weight: bold; color: #000; cursor: pointer; font-size: 15px; z-index: 2001; transition: 0.2s;}
@@ -109,12 +111,12 @@
     .video-dummy-text { color: #555; font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: bold; z-index: 1;} .video-wrapper video { width: 100%; height: 100%; object-fit: contain; background: #000; position: absolute; inset: 0; z-index: 5;}
     
     /* Admin Modal */
-    .admin-modal { width: 98%; max-width: 1100px; height: 90vh; max-height: 90vh; display: flex; flex-direction: column; padding: 25px 15px 15px; margin: auto; position: relative; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);}
-    /* バツボタンを大きく、押しやすく */
-    .btn-close-modal { position: absolute; top: -5px; right: 5px; background: transparent; border: none; color: #7a7e85; cursor: pointer; z-index: 200; transition: color 0.2s ease; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 32px; padding: 10px; line-height: 1;}
+    .admin-modal { width: 98%; max-width: 1100px; height: 90vh; max-height: 90vh; display: flex; flex-direction: column; padding: 25px; margin: auto; position: relative; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);}
+    .admin-header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; width: 100%; flex-shrink: 0;}
+    .admin-tabs-container { display: flex; gap: 8px; flex-grow: 1; margin-right: 20px;}
+    .btn-close-modal { background: transparent; border: none; color: #7a7e85; cursor: pointer; transition: color 0.2s ease; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 28px; padding: 0; flex-shrink: 0;}
     .btn-close-modal:hover { color: #ffffff; }
     
-    .admin-tabs-container { display: flex; gap: 8px; padding: 0 10px; margin-bottom: 20px; margin-top: 15px; width: 100%; flex-shrink: 0;}
     .admin-tab-btn { flex: 1; min-width: 0; background: rgba(0, 0, 0, 0.4); border: 1px solid transparent; color: #555 !important; padding: 12px 4px; font-size: 13px; font-weight: bold; border-radius: 8px 8px 0 0; cursor: pointer; transition: all 0.2s ease; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; line-height: 1.2; text-align: center; position: relative; z-index: 1; margin-bottom: 0; }
     .admin-tab-btn i { font-size: 20px; opacity: 0.6; transition: all 0.2s; } .admin-tab-btn:hover { color: #aaa !important; }
     .admin-tab-btn.active { background-color: var(--card-bg); background-image: linear-gradient(to bottom, rgba(96, 165, 250, 0.15) 0%, rgba(96, 165, 250, 0) 100%); border: 1px solid var(--border-color); color: #ffffff !important; box-shadow: none; text-shadow: 0 0 6px rgba(255,255,255,0.4); z-index: 2; border-radius: 8px 8px 0 0; }
@@ -175,7 +177,7 @@
     .remote-group { display: flex; flex-direction: column; align-items: center; background: #111216; border: 1px solid #2a2c33; border-radius: 6px; padding: 4px 6px 6px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.5); }
     .remote-label { font-family: 'JetBrains Mono', monospace; font-size: 8px; font-weight: bold; color: #666; margin-bottom: 4px; letter-spacing: 1px; } .remote-buttons { display: flex; gap: 6px; }
     .circle-btn { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #1c1d21; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.05); }
-    .circle-btn i { font-size: 12px; pointer-events: none; } .circle-btn.disabled { border-color: #444 !important; color: #444 !important; background: #15161a; box-shadow: none; cursor: not-allowed; opacity: 0.5; }
+    .circle-btn .btn-icon { width: 14px; height: 14px; fill: currentColor; pointer-events: none; } .circle-btn.disabled { border-color: #444 !important; color: #444 !important; background: #15161a; box-shadow: none; cursor: not-allowed; opacity: 0.5; }
     .remote-spk-btn { border: 1.5px solid var(--green); color: var(--green); } .remote-spk-btn.active { background-color: var(--green); color: #000; box-shadow: inset 0 2px 4px rgba(255,255,255,0.4), 0 0 10px rgba(74, 222, 128, 0.5); }
     .remote-mic-btn { border: 1.5px solid var(--red); color: var(--red); } .remote-mic-btn.active { background-color: var(--red); color: #fff; box-shadow: inset 0 2px 4px rgba(255,255,255,0.3), 0 0 10px rgba(220, 38, 38, 0.5); }
     .cp-meter-bg { width: 6px; height: 36px; background: #000; border-radius: 2px; position: relative; box-shadow: inset 0 0 3px rgba(0,0,0,0.8); overflow: hidden; margin-left: 2px;} .cp-meter-bar { width: 100%; height: 100%; background: linear-gradient(to top, #22c55e, #eab308, #ef4444); position: absolute; bottom: 0; left: 0; transform-origin: bottom; transform: scaleY(0); transition: transform 0.05s ease-out; }
@@ -224,7 +226,7 @@
     .master-meter-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); } .master-meter-mask { position: absolute; right: 0; top: 0; bottom: 0; width: 100%; background-color: var(--bg-dark); transition: width 0.05s linear; }
 
     @media (max-width: 600px) {
-      .admin-modal { padding: 50px 15px 15px; width: 100%; height: 100dvh; max-height: 100dvh; border-radius: 0; margin: 0;}
+      .admin-modal { padding: 15px; width: 100%; height: 100dvh; max-height: 100dvh; border-radius: 0; margin: 0;}
       .admin-settings-row { flex-direction: column; padding: 15px; }
       .io-grid { grid-template-columns: 1fr; }
       .io-ch-row { flex-direction: column; gap: 15px; }
@@ -254,6 +256,7 @@
   </div>
 
   <div class="app-container" id="main-app-container">
+    <div id="audio-overlay" class="overlay-base"><p style="font-weight:bold;margin-bottom:20px;font-size:18px;">通話に参加しますか？</p><button id="btn-enable-audio" class="btn-green-solid">音声を有効にして参加</button></div>
     
     <div id="disconnect-overlay" class="overlay-base">
       <div class="loader-spinner" style="border: 4px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px;"></div>
@@ -299,11 +302,13 @@
     <!-- 管理者パネル -->
     <div id="admin-overlay" class="overlay-base">
       <div class="login-modal admin-modal">
-        <button id="btn-close-admin" class="btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
-        <div class="admin-tabs-container">
-          <button id="tab-video" class="admin-tab-btn active"><i class="fa-solid fa-tv"></i><span>VIDEO TALLY</span></button>
-          <button id="tab-patch" class="admin-tab-btn"><i class="fa-solid fa-network-wired"></i><span>PATCH PANEL</span></button>
-          <button id="tab-io" class="admin-tab-btn"><i class="fa-solid fa-sliders"></i><span>I/O BRIDGE</span></button>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; position: relative;">
+          <div class="admin-tabs-container" style="margin: 0; padding: 0; flex-grow: 1; margin-right: 40px;">
+            <button id="tab-video" class="admin-tab-btn active"><i class="fa-solid fa-tv"></i><span>VIDEO TALLY</span></button>
+            <button id="tab-patch" class="admin-tab-btn"><i class="fa-solid fa-network-wired"></i><span>PATCH PANEL</span></button>
+            <button id="tab-io" class="admin-tab-btn"><i class="fa-solid fa-sliders"></i><span>I/O BRIDGE</span></button>
+          </div>
+          <button id="btn-close-admin" class="btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="scroll-area">
           <div id="admin-video-section">
@@ -373,8 +378,8 @@
     </div>
 
     <div class="global-controls">
-      <button id="btn-master-spk" class="btn-global btn-master-spk"><i class="fa-solid fa-volume-high"></i> SPK MUTE</button>
-      <button id="btn-master-mic" class="btn-global btn-master-mic"><i class="fa-solid fa-microphone"></i> MIC MUTE</button>
+      <button id="btn-master-spk" class="btn-global btn-master-spk"><span id="global-spk-icon"></span> SPK MUTE</button>
+      <button id="btn-master-mic" class="btn-global btn-master-mic"><span id="global-mic-icon"></span> MIC MUTE</button>
     </div>
 
     <div class="channel-list-container" id="channel-list-wrap"></div>
@@ -405,8 +410,8 @@
 
     // --- HTML圧縮用 I/O Bridge 動的生成 ---
     function generateIoHtml() {
-        const volL = `<i class="fa-solid fa-volume-low vol-icon"></i>`;
-        const volR = `<i class="fa-solid fa-volume-high vol-icon"></i>`;
+        const volL = `<svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M18.5 12A4.5 4.5 0 0 0 16 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg>`;
+        const volR = `<svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
         function buildSec(title, dLab, dId, items) {
             let h = `<div class="io-interface-section"><h4 class="interface-title">${title}</h4><div class="io-grid">`;
             h += `<div class="io-card">`;
@@ -473,6 +478,11 @@
         }
     });
 
+    const iconSpeaker = `<svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
+    const iconSpeakerOff = `<svg class="btn-icon" viewBox="0 0 24 24"><path fill="currentColor" opacity="0.4" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/><line x1="4" y1="4" x2="20" y2="20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
+    const iconMic = `<svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>`;
+    const iconMicOff = `<svg class="btn-icon" viewBox="0 0 24 24"><path fill="currentColor" opacity="0.4" d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/><line x1="4" y1="4" x2="20" y2="20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
+
     const memStorage = {};
     const safeStorage = { 
         get: (key) => { try { return localStorage.getItem(key) || memStorage[key] || null; } catch(e) { return memStorage[key] || null; } }, 
@@ -533,6 +543,25 @@
 
         const bjm = $('btn-join-member'); if(bjm) bjm.onclick = () => joinNetwork(false);
         const bja = $('btn-join-admin'); if(bja) bja.onclick = () => joinNetwork(true);
+        const bea = $('btn-enable-audio'); if(bea) bea.onclick = () => { 
+            $('audio-overlay').style.display = 'none'; 
+            state.audioEnabled = true; 
+            initAudioContext(); 
+            $('dummy-audio')?.play().catch(()=>{});
+            
+            // Audio Context開始後にマイク取得
+            if (state.myUserId.toLowerCase() !== 'debug') {
+                const constraints = state.ioBridge.enabled ? { echoCancellation: false, noiseSuppression: false, autoGainControl: false } : { echoCancellation: true, noiseSuppression: true };
+                navigator.mediaDevices.getUserMedia({ audio: constraints })
+                .then(stream => {
+                    state.localStream = stream;
+                    if(state.room && state.room.state === 'connected') {
+                        publishLocalMic();
+                    }
+                })
+                .catch(err => uiLog("マイクアクセス拒否:" + err.message, '#f97316'));
+            }
+        };
         const bStop = $('btn-stop'); if(bStop) bStop.onclick = () => { LocalProfile.clear(); location.reload(); };
 
         const cWrap = $('channel-list-wrap');
@@ -571,8 +600,8 @@
     function updateUserCount() {
       if(!state.room) return;
       const count = state.room.remoteParticipants.size + 1;
-      const activeEl = $('header-active-count');
-      if(activeEl) { activeEl.innerHTML = `<i class="fa-solid fa-users"></i> ${count}`; activeEl.style.display = 'block'; }
+      const activeEl = $('header-active-count'); const sepEl = $('header-user-separator');
+      if(activeEl && sepEl) { activeEl.textContent = `ACTIVE: ${count}`; activeEl.style.display = 'block'; sepEl.style.display = 'block'; }
     }
 
     // --- 切断時の即時反応 ---
@@ -592,15 +621,7 @@
             if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: micConstraints });
                 state.localStream = stream;
-                const audioTrack = stream.getAudioTracks()[0];
-                if (audioTrack) {
-                    const localMicTrack = new LivekitClient.LocalAudioTrack(audioTrack);
-                    state.localMicTrack = localMicTrack;
-                    await state.room.localParticipant.publishTrack(localMicTrack, { name: 'mic', source: LivekitClient.Track.Source.Microphone });
-                    const isAnyTalking = Object.values(state.talkStates).some(v => v === true) && !state.isMasterMicMuted;
-                    if (!isAnyTalking) await localMicTrack.mute(); else await localMicTrack.unmute();
-                }
-                if (state.audioCtx) { if (state.localMicAnalyser) state.localMicAnalyser.disconnect(); const localSrc = state.audioCtx.createMediaStreamSource(state.localStream); state.localMicAnalyser = state.audioCtx.createAnalyser(); state.localMicAnalyser.fftSize = 256; localSrc.connect(state.localMicAnalyser); }
+                publishLocalMic();
             }
         } catch(e) { uiLog("Mic Update Error", '#f00'); }
 
@@ -701,7 +722,7 @@
     function attachVideoTrack(track) { const mw = $('monitor-video-wrapper'); if(!mw) return; mw.querySelectorAll('video').forEach(v => v.remove()); const videoEl = track.attach(); videoEl.style.width = '100%'; videoEl.style.height = '100%'; videoEl.style.objectFit = 'contain'; videoEl.style.background = '#000'; videoEl.style.position = 'absolute'; videoEl.style.inset = '0'; videoEl.style.zIndex = '5'; mw.appendChild(videoEl); const mst = $('main-monitor-source-text'); if(mst) mst.style.display = 'none'; }
     function detachVideoTrack(track) { if (track) track.detach(); const mw = $('monitor-video-wrapper'); if(mw) mw.querySelectorAll('video').forEach(v => v.remove()); const mst = $('main-monitor-source-text'); if(mst) mst.style.display = 'block'; }
 
-    function updateChannelIcons() { const bs = $('btn-master-spk'); const bm = $('btn-master-mic'); if(bs) bs.classList.toggle('active', state.isMasterSpkMuted); if(bm) bm.classList.toggle('active', state.isMasterMicMuted); state.channels?.forEach(ch => { const lBtn = $(`listen-${ch.id}`); const tBtn = $(`talk-${ch.id}`); if (lBtn) { lBtn.innerHTML = state.isMasterSpkMuted ? `<i class="fa-solid fa-volume-xmark btn-icon" style="opacity: 0.4;"></i>` : `<i class="fa-solid fa-volume-high btn-icon"></i>`; lBtn.classList.toggle('muted-slash', state.isMasterSpkMuted); } if (tBtn) { tBtn.innerHTML = state.isMasterMicMuted ? `<i class="fa-solid fa-microphone-slash btn-icon" style="opacity: 0.4;"></i>` : `<i class="fa-solid fa-microphone btn-icon"></i>`; tBtn.classList.toggle('muted-slash', state.isMasterMicMuted); } }); }
+    function updateChannelIcons() { const bs = $('btn-master-spk'); const bm = $('btn-master-mic'); if(bs) bs.classList.toggle('active', state.isMasterSpkMuted); if(bm) bm.classList.toggle('active', state.isMasterMicMuted); state.channels?.forEach(ch => { const lBtn = $(`listen-${ch.id}`); const tBtn = $(`talk-${ch.id}`); if (lBtn) { lBtn.innerHTML = state.isMasterSpkMuted ? iconSpeakerOff : iconSpeaker; lBtn.classList.toggle('muted-slash', state.isMasterSpkMuted); } if (tBtn) { tBtn.innerHTML = state.isMasterMicMuted ? iconMicOff : iconMic; tBtn.classList.toggle('muted-slash', state.isMasterMicMuted); } }); }
     function toggleMasterSpk() { state.isMasterSpkMuted = !state.isMasterSpkMuted; updateAudioRouting(); updateChannelIcons(); } function toggleMasterMic() { state.isMasterMicMuted = !state.isMasterMicMuted; updateAudioRouting(); updateChannelIcons(); syncTalkStates(); }
 
     function saveRoomState() { 
@@ -733,12 +754,11 @@
       if(!ch || ch.id === 'ch-video') return; 
       if(state.listenStates[ch.id] === undefined) state.listenStates[ch.id] = false; if(state.talkStates[ch.id] === undefined) state.talkStates[ch.id] = false; if(state.channelVolumes[ch.id] === undefined) state.channelVolumes[ch.id] = 1.5;
       const listenClass = state.listenStates[ch.id] ? 'listen-on' : ''; const talkClass = state.talkStates[ch.id] ? 'talk-on' : '';
-      const curListenIcon = state.isMasterSpkMuted ? `<i class="fa-solid fa-volume-xmark btn-icon" style="opacity: 0.4;"></i>` : `<i class="fa-solid fa-volume-high btn-icon"></i>`; 
-      const curTalkIcon = state.isMasterMicMuted ? `<i class="fa-solid fa-microphone-slash btn-icon" style="opacity: 0.4;"></i>` : `<i class="fa-solid fa-microphone btn-icon"></i>`;
+      const curListenIcon = state.isMasterSpkMuted ? iconSpeakerOff : iconSpeaker; const curTalkIcon = state.isMasterMicMuted ? iconMicOff : iconMic;
       const lMuted = state.isMasterSpkMuted ? 'muted-slash' : ''; const tMuted = state.isMasterMicMuted ? 'muted-slash' : '';
 
       const card = document.createElement('div'); card.className = `channel-card ${listenClass} ${talkClass}`; card.id = `card-${ch.id}`;
-      card.innerHTML = `<div class="status-line-bg"><div class="status-line-grad"></div><div class="status-line-mask" id="meter-${ch.id}"></div></div><div class="card-main"><div class="btn-action btn-listen ${state.listenStates[ch.id] ? 'active latched' : ''} ${lMuted}" id="listen-${ch.id}">${curListenIcon}</div><div class="ch-info"><div class="ch-name" id="name-${ch.id}">${ch.name || 'Unknown'}</div><div class="ch-type" id="type-${ch.id}">${ch.type || 'PL'}</div></div>${ch.type === 'Listen' ? `<div style="width: 44px; height: 44px;"></div>` : `<div class="btn-action btn-talk ${state.talkStates[ch.id] ? 'active latched' : ''} ${tMuted}" id="talk-${ch.id}">${curTalkIcon}</div>`}</div><div class="ch-meter-container"><div class="ch-meter-grad"></div><div class="ch-meter-mask" id="ch-meter-fill-${ch.id}"></div></div><div class="volume-panel"><i class="fa-solid fa-volume-low vol-icon"></i><div class="vol-slider-wrap"><div class="vol-slider-track-bg"></div><div class="vol-slider-fill" id="fill-${ch.id}"></div><input type="range" id="vol-${ch.id}" min="0" max="100" value="50"></div><i class="fa-solid fa-volume-high vol-icon"></i></div><div class="card-footer"><div class="btn-expand" id="expand-${ch.id}">○ ○ ○</div></div>`;
+      card.innerHTML = `<div class="status-line-bg"><div class="status-line-grad"></div><div class="status-line-mask" id="meter-${ch.id}"></div></div><div class="card-main"><div class="btn-action btn-listen ${state.listenStates[ch.id] ? 'active latched' : ''} ${lMuted}" id="listen-${ch.id}">${curListenIcon}</div><div class="ch-info"><div class="ch-name" id="name-${ch.id}">${ch.name || 'Unknown'}</div><div class="ch-type" id="type-${ch.id}">${ch.type || 'PL'}</div></div>${ch.type === 'Listen' ? `<div style="width: 44px; height: 44px;"></div>` : `<div class="btn-action btn-talk ${state.talkStates[ch.id] ? 'active latched' : ''} ${tMuted}" id="talk-${ch.id}">${curTalkIcon}</div>`}</div><div class="ch-meter-container"><div class="ch-meter-grad"></div><div class="ch-meter-mask" id="ch-meter-fill-${ch.id}"></div></div><div class="volume-panel"><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M18.5 12A4.5 4.5 0 0 0 16 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg><div class="vol-slider-wrap"><div class="vol-slider-track-bg"></div><div class="vol-slider-fill" id="fill-${ch.id}"></div><input type="range" id="vol-${ch.id}" min="0" max="100" value="50"></div><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></div><div class="card-footer"><div class="btn-expand" id="expand-${ch.id}">○ ○ ○</div></div>`;
       const cw = $('channel-list-wrap'); if(cw) cw.appendChild(card);
       const slider = card.querySelector(`#vol-${ch.id}`); const fill = card.querySelector(`#fill-${ch.id}`); const leftMeter = card.querySelector(`#meter-${ch.id}`);
       slider.value = (state.channelVolumes[ch.id] / 3.0) * 100; fill.style.width = slider.value + '%'; leftMeter.style.height = (100 - slider.value) + '%'; 
@@ -818,6 +838,21 @@
           startMeterDraw(); state.channels?.forEach(ch => setupChannelAudio(ch.id)); applyOutputDevice();
       }
       if(state.audioCtx.state === 'suspended') state.audioCtx.resume(); Object.values(state.mediaCalls || {}).forEach(callData => { if (!callData?.source) setupPeerMixer(callData); });
+    }
+
+    function publishLocalMic() {
+        if (!state.room || !state.localStream) return;
+        const audioTrack = state.localStream.getAudioTracks()[0];
+        if (audioTrack && !state.localMicTrack) {
+            try {
+                const localMicTrack = new LivekitClient.LocalAudioTrack(audioTrack);
+                state.localMicTrack = localMicTrack;
+                state.room.localParticipant.publishTrack(localMicTrack, { name: 'mic', source: LivekitClient.Track.Source.Microphone });
+                const isAnyTalking = Object.values(state.talkStates).some(v => v === true) && !state.isMasterMicMuted;
+                if (!isAnyTalking) localMicTrack.mute(); else localMicTrack.unmute();
+                uiLog("Mic Track Published.");
+            } catch (err) { uiLog(`Mic Publish Error: ${err.message}`, '#ef4444'); }
+        }
     }
 
     function setupChannelAudio(chId) { if (!state.audioCtx || state.channelNodes[chId]) return; const analyser = state.audioCtx.createAnalyser(); analyser.fftSize = 256; const masterGain = state.audioCtx.createGain(); masterGain.gain.value = 0; analyser.connect(masterGain); masterGain.connect(state.masterAnalyser); state.channelNodes[chId] = { analyser, masterGain }; }
@@ -901,12 +936,17 @@
       }
     }
 
-    // ★ 確実なミュート同期
     function syncTalkStates() { 
         sendData({ type: 'update-talk-states', states: state.talkStates }); 
         const isAnyTalking = Object.values(state.talkStates).some(v => v === true) && !state.isMasterMicMuted;
-        if (state.localMicTrack && state.localMicTrack.mediaStreamTrack) {
-            state.localMicTrack.mediaStreamTrack.enabled = isAnyTalking;
+        if (state.localMicTrack) {
+            try {
+                if (typeof state.localMicTrack.mute === 'function') {
+                    isAnyTalking ? state.localMicTrack.unmute().catch(()=>{}) : state.localMicTrack.mute().catch(()=>{});
+                } else if (state.localMicTrack.mediaStreamTrack) {
+                    state.localMicTrack.mediaStreamTrack.enabled = isAnyTalking;
+                }
+            } catch(e) { uiLog("Mic Mute Error", '#f00'); }
         }
     } 
     function syncListenStates() { sendData({ type: 'update-listen-states', states: state.listenStates }); }
@@ -956,8 +996,8 @@
             let isMicOn = false; let isSpkOn = false;
             if (isSelf) { isMicOn = state.talkStates[ch.id] === true; isSpkOn = state.listenStates[ch.id] === true; } else { isMicOn = state.remoteTalkStates[uid] && state.remoteTalkStates[uid][ch.id] === true; isSpkOn = state.remoteListenStates[uid] && state.remoteListenStates[uid][ch.id] === true; }
             const micActiveClass = isMicOn ? 'active' : ''; const spkActiveClass = isSpkOn ? 'active' : ''; 
-            let micBtnHtml = ''; if (ch.type !== 'Listen') { micBtnHtml = `<div class="circle-btn remote-mic-btn ${disabledClass} ${micActiveClass}" data-uid="${uid}" data-chid="${ch.id}"><i class="fa-solid fa-microphone"></i></div>`; } else { micBtnHtml = `<div style="width: 26px; height: 26px;"></div>`; }
-            let spkBtnHtml = `<div class="circle-btn remote-spk-btn ${disabledClass} ${spkActiveClass}" data-uid="${uid}" data-chid="${ch.id}"><i class="fa-solid fa-volume-high"></i></div>`;
+            let micBtnHtml = ''; if (ch.type !== 'Listen') { micBtnHtml = `<div class="circle-btn remote-mic-btn ${disabledClass} ${micActiveClass}" data-uid="${uid}" data-chid="${ch.id}"><svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg></div>`; } else { micBtnHtml = `<div style="width: 26px; height: 26px;"></div>`; }
+            let spkBtnHtml = `<div class="circle-btn remote-spk-btn ${disabledClass} ${spkActiveClass}" data-uid="${uid}" data-chid="${ch.id}"><svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></div>`;
             const remoteGroupStyle = (isSelf && isIoOn) ? `style="opacity: 0.3; pointer-events: none;"` : ''; const remoteLabelText = isSelf ? 'LOCAL' : 'REMOTE'; const dataIsLocal = isSelf ? `data-is-local="true"` : '';
             html += `<td style="width:140px; min-width:140px;"><div class="cell-layout"><div class="matrix-toggle ${activeClass}" data-uid="${uid}" data-chid="${ch.id}"></div><div class="remote-group" ${remoteGroupStyle} ${dataIsLocal}><div class="remote-label">${remoteLabelText}</div><div class="remote-buttons">${spkBtnHtml}${micBtnHtml}</div></div><div class="cp-meter-bg"><div class="cp-meter-bar" id="cp-meter-${uid}-${ch.id}"></div></div></div></td>`; 
           });
@@ -1157,6 +1197,7 @@
             return;
           }
 
+          // ★ MQTT通信を独立させてエラーを分離
           try {
               const tallyTopic = "yytalk/tally/" + rawRoomId;
               const mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
@@ -1247,26 +1288,29 @@
               syncTalkStates(); 
               syncListenStates();
               
-              // ★ マイクの確実な登録
-              if (state.localStream) {
-                  try {
-                      const audioTrack = state.localStream.getAudioTracks()[0];
-                      if(audioTrack) {
-                          const clonedTrack = audioTrack.clone();
-                          const localMicTrack = new LivekitClient.LocalAudioTrack(clonedTrack);
-                          state.localMicTrack = localMicTrack;
-                          await room.localParticipant.publishTrack(localMicTrack, { name: 'mic', source: LivekitClient.Track.Source.Microphone });
-                          if(state.localMicTrack.mediaStreamTrack) state.localMicTrack.mediaStreamTrack.enabled = false; // 初期状態はミュート
-                          uiLog("Mic Track Published & Muted.");
-                      }
-                  } catch (err) { uiLog(`Mic Publish Error: ${err.message}`, '#ef4444'); }
-              }
+              publishLocalMic();
+
           } catch (e) { 
               uiLog(`LiveKit Connect Error: ${e.message}`, '#ef4444');
               showDisconnect('接続エラー: ' + e.message);
           }
       })();
     };
+
+    function publishLocalMic() {
+        if (!state.room || !state.localStream || state.room.state !== 'connected') return;
+        const audioTrack = state.localStream.getAudioTracks()[0];
+        if (audioTrack && !state.localMicTrack) {
+            try {
+                const localMicTrack = new LivekitClient.LocalAudioTrack(audioTrack);
+                state.localMicTrack = localMicTrack;
+                state.room.localParticipant.publishTrack(localMicTrack, { name: 'mic', source: LivekitClient.Track.Source.Microphone });
+                const isAnyTalking = Object.values(state.talkStates).some(v => v === true) && !state.isMasterMicMuted;
+                if (!isAnyTalking) localMicTrack.mute(); else localMicTrack.unmute();
+                uiLog("Mic Track Published.");
+            } catch (err) { uiLog(`Mic Publish Error: ${err.message}`, '#ef4444'); }
+        }
+    }
 
     setInterval(async () => {
         const rttEl = $('status-rtt'); if (!rttEl) return;
