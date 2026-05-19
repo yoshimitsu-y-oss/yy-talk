@@ -52,15 +52,11 @@
     };
   </script>
 
-  <!-- LiveKitの安定バージョン -->
   <script src="https://cdn.jsdelivr.net/npm/livekit-client@2.5.9/dist/livekit-client.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
   
   <style>
-    /* ==========================================
-       RICH UI STYLES (完全復元版)
-       ========================================== */
     :root { --bg-dark:#0a0b0d; --card-bg:#1c1d21; --card-bg-expanded:#24262b; --text-main:#ffffff; --text-sub:#7a7e85; --green:#4ade80; --red:#dc2626; --alert:#ef4444; --orange:#f97316; --blue:#60a5fa; --border-color:#3a3c42; }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
     input, select, textarea { -webkit-user-select: auto; user-select: auto; touch-action: auto; }
@@ -68,12 +64,11 @@
     .app-container { width: 100%; height: 100dvh; display: flex; flex-direction: column; position: relative; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); margin: 0; }
     
     .overlay-base { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; flex-direction: column; backdrop-filter: blur(4px); z-index: 1000; overflow-y: auto;}
-    #login-overlay { z-index: 2000; display: flex; } #audio-overlay { z-index: 1100; } #disconnect-overlay { z-index: 3000; background: rgba(220, 38, 38, 0.95); }
+    #login-overlay { z-index: 2000; display: flex; } #disconnect-overlay { z-index: 3000; background: rgba(220, 38, 38, 0.95); }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     
-    .btn-green-solid { background: var(--green); color: #000; border: none; padding: 15px 30px; font-size: 18px; font-weight: bold; border-radius: 30px; cursor: pointer; }
     .login-modal { background: var(--card-bg); padding: 40px 50px; border-radius: 16px; width: 90%; max-width: 480px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 15px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); margin: auto; position: relative;}
-    .login-modal .btn-close-login { position: absolute; top: 15px; right: 15px; background: transparent; border: none; color: #9ca3af; font-size: 28px; cursor: pointer; padding: 0; width: 32px; height: 32px; display: none; align-items: center; justify-content: center; z-index: 2010; font-weight: normal; }
+    .login-modal .btn-close-login { position: absolute; top: 15px; right: 15px; background: transparent; border: none; color: #9ca3af; font-size: 24px; cursor: pointer; padding: 0; width: 32px; height: 32px; display: none; align-items: center; justify-content: center; z-index: 2010; font-weight: normal; }
     .login-modal button:not(.btn-close-login) { padding: 16px; border: none; border-radius: 8px; font-weight: bold; color: #000; cursor: pointer; font-size: 15px; z-index: 2001; transition: 0.2s;}
     .login-modal button:not(.btn-close-login):active { transform: scale(0.98); } .login-modal button:not(.btn-close-login):disabled { opacity: 0.5; cursor: not-allowed; }
     .btn-join-member { background: var(--blue); color: white!important; width: 100%; } .btn-join-admin { background: transparent; border: 1px solid var(--text-sub) !important; color: var(--text-sub) !important; width: 100%; } .btn-stop { background: var(--red); width: 100%; color: #fff!important;}
@@ -83,16 +78,15 @@
     .login-input { width: 100%; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); background: #0a0b0d; color: var(--text-main); font-size: 16px; text-align: center; font-family: 'JetBrains Mono', monospace; outline: none; transition: 0.2s; }
     .login-input:focus { border-color: var(--blue) !important; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3) !important; animation: none !important; }
     
-    .header { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; background: var(--bg-dark); flex-shrink: 0; z-index: 100; border-bottom: 1px solid #1e2128;}
+    .header { display: flex; align-items: center; justify-content: space-between; padding: 8px 15px; background: var(--bg-dark); flex-shrink: 0; z-index: 100; border-bottom: 1px solid #1e2128;}
     .header-left { display: flex; align-items: center; } #app-logo { height: 26px; width: auto; margin-right: 15px; } @media (min-width: 600px) { #app-logo { height: 32px; } }
     .room-info-group { display: flex; flex-direction: row; gap: 15px; align-items: center; border-left: 1px solid var(--border-color); padding-left: 15px; height: 32px;}
     .room-info-label { font-size: 9px; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1px; font-weight: bold; line-height: 1; margin-bottom: 4px; font-family: 'JetBrains Mono', monospace;}
     #header-room-name { font-size: 15px; font-weight: bold; color: var(--text-main); line-height: 1; font-family: 'JetBrains Mono', monospace;}
     .header-right { display: flex; align-items: center; gap: 8px; }
-    .btn-header-icon, .btn-header-layout { background: transparent; border: 1.5px solid var(--text-sub); color: var(--text-sub); width: 32px; height: 32px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; font-size: 14px; padding: 0;}
+    .btn-header-icon { background: transparent; border: 1.5px solid var(--text-sub); color: var(--text-sub); width: 32px; height: 32px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; font-size: 14px; padding: 0;}
     #btn-settings.active { border-color: var(--text-sub); color: var(--text-sub); background: transparent; } .admin-only { display: none; }
-    .status-badge { border: 1.5px solid var(--text-sub); color: var(--text-sub); padding: 6px 12px; border-radius: 6px; font-weight: bold; font-size: 11px; cursor: pointer; transition: 0.2s; }
-    .status-badge.online { border-color: var(--blue); color: var(--blue); } #status-role { font-size: 11px; font-family: 'JetBrains Mono', monospace; font-weight: bold; color: var(--orange); margin-right: 2px;}
+    #btn-show-login.online { border-color: var(--green); color: var(--green); }
     
     .layout-dropdown { position: absolute; top: 40px; right: 0; background: #111216; border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); display: none; flex-direction: column; z-index: 200; overflow: hidden; min-width: 150px; }
     .layout-dropdown.show { display: flex; } .layout-item { background: transparent; border: none; color: var(--text-main); padding: 12px 15px; text-align: left; font-size: 13px; font-weight: bold; cursor: pointer; font-family: 'JetBrains Mono', monospace; border-bottom: 1px solid var(--border-color); transition: background 0.2s; display: flex; align-items: center; }
@@ -107,10 +101,10 @@
     .video-wrapper.tally-on { border: 4px solid var(--alert) !important; box-shadow: 0 0 30px rgba(239, 68, 68, 0.8), inset 0 0 30px rgba(239, 68, 68, 0.6); }
     .video-dummy-text { color: #555; font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: bold; z-index: 1;} .video-wrapper video { width: 100%; height: 100%; object-fit: contain; background: #000; position: absolute; inset: 0; z-index: 5;}
     
-    .admin-modal { width: 98%; max-width: 1100px; max-height: 95vh; display: flex; flex-direction: column; padding: 25px 15px 15px; margin: 2vh auto auto; position: relative; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);}
-    .btn-close-modal { position: absolute; top: 10px; right: 15px; background: transparent; border: none; color: #7a7e85; cursor: pointer; z-index: 200; transition: color 0.2s ease; padding: 0; font-size: 24px;}
+    .admin-modal { width: 98%; max-width: 1100px; max-height: 90vh; display: flex; flex-direction: column; padding: 25px 15px 15px; margin: auto; position: relative; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);}
+    .btn-close-modal { position: absolute; top: 10px; right: 15px; background: transparent; border: none; color: #7a7e85; cursor: pointer; z-index: 200; transition: color 0.2s ease; padding: 0; line-height: 0; font-size: 24px;}
     .btn-close-modal:hover { color: #ffffff; }
-    .admin-tabs-container { display: flex; gap: 8px; padding: 0 10px; margin-bottom: 20px; margin-top: 15px; width: 100%; }
+    .admin-tabs-container { display: flex; gap: 8px; padding: 0 10px; margin-bottom: 20px; margin-top: 15px; width: 100%; flex-shrink: 0;}
     .admin-tab-btn { flex: 1; min-width: 0; background: rgba(0, 0, 0, 0.4); border: 1px solid transparent; color: #555 !important; padding: 12px 4px; font-size: 13px; font-weight: bold; border-radius: 8px 8px 0 0; cursor: pointer; transition: all 0.2s ease; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; line-height: 1.2; text-align: center; position: relative; z-index: 1; margin-bottom: 0; }
     .admin-tab-btn i { font-size: 20px; opacity: 0.6; transition: all 0.2s; } .admin-tab-btn:hover { color: #aaa !important; }
     .admin-tab-btn.active { background-color: var(--card-bg); background-image: linear-gradient(to bottom, rgba(96, 165, 250, 0.15) 0%, rgba(96, 165, 250, 0) 100%); border: 1px solid var(--border-color); color: #ffffff !important; box-shadow: none; text-shadow: 0 0 6px rgba(255,255,255,0.4); z-index: 2; border-radius: 8px 8px 0 0; }
@@ -125,16 +119,20 @@
     .setting-group input:not([type="range"]):focus, .setting-group select:focus { outline: none; border-color: var(--blue); } .setting-group select:disabled { opacity: 0.5; cursor: not-allowed; }
     
     .io-panel { display: flex; flex-direction: column; gap: 30px; margin-bottom: 20px;}
-    .io-toggle-wrapper { width: 240px; height: 56px; background: #111216; border-radius: 28px; border: 2px solid var(--border-color); position: relative; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; box-shadow: inset 0 2px 8px rgba(0,0,0,0.8); margin: 0 auto; touch-action: none;}
-    .io-toggle-slider { width: 48px; height: 48px; background: #7a7e85; border-radius: 50%; position: absolute; left: 2px; transition: left 0.3s cubic-bezier(0.4, 0.0, 0.2, 1), background-color 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.6); z-index: 2; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: bold; color: #fff;}
+    .io-toggle-wrapper { width: 240px; height: 56px; background: #111216; border-radius: 28px; border: 2px solid var(--border-color); position: relative; cursor: pointer; display: flex; align-items: center; box-shadow: inset 0 2px 8px rgba(0,0,0,0.8); margin: 0 auto; touch-action: none;}
+    .io-toggle-slider { width: 48px; height: 48px; background: #7a7e85; border-radius: 50%; position: absolute; left: 2px; transition: left 0.3s ease, background-color 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.6); z-index: 2; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: bold; color: #fff;}
     .io-toggle-wrapper.active { background: var(--green); border-color: var(--green); box-shadow: inset 0 2px 8px rgba(0,0,0,0.4), 0 0 15px rgba(74, 222, 128, 0.3); }
-    .io-toggle-wrapper.active .io-toggle-slider { left: calc(100% - 50px); background: #ffffff; color: #000;}
-    .io-toggle-text { position: absolute; width: 100%; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: bold; transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1), color 0.3s ease; z-index: 1; pointer-events: none; margin-top: 1px; letter-spacing: 1px;}
+    .io-toggle-wrapper.active .io-toggle-slider { left: calc(100% - 52px); background: #ffffff; color: #000;}
+    .io-toggle-text { position: absolute; width: 100%; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: bold; transition: transform 0.3s ease, color 0.3s ease; z-index: 1; pointer-events: none; margin-top: 1px; letter-spacing: 1px;}
     .io-toggle-wrapper.active .io-toggle-text { color: #000; transform: translateX(-24px); } .io-toggle-wrapper:not(.active) .io-toggle-text { color: #7a7e85; transform: translateX(24px); }
     .io-select { width: 100%; height: 32px; background: #1c1d21; border: 1px solid var(--border-color); color: #fff; border-radius: 6px; font-size: 13px; padding: 0 10px; font-family: 'JetBrains Mono', monospace; cursor: pointer; transition: all 0.2s; text-align: center; text-align-last: center;}
     .io-select:focus { outline: none; border-color: var(--text-sub); }
     
-    .io-interface-section { display: flex; flex-direction: column; gap: 15px; } .interface-title { font-size: 13px; font-weight: bold; color: var(--text-main); letter-spacing: 2px; margin: 0; padding-left: 10px; border-left: 3px solid var(--blue); font-family: 'JetBrains Mono', monospace; }
+    .io-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+    .io-card { background: #111216; padding: 25px; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; flex-direction: column; gap: 15px;}
+    .io-ch-row { display: flex; gap: 20px; }
+    
+    .io-interface-section { display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px;} .interface-title { font-size: 13px; font-weight: bold; color: var(--text-main); letter-spacing: 2px; margin: 0; padding-left: 10px; border-left: 3px solid var(--blue); font-family: 'JetBrains Mono', monospace; }
     .tally-label { font-size: 11px; font-weight: bold; color: var(--text-sub); margin-bottom: 10px; display: block; text-align: center; letter-spacing: 1px;}
     .tally-row { display: flex; align-items: center; justify-content: center; padding: 10px 15px; background: #1c1d21; border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 8px; gap: 20px; flex-wrap: wrap; }
     .tally-member-info { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-shrink: 0; width: 100px;}
@@ -168,7 +166,7 @@
     .remote-group { display: flex; flex-direction: column; align-items: center; background: #111216; border: 1px solid #2a2c33; border-radius: 6px; padding: 4px 6px 6px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.5); }
     .remote-label { font-family: 'JetBrains Mono', monospace; font-size: 8px; font-weight: bold; color: #666; margin-bottom: 4px; letter-spacing: 1px; } .remote-buttons { display: flex; gap: 6px; }
     .circle-btn { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #1c1d21; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.05); }
-    .circle-btn svg { width: 14px; height: 14px; fill: currentColor; pointer-events: none; } .circle-btn.disabled { border-color: #444 !important; color: #444 !important; background: #15161a; box-shadow: none; cursor: not-allowed; opacity: 0.5; }
+    .circle-btn i { font-size: 12px; pointer-events: none; } .circle-btn.disabled { border-color: #444 !important; color: #444 !important; background: #15161a; box-shadow: none; cursor: not-allowed; opacity: 0.5; }
     .remote-spk-btn { border: 1.5px solid var(--green); color: var(--green); } .remote-spk-btn.active { background-color: var(--green); color: #000; box-shadow: inset 0 2px 4px rgba(255,255,255,0.4), 0 0 10px rgba(74, 222, 128, 0.5); }
     .remote-mic-btn { border: 1.5px solid var(--red); color: var(--red); } .remote-mic-btn.active { background-color: var(--red); color: #fff; box-shadow: inset 0 2px 4px rgba(255,255,255,0.3), 0 0 10px rgba(220, 38, 38, 0.5); }
     .cp-meter-bg { width: 6px; height: 36px; background: #000; border-radius: 2px; position: relative; box-shadow: inset 0 0 3px rgba(0,0,0,0.8); overflow: hidden; margin-left: 2px;} .cp-meter-bar { width: 100%; height: 100%; background: linear-gradient(to top, #22c55e, #eab308, #ef4444); position: absolute; bottom: 0; left: 0; transform-origin: bottom; transform: scaleY(0); transition: transform 0.05s ease-out; }
@@ -191,8 +189,8 @@
     .channel-card.listen-on::before { opacity: 1; } .channel-card.talk-on::after { opacity: 1; } .channel-card > * { position: relative; z-index: 1; }
     .status-line-bg { position: absolute; left: 0; top: 10%; bottom: 10%; width: 4px; background-color: #0a0b0d; border-radius: 0 4px 4px 0; overflow: hidden; z-index: 2; }
     .status-line-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to top, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); } .status-line-mask { position: absolute; top: 0; left: 0; right: 0; height: 100%; background-color: var(--bg-dark); transition: height 0.1s linear; }
-    .volume-panel { display: none; padding: 5px 20px; align-items: center; gap: 10px; } .channel-card.expanded .volume-panel { display: flex; }
-    .vol-icon { width: 14px; height: 14px; fill: var(--text-sub); flex-shrink: 0; } .vol-slider-wrap { flex: 1; position: relative; display: flex; align-items: center; touch-action: pan-x; }
+    .volume-panel { display: none; padding: 5px 15px; align-items: center; gap: 10px; } .channel-card.expanded .volume-panel { display: flex; }
+    .vol-icon { font-size: 14px; color: var(--text-sub); flex-shrink: 0; width: 14px; height: 14px; } .vol-slider-wrap { flex: 1; position: relative; display: flex; align-items: center; touch-action: pan-x; }
     .vol-slider-track-bg { position: absolute; left: 0; right: 0; height: 4px; background: var(--border-color); border-radius: 2px; z-index: 1; } .vol-slider-fill { position: absolute; left: 0; height: 4px; background: var(--orange); border-radius: 2px; z-index: 2; width: 50%; pointer-events: none; }
     
     input[type=range] { width: 100%; -webkit-appearance: none; background: transparent; height: 30px; position: relative; z-index: 3; margin: 0; outline: none; border: none; }
@@ -200,26 +198,37 @@
     input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 30px; background: transparent; border: none; } 
     input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 18px; width: 18px; border-radius: 50%; background: #ffffff; box-shadow: 0 0 8px rgba(0,0,0,0.6); cursor: pointer; margin-top: 6px; border: none; }
     
-    .main-controls { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; position: relative; } .ch-info { text-align: center; flex: 1; padding: 0 5px; }
-    .ch-name { font-size: 15px; font-weight: 500; margin-bottom: 0px; display: inline-block; padding: 2px 6px; border-radius: 4px; } .ch-type { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-sub); display: inline-block; padding: 0px 6px; border-radius: 4px; pointer-events: auto; }
-    .btn-action { width: 50px; height: 50px; border-radius: 50%; border: 2px solid; display: flex; align-items: center; justify-content: center; background: #1c1d21; touch-action: none; z-index: 10; user-select: none; box-shadow: 0 4px 8px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.05); transition: background-color 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, color 0.2s ease; cursor: pointer; }
+    .card-main { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; position: relative; z-index: 2;} .ch-info { text-align: center; flex: 1; padding: 0 5px; }
+    .ch-name { font-size: 14px; font-weight: 500; margin-bottom: 2px; display: inline-block; padding: 2px 6px; border-radius: 4px; } .ch-type { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-sub); display: inline-block; padding: 0px 6px; border-radius: 4px; pointer-events: auto; }
+    .btn-action { width: 44px; height: 44px; border-radius: 50%; border: 2px solid; display: flex; align-items: center; justify-content: center; background: #1c1d21; touch-action: none; z-index: 10; user-select: none; box-shadow: 0 4px 8px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.05); transition: background-color 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, color 0.2s ease; cursor: pointer; font-size: 16px;}
     .btn-action.disabled-btn { opacity: 0.3; cursor: not-allowed; pointer-events: none; border-color: var(--border-color) !important; color: var(--text-sub) !important; background: #15161a !important; box-shadow: none !important; }
-    .btn-icon { width: 24px; height: 24px; fill: currentColor; pointer-events: none; }
+    .btn-icon { width: 20px; height: 20px; fill: currentColor; pointer-events: none; }
     .btn-listen { border-color: var(--green); color: var(--green); } .btn-listen.active, .btn-listen.latched { background-color: var(--green); color: var(--bg-dark); box-shadow: inset 0 2px 4px rgba(255,255,255,0.4), 0 4px 15px rgba(74, 222, 128, 0.5); }
     .btn-talk { border-color: var(--red); color: var(--red); } .btn-talk.active, .btn-talk.latched { background-color: var(--red); color: var(--text-main); box-shadow: inset 0 2px 4px rgba(255,255,255,0.3), 0 4px 15px rgba(220, 38, 38, 0.5); }
-    .ch-meter-container { height: 4px; background: var(--bg-dark); margin: 0 45px 0; border-radius: 2px; overflow: hidden; position: relative; opacity: 0.8; }
+    .ch-meter-container { height: 4px; background: var(--bg-dark); margin: 0 45px 0; border-radius: 2px; overflow: hidden; position: relative; opacity: 0.8; z-index: 2;}
     .ch-meter-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); } .ch-meter-mask { position: absolute; right: 0; top: 0; bottom: 0; width: 100%; background-color: var(--bg-dark); transition: width 0.05s linear; }
+    .card-footer { display: flex; justify-content: center; align-items: center; padding: 0 15px 4px; position: relative; z-index: 5;}
     .btn-expand { display: inline-block; padding: 4px 40px; color: var(--text-sub); font-size: 14px; letter-spacing: 2px; cursor: grab; margin: 0 auto; border-radius: 20px; touch-action: none;} .btn-expand:active { cursor: grabbing; background-color: rgba(255,255,255,0.05); }
     .sortable-ghost { opacity: 0.2 !important; background-color: #000 !important; } .sortable-drag { cursor: grabbing !important; box-shadow: 0 20px 40px rgba(0,0,0,0.8) !important; background-color: var(--card-bg-expanded) !important; border: 1px solid var(--border-color) !important; opacity: 1 !important; z-index: 9999 !important; }
     
     .master-meter-container { height: 8px; width: 100%; background: var(--bg-dark); position: relative; flex-shrink: 0; z-index: 10;}
     .master-meter-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); } .master-meter-mask { position: absolute; right: 0; top: 0; bottom: 0; width: 100%; background-color: var(--bg-dark); transition: width 0.05s linear; }
 
+    @media (max-width: 600px) {
+      .admin-modal { padding: 15px; width: 100%; height: 100dvh; max-height: 100dvh; border-radius: 0; margin: 0;}
+      .admin-settings-row { flex-direction: column; padding: 15px; }
+      .io-grid { grid-template-columns: 1fr; }
+      .io-ch-row { flex-direction: column; gap: 15px; }
+      .io-card { padding: 15px; }
+      .header-right { gap: 4px; }
+      .btn-header-icon { width: 28px; height: 28px; font-size: 12px; }
+    }
+    
     @media (orientation: landscape) and (max-height: 500px) {
       .header { padding: 4px 15px; border-bottom: 1px solid #1e2128; min-height: 36px;} #app-logo { height: 18px; } 
       .global-controls { padding: 2px 15px 4px; gap: 8px; min-height: 36px;} .btn-global { padding: 4px 8px; font-size: 11px; height: 28px; }
       .channel-list-container { padding: 4px 15px 10px; gap: 6px;} #channel-list-wrap { grid-template-columns: 1fr 1fr; gap: 6px; } 
-      .main-controls { padding: 4px 10px; } .btn-action { width: 38px; height: 38px; border-width: 1.5px; } .btn-icon { width: 18px; height: 18px; }
+      .card-main { padding: 4px 10px; } .btn-action { width: 34px; height: 34px; border-width: 1.5px; } .btn-icon { width: 16px; height: 16px; }
       .ch-name { font-size: 13px; } .ch-type { font-size: 9px; } .card-footer { padding: 0 10px 2px !important; } .btn-expand { padding: 2px 30px !important; font-size: 12px !important; }
       .master-meter-container { height: 6px; } .monitor-section { padding: 5px 0; }
       .video-wrapper { height: auto; max-height: 45vh; width: 100%; max-width: 80vh; aspect-ratio: 16 / 9; margin: 0 auto; }
@@ -230,23 +239,22 @@
 <body onload="if(window.forceResize) window.forceResize()">
 
   <!-- 🚨 デバッグ用 システムロガー 🚨 -->
-  <div id="debug-logger" style="position: fixed; bottom: 0; left: 0; width: 100%; height: 120px; background: rgba(0,0,0,0.85); color: #4ade80; font-family: monospace; font-size: 11px; padding: 10px; overflow-y: auto; z-index: 99999; border-top: 1px solid #444; pointer-events: none;">
+  <div id="debug-logger" style="position: fixed; bottom: 0; left: 0; width: 100%; height: 100px; background: rgba(0,0,0,0.85); color: #4ade80; font-family: monospace; font-size: 10px; padding: 10px; overflow-y: auto; z-index: 99999; border-top: 1px solid #444; pointer-events: none;">
       <div>[System] Logger Initialized. Awaiting Events...</div>
   </div>
 
   <div class="app-container" id="main-app-container">
-    <div id="audio-overlay" class="overlay-base"><p style="font-weight:bold;margin-bottom:20px;font-size:18px;">通話に参加しますか？</p><button id="btn-enable-audio" class="btn-green-solid">音声を有効にして参加</button></div>
     
-    <div id="disconnect-overlay" class="overlay-base" style="z-index: 3000; background: rgba(220, 38, 38, 0.95);">
+    <div id="disconnect-overlay" class="overlay-base">
       <div class="loader-spinner" style="border: 4px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px;"></div>
       <div style="font-size: 20px; font-weight: bold; margin-bottom: 10px; color: white;">CONNECTION LOST</div>
       <div id="disconnect-text" style="font-size: 14px; color: rgba(255,255,255,0.8); margin-bottom: 30px;">通信が切断されました。自動再接続を試行中...</div>
     </div>
 
-    <!-- ログイン画面 (リッチUI復元) -->
-    <div id="login-overlay" class="overlay-base" style="display: flex;">
-      <div class="login-modal" style="padding: 40px 50px; border-radius: 16px; width: 90%; max-width: 480px; background: #111216; border: 1px solid var(--border-color); box-shadow: 0 20px 50px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; margin: auto;">
-        <button class="btn-close-login" id="btn-close-login" style="position: absolute; top: 15px; right: 15px; background: transparent; border: none; color: #9ca3af; font-size: 24px; cursor: pointer; display: none; z-index: 200;"><i class="fa-solid fa-xmark"></i></button>
+    <!-- ログイン画面 -->
+    <div id="login-overlay" class="overlay-base">
+      <div class="login-modal">
+        <button class="btn-close-login" id="btn-close-login"><i class="fa-solid fa-xmark"></i></button>
         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 30px; width: 100%;">
           <div style="display: flex; align-items: center; justify-content: space-between; width: 195px; margin-bottom: 5px;">
             <svg viewBox="0 0 66 60" style="height: 38px; width: auto; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4)); display: block;">
@@ -265,41 +273,41 @@
         </div>
         <div id="host-id-input-container" style="width: 100%; margin-bottom: 8px;">
             <label style="display: block; text-align: left; font-size: 11px; color: var(--text-sub); font-weight: bold; letter-spacing: 1px; margin-bottom: 5px;">ROOM NAME</label>
-            <input type="text" id="host-id" class="login-input" placeholder="例: STUDIO_A" style="margin-bottom: 0;">
+            <input type="text" id="host-id" class="login-input" placeholder="例: STUDIO_A">
         </div>
         <div id="join-userid-input-container" style="width: 100%; margin-bottom: 35px;">
             <label style="display: block; text-align: left; font-size: 11px; color: var(--text-sub); font-weight: bold; letter-spacing: 1px; margin-bottom: 5px;">USER ID</label>
-            <input type="text" id="join-userid" class="login-input" placeholder="例: CAM1" style="margin-bottom: 0;">
+            <input type="text" id="join-userid" class="login-input" placeholder="例: CAM1">
         </div>
-        <button id="btn-join-member" class="btn-reload" style="width: 100%; background: var(--blue); color: white; margin-top: 0; padding: 16px;">接続 (Connect)</button>
-        <button id="btn-join-admin" class="btn-reload admin-btn" style="width: 100%; background: transparent; border: 1px solid var(--text-sub); color: var(--text-sub); margin-top: 15px; font-size: 14px; padding: 16px;">管理者接続 (Admin)</button>
-        <button id="btn-stop" class="btn-reload" style="width: 100%; background: var(--red); color: white; margin-top: 10px; display: none; padding: 16px;">切断 (Disconnect)</button>
-        <div class="status-text" id="status-msg" style="margin-top: 25px; font-size: 12px; color: var(--text-sub);">待機中... ルーム名とユーザーIDを入力して接続</div>
+        <button id="btn-join-member" class="btn-reload btn-join-member">接続 (Connect)</button>
+        <button id="btn-join-admin" class="btn-reload admin-btn">管理者接続 (Admin)</button>
+        <button id="btn-stop" class="btn-reload btn-stop">切断 (Disconnect)</button>
+        <div class="status-text" id="status-msg">待機中... ルーム名とユーザーIDを入力</div>
       </div>
     </div>
 
     <!-- 管理者パネル -->
     <div id="admin-overlay" class="overlay-base">
       <div class="login-modal admin-modal">
-        <button id="btn-close-admin" class="btn-close-modal"><svg viewBox="0 0 24 24" width="44" height="44" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+        <button id="btn-close-admin" class="btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
         <div class="admin-tabs-container">
-          <button id="tab-video" class="admin-tab-btn active"><svg viewBox="0 0 24 24"><path d="M23 7l-7 5 7 5V7zM1 6c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H3c-1.1 0-2-.9-2-2V6z"/></svg><span>VIDEO & TALLY</span></button>
-          <button id="tab-patch" class="admin-tab-btn"><svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg><span>PATCH PANEL</span></button>
-          <button id="tab-io" class="admin-tab-btn"><svg viewBox="0 0 24 24" style="margin-right: 5px;"><path d="M4 10h3v7H4zM10.5 10h3v7h-3zM2 19h20v3H2zM17 10h3v7h-3zM12 1L2 6v2h20V6z"/></svg><span>I/O BRIDGE</span></button>
+          <button id="tab-video" class="admin-tab-btn active"><i class="fa-solid fa-tv"></i><span>VIDEO & TALLY</span></button>
+          <button id="tab-patch" class="admin-tab-btn"><i class="fa-solid fa-network-wired"></i><span>PATCH PANEL</span></button>
+          <button id="tab-io" class="admin-tab-btn"><i class="fa-solid fa-sliders"></i><span>I/O BRIDGE</span></button>
         </div>
         <div class="scroll-area">
           <div id="admin-video-section">
-            <div class="io-interface-section" style="margin-bottom: 25px;">
-              <h4 class="interface-title" style="margin-bottom: 15px;">MONITOR SETTINGS <span style="color: var(--text-sub); font-size: 11px;">(DISPLAY & VIDEO)</span></h4>
-              <div style="background: #111216; padding: 25px; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; flex-wrap: wrap; justify-content: center; gap: 20px;">
+            <div class="io-interface-section">
+              <h4 class="interface-title">MONITOR SETTINGS</h4>
+              <div class="admin-settings-row">
                 <div class="setting-group"><label>MONITOR NAME</label><input type="text" id="edit-monitor-title" value="MONITOR"></div>
                 <div class="setting-group"><label>VIDEO SOURCE</label><select id="edit-monitor-source"><option value="off">OFF</option><option value="screen">画面共有</option></select></div>
-                <div class="setting-group"><label>VIDEO QUALITY</label><select id="edit-video-quality"><option value="128000">128 Kbps (~57MB/h)</option><option value="256000">256 Kbps (~115MB/h)</option><option value="512000" selected>512 Kbps (~230MB/h)</option><option value="1000000">1 Mbps (~450MB/h)</option><option value="5000000">5 Mbps (~2.2GB/h)</option></select></div>
+                <div class="setting-group"><label>VIDEO QUALITY</label><select id="edit-video-quality"><option value="128000">128 Kbps</option><option value="256000">256 Kbps</option><option value="512000" selected>512 Kbps</option><option value="1000000">1 Mbps</option><option value="5000000">5 Mbps</option></select></div>
               </div>
             </div>
             <div class="io-interface-section">
-              <h4 class="interface-title" style="margin-bottom: 15px;">TALLY ROUTING <span style="color: var(--text-sub); font-size: 11px;">(ASSIGNMENT)</span></h4>
-              <div style="background: #111216; padding: 25px; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: stretch;">
+              <h4 class="interface-title">TALLY ROUTING</h4>
+              <div class="admin-settings-row" style="flex-direction: column; align-items: stretch;">
                 <div id="tally-assignment-list" style="display: flex; flex-direction: column;"></div>
               </div>
             </div>
@@ -309,7 +317,7 @@
             <button id="btn-add-ch" style="background: rgba(96, 165, 250, 0.1); color: var(--blue); border: 1px solid rgba(96, 165, 250, 0.4); width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background 0.2s;">＋ 新規パーティーを追加</button>
           </div>
           <div id="admin-io-section" style="display: none;">
-            <div style="display: flex; flex-direction: column; align-items: center; margin-top: 0; margin-bottom: 20px; padding: 20px; background: #111216; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+            <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; padding: 20px; background: #111216; border-radius: 12px; border: 1px solid var(--border-color);">
               <span style="font-size: 16px; letter-spacing: 4px; color: var(--green); margin-bottom: 15px; font-weight: bold; font-family: 'JetBrains Mono', monospace;">I/O BRIDGE MODE</span>
               <div id="btn-io-toggle" class="io-toggle-wrapper"><div class="io-toggle-slider"><span id="io-slider-text">OFF</span></div><span class="io-toggle-text">I/O BRIDGE</span></div>
             </div>
@@ -326,23 +334,26 @@
       <div class="header-left">
         <svg id="app-logo" viewBox="0 0 200 60"><defs><linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" /><stop offset="100%" style="stop-color:#4ade80;stop-opacity:1" /></linearGradient></defs><path d="M 12 30 L 20 42 L 20 54 M 28 30 L 20 42" stroke="url(#logo-grad)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none" /><path d="M 12 20 Q 20 12 28 20 M 6 12 Q 20 0 34 12" stroke="url(#logo-grad)" stroke-width="4" stroke-linecap="round" fill="none" /><path d="M 42 30 L 50 42 L 50 54 M 58 30 L 50 42" stroke="url(#logo-grad)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none" /><path d="M 42 20 Q 50 12 58 20 M 36 12 Q 50 0 64 12" stroke="url(#logo-grad)" stroke-width="4" stroke-linecap="round" fill="none" /><text x="75" y="44" font-family="sans-serif" font-weight="900" font-size="34" fill="#ffffff">Talk</text></svg>
         <div class="room-info-group">
-          <div><div class="room-info-label">ROOM NAME</div><div id="header-room-name">---</div></div>
+          <div><div class="room-info-label">ROOM</div><div id="header-room-name">---</div></div>
           <div style="width: 1px; height: 24px; background: var(--border-color);"></div>
-          <div><div class="room-info-label">USER ID</div><div style="display: flex; align-items: center; gap: 8px;"><div id="header-user-id" style="font-size: 15px; font-weight: bold; color: var(--text-main); font-family: 'JetBrains Mono', monospace; line-height: 1; display: none;">---</div><div id="header-user-separator" style="width: 1px; height: 16px; background: var(--border-color); display: none;"></div><div id="header-active-count" style="font-size: 11px; font-weight: bold; color: var(--green); background: rgba(74, 222, 128, 0.1); padding: 2px 6px; border-radius: 4px; display: none; font-family: 'JetBrains Mono', monospace; border: 1px solid rgba(74, 222, 128, 0.3);"></div></div></div>
+          <div><div class="room-info-label">USER</div><div id="header-user-id" style="font-size: 15px; font-weight: bold; color: var(--text-main); font-family: 'JetBrains Mono', monospace; display: none;">---</div></div>
         </div>
       </div>
       <div class="header-right">
-        <div id="status-rtt" style="font-size: 11px; font-family: 'JetBrains Mono', monospace; font-weight: bold; color: var(--text-sub); display: none;">-- ms</div>
+        <div style="display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 2px; margin-right: 5px;">
+            <div id="header-active-count" style="font-size: 10px; font-weight: bold; color: var(--green); display: none; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.5px;">ACTIVE: 0</div>
+            <div id="status-rtt" style="font-size: 10px; font-family: 'JetBrains Mono', monospace; font-weight: bold; color: var(--text-sub); display: none;">-- ms</div>
+        </div>
         <div style="position: relative;">
-          <button id="btn-layout" class="btn-header-layout" title="レイアウト変更"><i class="fa-solid fa-border-all"></i></button>
+          <button id="btn-layout" class="btn-header-icon" title="レイアウト変更"><i class="fa-solid fa-border-all"></i></button>
           <div id="layout-dropdown" class="layout-dropdown">
             <button class="layout-item active" data-layout="normal"><i class="fa-solid fa-microphone-lines" style="margin-right:10px; width:16px; text-align:center;"></i>INTERCOM</button>
             <button class="layout-item" data-layout="hybrid"><i class="fa-solid fa-table-columns" style="margin-right:10px; width:16px; text-align:center;"></i>HYBRID</button>
             <button class="layout-item" data-layout="monitor"><i class="fa-solid fa-tv" style="margin-right:10px; width:16px; text-align:center;"></i>MONITOR</button>
           </div>
         </div>
-        <button id="btn-settings" class="btn-header-icon admin-only" title="設定"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></button>
-        <div id="btn-show-login" class="status-badge">Login</div>
+        <button id="btn-settings" class="btn-header-icon admin-only" title="設定"><i class="fa-solid fa-gear"></i></button>
+        <button id="btn-show-login" class="btn-header-icon"><i class="fa-solid fa-satellite-dish"></i></button>
       </div>
     </div>
 
@@ -364,34 +375,35 @@
     // --- 安全なDOMアクセスのためのヘルパー ---
     const $ = id => document.getElementById(id);
 
-    // ★ 欠落回避のため再登録
-    window.forceResize = function() {
-      const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-      document.documentElement.style.height = h + 'px'; document.body.style.height = h + 'px';
-      const c = $('main-app-container'); if (c) c.style.height = h + 'px';
-      window.scrollTo(0, 0);
-    };
-
-    let isPulsing = false;
-    function syncPulse() { const host = $('host-id'); const user = $('join-userid'); if (host && user) { const shouldPulse = host.value === '' && user.value === ''; if (shouldPulse !== isPulsing) { isPulsing = shouldPulse; host.style.animation = 'none'; user.style.animation = 'none'; if (shouldPulse) { void host.offsetWidth; host.style.animation = 'pulse-blue-border 1.5s infinite'; user.style.animation = 'pulse-blue-border 1.5s infinite'; } } } }
+    // 空欄同期アニメーション
+    function syncPulse() { 
+        const host = $('host-id'); const user = $('join-userid'); 
+        if (!host || !user) return;
+        const hostEmpty = host.value.trim() === '';
+        const userEmpty = user.value.trim() === '';
+        
+        host.style.animation = 'none'; user.style.animation = 'none';
+        void host.offsetWidth; void user.offsetWidth;
+        
+        if (hostEmpty || userEmpty) {
+            if(hostEmpty) host.style.animation = 'pulse-blue-border 1.5s infinite';
+            if(userEmpty) user.style.animation = 'pulse-blue-border 1.5s infinite';
+        }
+    }
 
     // --- HTML圧縮用 I/O Bridge 動的生成 ---
     function generateIoHtml() {
         const volL = `<svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M18.5 12A4.5 4.5 0 0 0 16 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg>`;
         const volR = `<svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
         function buildSec(title, dLab, dId, items) {
-            let h = `<div class="io-interface-section"><h4 class="interface-title">${title}</h4><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">`;
-            [0, 1].forEach(i => {
-                h += `<div style="background: #111216; padding: 25px; border-radius: 12px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 15px;">`;
-                if(i===0) h += `<div class="setting-group" style="align-items: center; width: 100%; max-width: none;"><label>${dLab}</label><select id="${dId}" class="io-select" style="max-width: none;"></select></div>`;
-                h += `<div style="display: flex; gap: 10px;">`;
-                const targets = i===0 ? [items[0], items[1]] : [items[0], items[1]]; 
-                targets.forEach(item => {
-                    h += `<div class="setting-group" style="flex:1; align-items: stretch;"><label>${item.label}</label><select id="select-${item.id}" class="io-select"></select><div class="io-gain-slider-wrap">${volL}<div class="vol-slider-wrap"><div class="vol-slider-track-bg"></div><div class="vol-slider-fill" id="fill-gain-${item.id}" style="width: 50%;"></div><input type="range" id="gain-${item.id}" min="0" max="200" value="100"></div>${volR}</div><div class="io-meter-horizontal-bg"><div id="meter-${item.id}" class="io-meter-horizontal-fill"></div></div></div>`;
-                });
-                h += `</div></div>`;
+            let h = `<div class="io-interface-section"><h4 class="interface-title">${title}</h4><div class="io-grid">`;
+            h += `<div class="io-card">`;
+            h += `<div class="setting-group" style="align-items: center; width: 100%; max-width: none; margin-bottom: 15px;"><label>${dLab}</label><select id="${dId}" class="io-select" style="max-width: none;"></select></div>`;
+            h += `<div class="io-ch-row">`;
+            items.forEach(item => {
+                h += `<div class="setting-group" style="flex:1; align-items: stretch;"><label>${item.label}</label><select id="select-${item.id}" class="io-select"></select><div class="io-gain-slider-wrap">${volL}<div class="vol-slider-wrap"><div class="vol-slider-track-bg"></div><div class="vol-slider-fill" id="fill-gain-${item.id}" style="width: 50%;"></div><input type="range" id="gain-${item.id}" min="0" max="200" value="100"></div>${volR}</div><div class="io-meter-horizontal-bg"><div id="meter-${item.id}" class="io-meter-horizontal-fill"></div></div></div>`;
             });
-            h += `</div></div>`; return h;
+            h += `</div></div></div></div>`; return h;
         }
         const container = $('io-bridge-container');
         if(container) {
@@ -404,24 +416,34 @@
     generateIoHtml();
 
     function patchIoToggle() {
-        const toggleWrapper = $('btn-io-toggle'); const sliderText = $('io-slider-text'); const toggleText = toggleWrapper?.querySelector('.io-toggle-text'); if(!toggleWrapper) return;
-        toggleWrapper.onpointerdown = (e) => { toggleWrapper.setPointerCapture(e.pointerId); toggleWrapper.isDragging = true; toggleWrapper.startX = e.clientX; toggleWrapper.moved = false; toggleWrapper.querySelector('.io-toggle-slider').style.transition = 'none'; toggleText.style.transition = 'none'; };
-        toggleWrapper.onpointermove = (e) => {
-          if (!toggleWrapper.isDragging) return; toggleWrapper.moved = true; let deltaX = e.clientX - toggleWrapper.startX; let currentLeft = state.ioBridge.enabled ? 188 : 0; let newLeft = currentLeft + deltaX; newLeft = Math.max(0, Math.min(newLeft, 188)); toggleWrapper.querySelector('.io-toggle-slider').style.left = `calc(2px + ${newLeft}px)`; let ratio = newLeft / 188; let textX = 24 - (ratio * 48); toggleText.style.transform = `translateX(${textX}px)`;
+        const tw = $('btn-io-toggle'); const st = $('io-slider-text'); const tt = tw?.querySelector('.io-toggle-text'); const ts = tw?.querySelector('.io-toggle-slider'); if(!tw) return;
+        tw.onpointerdown = (e) => { tw.setPointerCapture(e.pointerId); tw.isDragging = true; tw.startX = e.clientX; tw.moved = false; ts.style.transition = 'none'; tt.style.transition = 'none'; };
+        tw.onpointermove = (e) => {
+          if (!tw.isDragging) return; tw.moved = true; 
+          let dx = e.clientX - tw.startX; let maxL = tw.clientWidth - 52;
+          let cL = state.ioBridge.enabled ? maxL : 0; let nL = Math.max(0, Math.min(cL + dx, maxL)); 
+          ts.style.left = `calc(2px + ${nL}px)`; 
+          let ratio = nL / maxL; tt.style.transform = `translateX(${24 - ratio * 48}px)`;
         };
         const handlePointerUp = (e) => {
-          if (!toggleWrapper.isDragging) return; toggleWrapper.isDragging = false; toggleWrapper.releasePointerCapture(e.pointerId);
-          toggleWrapper.querySelector('.io-toggle-slider').style.transition = 'left 0.3s cubic-bezier(0.4, 0.0, 0.2, 1), background-color 0.3s'; toggleText.style.transition = 'transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1), color 0.3s'; toggleWrapper.querySelector('.io-toggle-slider').style.cssText = ''; toggleText.style.cssText = '';
-          let deltaX = e.clientX - toggleWrapper.startX;
-          if (toggleWrapper.moved && Math.abs(deltaX) > 20) { if (!state.ioBridge.enabled && deltaX > 30) { toggleAction(true); } else if (state.ioBridge.enabled && deltaX < -30) { toggleAction(false); } else { if(state.ioBridge.enabled) toggleWrapper.classList.add('active'); else toggleWrapper.classList.remove('active'); } } else { if(state.ioBridge.enabled) toggleWrapper.classList.add('active'); else toggleWrapper.classList.remove('active'); }
+          if (!tw.isDragging) return; tw.isDragging = false; tw.releasePointerCapture(e.pointerId);
+          ts.style.transition = 'left 0.3s ease, background-color 0.3s'; tt.style.transition = 'transform 0.3s ease, color 0.3s ease'; ts.style.cssText = ''; tt.style.cssText = '';
+          let dx = e.clientX - tw.startX;
+          if (tw.moved && Math.abs(dx) > 20) { 
+              let ns = state.ioBridge.enabled; if(!ns && dx > 30) ns = true; else if(ns && dx < -30) ns = false;
+              if (ns !== state.ioBridge.enabled) toggleAction(ns); else tw.classList.toggle('active', ns);
+          } else { tw.classList.toggle('active', state.ioBridge.enabled); }
         };
-        toggleWrapper.onpointerup = handlePointerUp;
+        tw.onpointerup = handlePointerUp;
+        
         async function toggleAction(newState) {
-            if (state.ioBridge.enabled === newState) return; state.ioBridge.enabled = newState; sliderText.textContent = newState ? "ON" : "OFF"; if(newState) toggleWrapper.classList.add('active'); else toggleWrapper.classList.remove('active');
+            state.ioBridge.enabled = newState; st.textContent = newState ? "ON" : "OFF"; tw.classList.toggle('active', newState);
             if (typeof updateIoElementsState === 'function') updateIoElementsState(); if (typeof updatePttButtonsState === 'function') updatePttButtonsState();
             if (newState) {
                 let changed = false; state.channels?.forEach(ch => { if (state.talkStates[ch.id]) { state.talkStates[ch.id] = false; changed = true; } if (state.listenStates[ch.id]) { state.listenStates[ch.id] = false; changed = true; } const card = $(`card-${ch.id}`); if (card) card.classList.remove('talk-on', 'listen-on'); const tBtn = $(`talk-${ch.id}`); if (tBtn) tBtn.classList.remove('active', 'latched'); const lBtn = $(`listen-${ch.id}`); if (lBtn) lBtn.classList.remove('active', 'latched'); });
                 if(changed) { updateAudioRouting(); updateChannelIcons(); syncTalkStates(); syncListenStates(); }
+            } else {
+                ['meter-4w-in-l', 'meter-4w-in-r', 'meter-4w-out-l', 'meter-4w-out-r', 'meter-pgm-in-l', 'meter-pgm-in-r'].forEach(id => { const el = $(id); if(el) el.style.width = '0%'; });
             }
             saveRoomState(); sendData({ type: 'update-io-bridge', ioBridge: state.ioBridge }); await updateAudioDevices(); applyOutputDevice();
         }
@@ -449,7 +471,7 @@
     };
     const LocalProfile = { get: () => { try { return JSON.parse(safeStorage.get('yytalk_user_profile')); } catch(e) { return null; } }, set: (data) => { try { safeStorage.set('yytalk_user_profile', JSON.stringify(data)); } catch(e) {} }, clear: () => { try { safeStorage.remove('yytalk_user_profile'); } catch(e) {} } };
 
-    // ★ 状態管理（変数の統合によりバグを根絶）
+    // ★ 状態管理
     const state = {
       room: null, localStream: null, localMicTrack: null, roomId: '', myUserId: '', isAdmin: false,
       channels: [], registeredUsers: [], userAssignments: {}, tallyAssignments: {}, mediaCalls: {}, 
@@ -464,7 +486,6 @@
     const LIVEKIT_WS_URL = "wss://yy-talk-pe8z9ycq.livekit.cloud";
     const WORKER_AUTH_URL = "https://yy-talk.yoshimitsu-y.workers.dev";
 
-    // CSSの初期適用
     if($('main-app-container')) $('main-app-container').classList.add('layout-normal');
     
     window.addEventListener('DOMContentLoaded', () => {
@@ -492,7 +513,6 @@
 
         const bjm = $('btn-join-member'); if(bjm) bjm.onclick = () => joinNetwork(false);
         const bja = $('btn-join-admin'); if(bja) bja.onclick = () => joinNetwork(true);
-        const bea = $('btn-enable-audio'); if(bea) bea.onclick = () => { $('audio-overlay').style.display = 'none'; state.audioEnabled = true; initAudioContext(); };
         const bStop = $('btn-stop'); if(bStop) bStop.onclick = () => { LocalProfile.clear(); location.reload(); };
 
         const cWrap = $('channel-list-wrap');
@@ -531,8 +551,8 @@
     function updateUserCount() {
       if(!state.room) return;
       const count = state.room.remoteParticipants.size + 1;
-      const activeEl = $('header-active-count'); const sepEl = $('header-user-separator');
-      if(activeEl && sepEl) { activeEl.textContent = `ACTIVE: ${count}`; activeEl.style.display = 'block'; sepEl.style.display = 'block'; }
+      const activeEl = $('header-active-count');
+      if(activeEl) { activeEl.textContent = `ACTIVE: ${count}`; activeEl.style.display = 'block'; }
     }
 
     async function updateAudioDevices() {
@@ -690,7 +710,7 @@
       const lMuted = state.isMasterSpkMuted ? 'muted-slash' : ''; const tMuted = state.isMasterMicMuted ? 'muted-slash' : '';
 
       const card = document.createElement('div'); card.className = `channel-card ${listenClass} ${talkClass}`; card.id = `card-${ch.id}`;
-      card.innerHTML = `<div class="status-line-bg"><div class="status-line-grad"></div><div class="status-line-mask" id="meter-${ch.id}"></div></div><div class="volume-panel"><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M18.5 12A4.5 4.5 0 0 0 16 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg><div class="vol-slider-wrap"><div class="vol-slider-track-bg"></div><div class="vol-slider-fill" id="fill-${ch.id}"></div><input type="range" id="vol-${ch.id}" min="0" max="100" value="50"></div><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></div><div class="main-controls"><div class="btn-action btn-listen ${state.listenStates[ch.id] ? 'active latched' : ''} ${lMuted}" id="listen-${ch.id}">${curListenIcon}</div><div class="ch-info"><div class="ch-name" id="name-${ch.id}">${ch.name || 'Unknown'}</div><div class="ch-type" id="type-${ch.id}">${ch.type || 'PL'}</div></div>${ch.type === 'Listen' ? `<div style="width: 50px; height: 50px;"></div>` : `<div class="btn-action btn-talk ${state.talkStates[ch.id] ? 'active latched' : ''} ${tMuted}" id="talk-${ch.id}">${curTalkIcon}</div>`}</div><div class="ch-meter-container"><div class="ch-meter-grad"></div><div class="ch-meter-mask" id="ch-meter-fill-${ch.id}"></div></div><div class="card-footer" style="display: flex; justify-content: center; align-items: center; padding: 0 15px 4px; position: relative; z-index: 5;"><div class="btn-expand" id="expand-${ch.id}">○ ○ ○</div></div>`;
+      card.innerHTML = `<div class="status-line-bg"><div class="status-line-grad"></div><div class="status-line-mask" id="meter-${ch.id}"></div></div><div class="card-main"><div class="btn-action btn-listen ${state.listenStates[ch.id] ? 'active latched' : ''} ${lMuted}" id="listen-${ch.id}">${curListenIcon}</div><div class="ch-info"><div class="ch-name" id="name-${ch.id}">${ch.name || 'Unknown'}</div><div class="ch-type" id="type-${ch.id}">${ch.type || 'PL'}</div></div>${ch.type === 'Listen' ? `<div style="width: 44px; height: 44px;"></div>` : `<div class="btn-action btn-talk ${state.talkStates[ch.id] ? 'active latched' : ''} ${tMuted}" id="talk-${ch.id}">${curTalkIcon}</div>`}</div><div class="ch-meter-container"><div class="ch-meter-grad"></div><div class="ch-meter-mask" id="ch-meter-fill-${ch.id}"></div></div><div class="volume-panel"><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M18.5 12A4.5 4.5 0 0 0 16 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg><div class="vol-slider-wrap"><div class="vol-slider-track-bg"></div><div class="vol-slider-fill" id="fill-${ch.id}"></div><input type="range" id="vol-${ch.id}" min="0" max="100" value="50"></div><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></div><div class="card-footer"><div class="btn-expand" id="expand-${ch.id}">○ ○ ○</div></div>`;
       const cw = $('channel-list-wrap'); if(cw) cw.appendChild(card);
       const slider = card.querySelector(`#vol-${ch.id}`); const fill = card.querySelector(`#fill-${ch.id}`); const leftMeter = card.querySelector(`#meter-${ch.id}`);
       slider.value = (state.channelVolumes[ch.id] / 3.0) * 100; fill.style.width = slider.value + '%'; leftMeter.style.height = (100 - slider.value) + '%'; 
@@ -713,7 +733,6 @@
       order.forEach(id => { const ch = state.channels?.find(c => c?.id === id); if (ch) createChannelCard(ch); }); if (typeof updatePttButtonsState === 'function') updatePttButtonsState();
     }
 
-    // ★ フェイルセーフ送信の実装
     async function sendData(payload) { 
         if (state.room && state.room.localParticipant) { 
             try {
@@ -846,7 +865,6 @@
       }
     }
 
-    // ★ 純正APIでの確実なミュート制御
     function syncTalkStates() { 
         sendData({ type: 'update-talk-states', states: state.talkStates }); 
         const isAnyTalking = Object.values(state.talkStates).some(v => v === true) && !state.isMasterMicMuted;
@@ -1051,11 +1069,15 @@
     const joinNetwork = async function(isAdmin) {
       const rawRoomId = $('host-id')?.value.trim(); const myName = $('join-userid')?.value.trim();
       if (!rawRoomId || !myName) { const sm=$('status-msg'); if(sm){sm.textContent = "ルーム名とIDを入力してください"; sm.style.color = "var(--alert)"; setTimeout(() => { sm.textContent = "待機中... ルーム名とIDを入力"; sm.style.color = "var(--text-sub)"; }, 3000);} return; }
-      if (isAdmin && myName.toLowerCase() !== 'debug') { const pass = prompt("管理者パスワードを入力してください"); if (pass !== "tmax") { if(pass !== null) alert("パスワードが違います。"); return; } }
+      if (isAdmin && myName.toLowerCase() !== 'debug') { const pass = prompt("管理者パスワードを入力してください (ヒント: tmax)"); if (pass !== "tmax") { if(pass !== null) alert("パスワードが違います。"); return; } }
 
       const btn = isAdmin ? $('btn-join-admin') : $('btn-join-member'); const originalText = btn?.textContent;
       if($('btn-join-member')) $('btn-join-member').disabled = true; if($('btn-join-admin')) $('btn-join-admin').disabled = true; if(btn){btn.textContent = "認証中..."; btn.style.opacity = "0.5";}
 
+      // --- UI側で音声開始を吸収 ---
+      state.audioEnabled = true;
+      initAudioContext();
+      
       if (myName.toLowerCase() !== 'debug') {
           try {
               const constraints = state.ioBridge.enabled ? { echoCancellation: false, noiseSuppression: false, autoGainControl: false } : { echoCancellation: true, noiseSuppression: true };
@@ -1071,21 +1093,10 @@
 
       if($('login-overlay')) $('login-overlay').style.display = 'none'; 
       if(btn){btn.textContent = originalText; btn.style.opacity = "1";} if($('btn-join-member')) $('btn-join-member').disabled = false; if($('btn-join-admin')) $('btn-join-admin').disabled = false;
-      const bsl = $('btn-show-login'); if(bsl){ bsl.textContent = "CONNECT"; bsl.classList.add('online'); }
-      if($('btn-join-member')) $('btn-join-member').style.display = 'none'; if($('btn-join-admin')) $('btn-join-admin').style.display = 'none';
-      const hostContainer = $('host-id-input-container'); if(hostContainer) hostContainer.style.display = 'none';
-      const userContainer = $('join-userid-input-container'); if(userContainer) userContainer.style.display = 'none';
-      if($('btn-stop')) $('btn-stop').style.display = 'block'; const closeBtn = $('btn-close-login'); if (closeBtn) closeBtn.style.display = 'flex';
-      const sm=$('status-msg'); if(sm){sm.textContent = "接続完了 (Connected)"; sm.style.color = "var(--green)";}
+      const bsl = $('btn-show-login'); if(bsl){ bsl.textContent = "ONLINE"; bsl.classList.add('online'); }
       
-      let subText = $('header-status-sub');
-      if (!subText && bsl) { subText = document.createElement('div'); subText.id = 'header-status-sub'; subText.style.position = 'absolute'; subText.style.bottom = '-18px'; subText.style.right = '0'; subText.style.fontSize = '10px'; subText.style.color = 'var(--text-sub)'; subText.style.fontFamily = "'JetBrains Mono', monospace"; bsl.parentElement.appendChild(subText); }
-      if(subText) subText.textContent = "接続完了";
-
       const sr = $('status-role'); if (sr) sr.style.display = 'none'; 
-      if($('audio-overlay')) $('audio-overlay').style.display = 'flex';
       
-      // ★ 過去のデータを確実にロードし、自身のユーザー名を登録・即時セーブする
       loadRoomState(state.roomId);
       if (!state.registeredUsers.includes(state.myUserId)) {
           state.registeredUsers.push(state.myUserId);
@@ -1108,7 +1119,7 @@
                     publishData: () => {}, setMicrophoneEnabled: async () => {}, setScreenShareEnabled: async () => {},
                     setCameraEnabled: async () => {}, unpublishTrack: async () => {}, publishTrack: async () => {}, getTrackPublication: () => { return null; }
                 },
-                engine: { pcManager: { subscriber: { pc: { getStats: async () => [] } } } } // RTT用ダミー
+                engine: { pcManager: { subscriber: { pc: { getStats: async () => [] } } } }
             };
             if (state.channels.length > 1) state.remoteTalkStates = { 'Cam1': { [state.channels[1].id]: true } };
             
@@ -1118,7 +1129,6 @@
             return;
           }
 
-          // ★ MQTT通信を独立させてエラーを分離
           try {
               const tallyTopic = "yytalk/tally/" + rawRoomId;
               const mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
@@ -1204,7 +1214,6 @@
               syncTalkStates(); 
               syncListenStates();
               
-              // ★ マイクの登録（安全なクローン生成とミュート）
               if (state.localStream) {
                   try {
                       const audioTrack = state.localStream.getAudioTracks()[0];
@@ -1213,7 +1222,7 @@
                           const localMicTrack = new LivekitClient.LocalAudioTrack(clonedTrack);
                           state.localMicTrack = localMicTrack;
                           await room.localParticipant.publishTrack(localMicTrack, { name: 'mic', source: LivekitClient.Track.Source.Microphone });
-                          await localMicTrack.mute(); // 初期状態はミュート
+                          await localMicTrack.mute();
                           state.audioEnabled = true; 
                           uiLog("Mic Track Published.");
                       }
@@ -1226,7 +1235,6 @@
       })();
     };
 
-    // RTT遅延表示
     setInterval(async () => {
         const rttEl = $('status-rtt'); if (!rttEl) return;
         if (state.myUserId && state.myUserId.toLowerCase() === 'debug') { const fakeRtt = Math.floor(Math.random() * 10) + 12; rttEl.style.display = 'block'; rttEl.textContent = `${fakeRtt} ms`; rttEl.style.color = 'var(--green)'; return; }
