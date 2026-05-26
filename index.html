@@ -64,7 +64,6 @@
     .login-modal .btn-close-login { position: absolute; top: 10px; right: 10px; background: transparent; border: none; color: #9ca3af; font-size: 24px; cursor: pointer; padding: 15px; display: none; align-items: center; justify-content: center; z-index: 2010; font-weight: normal; }
     .login-modal .btn-close-login:hover { color: #ffffff; }
     
-    /* 修正：バツボタン以外のボタンのみスタイルを当てる */
     .login-modal button:not(.btn-close-login) { padding: 16px; border: none; border-radius: 8px; font-weight: bold; color: #000; cursor: pointer; font-size: 15px; z-index: 2001; transition: 0.2s;}
     .login-modal button:not(.btn-close-login):active { transform: scale(0.98); } 
     .login-modal button:not(.btn-close-login):disabled { opacity: 0.5; cursor: not-allowed; }
@@ -94,8 +93,16 @@
     .layout-dropdown.show { display: flex; } .layout-item { background: transparent; border: none; color: var(--text-main); padding: 12px 15px; text-align: left; font-size: 13px; font-weight: bold; cursor: pointer; font-family: 'JetBrains Mono', monospace; border-bottom: 1px solid var(--border-color); transition: background 0.2s; display: flex; align-items: center; }
     .layout-item:hover { background: rgba(255,255,255,0.05); } .layout-item.active { color: var(--blue); }
     
+    /* Layout Configurations */
     .monitor-section { width: 100%; background: #000; display: none; flex-direction: column; align-items: center; padding: 10px 0; border-bottom: 2px solid var(--border-color); flex-shrink: 0; position: relative;}
-    .app-container.layout-hybrid .monitor-section { display: flex; } .app-container.layout-monitor .monitor-section { display: flex; flex: 1; border-bottom: none; justify-content: flex-start; align-items: center; overflow: hidden; padding-top: 10px; }
+    .app-container.layout-hybrid .monitor-section { display: flex; flex: 1; min-height: 0; border-bottom: 2px solid var(--border-color); padding: 0; background: #000; position: relative; justify-content: center;}
+    .app-container.layout-hybrid .monitor-section .video-wrapper { height: 100%; width: 100%; max-height: 100%; max-width: 100%; border: none; }
+    .app-container.layout-hybrid .monitor-label { position: absolute; top: 10px; left: 10px; z-index: 10; background: rgba(0,0,0,0.6); padding: 4px 10px; border-radius: 6px; width: auto; margin: 0; pointer-events: none; }
+    .app-container.layout-hybrid .channel-list-container { flex: 0 0 auto; padding: 15px; background: var(--bg-dark); display: flex; flex-direction: row; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none; align-content: flex-start;}
+    .app-container.layout-hybrid .channel-list-container::-webkit-scrollbar { display: none; }
+    .app-container.layout-hybrid #channel-list-wrap { display: flex; flex-direction: row; flex-wrap: nowrap; gap: 15px; width: max-content; align-items: flex-start; }
+    .app-container.layout-hybrid .channel-card { flex: 0 0 280px; scroll-snap-align: start; height: max-content; }
+    .app-container.layout-monitor .monitor-section { display: flex; flex: 1; border-bottom: none; justify-content: flex-start; align-items: center; overflow: hidden; padding-top: 10px; }
     .app-container.layout-monitor .monitor-section .video-wrapper { width: 100vw; max-width: none; height: auto; aspect-ratio: 16 / 9; max-height: calc(100dvh - 80px); margin: 0 auto auto auto; }
     .app-container.layout-monitor .global-controls,.app-container.layout-monitor .channel-list-container,.app-container.layout-monitor .master-meter-container { display: none !important; }
     .monitor-label { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: bold; color: #ddd; margin-bottom: 6px; letter-spacing: 1px; width: 100%; text-align: center; }
@@ -103,10 +110,13 @@
     .video-wrapper.tally-on { border: 4px solid var(--alert) !important; box-shadow: 0 0 30px rgba(239, 68, 68, 0.8), inset 0 0 30px rgba(239, 68, 68, 0.6); }
     .video-dummy-text { color: #555; font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: bold; z-index: 1;} .video-wrapper video { width: 100%; height: 100%; object-fit: contain; background: #000; position: absolute; inset: 0; z-index: 5;}
     
-    /* Admin Modal - Header sits on top, so this slides under it */
+    /* Admin Modal */
     #admin-overlay { z-index: 4000; align-items: center; justify-content: flex-start; padding-top: 20px;}
     .admin-modal { width: 98%; max-width: 1100px; height: calc(100dvh - 90px); display: flex; flex-direction: column; padding: 25px; margin: 0 auto; position: relative; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);}
     .admin-tabs-container { display: flex; gap: 8px; margin-bottom: 20px; width: 100%; flex-shrink: 0;}
+    .btn-close-modal { position: absolute; top: 10px; right: 10px; background: transparent; border: none; color: #9ca3af; font-size: 24px; cursor: pointer; padding: 15px; display: flex; align-items: center; justify-content: center; z-index: 200; font-weight: normal; transition: color 0.2s ease;}
+    .btn-close-modal:hover { color: #ffffff; }
+    
     .admin-tab-btn { flex: 1; min-width: 0; background: rgba(0, 0, 0, 0.4); border: 1px solid transparent; color: #555 !important; padding: 12px 4px; font-size: 13px; font-weight: bold; border-radius: 8px 8px 0 0; cursor: pointer; transition: all 0.2s ease; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; line-height: 1.2; text-align: center; position: relative; z-index: 1; margin-bottom: 0; }
     .admin-tab-btn i { font-size: 20px; opacity: 0.6; transition: all 0.2s; } .admin-tab-btn:hover { color: #aaa !important; }
     .admin-tab-btn.active { background-color: var(--card-bg); background-image: linear-gradient(to bottom, rgba(96, 165, 250, 0.15) 0%, rgba(96, 165, 250, 0) 100%); border: 1px solid var(--border-color); color: #ffffff !important; box-shadow: none; text-shadow: 0 0 6px rgba(255,255,255,0.4); z-index: 2; border-radius: 8px 8px 0 0; }
@@ -189,14 +199,14 @@
     .channel-card::before { left: 0; background: linear-gradient(to right, rgba(74, 222, 128, 0.25) 0%, transparent 100%); } .channel-card::after { right: 0; background: linear-gradient(to left, rgba(220, 38, 38, 0.25) 0%, transparent 100%); }
     .channel-card.listen-on::before { opacity: 1; } .channel-card.talk-on::after { opacity: 1; } .channel-card > * { position: relative; z-index: 1; }
     
-    /* ★メーターのスタイル（縦＝ボリューム、横＝声の波形）に修正 */
-    .status-line-bg { position: absolute; left: 0; top: 10%; bottom: 10%; width: 4px; background-color: #0a0b0d; border-radius: 0 4px 4px 0; overflow: hidden; z-index: 2; }
+    /* ★メーターのスタイル（縦＝ボリューム、横＝声の波形）背景色をうっすらグレー（#2a2c33）に指定 */
+    .status-line-bg { position: absolute; left: 0; top: 10%; bottom: 10%; width: 4px; background-color: #2a2c33; border-radius: 0 4px 4px 0; overflow: hidden; z-index: 2; }
     .status-line-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to top, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); } 
-    .status-line-mask { position: absolute; top: 0; left: 0; right: 0; height: 100%; background-color: var(--card-bg); transition: height 0.05s ease-out; }
+    .status-line-mask { position: absolute; top: 0; left: 0; right: 0; height: 100%; background-color: #2a2c33; transition: height 0.05s ease-out; }
     
-    .ch-meter-container { height: 4px; background: var(--bg-dark); margin: 0 45px 0; border-radius: 2px; overflow: hidden; position: relative; opacity: 0.8; z-index: 2;}
+    .ch-meter-container { height: 4px; background: #2a2c33; margin: 0 45px 4px; border-radius: 2px; overflow: hidden; position: relative; z-index: 2;}
     .ch-meter-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); } 
-    .ch-meter-mask { position: absolute; right: 0; top: 0; bottom: 0; width: 100%; background-color: var(--card-bg); transition: width 0.1s ease-out; }
+    .ch-meter-mask { position: absolute; right: 0; top: 0; bottom: 0; width: 100%; background-color: #2a2c33; transition: width 0.1s ease-out; }
 
     .volume-panel { display: none; padding: 5px 20px; align-items: center; gap: 10px; } .channel-card.expanded .volume-panel { display: flex; }
     .vol-icon { font-size: 14px; color: var(--text-sub); flex-shrink: 0; width: 14px; height: 14px; } .vol-slider-wrap { flex: 1; position: relative; display: flex; align-items: center; touch-action: pan-x; }
@@ -207,15 +217,18 @@
     input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 30px; background: transparent; border: none; } 
     input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 18px; width: 18px; border-radius: 50%; background: #ffffff; box-shadow: 0 0 8px rgba(0,0,0,0.6); cursor: pointer; margin-top: 6px; border: none; }
     
-    .card-main { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; position: relative; z-index: 2;} .ch-info { text-align: center; flex: 1; padding: 0 5px; }
-    .ch-name { font-size: 14px; font-weight: 500; margin-bottom: 2px; display: inline-block; padding: 2px 6px; border-radius: 4px; } .ch-type { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-sub); display: inline-block; padding: 0px 6px; border-radius: 4px; pointer-events: auto; }
-    .btn-action { width: 44px; height: 44px; border-radius: 50%; border: 2px solid; display: flex; align-items: center; justify-content: center; background: #1c1d21; touch-action: none; z-index: 10; user-select: none; box-shadow: 0 4px 8px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.05); transition: background-color 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, color 0.2s ease; cursor: pointer; font-size: 16px;}
+    /* カード内のレイアウト崩れ対策（flex-shrink, overflow制御） */
+    .card-main { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; position: relative; z-index: 2;} 
+    .ch-info { text-align: center; flex: 1; padding: 0 5px; min-width: 0; overflow: hidden;}
+    .ch-name { font-size: 14px; font-weight: 500; margin-bottom: 2px; display: inline-block; padding: 2px 6px; border-radius: 4px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;} 
+    .ch-type { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-sub); display: inline-block; padding: 0px 6px; border-radius: 4px; pointer-events: auto; }
+    .btn-action { width: 44px; height: 44px; flex-shrink: 0; border-radius: 50%; border: 2px solid; display: flex; align-items: center; justify-content: center; background: #1c1d21; touch-action: none; z-index: 10; user-select: none; box-shadow: 0 4px 8px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.05); transition: background-color 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, color 0.2s ease; cursor: pointer; font-size: 16px;}
     .btn-action.disabled-btn { opacity: 0.3; cursor: not-allowed; pointer-events: none; border-color: var(--border-color) !important; color: var(--text-sub) !important; background: #15161a !important; box-shadow: none !important; }
     .btn-icon { width: 20px; height: 20px; fill: currentColor; pointer-events: none; }
     .btn-listen { border-color: var(--green); color: var(--green); } .btn-listen.active, .btn-listen.latched { background-color: var(--green); color: var(--bg-dark); box-shadow: inset 0 2px 4px rgba(255,255,255,0.4), 0 4px 15px rgba(74, 222, 128, 0.5); }
     .btn-talk { border-color: var(--red); color: var(--red); } .btn-talk.active, .btn-talk.latched { background-color: var(--red); color: var(--text-main); box-shadow: inset 0 2px 4px rgba(255,255,255,0.3), 0 4px 15px rgba(220, 38, 38, 0.5); }
-    .ch-meter-container { height: 4px; background: var(--bg-dark); margin: 0 45px 0; border-radius: 2px; overflow: hidden; position: relative; opacity: 0.8; z-index: 2;}
-    .ch-meter-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); } 
+    .card-footer { display: flex; justify-content: center; align-items: center; padding: 0 15px 4px; position: relative; z-index: 5;}
+    .btn-expand { display: inline-block; padding: 4px 40px; color: var(--text-sub); font-size: 14px; letter-spacing: 2px; cursor: grab; margin: 0 auto; border-radius: 20px; touch-action: none;} .btn-expand:active { cursor: grabbing; background-color: rgba(255,255,255,0.05); }
     .sortable-ghost { opacity: 0.2 !important; background-color: #000 !important; } .sortable-drag { cursor: grabbing !important; box-shadow: 0 20px 40px rgba(0,0,0,0.8) !important; background-color: var(--card-bg-expanded) !important; border: 1px solid var(--border-color) !important; opacity: 1 !important; z-index: 9999 !important; }
     
     .master-meter-container { height: 8px; width: 100%; background: var(--bg-dark); position: relative; flex-shrink: 0; z-index: 10;}
@@ -230,6 +243,7 @@
       .header-right { gap: 4px; }
       .btn-header-icon { width: 28px; height: 28px; font-size: 12px; }
       .scroll-area { padding-bottom: 50px; }
+      .app-container.layout-hybrid .channel-card { flex: 0 0 85vw; }
     }
     
     @media (orientation: landscape) and (max-height: 500px) {
@@ -477,7 +491,7 @@
         const devices = await navigator.mediaDevices.enumerateDevices();
         if (state.ioBridge.outDevice4w && state.ioBridge.outDevice4w !== 'default' && state.ioBridge.outDevice4w !== '') {
             const exists = devices.some(d => d.deviceId === state.ioBridge.outDevice4w);
-            if (!exists) { state.ioBridge.outDevice4w = 'default'; if($('select-4w-out-device')) $('select-4w-out-device').value = 'default'; applyOutputDevice(); saveRoomState(); }
+            if (!exists) { state.ioBridge.outDevice4w = 'default'; if($('select-4w-out-device')) $('select-4w-out-device').value = 'default'; applyOutputDevice(); uiLog("Warning: Audio output device lost."); saveRoomState(); }
         }
     });
 
@@ -669,7 +683,7 @@
 
         const handleIOTracks = async () => {
             if (!state.ioBridge.enabled) { ['ioTrack4wL', 'ioTrack4wR', 'ioTrackPgmL', 'ioTrackPgmR'].forEach(async key => { if (state[key]) { await state.room.localParticipant.unpublishTrack(state[key].track); state[key].track.stop(); state[key] = null; } }); return; }
-            if (state.ioBridge.inDevice4w) { try { let audioConst = { echoCancellation: false, noiseSuppression: false, autoGainControl: false }; if (state.ioBridge.inDevice4w !== 'default') audioConst.deviceId = { exact: state.ioBridge.inDevice4w }; const stream = await navigator.mediaDevices.getUserMedia({ audio: audioConst }); const source = state.audioCtx.createMediaStreamSource(stream); const splitter = state.audioCtx.createChannelSplitter(2); source.connect(splitter); const gainL = state.audioCtx.createGain(); gainL.gain.value = state.ioBridge.inGain4wL ?? 1.0; state.ioNodes.gain4wL = gainL; const analyserL = state.audioCtx.createAnalyser(); analyserL.fftSize = 256; state.ioNodes.analyser4wL = analyserL; const destL = state.audioCtx.createMediaStreamDestination(); splitter.connect(gainL, 0); gainL.connect(analyserL); gainL.connect(destL); const gainR = state.audioCtx.createGain(); gainR.gain.value = state.ioBridge.inGain4wR ?? 1.0; state.ioNodes.gain4wR = gainR; const analyserR = state.audioCtx.createAnalyser(); analyserR.fftSize = 256; state.ioNodes.analyser4wR = analyserR; const destR = state.audioCtx.createMediaStreamDestination(); splitter.connect(gainR, 1); gainR.connect(analyserR); gainR.connect(destR); const trackL = new LivekitClient.LocalAudioTrack(destL.stream.getAudioTracks()[0]); const trackR = new LivekitClient.LocalAudioTrack(destR.stream.getAudioTracks()[0]); if(state.ioTrack4wL) await state.room.localParticipant.unpublishTrack(state.ioTrack4wL.track); if(state.ioTrack4wR) await state.room.localParticipant.unpublishTrack(state.ioTrack4wR.track); state.ioTrack4wL = await state.room.localParticipant.publishTrack(trackL, { name: 'io_4w_l', source: LivekitClient.Track.Source.Unknown }); state.ioTrack4wR = await state.room.localParticipant.publishTrack(trackR, { name: 'io_4w_r', source: LivekitClient.Track.Source.Unknown }); } catch(e) { } }
+            if (state.ioBridge.inDevice4w) { try { let audioConst = { echoCancellation: false, noiseSuppression: false, autoGainControl: false }; if (state.ioBridge.inDevice4w !== 'default') audioConst.deviceId = { exact: state.ioBridge.inDevice4w }; const stream = await navigator.mediaDevices.getUserMedia({ audio: audioConst }); const source = state.audioCtx.createMediaStreamSource(stream); const splitter = state.audioCtx.createChannelSplitter(2); source.connect(splitter); const gainL = state.audioCtx.createGain(); gainL.gain.value = state.ioBridge.inGain4wL ?? 1.0; state.ioNodes.gain4wL = gainL; const analyserL = state.audioCtx.createAnalyser(); analyserL.fftSize = 256; state.ioNodes.analyser4wL = analyserL; const destL = state.audioCtx.createMediaStreamDestination(); splitter.connect(gainL, 0); gainL.connect(analyserL); gainL.connect(destL); const gainR = state.audioCtx.createGain(); gainR.gain.value = state.ioBridge.inGain4wR ?? 1.0; state.ioNodes.gain4wR = gainR; const analyserR = state.audioCtx.createAnalyser(); analyserR.fftSize = 256; state.ioNodes.analyser4wR = analyserR; const destR = state.audioCtx.createMediaStreamDestination(); splitter.connect(gainR, 1); gainR.connect(analyserR); connect(destR); const trackL = new LivekitClient.LocalAudioTrack(destL.stream.getAudioTracks()[0]); const trackR = new LivekitClient.LocalAudioTrack(destR.stream.getAudioTracks()[0]); if(state.ioTrack4wL) await state.room.localParticipant.unpublishTrack(state.ioTrack4wL.track); if(state.ioTrack4wR) await state.room.localParticipant.unpublishTrack(state.ioTrack4wR.track); state.ioTrack4wL = await state.room.localParticipant.publishTrack(trackL, { name: 'io_4w_l', source: LivekitClient.Track.Source.Unknown }); state.ioTrack4wR = await state.room.localParticipant.publishTrack(trackR, { name: 'io_4w_r', source: LivekitClient.Track.Source.Unknown }); } catch(e) { } }
             if (state.ioBridge.inDevicePgm) { try { let audioConst = { echoCancellation: false, noiseSuppression: false, autoGainControl: false }; if (state.ioBridge.inDevicePgm !== 'default') audioConst.deviceId = { exact: state.ioBridge.inDevicePgm }; const stream = await navigator.mediaDevices.getUserMedia({ audio: audioConst }); const source = state.audioCtx.createMediaStreamSource(stream); const splitter = state.audioCtx.createChannelSplitter(2); source.connect(splitter); const gainL = state.audioCtx.createGain(); gainL.gain.value = state.ioBridge.inGainPgmL ?? 1.0; state.ioNodes.gainPgmL = gainL; const analyserL = state.audioCtx.createAnalyser(); analyserL.fftSize = 256; state.ioNodes.analyserPgmL = analyserL; const destL = state.audioCtx.createMediaStreamDestination(); splitter.connect(gainL, 0); gainL.connect(analyserL); gainL.connect(destL); const gainR = state.audioCtx.createGain(); gainR.gain.value = state.ioBridge.inGainPgmR ?? 1.0; state.ioNodes.gainPgmR = gainR; const analyserR = state.audioCtx.createAnalyser(); analyserR.fftSize = 256; state.ioNodes.analyserPgmR = analyserR; const destR = state.audioCtx.createMediaStreamDestination(); splitter.connect(gainR, 1); gainR.connect(analyserR); connect(destR); const trackL = new LivekitClient.LocalAudioTrack(destL.stream.getAudioTracks()[0]); const trackR = new LivekitClient.LocalAudioTrack(destR.stream.getAudioTracks()[0]); if(state.ioTrackPgmL) await state.room.localParticipant.unpublishTrack(state.ioTrackPgmL.track); if(state.ioTrackPgmR) await state.room.localParticipant.unpublishTrack(state.ioTrackPgmR.track); state.ioTrackPgmL = await state.room.localParticipant.publishTrack(trackL, { name: 'io_pgm_l', source: LivekitClient.Track.Source.Unknown }); state.ioTrackPgmR = await state.room.localParticipant.publishTrack(trackR, { name: 'io_pgm_r', source: LivekitClient.Track.Source.Unknown }); } catch(e) { } }
         };
         await handleIOTracks(); updateAudioRouting();
@@ -803,6 +817,7 @@
       const lMuted = state.isMasterSpkMuted ? 'muted-slash' : ''; const tMuted = state.isMasterMicMuted ? 'muted-slash' : '';
 
       const card = document.createElement('div'); card.className = `channel-card ${listenClass} ${talkClass}`; card.id = `card-${ch.id}`;
+      // ★ 左の縦バーを「ボリューム設定(vol-indicator)」、下の横バーを「トークレベル(meter)」に修正
       card.innerHTML = `<div class="status-line-bg"><div class="status-line-grad"></div><div class="status-line-mask" id="vol-indicator-${ch.id}"></div></div><div class="card-main"><div class="btn-action btn-listen ${state.listenStates[ch.id] ? 'active latched' : ''} ${lMuted}" id="listen-${ch.id}">${curListenIcon}</div><div class="ch-info"><div class="ch-name" id="name-${ch.id}">${ch.name || 'Unknown'}</div><div class="ch-type" id="type-${ch.id}">${ch.type || 'PL'}</div></div>${ch.type === 'Listen' ? `<div style="width: 44px; height: 44px;"></div>` : `<div class="btn-action btn-talk ${state.talkStates[ch.id] ? 'active latched' : ''} ${tMuted}" id="talk-${ch.id}">${curTalkIcon}</div>`}</div><div class="ch-meter-container"><div class="ch-meter-grad"></div><div class="ch-meter-mask" id="meter-${ch.id}"></div></div><div class="volume-panel"><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M18.5 12A4.5 4.5 0 0 0 16 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg><div class="vol-slider-wrap"><div class="vol-slider-track-bg"></div><div class="vol-slider-fill" id="fill-${ch.id}"></div><input type="range" id="vol-${ch.id}" min="0" max="100" value="50"></div><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></div><div class="card-footer"><div class="btn-expand" id="expand-${ch.id}">○ ○ ○</div></div>`;
       const cw = $('channel-list-wrap'); if(cw) cw.appendChild(card);
       
@@ -955,6 +970,7 @@
                 let chPeak = getPeak(chData); 
                 let chPercent = Math.min((chPeak / 255) * 100 * 2.0, 100); 
                 
+                // 他の人が喋っている場合のメーター反映
                 for (let pid in state.mediaCalls) {
                     if (state.remoteTalkStates[pid] && state.remoteTalkStates[pid][ch.id] && state.mediaCalls[pid].analyser && !state.mediaCalls[pid].isIOTrack) {
                         const pData = new Uint8Array(state.mediaCalls[pid].analyser.frequencyBinCount);
@@ -1317,7 +1333,7 @@
                     publishData: () => {}, setMicrophoneEnabled: async () => {}, setScreenShareEnabled: async () => {},
                     setCameraEnabled: async () => {}, unpublishTrack: async () => {}, publishTrack: async () => {}, getTrackPublication: () => { return null; }
                 },
-                engine: { pcManager: { subscriber: { pc: { getStats: async () => [] } } } } // RTT用ダミー
+                engine: { pcManager: { subscriber: { pc: { getStats: async () => [] } } } } 
             };
             if (state.channels.length > 1) state.remoteTalkStates = { 'Cam1': { [state.channels[1].id]: true } };
             
