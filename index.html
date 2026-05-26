@@ -198,10 +198,16 @@
     .channel-card::before, .channel-card::after { content: ""; position: absolute; top: 0; bottom: 0; width: 50%; opacity: 0; transition: opacity 0.3s ease; pointer-events: none; z-index: 0; }
     .channel-card::before { left: 0; background: linear-gradient(to right, rgba(74, 222, 128, 0.25) 0%, transparent 100%); } .channel-card::after { right: 0; background: linear-gradient(to left, rgba(220, 38, 38, 0.25) 0%, transparent 100%); }
     .channel-card.listen-on::before { opacity: 1; } .channel-card.talk-on::after { opacity: 1; } .channel-card > * { position: relative; z-index: 1; }
+    
+    /* ★メーターのスタイル修正 */
     .status-line-bg { position: absolute; left: 0; top: 10%; bottom: 10%; width: 4px; background-color: #0a0b0d; border-radius: 0 4px 4px 0; overflow: hidden; z-index: 2; }
     .status-line-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to top, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); } 
-    /* ★カードのメーターマスクを背景色と同じにして、無音時に「黒いバー」に見えるのを防ぐ */
     .status-line-mask { position: absolute; top: 0; left: 0; right: 0; height: 100%; background-color: var(--card-bg); transition: height 0.05s ease-out; }
+    
+    .ch-meter-container { height: 4px; background: var(--bg-dark); margin: 0 45px 0; border-radius: 2px; overflow: hidden; position: relative; opacity: 0.8; z-index: 2;}
+    .ch-meter-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); } 
+    .ch-meter-mask { position: absolute; right: 0; top: 0; bottom: 0; width: 100%; background-color: var(--card-bg); transition: width 0.1s ease-out; }
+
     .volume-panel { display: none; padding: 5px 20px; align-items: center; gap: 10px; } .channel-card.expanded .volume-panel { display: flex; }
     .vol-icon { font-size: 14px; color: var(--text-sub); flex-shrink: 0; width: 14px; height: 14px; } .vol-slider-wrap { flex: 1; position: relative; display: flex; align-items: center; touch-action: pan-x; }
     .vol-slider-track-bg { position: absolute; left: 0; right: 0; height: 4px; background: var(--border-color); border-radius: 2px; z-index: 1; } .vol-slider-fill { position: absolute; left: 0; height: 4px; background: var(--orange); border-radius: 2px; z-index: 2; width: 50%; pointer-events: none; }
@@ -218,10 +224,6 @@
     .btn-icon { width: 20px; height: 20px; fill: currentColor; pointer-events: none; }
     .btn-listen { border-color: var(--green); color: var(--green); } .btn-listen.active, .btn-listen.latched { background-color: var(--green); color: var(--bg-dark); box-shadow: inset 0 2px 4px rgba(255,255,255,0.4), 0 4px 15px rgba(74, 222, 128, 0.5); }
     .btn-talk { border-color: var(--red); color: var(--red); } .btn-talk.active, .btn-talk.latched { background-color: var(--red); color: var(--text-main); box-shadow: inset 0 2px 4px rgba(255,255,255,0.3), 0 4px 15px rgba(220, 38, 38, 0.5); }
-    .ch-meter-container { height: 4px; background: var(--bg-dark); margin: 0 45px 0; border-radius: 2px; overflow: hidden; position: relative; opacity: 0.8; z-index: 2;}
-    .ch-meter-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); } 
-    /* ★カード下部のメーターのマスク色も修正 */
-    .ch-meter-mask { position: absolute; right: 0; top: 0; bottom: 0; width: 100%; background-color: var(--card-bg); transition: width 0.05s ease-out; }
     .card-footer { display: flex; justify-content: center; align-items: center; padding: 0 15px 4px; position: relative; z-index: 5;}
     .btn-expand { display: inline-block; padding: 4px 40px; color: var(--text-sub); font-size: 14px; letter-spacing: 2px; cursor: grab; margin: 0 auto; border-radius: 20px; touch-action: none;} .btn-expand:active { cursor: grabbing; background-color: rgba(255,255,255,0.05); }
     .sortable-ghost { opacity: 0.2 !important; background-color: #000 !important; } .sortable-drag { cursor: grabbing !important; box-shadow: 0 20px 40px rgba(0,0,0,0.8) !important; background-color: var(--card-bg-expanded) !important; border: 1px solid var(--border-color) !important; opacity: 1 !important; z-index: 9999 !important; }
@@ -565,6 +567,7 @@
                 navigator.mediaDevices.getUserMedia({ audio: constraints })
                 .then(stream => {
                     state.localStream = stream;
+                    // --- ★メーター動作用のアナライザー接続を追加 ---
                     if (state.audioCtx) { 
                         if (state.localMicAnalyser) state.localMicAnalyser.disconnect(); 
                         const localSrc = state.audioCtx.createMediaStreamSource(state.localStream); 
@@ -611,17 +614,7 @@
         setTimeout(window.forceResize, 100);
     }
     
-    function switchTab(activeTab, activeSec) { 
-        const tVid=$('tab-video'), tPat=$('tab-patch'), tIo=$('tab-io'); 
-        if(tVid && tPat && tIo) [tVid, tPat, tIo].forEach(t => t.classList.remove('active')); 
-        const sVid=$('admin-video-section'), sPat=$('admin-patch-section'), sIo=$('admin-io-section'); 
-        if(sVid && sPat && sIo) [sVid, sPat, sIo].forEach(s => s.style.display = 'none'); 
-        if(activeTab) activeTab.classList.add('active'); 
-        if(activeSec) activeSec.style.display = 'block'; 
-        // ★ タブ切り替え時にスクロールを上に戻す
-        const scrollArea = document.querySelector('.scroll-area');
-        if(scrollArea) scrollArea.scrollTop = 0;
-    }
+    function switchTab(activeTab, activeSec) { const tVid=$('tab-video'), tPat=$('tab-patch'), tIo=$('tab-io'); if(tVid && tPat && tIo) [tVid, tPat, tIo].forEach(t => t.classList.remove('active')); const sVid=$('admin-video-section'), sPat=$('admin-patch-section'), sIo=$('admin-io-section'); if(sVid && sPat && sIo) [sVid, sPat, sIo].forEach(s => s.style.display = 'none'); if(activeTab) activeTab.classList.add('active'); if(activeSec) activeSec.style.display = 'block'; }
 
     function updateUserCount() {
       if(!state.room) return;
@@ -797,11 +790,24 @@
       const lMuted = state.isMasterSpkMuted ? 'muted-slash' : ''; const tMuted = state.isMasterMicMuted ? 'muted-slash' : '';
 
       const card = document.createElement('div'); card.className = `channel-card ${listenClass} ${talkClass}`; card.id = `card-${ch.id}`;
-      card.innerHTML = `<div class="status-line-bg"><div class="status-line-grad"></div><div class="status-line-mask" id="ch-meter-fill-${ch.id}"></div></div><div class="card-main"><div class="btn-action btn-listen ${state.listenStates[ch.id] ? 'active latched' : ''} ${lMuted}" id="listen-${ch.id}">${curListenIcon}</div><div class="ch-info"><div class="ch-name" id="name-${ch.id}">${ch.name || 'Unknown'}</div><div class="ch-type" id="type-${ch.id}">${ch.type || 'PL'}</div></div>${ch.type === 'Listen' ? `<div style="width: 44px; height: 44px;"></div>` : `<div class="btn-action btn-talk ${state.talkStates[ch.id] ? 'active latched' : ''} ${tMuted}" id="talk-${ch.id}">${curTalkIcon}</div>`}</div><div class="ch-meter-container"><div class="ch-meter-grad"></div><div class="ch-meter-mask" id="meter-${ch.id}"></div></div><div class="volume-panel"><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M18.5 12A4.5 4.5 0 0 0 16 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg><div class="vol-slider-wrap"><div class="vol-slider-track-bg"></div><div class="vol-slider-fill" id="fill-${ch.id}"></div><input type="range" id="vol-${ch.id}" min="0" max="100" value="50"></div><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></div><div class="card-footer"><div class="btn-expand" id="expand-${ch.id}">○ ○ ○</div></div>`;
+      card.innerHTML = `<div class="status-line-bg"><div class="status-line-grad"></div><div class="status-line-mask" id="meter-level-${ch.id}"></div></div><div class="card-main"><div class="btn-action btn-listen ${state.listenStates[ch.id] ? 'active latched' : ''} ${lMuted}" id="listen-${ch.id}">${curListenIcon}</div><div class="ch-info"><div class="ch-name" id="name-${ch.id}">${ch.name || 'Unknown'}</div><div class="ch-type" id="type-${ch.id}">${ch.type || 'PL'}</div></div>${ch.type === 'Listen' ? `<div style="width: 44px; height: 44px;"></div>` : `<div class="btn-action btn-talk ${state.talkStates[ch.id] ? 'active latched' : ''} ${tMuted}" id="talk-${ch.id}">${curTalkIcon}</div>`}</div><div class="ch-meter-container"><div class="ch-meter-grad"></div><div class="ch-meter-mask" id="vol-indicator-${ch.id}"></div></div><div class="volume-panel"><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M18.5 12A4.5 4.5 0 0 0 16 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg><div class="vol-slider-wrap"><div class="vol-slider-track-bg"></div><div class="vol-slider-fill" id="fill-${ch.id}"></div><input type="range" id="vol-${ch.id}" min="0" max="100" value="50"></div><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></div><div class="card-footer"><div class="btn-expand" id="expand-${ch.id}">○ ○ ○</div></div>`;
       const cw = $('channel-list-wrap'); if(cw) cw.appendChild(card);
-      const slider = card.querySelector(`#vol-${ch.id}`); const fill = card.querySelector(`#fill-${ch.id}`); const leftMeter = card.querySelector(`#meter-${ch.id}`);
-      slider.value = (state.channelVolumes[ch.id] / 3.0) * 100; fill.style.width = slider.value + '%'; leftMeter.style.width = (100 - slider.value) + '%'; 
-      slider.addEventListener('input', (e) => { fill.style.width = e.target.value + '%'; leftMeter.style.width = (100 - e.target.value) + '%'; state.channelVolumes[ch.id] = (e.target.value / 100) * 3.0; updateAudioRouting(); });
+      
+      const slider = card.querySelector(`#vol-${ch.id}`); 
+      const fill = card.querySelector(`#fill-${ch.id}`); 
+      const volIndicator = card.querySelector(`#vol-indicator-${ch.id}`);
+      
+      slider.value = (state.channelVolumes[ch.id] / 3.0) * 100; 
+      if(fill) fill.style.width = slider.value + '%'; 
+      if(volIndicator) volIndicator.style.width = (100 - slider.value) + '%'; 
+      
+      slider.addEventListener('input', (e) => { 
+          if(fill) fill.style.width = e.target.value + '%'; 
+          if(volIndicator) volIndicator.style.width = (100 - e.target.value) + '%'; 
+          state.channelVolumes[ch.id] = (e.target.value / 100) * 3.0; 
+          updateAudioRouting(); 
+      });
+      
       card.querySelector(`#expand-${ch.id}`).addEventListener('click', () => card.classList.toggle('expanded'));
       setupPTTButton(card.querySelector(`#listen-${ch.id}`), 'listen', ch.id); 
       if(ch.type !== 'Listen') setupPTTButton(card.querySelector(`#talk-${ch.id}`), 'talk', ch.id);
@@ -865,6 +871,12 @@
           const masterDest = state.audioCtx.createMediaStreamDestination(); masterMerger.connect(masterDest);
           state.masterAudioEl = new Audio(); state.masterAudioEl.srcObject = masterDest.stream; state.masterAudioEl.play().catch(e => {});
           
+          if (state.localStream) { 
+              const localSrc = state.audioCtx.createMediaStreamSource(state.localStream); 
+              state.localMicAnalyser = state.audioCtx.createAnalyser(); 
+              state.localMicAnalyser.fftSize = 256; 
+              localSrc.connect(state.localMicAnalyser);
+          } 
           startMeterDraw(); state.channels?.forEach(ch => setupChannelAudio(ch.id)); applyOutputDevice();
       }
       if(state.audioCtx.state === 'suspended') state.audioCtx.resume(); Object.values(state.mediaCalls || {}).forEach(callData => { if (!callData?.source) setupPeerMixer(callData); });
@@ -957,7 +969,10 @@
                 }
 
                 if (state.talkStates[ch.id]) chPercent = Math.max(chPercent, localPercent); 
-                const meterEl = $(`ch-meter-fill-${ch.id}`); if (meterEl) meterEl.style.width = Math.max(100 - chPercent, 0) + '%'; 
+                
+                // ★左の縦バーの"高さ"を更新
+                const meterEl = $(`meter-level-${ch.id}`); 
+                if (meterEl) meterEl.style.height = Math.max(100 - chPercent, 0) + '%'; 
             } 
         });
         
