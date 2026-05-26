@@ -790,24 +790,12 @@
       const lMuted = state.isMasterSpkMuted ? 'muted-slash' : ''; const tMuted = state.isMasterMicMuted ? 'muted-slash' : '';
 
       const card = document.createElement('div'); card.className = `channel-card ${listenClass} ${talkClass}`; card.id = `card-${ch.id}`;
-      card.innerHTML = `<div class="status-line-bg"><div class="status-line-grad"></div><div class="status-line-mask" id="meter-level-${ch.id}"></div></div><div class="card-main"><div class="btn-action btn-listen ${state.listenStates[ch.id] ? 'active latched' : ''} ${lMuted}" id="listen-${ch.id}">${curListenIcon}</div><div class="ch-info"><div class="ch-name" id="name-${ch.id}">${ch.name || 'Unknown'}</div><div class="ch-type" id="type-${ch.id}">${ch.type || 'PL'}</div></div>${ch.type === 'Listen' ? `<div style="width: 44px; height: 44px;"></div>` : `<div class="btn-action btn-talk ${state.talkStates[ch.id] ? 'active latched' : ''} ${tMuted}" id="talk-${ch.id}">${curTalkIcon}</div>`}</div><div class="ch-meter-container"><div class="ch-meter-grad"></div><div class="ch-meter-mask" id="vol-indicator-${ch.id}"></div></div><div class="volume-panel"><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M18.5 12A4.5 4.5 0 0 0 16 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg><div class="vol-slider-wrap"><div class="vol-slider-track-bg"></div><div class="vol-slider-fill" id="fill-${ch.id}"></div><input type="range" id="vol-${ch.id}" min="0" max="100" value="50"></div><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></div><div class="card-footer"><div class="btn-expand" id="expand-${ch.id}">○ ○ ○</div></div>`;
+      card.innerHTML = `<div class="status-line-bg"><div class="status-line-grad"></div><div class="status-line-mask" id="vol-indicator-${ch.id}"></div></div><div class="card-main"><div class="btn-action btn-listen ${state.listenStates[ch.id] ? 'active latched' : ''} ${lMuted}" id="listen-${ch.id}">${curListenIcon}</div><div class="ch-info"><div class="ch-name" id="name-${ch.id}">${ch.name || 'Unknown'}</div><div class="ch-type" id="type-${ch.id}">${ch.type || 'PL'}</div></div>${ch.type === 'Listen' ? `<div style="width: 44px; height: 44px;"></div>` : `<div class="btn-action btn-talk ${state.talkStates[ch.id] ? 'active latched' : ''} ${tMuted}" id="talk-${ch.id}">${curTalkIcon}</div>`}</div><div class="ch-meter-container"><div class="ch-meter-grad"></div><div class="ch-meter-mask" id="ch-meter-fill-${ch.id}"></div></div><div class="volume-panel"><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M18.5 12A4.5 4.5 0 0 0 16 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg><div class="vol-slider-wrap"><div class="vol-slider-track-bg"></div><div class="vol-slider-fill" id="fill-${ch.id}"></div><input type="range" id="vol-${ch.id}" min="0" max="100" value="50"></div><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></div><div class="card-footer"><div class="btn-expand" id="expand-${ch.id}">○ ○ ○</div></div>`;
       const cw = $('channel-list-wrap'); if(cw) cw.appendChild(card);
       
-      const slider = card.querySelector(`#vol-${ch.id}`); 
-      const fill = card.querySelector(`#fill-${ch.id}`); 
-      const volIndicator = card.querySelector(`#vol-indicator-${ch.id}`);
-      
-      slider.value = (state.channelVolumes[ch.id] / 3.0) * 100; 
-      if(fill) fill.style.width = slider.value + '%'; 
-      if(volIndicator) volIndicator.style.width = (100 - slider.value) + '%'; 
-      
-      slider.addEventListener('input', (e) => { 
-          if(fill) fill.style.width = e.target.value + '%'; 
-          if(volIndicator) volIndicator.style.width = (100 - e.target.value) + '%'; 
-          state.channelVolumes[ch.id] = (e.target.value / 100) * 3.0; 
-          updateAudioRouting(); 
-      });
-      
+      const slider = card.querySelector(`#vol-${ch.id}`); const fill = card.querySelector(`#fill-${ch.id}`); const volIndicator = card.querySelector(`#vol-indicator-${ch.id}`);
+      slider.value = (state.channelVolumes[ch.id] / 3.0) * 100; fill.style.width = slider.value + '%'; if(volIndicator) volIndicator.style.height = (100 - slider.value) + '%'; 
+      slider.addEventListener('input', (e) => { fill.style.width = e.target.value + '%'; if(volIndicator) volIndicator.style.height = (100 - e.target.value) + '%'; state.channelVolumes[ch.id] = (e.target.value / 100) * 3.0; updateAudioRouting(); });
       card.querySelector(`#expand-${ch.id}`).addEventListener('click', () => card.classList.toggle('expanded'));
       setupPTTButton(card.querySelector(`#listen-${ch.id}`), 'listen', ch.id); 
       if(ch.type !== 'Listen') setupPTTButton(card.querySelector(`#talk-${ch.id}`), 'talk', ch.id);
@@ -970,9 +958,9 @@
 
                 if (state.talkStates[ch.id]) chPercent = Math.max(chPercent, localPercent); 
                 
-                // ★左の縦バーの"高さ"を更新
-                const meterEl = $(`meter-level-${ch.id}`); 
-                if (meterEl) meterEl.style.height = Math.max(100 - chPercent, 0) + '%'; 
+                // ★下の横バーの"幅"を更新
+                const meterEl = $(`ch-meter-fill-${ch.id}`); 
+                if (meterEl) meterEl.style.width = Math.max(100 - chPercent, 0) + '%'; 
             } 
         });
         
