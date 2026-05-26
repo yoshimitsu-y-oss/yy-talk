@@ -199,7 +199,7 @@
     .channel-card::before { left: 0; background: linear-gradient(to right, rgba(74, 222, 128, 0.25) 0%, transparent 100%); } .channel-card::after { right: 0; background: linear-gradient(to left, rgba(220, 38, 38, 0.25) 0%, transparent 100%); }
     .channel-card.listen-on::before { opacity: 1; } .channel-card.talk-on::after { opacity: 1; } .channel-card > * { position: relative; z-index: 1; }
     
-    /* ★メーターのスタイル修正 */
+    /* ★メーターのスタイル（縦＝声、横＝音量） */
     .status-line-bg { position: absolute; left: 0; top: 10%; bottom: 10%; width: 4px; background-color: #0a0b0d; border-radius: 0 4px 4px 0; overflow: hidden; z-index: 2; }
     .status-line-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to top, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); } 
     .status-line-mask { position: absolute; top: 0; left: 0; right: 0; height: 100%; background-color: var(--card-bg); transition: height 0.05s ease-out; }
@@ -567,7 +567,6 @@
                 navigator.mediaDevices.getUserMedia({ audio: constraints })
                 .then(stream => {
                     state.localStream = stream;
-                    // --- ★メーター動作用のアナライザー接続を追加 ---
                     if (state.audioCtx) { 
                         if (state.localMicAnalyser) state.localMicAnalyser.disconnect(); 
                         const localSrc = state.audioCtx.createMediaStreamSource(state.localStream); 
@@ -790,12 +789,13 @@
       const lMuted = state.isMasterSpkMuted ? 'muted-slash' : ''; const tMuted = state.isMasterMicMuted ? 'muted-slash' : '';
 
       const card = document.createElement('div'); card.className = `channel-card ${listenClass} ${talkClass}`; card.id = `card-${ch.id}`;
-      card.innerHTML = `<div class="status-line-bg"><div class="status-line-grad"></div><div class="status-line-mask" id="vol-indicator-${ch.id}"></div></div><div class="card-main"><div class="btn-action btn-listen ${state.listenStates[ch.id] ? 'active latched' : ''} ${lMuted}" id="listen-${ch.id}">${curListenIcon}</div><div class="ch-info"><div class="ch-name" id="name-${ch.id}">${ch.name || 'Unknown'}</div><div class="ch-type" id="type-${ch.id}">${ch.type || 'PL'}</div></div>${ch.type === 'Listen' ? `<div style="width: 44px; height: 44px;"></div>` : `<div class="btn-action btn-talk ${state.talkStates[ch.id] ? 'active latched' : ''} ${tMuted}" id="talk-${ch.id}">${curTalkIcon}</div>`}</div><div class="ch-meter-container"><div class="ch-meter-grad"></div><div class="ch-meter-mask" id="ch-meter-fill-${ch.id}"></div></div><div class="volume-panel"><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M18.5 12A4.5 4.5 0 0 0 16 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg><div class="vol-slider-wrap"><div class="vol-slider-track-bg"></div><div class="vol-slider-fill" id="fill-${ch.id}"></div><input type="range" id="vol-${ch.id}" min="0" max="100" value="50"></div><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></div><div class="card-footer"><div class="btn-expand" id="expand-${ch.id}">○ ○ ○</div></div>`;
+      // ★ 左の縦バーを「トークレベル(meter)」、下の横バーを「ボリューム設定(vol-indicator)」に修正
+      card.innerHTML = `<div class="status-line-bg"><div class="status-line-grad"></div><div class="status-line-mask" id="meter-${ch.id}"></div></div><div class="card-main"><div class="btn-action btn-listen ${state.listenStates[ch.id] ? 'active latched' : ''} ${lMuted}" id="listen-${ch.id}">${curListenIcon}</div><div class="ch-info"><div class="ch-name" id="name-${ch.id}">${ch.name || 'Unknown'}</div><div class="ch-type" id="type-${ch.id}">${ch.type || 'PL'}</div></div>${ch.type === 'Listen' ? `<div style="width: 44px; height: 44px;"></div>` : `<div class="btn-action btn-talk ${state.talkStates[ch.id] ? 'active latched' : ''} ${tMuted}" id="talk-${ch.id}">${curTalkIcon}</div>`}</div><div class="ch-meter-container"><div class="ch-meter-grad"></div><div class="ch-meter-mask" id="vol-indicator-${ch.id}"></div></div><div class="volume-panel"><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M18.5 12A4.5 4.5 0 0 0 16 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg><div class="vol-slider-wrap"><div class="vol-slider-track-bg"></div><div class="vol-slider-fill" id="fill-${ch.id}"></div><input type="range" id="vol-${ch.id}" min="0" max="100" value="50"></div><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></div><div class="card-footer"><div class="btn-expand" id="expand-${ch.id}">○ ○ ○</div></div>`;
       const cw = $('channel-list-wrap'); if(cw) cw.appendChild(card);
       
       const slider = card.querySelector(`#vol-${ch.id}`); const fill = card.querySelector(`#fill-${ch.id}`); const volIndicator = card.querySelector(`#vol-indicator-${ch.id}`);
-      slider.value = (state.channelVolumes[ch.id] / 3.0) * 100; fill.style.width = slider.value + '%'; if(volIndicator) volIndicator.style.height = (100 - slider.value) + '%'; 
-      slider.addEventListener('input', (e) => { fill.style.width = e.target.value + '%'; if(volIndicator) volIndicator.style.height = (100 - e.target.value) + '%'; state.channelVolumes[ch.id] = (e.target.value / 100) * 3.0; updateAudioRouting(); });
+      slider.value = (state.channelVolumes[ch.id] / 3.0) * 100; fill.style.width = slider.value + '%'; if(volIndicator) volIndicator.style.width = (100 - slider.value) + '%'; 
+      slider.addEventListener('input', (e) => { fill.style.width = e.target.value + '%'; if(volIndicator) volIndicator.style.width = (100 - e.target.value) + '%'; state.channelVolumes[ch.id] = (e.target.value / 100) * 3.0; updateAudioRouting(); });
       card.querySelector(`#expand-${ch.id}`).addEventListener('click', () => card.classList.toggle('expanded'));
       setupPTTButton(card.querySelector(`#listen-${ch.id}`), 'listen', ch.id); 
       if(ch.type !== 'Listen') setupPTTButton(card.querySelector(`#talk-${ch.id}`), 'talk', ch.id);
@@ -875,14 +875,17 @@
         const audioTrack = state.localStream.getAudioTracks()[0];
         if (audioTrack && !state.localMicTrack) {
             try {
-                // クローンしたトラックをパブリッシュし、大元のストリームはミュートしない
-                const clonedTrack = audioTrack.clone();
-                state.room.localParticipant.publishTrack(clonedTrack, { name: 'mic', source: LivekitClient.Track.Source.Microphone }).then(pub => {
+                // ★ 大元のトラックをクローンせずにそのまま渡すことで、マイク無音問題を解決
+                state.room.localParticipant.publishTrack(audioTrack, { name: 'mic', source: LivekitClient.Track.Source.Microphone }).then(pub => {
                     state.localMicTrack = pub.track;
                     const isAnyTalking = Object.values(state.talkStates).some(v => v === true) && !state.isMasterMicMuted;
-                    if(state.localMicTrack && state.localMicTrack.mediaStreamTrack) {
-                        state.localMicTrack.mediaStreamTrack.enabled = isAnyTalking;
+                    
+                    if (isAnyTalking) {
+                        state.localMicTrack.unmute().catch(() => { if(state.localMicTrack.mediaStreamTrack) state.localMicTrack.mediaStreamTrack.enabled = true; });
+                    } else {
+                        state.localMicTrack.mute().catch(() => { if(state.localMicTrack.mediaStreamTrack) state.localMicTrack.mediaStreamTrack.enabled = false; });
                     }
+                    
                     uiLog("Mic Track Published.");
                 }).catch(err => uiLog(`Mic Publish Error: ${err.message}`, '#ef4444'));
             } catch (err) { uiLog(`Mic Publish Error: ${err.message}`, '#ef4444'); }
@@ -905,11 +908,11 @@
 
     let lastDrawTime = 0;
     
-    // ピーク取得関数（低周波ノイズをカット）
+    // ★ 微小なノイズをカットし、無音時にメーターを完全に0にする処理
     function getPeak(data) {
         let peak = 0;
         for(let i=5; i<data.length; i++) { if(data[i] > peak) peak = data[i]; }
-        return peak < 12 ? 0 : peak; // 閾値以下は0とする
+        return peak < 12 ? 0 : peak; 
     }
 
     function startMeterDraw() {
@@ -919,7 +922,6 @@
       function draw(timestamp) {
         requestAnimationFrame(draw); if (timestamp - lastDrawTime < 30) return; lastDrawTime = timestamp;
         
-        // ローカルデータの初期化（遅延生成対応）
         if (!localData && state.localMicAnalyser) {
             localData = new Uint8Array(state.localMicAnalyser.frequencyBinCount);
         }
@@ -943,7 +945,7 @@
                 let chPeak = getPeak(chData); 
                 let chPercent = Math.min((chPeak / 255) * 100 * 1.5, 100); 
                 
-                // 他の人が喋っている場合のメーター反映
+                // 他の人の音声をメーターに反映
                 for (let pid in state.mediaCalls) {
                     if (state.remoteTalkStates[pid] && state.remoteTalkStates[pid][ch.id] && state.mediaCalls[pid].analyser && !state.mediaCalls[pid].isIOTrack) {
                         const pData = new Uint8Array(state.mediaCalls[pid].analyser.frequencyBinCount);
@@ -958,9 +960,9 @@
 
                 if (state.talkStates[ch.id]) chPercent = Math.max(chPercent, localPercent); 
                 
-                // ★下の横バーの"幅"を更新
-                const meterEl = $(`ch-meter-fill-${ch.id}`); 
-                if (meterEl) meterEl.style.width = Math.max(100 - chPercent, 0) + '%'; 
+                // ★左の縦バーの"高さ"を波形として更新（マスクを下から上へ消す）
+                const meterEl = $(`meter-${ch.id}`); 
+                if (meterEl) meterEl.style.height = Math.max(100 - chPercent, 0) + '%'; 
             } 
         });
         
@@ -1024,8 +1026,18 @@
     function syncTalkStates() { 
         sendData({ type: 'update-talk-states', states: state.talkStates }); 
         const isAnyTalking = Object.values(state.talkStates).some(v => v === true) && !state.isMasterMicMuted;
-        if (state.localMicTrack && state.localMicTrack.mediaStreamTrack) {
-            state.localMicTrack.mediaStreamTrack.enabled = isAnyTalking;
+        if (state.localMicTrack) {
+            try {
+                if (isAnyTalking) {
+                    state.localMicTrack.unmute().catch(e => {
+                        if(state.localMicTrack.mediaStreamTrack) state.localMicTrack.mediaStreamTrack.enabled = true;
+                    });
+                } else {
+                    state.localMicTrack.mute().catch(e => {
+                        if(state.localMicTrack.mediaStreamTrack) state.localMicTrack.mediaStreamTrack.enabled = false;
+                    });
+                }
+            } catch(e) { uiLog("Mic Mute Error", '#f00'); }
         }
     } 
     function syncListenStates() { sendData({ type: 'update-listen-states', states: state.listenStates }); }
@@ -1149,8 +1161,32 @@
         if (!data) return;
         uiLog(`[RECV] ${data.type} from ${senderId}`);
         if (data.type === 'hello') {
-          if (senderId !== state.myUserId && !state.registeredUsers.includes(senderId)) { state.registeredUsers.push(senderId); state.userAssignments[senderId] = state.channels?.map(c => c.id) || []; if (!state.tallyAssignments[senderId]) state.tallyAssignments[senderId] = []; saveRoomState(); if (state.isAdmin) { buildAdminMatrix(); buildTallyAssignmentUI(); } }
+          const joinedUserId = data.userId || senderId;
+          // ★ 一般ユーザーでも「hello」を受信した場合はリストに追加し、自分も「hello_reply」を返す
+          if (joinedUserId !== state.myUserId && !state.registeredUsers.includes(joinedUserId)) { 
+              state.registeredUsers.push(joinedUserId); 
+              state.userAssignments[joinedUserId] = state.channels?.map(c => c.id) || []; 
+              if (!state.tallyAssignments[joinedUserId]) state.tallyAssignments[joinedUserId] = []; 
+              saveRoomState(); 
+              if (state.isAdmin) { 
+                  buildAdminMatrix(); buildTallyAssignmentUI(); 
+              } else {
+                  // 一般ユーザーの場合、相手に自分を認識させるために返事をする
+                  sendData({ type: 'hello_reply', userId: state.myUserId });
+              }
+          }
           if(state.isAdmin) { sendData({ type: 'init-state', channels: state.channels, assignments: state.userAssignments, tallyAssignments: state.tallyAssignments, registered: state.registeredUsers, ioBridge: state.ioBridge }); if(state.activeVideoSender === state.myUserId) { const sourceText = $('main-monitor-source-text')?.textContent.replace('[ VIDEO SWITCHING NOW ]', '').replace('[ NO VIDEO ]', 'CAMERA').trim() || 'OFF'; sendData({ type: 'update-video-sender', senderId: state.myUserId, sourceText: sourceText }); } }
+        }
+        else if (data.type === 'hello_reply') {
+          // 一般ユーザーから返事が来た場合
+          const joinedUserId = data.userId || senderId;
+          if (joinedUserId !== state.myUserId && !state.registeredUsers.includes(joinedUserId)) { 
+              state.registeredUsers.push(joinedUserId); 
+              state.userAssignments[joinedUserId] = state.channels?.map(c => c.id) || []; 
+              if (!state.tallyAssignments[joinedUserId]) state.tallyAssignments[joinedUserId] = []; 
+              saveRoomState(); 
+              if (state.isAdmin) { buildAdminMatrix(); buildTallyAssignmentUI(); }
+          }
         }
         else if (data.type === 'init-state') { 
             if(data.channels && Array.isArray(data.channels)) {
@@ -1242,7 +1278,6 @@
           saveRoomState();
       }
 
-      // --- ★音声の確実な起動のためのオーバーレイ表示 ---
       if (myName.toLowerCase() !== 'debug') {
           const ao = $('audio-overlay');
           if(ao) ao.style.display = 'flex';
@@ -1354,6 +1389,18 @@
               await room.connect(LIVEKIT_WS_URL, token);
               state.hasSuccessfullyConnected = true;
               uiLog("LiveKit Connected Successfully.", '#4ade80');
+              
+              // ★ 接続直後に、すでにルームにいる参加者をリストに追加する
+              if (room.remoteParticipants) {
+                  room.remoteParticipants.forEach((p, identity) => {
+                      if (!state.registeredUsers.includes(identity)) {
+                          state.registeredUsers.push(identity);
+                          if (!state.userAssignments[identity]) state.userAssignments[identity] = state.channels.map(c=>c.id);
+                          if (!state.tallyAssignments[identity]) state.tallyAssignments[identity] = [];
+                      }
+                  });
+              }
+              
               updateUserCount(); 
               
               if (state.isAdmin) { buildAdminMatrix(); buildTallyAssignmentUI(); }
@@ -1368,24 +1415,6 @@
           }
       })();
     };
-
-    function publishLocalMic() {
-        if (!state.room || !state.localStream || state.room.state !== 'connected') return;
-        const audioTrack = state.localStream.getAudioTracks()[0];
-        if (audioTrack && !state.localMicTrack) {
-            try {
-                const clonedTrack = audioTrack.clone();
-                state.room.localParticipant.publishTrack(clonedTrack, { name: 'mic', source: LivekitClient.Track.Source.Microphone }).then(pub => {
-                    state.localMicTrack = pub.track;
-                    const isAnyTalking = Object.values(state.talkStates).some(v => v === true) && !state.isMasterMicMuted;
-                    if(state.localMicTrack && state.localMicTrack.mediaStreamTrack) {
-                        state.localMicTrack.mediaStreamTrack.enabled = isAnyTalking;
-                    }
-                    uiLog("Mic Track Published.");
-                }).catch(err => uiLog(`Mic Publish Error: ${err.message}`, '#ef4444'));
-            } catch (err) { uiLog(`Mic Publish Error: ${err.message}`, '#ef4444'); }
-        }
-    }
 
     setInterval(async () => {
         const rttEl = $('status-rtt'); if (!rttEl) return;
