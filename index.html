@@ -95,14 +95,7 @@
     .layout-item:hover { background: rgba(255,255,255,0.05); } .layout-item.active { color: var(--blue); }
     
     .monitor-section { width: 100%; background: #000; display: none; flex-direction: column; align-items: center; padding: 10px 0; border-bottom: 2px solid var(--border-color); flex-shrink: 0; position: relative;}
-    .app-container.layout-hybrid .monitor-section { display: flex; flex: 1; min-height: 0; border-bottom: 2px solid var(--border-color); padding: 0; background: #000; position: relative; justify-content: center;}
-    .app-container.layout-hybrid .monitor-section .video-wrapper { height: 100%; width: 100%; max-height: 100%; max-width: 100%; border: none; }
-    .app-container.layout-hybrid .monitor-label { position: absolute; top: 10px; left: 10px; z-index: 10; background: rgba(0,0,0,0.6); padding: 4px 10px; border-radius: 6px; width: auto; margin: 0; pointer-events: none; }
-    .app-container.layout-hybrid .channel-list-container { flex: 0 0 auto; padding: 15px; background: var(--bg-dark); display: flex; flex-direction: row; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none; }
-    .app-container.layout-hybrid .channel-list-container::-webkit-scrollbar { display: none; }
-    .app-container.layout-hybrid #channel-list-wrap { display: flex; flex-direction: row; flex-wrap: nowrap; gap: 15px; width: max-content; align-items: flex-start; }
-    .app-container.layout-hybrid .channel-card { flex: 0 0 280px; scroll-snap-align: start; height: max-content; }
-    .app-container.layout-monitor .monitor-section { display: flex; flex: 1; border-bottom: none; justify-content: flex-start; align-items: center; overflow: hidden; padding-top: 10px; }
+    .app-container.layout-hybrid .monitor-section { display: flex; } .app-container.layout-monitor .monitor-section { display: flex; flex: 1; border-bottom: none; justify-content: flex-start; align-items: center; overflow: hidden; padding-top: 10px; }
     .app-container.layout-monitor .monitor-section .video-wrapper { width: 100vw; max-width: none; height: auto; aspect-ratio: 16 / 9; max-height: calc(100dvh - 80px); margin: 0 auto auto auto; }
     .app-container.layout-monitor .global-controls,.app-container.layout-monitor .channel-list-container,.app-container.layout-monitor .master-meter-container { display: none !important; }
     .monitor-label { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: bold; color: #ddd; margin-bottom: 6px; letter-spacing: 1px; width: 100%; text-align: center; }
@@ -221,7 +214,7 @@
     .btn-icon { width: 20px; height: 20px; fill: currentColor; pointer-events: none; }
     .btn-listen { border-color: var(--green); color: var(--green); } .btn-listen.active, .btn-listen.latched { background-color: var(--green); color: var(--bg-dark); box-shadow: inset 0 2px 4px rgba(255,255,255,0.4), 0 4px 15px rgba(74, 222, 128, 0.5); }
     .btn-talk { border-color: var(--red); color: var(--red); } .btn-talk.active, .btn-talk.latched { background-color: var(--red); color: var(--text-main); box-shadow: inset 0 2px 4px rgba(255,255,255,0.3), 0 4px 15px rgba(220, 38, 38, 0.5); }
-    .ch-meter-container { height: 4px; background: #2a2c33; margin: 0 45px 0; border-radius: 2px; overflow: hidden; position: relative; opacity: 1; z-index: 2;}
+    .ch-meter-container { height: 4px; background: var(--bg-dark); margin: 0 45px 0; border-radius: 2px; overflow: hidden; position: relative; opacity: 0.8; z-index: 2;}
     .ch-meter-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); } 
     .sortable-ghost { opacity: 0.2 !important; background-color: #000 !important; } .sortable-drag { cursor: grabbing !important; box-shadow: 0 20px 40px rgba(0,0,0,0.8) !important; background-color: var(--card-bg-expanded) !important; border: 1px solid var(--border-color) !important; opacity: 1 !important; z-index: 9999 !important; }
     
@@ -237,7 +230,6 @@
       .header-right { gap: 4px; }
       .btn-header-icon { width: 28px; height: 28px; font-size: 12px; }
       .scroll-area { padding-bottom: 50px; }
-      .app-container.layout-hybrid .channel-card { flex: 0 0 85vw; }
     }
     
     @media (orientation: landscape) and (max-height: 500px) {
