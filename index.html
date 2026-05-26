@@ -199,14 +199,14 @@
     .channel-card::before { left: 0; background: linear-gradient(to right, rgba(74, 222, 128, 0.25) 0%, transparent 100%); } .channel-card::after { right: 0; background: linear-gradient(to left, rgba(220, 38, 38, 0.25) 0%, transparent 100%); }
     .channel-card.listen-on::before { opacity: 1; } .channel-card.talk-on::after { opacity: 1; } .channel-card > * { position: relative; z-index: 1; }
     
-    /* ★メーターのスタイル（縦＝声、横＝音量） */
+    /* ★メーターのスタイル（縦＝ボリューム、横＝声の波形） */
     .status-line-bg { position: absolute; left: 0; top: 10%; bottom: 10%; width: 4px; background-color: #0a0b0d; border-radius: 0 4px 4px 0; overflow: hidden; z-index: 2; }
     .status-line-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to top, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); } 
-    .status-line-mask { position: absolute; top: 0; left: 0; right: 0; height: 100%; background-color: var(--card-bg); transition: height 0.05s ease-out; }
+    .status-line-mask { position: absolute; top: 0; left: 0; right: 0; height: 100%; background-color: var(--card-bg); transition: height 0.1s ease-out; }
     
     .ch-meter-container { height: 4px; background: var(--bg-dark); margin: 0 45px 0; border-radius: 2px; overflow: hidden; position: relative; opacity: 0.8; z-index: 2;}
     .ch-meter-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); } 
-    .ch-meter-mask { position: absolute; right: 0; top: 0; bottom: 0; width: 100%; background-color: var(--card-bg); transition: width 0.1s ease-out; }
+    .ch-meter-mask { position: absolute; right: 0; top: 0; bottom: 0; width: 100%; background-color: var(--card-bg); transition: width 0.05s ease-out; }
 
     .volume-panel { display: none; padding: 5px 20px; align-items: center; gap: 10px; } .channel-card.expanded .volume-panel { display: flex; }
     .vol-icon { font-size: 14px; color: var(--text-sub); flex-shrink: 0; width: 14px; height: 14px; } .vol-slider-wrap { flex: 1; position: relative; display: flex; align-items: center; touch-action: pan-x; }
@@ -309,7 +309,7 @@
     <div id="admin-overlay" class="overlay-base">
       <div class="login-modal admin-modal">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; position: relative;">
-          <div class="admin-tabs-container" style="margin: 0; padding: 0; flex-grow: 1; margin-right: 20px;">
+          <div class="admin-tabs-container" style="margin: 0; padding: 0; flex-grow: 1; margin-right: 40px;">
             <button id="tab-video" class="admin-tab-btn active"><i class="fa-solid fa-tv"></i><span>VIDEO TALLY</span></button>
             <button id="tab-patch" class="admin-tab-btn"><i class="fa-solid fa-network-wired"></i><span>PATCH PANEL</span></button>
             <button id="tab-io" class="admin-tab-btn"><i class="fa-solid fa-sliders"></i><span>I/O BRIDGE</span></button>
@@ -323,7 +323,15 @@
               <div class="admin-settings-row">
                 <div class="setting-group"><label>MONITOR NAME</label><input type="text" id="edit-monitor-title" value="MONITOR"></div>
                 <div class="setting-group"><label>VIDEO SOURCE</label><select id="edit-monitor-source"><option value="off">OFF</option><option value="screen">画面共有</option></select></div>
-                <div class="setting-group"><label>VIDEO QUALITY</label><select id="edit-video-quality"><option value="128000">128 Kbps</option><option value="256000">256 Kbps</option><option value="512000" selected>512 Kbps</option><option value="1000000">1 Mbps</option><option value="5000000">5 Mbps</option></select></div>
+                <div class="setting-group"><label>VIDEO QUALITY</label>
+                  <select id="edit-video-quality">
+                    <option value="128000">128 Kbps (~57MB/h)</option>
+                    <option value="256000">256 Kbps (~115MB/h)</option>
+                    <option value="512000" selected>512 Kbps (~230MB/h)</option>
+                    <option value="1000000">1 Mbps (~450MB/h)</option>
+                    <option value="5000000">5 Mbps (~2.2GB/h)</option>
+                  </select>
+                </div>
               </div>
             </div>
             <div class="io-interface-section">
@@ -613,7 +621,17 @@
         setTimeout(window.forceResize, 100);
     }
     
-    function switchTab(activeTab, activeSec) { const tVid=$('tab-video'), tPat=$('tab-patch'), tIo=$('tab-io'); if(tVid && tPat && tIo) [tVid, tPat, tIo].forEach(t => t.classList.remove('active')); const sVid=$('admin-video-section'), sPat=$('admin-patch-section'), sIo=$('admin-io-section'); if(sVid && sPat && sIo) [sVid, sPat, sIo].forEach(s => s.style.display = 'none'); if(activeTab) activeTab.classList.add('active'); if(activeSec) activeSec.style.display = 'block'; }
+    function switchTab(activeTab, activeSec) { 
+        const tVid=$('tab-video'), tPat=$('tab-patch'), tIo=$('tab-io'); 
+        if(tVid && tPat && tIo) [tVid, tPat, tIo].forEach(t => t.classList.remove('active')); 
+        const sVid=$('admin-video-section'), sPat=$('admin-patch-section'), sIo=$('admin-io-section'); 
+        if(sVid && sPat && sIo) [sVid, sPat, sIo].forEach(s => s.style.display = 'none'); 
+        if(activeTab) activeTab.classList.add('active'); 
+        if(activeSec) activeSec.style.display = 'block'; 
+        // ★ タブ切り替え時にスクロールを上に戻す
+        const scrollArea = document.querySelector('.scroll-area');
+        if(scrollArea) scrollArea.scrollTop = 0;
+    }
 
     function updateUserCount() {
       if(!state.room) return;
@@ -721,7 +739,14 @@
         if (state.activeVideoSender === state.myUserId && state.currentLocalVideoTrack) {
             const mst = $('main-monitor-source-text'); const es = $('edit-monitor-source');
             if(mst) { mst.textContent = '[ SWITCHING QUALITY ]'; mst.style.display = 'block'; } if(es) es.disabled = true; editVideoQual.disabled = true;
-            try { let targetBitrate = parseInt(state.videoQuality) || 512000; await state.room.localParticipant.unpublishTrack(state.currentLocalVideoTrack); await state.room.localParticipant.publishTrack(state.currentLocalVideoTrack, { name: 'camera', source: state.currentLocalVideoTrack.source || LivekitClient.Track.Source.Camera, simulcast: false, videoEncoding: { maxBitrate: targetBitrate } }); const videoEl = $('monitor-video-wrapper')?.querySelector('video'); if (videoEl) state.currentLocalVideoTrack.attach(videoEl); } catch (err) {} finally { if(mst) mst.style.display = 'none'; if(es) es.disabled = false; editVideoQual.disabled = false; }
+            try { 
+                let targetBitrate = parseInt(state.videoQuality) || 512000; 
+                const oldTrack = state.currentLocalVideoTrack;
+                await state.room.localParticipant.unpublishTrack(oldTrack); 
+                const pub = await state.room.localParticipant.publishTrack(oldTrack, { name: 'camera', source: oldTrack.source || LivekitClient.Track.Source.Camera, simulcast: false, videoEncoding: { maxBitrate: targetBitrate } }); 
+                state.currentLocalVideoTrack = pub.track || oldTrack;
+                attachVideoTrack(state.currentLocalVideoTrack);
+            } catch (err) { uiLog("Video switch err: " + err.message); } finally { if(mst) mst.style.display = 'none'; if(es) es.disabled = false; editVideoQual.disabled = false; }
         }
     }); }
 
@@ -789,13 +814,13 @@
       const lMuted = state.isMasterSpkMuted ? 'muted-slash' : ''; const tMuted = state.isMasterMicMuted ? 'muted-slash' : '';
 
       const card = document.createElement('div'); card.className = `channel-card ${listenClass} ${talkClass}`; card.id = `card-${ch.id}`;
-      // ★ 左の縦バーを「トークレベル(meter)」、下の横バーを「ボリューム設定(vol-indicator)」に修正
-      card.innerHTML = `<div class="status-line-bg"><div class="status-line-grad"></div><div class="status-line-mask" id="meter-${ch.id}"></div></div><div class="card-main"><div class="btn-action btn-listen ${state.listenStates[ch.id] ? 'active latched' : ''} ${lMuted}" id="listen-${ch.id}">${curListenIcon}</div><div class="ch-info"><div class="ch-name" id="name-${ch.id}">${ch.name || 'Unknown'}</div><div class="ch-type" id="type-${ch.id}">${ch.type || 'PL'}</div></div>${ch.type === 'Listen' ? `<div style="width: 44px; height: 44px;"></div>` : `<div class="btn-action btn-talk ${state.talkStates[ch.id] ? 'active latched' : ''} ${tMuted}" id="talk-${ch.id}">${curTalkIcon}</div>`}</div><div class="ch-meter-container"><div class="ch-meter-grad"></div><div class="ch-meter-mask" id="vol-indicator-${ch.id}"></div></div><div class="volume-panel"><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M18.5 12A4.5 4.5 0 0 0 16 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg><div class="vol-slider-wrap"><div class="vol-slider-track-bg"></div><div class="vol-slider-fill" id="fill-${ch.id}"></div><input type="range" id="vol-${ch.id}" min="0" max="100" value="50"></div><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></div><div class="card-footer"><div class="btn-expand" id="expand-${ch.id}">○ ○ ○</div></div>`;
+      // ★ 左の縦バーを「ボリューム設定(vol-indicator)」、下の横バーを「トークレベル(meter)」に修正
+      card.innerHTML = `<div class="status-line-bg"><div class="status-line-grad"></div><div class="status-line-mask" id="vol-indicator-${ch.id}"></div></div><div class="card-main"><div class="btn-action btn-listen ${state.listenStates[ch.id] ? 'active latched' : ''} ${lMuted}" id="listen-${ch.id}">${curListenIcon}</div><div class="ch-info"><div class="ch-name" id="name-${ch.id}">${ch.name || 'Unknown'}</div><div class="ch-type" id="type-${ch.id}">${ch.type || 'PL'}</div></div>${ch.type === 'Listen' ? `<div style="width: 44px; height: 44px;"></div>` : `<div class="btn-action btn-talk ${state.talkStates[ch.id] ? 'active latched' : ''} ${tMuted}" id="talk-${ch.id}">${curTalkIcon}</div>`}</div><div class="ch-meter-container"><div class="ch-meter-grad"></div><div class="ch-meter-mask" id="meter-${ch.id}"></div></div><div class="volume-panel"><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M18.5 12A4.5 4.5 0 0 0 16 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg><div class="vol-slider-wrap"><div class="vol-slider-track-bg"></div><div class="vol-slider-fill" id="fill-${ch.id}"></div><input type="range" id="vol-${ch.id}" min="0" max="100" value="50"></div><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></div><div class="card-footer"><div class="btn-expand" id="expand-${ch.id}">○ ○ ○</div></div>`;
       const cw = $('channel-list-wrap'); if(cw) cw.appendChild(card);
       
       const slider = card.querySelector(`#vol-${ch.id}`); const fill = card.querySelector(`#fill-${ch.id}`); const volIndicator = card.querySelector(`#vol-indicator-${ch.id}`);
-      slider.value = (state.channelVolumes[ch.id] / 3.0) * 100; fill.style.width = slider.value + '%'; if(volIndicator) volIndicator.style.width = (100 - slider.value) + '%'; 
-      slider.addEventListener('input', (e) => { fill.style.width = e.target.value + '%'; if(volIndicator) volIndicator.style.width = (100 - e.target.value) + '%'; state.channelVolumes[ch.id] = (e.target.value / 100) * 3.0; updateAudioRouting(); });
+      slider.value = (state.channelVolumes[ch.id] / 3.0) * 100; fill.style.width = slider.value + '%'; if(volIndicator) volIndicator.style.height = (100 - slider.value) + '%'; 
+      slider.addEventListener('input', (e) => { fill.style.width = e.target.value + '%'; if(volIndicator) volIndicator.style.height = (100 - e.target.value) + '%'; state.channelVolumes[ch.id] = (e.target.value / 100) * 3.0; updateAudioRouting(); });
       card.querySelector(`#expand-${ch.id}`).addEventListener('click', () => card.classList.toggle('expanded'));
       setupPTTButton(card.querySelector(`#listen-${ch.id}`), 'listen', ch.id); 
       if(ch.type !== 'Listen') setupPTTButton(card.querySelector(`#talk-${ch.id}`), 'talk', ch.id);
@@ -875,7 +900,7 @@
         const audioTrack = state.localStream.getAudioTracks()[0];
         if (audioTrack && !state.localMicTrack) {
             try {
-                // ★ 大元のトラックをクローンせずにそのまま渡すことで、マイク無音問題を解決
+                // 生のTrackをパブリッシュし、返り値のパブリケーションからTrackオブジェクトを保持する
                 state.room.localParticipant.publishTrack(audioTrack, { name: 'mic', source: LivekitClient.Track.Source.Microphone }).then(pub => {
                     state.localMicTrack = pub.track;
                     const isAnyTalking = Object.values(state.talkStates).some(v => v === true) && !state.isMasterMicMuted;
@@ -912,7 +937,7 @@
     function getPeak(data) {
         let peak = 0;
         for(let i=5; i<data.length; i++) { if(data[i] > peak) peak = data[i]; }
-        return peak < 12 ? 0 : peak; 
+        return peak < 8 ? 0 : peak; // 閾値を少し緩和
     }
 
     function startMeterDraw() {
@@ -922,20 +947,21 @@
       function draw(timestamp) {
         requestAnimationFrame(draw); if (timestamp - lastDrawTime < 30) return; lastDrawTime = timestamp;
         
+        // ローカルデータの初期化（遅延生成対応）
         if (!localData && state.localMicAnalyser) {
             localData = new Uint8Array(state.localMicAnalyser.frequencyBinCount);
         }
         
         state.masterAnalyser.getByteFrequencyData(masterData); 
         let mPeak = getPeak(masterData);
-        const masterPercent = Math.min((mPeak / 255) * 100 * 1.5, 100); 
+        const masterPercent = Math.min((mPeak / 255) * 100 * 2.0, 100); 
         const mf = $('master-meter-fill'); if(mf) mf.style.width = Math.max(100 - masterPercent, 0) + '%';
         
         let localPercent = 0; 
         if (state.localMicAnalyser && localData) { 
             state.localMicAnalyser.getByteFrequencyData(localData); 
             let lPeak = getPeak(localData); 
-            localPercent = Math.min((lPeak / 255) * 100 * 1.5, 100); 
+            localPercent = Math.min((lPeak / 255) * 100 * 2.0, 100); 
         }
         
         state.channels?.forEach(ch => { 
@@ -943,16 +969,16 @@
                 const chData = new Uint8Array(state.channelNodes[ch.id].analyser.frequencyBinCount); 
                 state.channelNodes[ch.id].analyser.getByteFrequencyData(chData); 
                 let chPeak = getPeak(chData); 
-                let chPercent = Math.min((chPeak / 255) * 100 * 1.5, 100); 
+                let chPercent = Math.min((chPeak / 255) * 100 * 2.0, 100); 
                 
-                // 他の人の音声をメーターに反映
+                // 他の人が喋っている場合のメーター反映
                 for (let pid in state.mediaCalls) {
                     if (state.remoteTalkStates[pid] && state.remoteTalkStates[pid][ch.id] && state.mediaCalls[pid].analyser && !state.mediaCalls[pid].isIOTrack) {
                         const pData = new Uint8Array(state.mediaCalls[pid].analyser.frequencyBinCount);
                         state.mediaCalls[pid].analyser.getByteFrequencyData(pData);
                         let pPeak = getPeak(pData);
                         if (pPeak > 0) {
-                            const pPercent = Math.min((pPeak / 255) * 100 * 1.5, 100);
+                            const pPercent = Math.min((pPeak / 255) * 100 * 2.0, 100);
                             chPercent = Math.max(chPercent, pPercent);
                         }
                     }
@@ -960,26 +986,52 @@
 
                 if (state.talkStates[ch.id]) chPercent = Math.max(chPercent, localPercent); 
                 
-                // ★左の縦バーの"高さ"を波形として更新（マスクを下から上へ消す）
+                // ★下の横バーの"幅"を波形として更新（マスクを右から左へ消す）
                 const meterEl = $(`meter-${ch.id}`); 
-                if (meterEl) meterEl.style.height = Math.max(100 - chPercent, 0) + '%'; 
+                if (meterEl) meterEl.style.width = Math.max(100 - chPercent, 0) + '%'; 
             } 
         });
         
-        if (state.isAdmin && state.ioBridge.enabled) {
-            const updateIoMeterHorizontal = (analyser, meterId) => { if (!analyser) return; const meterEl = $(meterId); if (!meterEl) return; const data = new Uint8Array(analyser.frequencyBinCount); analyser.getByteFrequencyData(data); let peak = getPeak(data); const volPercent = Math.min((peak / 255) * 100 * 1.5, 100); meterEl.style.width = `${volPercent}%`; };
-            updateIoMeterHorizontal(state.ioNodes.analyser4wL, 'meter-4w-in-l'); updateIoMeterHorizontal(state.ioNodes.analyser4wR, 'meter-4w-in-r'); updateIoMeterHorizontal(state.ioNodes.analyserOutL, 'meter-4w-out-l'); updateIoMeterHorizontal(state.ioNodes.analyserOutR, 'meter-4w-out-r'); updateIoMeterHorizontal(state.ioNodes.analyserPgmL, 'meter-pgm-in-l'); updateIoMeterHorizontal(state.ioNodes.analyserPgmR, 'meter-pgm-in-r');
-        }
-
         if (state.isAdmin) {
-          state.registeredUsers?.forEach(uid => {
-            let userVolRatio = 0;
-            if (uid === state.myUserId) { if (state.localMicAnalyser && localData) { let peak = getPeak(localData); userVolRatio = peak / 255; } }
-            else { const callInfo = state.mediaCalls[uid]; if (callInfo && callInfo.analyser && !callInfo.isIOTrack) { const pData = new Uint8Array(callInfo.analyser.frequencyBinCount); callInfo.analyser.getByteFrequencyData(pData); let peak = getPeak(pData); userVolRatio = peak / 255; } }
-            if (userVolRatio < 0.05) userVolRatio = 0;
-            const userMeter = $(`user-meter-${uid}`); if (userMeter) userMeter.style.transform = `scaleY(${userVolRatio})`;
-            state.channels?.forEach(ch => { const cpMeter = $(`cp-meter-${uid}-${ch.id}`); if (cpMeter) { let isTalking = false; if (uid === state.myUserId) isTalking = state.talkStates[ch.id] === true && !state.isMasterMicMuted; else isTalking = state.remoteTalkStates[uid] && state.remoteTalkStates[uid][ch.id] === true; cpMeter.style.transform = `scaleY(${isTalking ? userVolRatio : 0})`; } });
-          });
+            // IOメーター
+            if (state.ioBridge.enabled) {
+                const updateIoMeterHorizontal = (analyser, meterId) => { if (!analyser) return; const meterEl = $(meterId); if (!meterEl) return; const data = new Uint8Array(analyser.frequencyBinCount); analyser.getByteFrequencyData(data); let peak = getPeak(data); const volPercent = Math.min((peak / 255) * 100 * 2.0, 100); meterEl.style.width = `${volPercent}%`; };
+                updateIoMeterHorizontal(state.ioNodes.analyser4wL, 'meter-4w-in-l'); updateIoMeterHorizontal(state.ioNodes.analyser4wR, 'meter-4w-in-r'); updateIoMeterHorizontal(state.ioNodes.analyserOutL, 'meter-4w-out-l'); updateIoMeterHorizontal(state.ioNodes.analyserOutR, 'meter-4w-out-r'); updateIoMeterHorizontal(state.ioNodes.analyserPgmL, 'meter-pgm-in-l'); updateIoMeterHorizontal(state.ioNodes.analyserPgmR, 'meter-pgm-in-r');
+            }
+
+            // ★パッチパネルの常時メーター
+            state.registeredUsers?.forEach(uid => {
+                let userVolRatio = 0;
+                if (uid === state.myUserId) { 
+                    if (state.localMicAnalyser && localData) { 
+                        let peak = getPeak(localData); 
+                        userVolRatio = Math.min((peak / 255) * 2.0, 1.0); 
+                    } 
+                }
+                else { 
+                    const callInfo = state.mediaCalls[uid]; 
+                    if (callInfo && callInfo.analyser && !callInfo.isIOTrack) { 
+                        const pData = new Uint8Array(callInfo.analyser.frequencyBinCount); 
+                        callInfo.analyser.getByteFrequencyData(pData); 
+                        let peak = getPeak(pData); 
+                        userVolRatio = Math.min((peak / 255) * 2.0, 1.0); 
+                    } 
+                }
+                if (userVolRatio < 0.05) userVolRatio = 0;
+                
+                const userMeter = $(`user-meter-${uid}`); 
+                if (userMeter) userMeter.style.transform = `scaleY(${userVolRatio})`;
+                
+                state.channels?.forEach(ch => { 
+                    const cpMeter = $(`cp-meter-${uid}-${ch.id}`); 
+                    if (cpMeter) { 
+                        let isTalking = false; 
+                        if (uid === state.myUserId) isTalking = state.talkStates[ch.id] === true && !state.isMasterMicMuted; 
+                        else isTalking = state.remoteTalkStates[uid] && state.remoteTalkStates[uid][ch.id] === true; 
+                        cpMeter.style.transform = `scaleY(${isTalking ? userVolRatio : 0})`; 
+                    } 
+                });
+            });
         }
       } draw(0);
     }
@@ -1162,7 +1214,6 @@
         uiLog(`[RECV] ${data.type} from ${senderId}`);
         if (data.type === 'hello') {
           const joinedUserId = data.userId || senderId;
-          // ★ 一般ユーザーでも「hello」を受信した場合はリストに追加し、自分も「hello_reply」を返す
           if (joinedUserId !== state.myUserId && !state.registeredUsers.includes(joinedUserId)) { 
               state.registeredUsers.push(joinedUserId); 
               state.userAssignments[joinedUserId] = state.channels?.map(c => c.id) || []; 
@@ -1171,14 +1222,12 @@
               if (state.isAdmin) { 
                   buildAdminMatrix(); buildTallyAssignmentUI(); 
               } else {
-                  // 一般ユーザーの場合、相手に自分を認識させるために返事をする
                   sendData({ type: 'hello_reply', userId: state.myUserId });
               }
           }
           if(state.isAdmin) { sendData({ type: 'init-state', channels: state.channels, assignments: state.userAssignments, tallyAssignments: state.tallyAssignments, registered: state.registeredUsers, ioBridge: state.ioBridge }); if(state.activeVideoSender === state.myUserId) { const sourceText = $('main-monitor-source-text')?.textContent.replace('[ VIDEO SWITCHING NOW ]', '').replace('[ NO VIDEO ]', 'CAMERA').trim() || 'OFF'; sendData({ type: 'update-video-sender', senderId: state.myUserId, sourceText: sourceText }); } }
         }
         else if (data.type === 'hello_reply') {
-          // 一般ユーザーから返事が来た場合
           const joinedUserId = data.userId || senderId;
           if (joinedUserId !== state.myUserId && !state.registeredUsers.includes(joinedUserId)) { 
               state.registeredUsers.push(joinedUserId); 
@@ -1390,7 +1439,6 @@
               state.hasSuccessfullyConnected = true;
               uiLog("LiveKit Connected Successfully.", '#4ade80');
               
-              // ★ 接続直後に、すでにルームにいる参加者をリストに追加する
               if (room.remoteParticipants) {
                   room.remoteParticipants.forEach((p, identity) => {
                       if (!state.registeredUsers.includes(identity)) {
@@ -1402,12 +1450,9 @@
               }
               
               updateUserCount(); 
-              
               if (state.isAdmin) { buildAdminMatrix(); buildTallyAssignmentUI(); }
-              
               sendData({ type: 'hello', userId: state.myUserId }); 
-              syncTalkStates(); 
-              syncListenStates();
+              syncTalkStates(); syncListenStates();
 
           } catch (e) { 
               uiLog(`LiveKit Connect Error: ${e.message}`, '#ef4444');
