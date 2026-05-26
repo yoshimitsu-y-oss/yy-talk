@@ -74,7 +74,7 @@
     .btn-green-solid { background: var(--green); color: #000; border: none; padding: 15px 30px; font-size: 18px; font-weight: bold; border-radius: 30px; cursor: pointer; transition: 0.2s;}
     .btn-green-solid:hover { background: #34d399; }
     .login-modal { background: var(--card-bg); padding: 40px 50px; border-radius: 16px; width: 90%; max-width: 480px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 15px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); margin: auto; position: relative;}
-    .login-modal .btn-close-login { position: absolute; top: 12px; right: 15px; background: transparent; border: none; color: #9ca3af; font-size: 28px; cursor: pointer; padding: 0; width: 32px; height: 32px; display: none; align-items: center; justify-content: center; z-index: 2010; font-weight: normal; }
+    .login-modal .btn-close-login { position: absolute; top: 10px; right: 10px; background: transparent; border: none; color: #9ca3af; font-size: 24px; cursor: pointer; padding: 15px; display: none; align-items: center; justify-content: center; z-index: 2010; font-weight: normal; }
     .login-modal button:not(.btn-close-login) { padding: 16px; border: none; border-radius: 8px; font-weight: bold; color: #000; cursor: pointer; font-size: 15px; z-index: 2001; transition: 0.2s;}
     .login-modal button:not(.btn-close-login):active { transform: scale(0.98); } .login-modal button:not(.btn-close-login):disabled { opacity: 0.5; cursor: not-allowed; }
     .btn-join-member { background: var(--blue); color: white!important; width: 100%; } 
@@ -114,7 +114,7 @@
     .admin-modal { width: 98%; max-width: 1100px; height: 90vh; max-height: 90vh; display: flex; flex-direction: column; padding: 25px; margin: auto; position: relative; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);}
     .admin-header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; width: 100%; flex-shrink: 0;}
     .admin-tabs-container { display: flex; gap: 8px; flex-grow: 1; margin-right: 40px;}
-    .btn-close-modal { position: absolute; top: 12px; right: 15px; background: transparent; border: none; color: #9ca3af; cursor: pointer; z-index: 200; transition: color 0.2s ease; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 28px; padding: 0;}
+    .btn-close-modal { position: absolute; top: 10px; right: 10px; background: transparent; border: none; color: #9ca3af; font-size: 24px; cursor: pointer; padding: 15px; display: flex; align-items: center; justify-content: center; z-index: 200; font-weight: normal; transition: color 0.2s ease;}
     .btn-close-modal:hover { color: #ffffff; }
     
     .admin-tab-btn { flex: 1; min-width: 0; background: rgba(0, 0, 0, 0.4); border: 1px solid transparent; color: #555 !important; padding: 12px 4px; font-size: 13px; font-weight: bold; border-radius: 8px 8px 0 0; cursor: pointer; transition: all 0.2s ease; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; line-height: 1.2; text-align: center; position: relative; z-index: 1; margin-bottom: 0; }
@@ -199,7 +199,9 @@
     .channel-card::before { left: 0; background: linear-gradient(to right, rgba(74, 222, 128, 0.25) 0%, transparent 100%); } .channel-card::after { right: 0; background: linear-gradient(to left, rgba(220, 38, 38, 0.25) 0%, transparent 100%); }
     .channel-card.listen-on::before { opacity: 1; } .channel-card.talk-on::after { opacity: 1; } .channel-card > * { position: relative; z-index: 1; }
     .status-line-bg { position: absolute; left: 0; top: 10%; bottom: 10%; width: 4px; background-color: #0a0b0d; border-radius: 0 4px 4px 0; overflow: hidden; z-index: 2; }
-    .status-line-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to top, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); } .status-line-mask { position: absolute; top: 0; left: 0; right: 0; height: 100%; background-color: var(--bg-dark); transition: height 0.05s ease-out; }
+    .status-line-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to top, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); } 
+    /* ★カードのメーターマスクを背景色と同じにして、無音時に「黒いバー」に見えるのを防ぐ */
+    .status-line-mask { position: absolute; top: 0; left: 0; right: 0; height: 100%; background-color: var(--card-bg); transition: height 0.05s ease-out; }
     .volume-panel { display: none; padding: 5px 20px; align-items: center; gap: 10px; } .channel-card.expanded .volume-panel { display: flex; }
     .vol-icon { font-size: 14px; color: var(--text-sub); flex-shrink: 0; width: 14px; height: 14px; } .vol-slider-wrap { flex: 1; position: relative; display: flex; align-items: center; touch-action: pan-x; }
     .vol-slider-track-bg { position: absolute; left: 0; right: 0; height: 4px; background: var(--border-color); border-radius: 2px; z-index: 1; } .vol-slider-fill { position: absolute; left: 0; height: 4px; background: var(--orange); border-radius: 2px; z-index: 2; width: 50%; pointer-events: none; }
@@ -217,7 +219,9 @@
     .btn-listen { border-color: var(--green); color: var(--green); } .btn-listen.active, .btn-listen.latched { background-color: var(--green); color: var(--bg-dark); box-shadow: inset 0 2px 4px rgba(255,255,255,0.4), 0 4px 15px rgba(74, 222, 128, 0.5); }
     .btn-talk { border-color: var(--red); color: var(--red); } .btn-talk.active, .btn-talk.latched { background-color: var(--red); color: var(--text-main); box-shadow: inset 0 2px 4px rgba(255,255,255,0.3), 0 4px 15px rgba(220, 38, 38, 0.5); }
     .ch-meter-container { height: 4px; background: var(--bg-dark); margin: 0 45px 0; border-radius: 2px; overflow: hidden; position: relative; opacity: 0.8; z-index: 2;}
-    .ch-meter-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); } .ch-meter-mask { position: absolute; right: 0; top: 0; bottom: 0; width: 100%; background-color: var(--bg-dark); transition: width 0.05s ease-out; }
+    .ch-meter-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); } 
+    /* ★カード下部のメーターのマスク色も修正 */
+    .ch-meter-mask { position: absolute; right: 0; top: 0; bottom: 0; width: 100%; background-color: var(--card-bg); transition: width 0.05s ease-out; }
     .card-footer { display: flex; justify-content: center; align-items: center; padding: 0 15px 4px; position: relative; z-index: 5;}
     .btn-expand { display: inline-block; padding: 4px 40px; color: var(--text-sub); font-size: 14px; letter-spacing: 2px; cursor: grab; margin: 0 auto; border-radius: 20px; touch-action: none;} .btn-expand:active { cursor: grabbing; background-color: rgba(255,255,255,0.05); }
     .sortable-ghost { opacity: 0.2 !important; background-color: #000 !important; } .sortable-drag { cursor: grabbing !important; box-shadow: 0 20px 40px rgba(0,0,0,0.8) !important; background-color: var(--card-bg-expanded) !important; border: 1px solid var(--border-color) !important; opacity: 1 !important; z-index: 9999 !important; }
@@ -226,7 +230,7 @@
     .master-meter-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); } .master-meter-mask { position: absolute; right: 0; top: 0; bottom: 0; width: 100%; background-color: var(--bg-dark); transition: width 0.05s ease-out; }
 
     @media (max-width: 600px) {
-      .admin-modal { padding: 15px; padding-top: 60px; width: 100%; height: 100dvh; max-height: 100dvh; border-radius: 0; margin: 0;}
+      .admin-modal { padding: 60px 15px 15px; width: 100%; height: 100dvh; max-height: 100dvh; border-radius: 0; margin: 0;}
       .admin-settings-row { flex-direction: column; padding: 15px; }
       .io-grid { grid-template-columns: 1fr; }
       .io-ch-row { flex-direction: column; gap: 15px; }
@@ -796,8 +800,8 @@
       card.innerHTML = `<div class="status-line-bg"><div class="status-line-grad"></div><div class="status-line-mask" id="ch-meter-fill-${ch.id}"></div></div><div class="card-main"><div class="btn-action btn-listen ${state.listenStates[ch.id] ? 'active latched' : ''} ${lMuted}" id="listen-${ch.id}">${curListenIcon}</div><div class="ch-info"><div class="ch-name" id="name-${ch.id}">${ch.name || 'Unknown'}</div><div class="ch-type" id="type-${ch.id}">${ch.type || 'PL'}</div></div>${ch.type === 'Listen' ? `<div style="width: 44px; height: 44px;"></div>` : `<div class="btn-action btn-talk ${state.talkStates[ch.id] ? 'active latched' : ''} ${tMuted}" id="talk-${ch.id}">${curTalkIcon}</div>`}</div><div class="ch-meter-container"><div class="ch-meter-grad"></div><div class="ch-meter-mask" id="meter-${ch.id}"></div></div><div class="volume-panel"><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M18.5 12A4.5 4.5 0 0 0 16 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg><div class="vol-slider-wrap"><div class="vol-slider-track-bg"></div><div class="vol-slider-fill" id="fill-${ch.id}"></div><input type="range" id="vol-${ch.id}" min="0" max="100" value="50"></div><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></div><div class="card-footer"><div class="btn-expand" id="expand-${ch.id}">○ ○ ○</div></div>`;
       const cw = $('channel-list-wrap'); if(cw) cw.appendChild(card);
       const slider = card.querySelector(`#vol-${ch.id}`); const fill = card.querySelector(`#fill-${ch.id}`); const leftMeter = card.querySelector(`#meter-${ch.id}`);
-      slider.value = (state.channelVolumes[ch.id] / 3.0) * 100; fill.style.width = slider.value + '%'; leftMeter.style.height = (100 - slider.value) + '%'; 
-      slider.addEventListener('input', (e) => { fill.style.width = e.target.value + '%'; leftMeter.style.height = (100 - e.target.value) + '%'; state.channelVolumes[ch.id] = (e.target.value / 100) * 3.0; updateAudioRouting(); });
+      slider.value = (state.channelVolumes[ch.id] / 3.0) * 100; fill.style.width = slider.value + '%'; leftMeter.style.width = (100 - slider.value) + '%'; 
+      slider.addEventListener('input', (e) => { fill.style.width = e.target.value + '%'; leftMeter.style.width = (100 - e.target.value) + '%'; state.channelVolumes[ch.id] = (e.target.value / 100) * 3.0; updateAudioRouting(); });
       card.querySelector(`#expand-${ch.id}`).addEventListener('click', () => card.classList.toggle('expanded'));
       setupPTTButton(card.querySelector(`#listen-${ch.id}`), 'listen', ch.id); 
       if(ch.type !== 'Listen') setupPTTButton(card.querySelector(`#talk-${ch.id}`), 'talk', ch.id);
@@ -861,12 +865,6 @@
           const masterDest = state.audioCtx.createMediaStreamDestination(); masterMerger.connect(masterDest);
           state.masterAudioEl = new Audio(); state.masterAudioEl.srcObject = masterDest.stream; state.masterAudioEl.play().catch(e => {});
           
-          if (state.localStream) { 
-              const localSrc = state.audioCtx.createMediaStreamSource(state.localStream); 
-              state.localMicAnalyser = state.audioCtx.createAnalyser(); 
-              state.localMicAnalyser.fftSize = 256; 
-              localSrc.connect(state.localMicAnalyser);
-          } 
           startMeterDraw(); state.channels?.forEach(ch => setupChannelAudio(ch.id)); applyOutputDevice();
       }
       if(state.audioCtx.state === 'suspended') state.audioCtx.resume(); Object.values(state.mediaCalls || {}).forEach(callData => { if (!callData?.source) setupPeerMixer(callData); });
@@ -877,7 +875,7 @@
         const audioTrack = state.localStream.getAudioTracks()[0];
         if (audioTrack && !state.localMicTrack) {
             try {
-                // クローンしたトラックをパブリッシュすることで大元のストリームをミュートしない
+                // クローンしたトラックをパブリッシュし、大元のストリームはミュートしない
                 const clonedTrack = audioTrack.clone();
                 state.room.localParticipant.publishTrack(clonedTrack, { name: 'mic', source: LivekitClient.Track.Source.Microphone }).then(pub => {
                     state.localMicTrack = pub.track;
@@ -916,9 +914,15 @@
 
     function startMeterDraw() {
       const masterData = new Uint8Array(state.masterAnalyser.frequencyBinCount); 
-      let localData = state.localMicAnalyser ? new Uint8Array(state.localMicAnalyser.frequencyBinCount) : null;
+      let localData = null;
+      
       function draw(timestamp) {
         requestAnimationFrame(draw); if (timestamp - lastDrawTime < 30) return; lastDrawTime = timestamp;
+        
+        // ローカルデータの初期化（遅延生成対応）
+        if (!localData && state.localMicAnalyser) {
+            localData = new Uint8Array(state.localMicAnalyser.frequencyBinCount);
+        }
         
         state.masterAnalyser.getByteFrequencyData(masterData); 
         let mPeak = getPeak(masterData);
@@ -939,6 +943,7 @@
                 let chPeak = getPeak(chData); 
                 let chPercent = Math.min((chPeak / 255) * 100 * 1.5, 100); 
                 
+                // 他の人が喋っている場合のメーター反映
                 for (let pid in state.mediaCalls) {
                     if (state.remoteTalkStates[pid] && state.remoteTalkStates[pid][ch.id] && state.mediaCalls[pid].analyser && !state.mediaCalls[pid].isIOTrack) {
                         const pData = new Uint8Array(state.mediaCalls[pid].analyser.frequencyBinCount);
@@ -1366,7 +1371,6 @@
         const audioTrack = state.localStream.getAudioTracks()[0];
         if (audioTrack && !state.localMicTrack) {
             try {
-                // クローンしたトラックをパブリッシュすることで大元のストリームをミュートしない
                 const clonedTrack = audioTrack.clone();
                 state.room.localParticipant.publishTrack(clonedTrack, { name: 'mic', source: LivekitClient.Track.Source.Microphone }).then(pub => {
                     state.localMicTrack = pub.track;
