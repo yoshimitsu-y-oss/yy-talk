@@ -1,132 +1,1479 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>YY-Talk PRO - Ultimate Edition</title>
-  
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
-  <script>
-    // --- 🚨 UI Debug Logger ---
-    function uiLog(msg, color='#4ade80') {
-      const d = document.getElementById('debug-logger'); if(!d) return;
-      const l = document.createElement('div'); l.style.color = color;
-      l.textContent = `[${new Date().toISOString().split('T')[1].slice(0,-1)}] ${msg}`;
-      d.appendChild(l); d.scrollTop = d.scrollHeight;
-    }
-    window.onerror = function(msg, src, line, col, err) { uiLog(`ERROR: ${msg} (${line}:${col})`, '#ef4444'); return false; };
-    window.onunhandledrejection = function(e) { uiLog(`PROMISE ERR: ${e.reason}`, '#ef4444'); };
-    
-    // --- Safe Resize ---
-    window.forceResize = function() {
-      const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-      document.documentElement.style.height = h + 'px'; document.body.style.height = h + 'px';
-      const c = document.getElementById('main-app-container'); if (c) c.style.height = h + 'px';
-      window.scrollTo(0, 0);
-    };
-    window.addEventListener('resize', window.forceResize);
-    window.addEventListener('orientationchange', () => { setTimeout(window.forceResize, 50); setTimeout(window.forceResize, 200); setTimeout(window.forceResize, 500); });
-    if (window.visualViewport) window.visualViewport.addEventListener('resize', window.forceResize);
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>YY-Talk PRO - Ultimate Edition</title>
 
-    try {
-      if (typeof navigator !== 'undefined' && navigator.mediaDevices) {
-        let originalGUM = navigator.mediaDevices.getUserMedia;
-        if (originalGUM) {
-          originalGUM = originalGUM.bind(navigator.mediaDevices);
-          Object.defineProperty(navigator.mediaDevices, 'getUserMedia', {
-            get: () => originalGUM, set: (val) => { originalGUM = val; }, configurable: true, enumerable: true
-          });
-        }
-      }
-    } catch (e) { }
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    const origSetLocalDescription = RTCPeerConnection.prototype.setLocalDescription;
-    RTCPeerConnection.prototype.setLocalDescription = function(desc) {
-      if (desc && (desc.type === 'offer' || desc.type === 'answer')) desc.sdp = desc.sdp.replace(/(a=fmtp:111.*)/g, '$1;usedtx=1');
-      return origSetLocalDescription.apply(this, arguments);
-    };
-  </script>
+<script>
+// --- Safe Resize ---
+window.forceResize = function() {
+const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+document.documentElement.style.height = h + 'px'; document.body.style.height = h + 'px';
+const c = document.getElementById('main-app-container'); if (c) c.style.height = h + 'px';
+window.scrollTo(0, 0);
+};
+window.addEventListener('resize', window.forceResize);
+window.addEventListener('orientationchange', () => { setTimeout(window.forceResize, 50); setTimeout(window.forceResize, 200); setTimeout(window.forceResize, 500); });
+if (window.visualViewport) window.visualViewport.addEventListener('resize', window.forceResize);
 
-  <!-- LiveKitの安定バージョン -->
-  <script src="https://cdn.jsdelivr.net/npm/livekit-client@2.5.9/dist/livekit-client.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
-  
-  <style>
-    /* ==========================================
-       RICH UI STYLES
-       ========================================== */
-    :root { --bg-dark:#0a0b0d; --card-bg:#1c1d21; --card-bg-expanded:#24262b; --text-main:#ffffff; --text-sub:#7a7e85; --green:#4ade80; --red:#dc2626; --alert:#ef4444; --orange:#f97316; --blue:#60a5fa; --border-color:#3a3c42; }
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
-    input, select, textarea { -webkit-user-select: auto; user-select: auto; touch-action: auto; }
-    html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: var(--bg-dark); color: var(--text-main); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overscroll-behavior: none; }
-    .app-container { width: 100%; height: 100dvh; display: flex; flex-direction: column; position: relative; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); margin: 0; }
-    
-    .overlay-base { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; flex-direction: column; backdrop-filter: blur(4px); z-index: 1000;}
-    #login-overlay { z-index: 6000; display: flex; } #disconnect-overlay { z-index: 6000; background: rgba(220, 38, 38, 0.95); } #audio-overlay { z-index: 6000; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    
-    .btn-green-solid { background: var(--green); color: #000; border: none; padding: 15px 30px; font-size: 18px; font-weight: bold; border-radius: 30px; cursor: pointer; transition: 0.2s;}
-    .btn-green-solid:hover { background: #34d399; }
-    
-    .login-modal { background: var(--card-bg); padding: 40px 50px; border-radius: 16px; width: 90%; max-width: 480px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 15px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); margin: auto; position: relative;}
-    .login-modal .btn-close-login { position: absolute; top: 10px; right: 10px; background: transparent; border: none; color: #9ca3af; font-size: 24px; cursor: pointer; padding: 15px; display: none; align-items: center; justify-content: center; z-index: 2010; font-weight: normal; }
-    .login-modal .btn-close-login:hover { color: #ffffff; }
-    
-    .login-modal button:not(.btn-close-login) { padding: 16px; border: none; border-radius: 8px; font-weight: bold; color: #000; cursor: pointer; font-size: 15px; z-index: 2001; transition: 0.2s;}
-    .login-modal button:not(.btn-close-login):active { transform: scale(0.98); } 
-    .login-modal button:not(.btn-close-login):disabled { opacity: 0.5; cursor: not-allowed; }
-    
-    .btn-join-member { background: var(--blue); color: white!important; width: 100%; } 
-    .btn-join-admin { background: #2a2c33; border: 1px solid #444 !important; color: #aaa !important; width: 100%; } 
-    .btn-stop { background: var(--red); width: 100%; color: #fff!important; display: none;}
-    .status-text { font-size: 12px; color: var(--text-sub); text-align: center; margin-top: 5px; font-family: 'JetBrains Mono', monospace;}
-    
-    @keyframes pulse-blue-border { 0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.6); border-color: var(--blue); } 70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); border-color: var(--blue); } 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); border-color: var(--border-color); } }
-    .pulse-anim { animation: pulse-blue-border 1.5s infinite; }
-    .login-input { width: 100%; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); background: #0a0b0d; color: var(--text-main); font-size: 16px; text-align: center; font-family: 'JetBrains Mono', monospace; outline: none; transition: 0.2s; }
-    .login-input:focus { border-color: var(--blue) !important; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3) !important; animation: none !important; }
-    
-    /* Header - Always on top */
-    .header { display: flex; align-items: center; justify-content: space-between; padding: 8px 15px; background: var(--bg-dark); flex-shrink: 0; z-index: 5000; position: relative; border-bottom: 1px solid #1e2128;}
-    .header-left { display: flex; align-items: center; } #app-logo { height: 26px; width: auto; margin-right: 15px; } @media (min-width: 600px) { #app-logo { height: 32px; } }
-    .room-info-group { display: flex; flex-direction: row; gap: 15px; align-items: center; border-left: 1px solid var(--border-color); padding-left: 15px; height: 32px;}
-    .room-info-label { font-size: 9px; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1px; font-weight: bold; line-height: 1; margin-bottom: 4px; font-family: 'JetBrains Mono', monospace;}
-    #header-room-name, #header-user-id { font-size: 15px; font-weight: bold; color: var(--text-main); line-height: 1; font-family: 'JetBrains Mono', monospace; min-height: 15px;}
-    .header-right { display: flex; align-items: center; gap: 6px; }
-    .btn-header-icon, .btn-header-layout { background: transparent; border: 1.5px solid var(--text-sub); color: var(--text-sub); width: 32px; height: 32px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; font-size: 14px; padding: 0;}
-    #btn-settings.active { border-color: var(--blue); color: var(--blue); background: rgba(59, 130, 246, 0.1); } .admin-only { display: none; }
-    #btn-show-login.online { border-color: var(--green); color: var(--green); }
-    
-    .layout-dropdown { position: absolute; top: 40px; right: 0; background: #111216; border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); display: none; flex-direction: column; z-index: 5500; overflow: hidden; min-width: 150px; }
-    .layout-dropdown.show { display: flex; } .layout-item { background: transparent; border: none; color: var(--text-main); padding: 12px 15px; text-align: left; font-size: 13px; font-weight: bold; cursor: pointer; font-family: 'JetBrains Mono', monospace; border-bottom: 1px solid var(--border-color); transition: background 0.2s; display: flex; align-items: center; }
-    .layout-item:hover { background: rgba(255,255,255,0.05); } .layout-item.active { color: var(--blue); }
-    
+try {
+if (typeof navigator !== 'undefined' && navigator.mediaDevices) {
+let originalGUM = navigator.mediaDevices.getUserMedia;
+if (originalGUM) {
+originalGUM = originalGUM.bind(navigator.mediaDevices);
+Object.defineProperty(navigator.mediaDevices, 'getUserMedia', {
+get: () => originalGUM, set: (val) => { originalGUM = val; }, configurable: true, enumerable: true
+});
+}
+}
+} catch (e) { }
+
+const origSetLocalDescription = RTCPeerConnection.prototype.setLocalDescription;
+RTCPeerConnection.prototype.setLocalDescription = function(desc) {
+if (desc && (desc.type === 'offer' || desc.type === 'answer')) desc.sdp = desc.sdp.replace(/(a=fmtp:111.*)/g, '$1;usedtx=1');
+return origSetLocalDescription.apply(this, arguments);
+};
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/livekit-client@2.5.9/dist/livekit-client.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+
+<style>
+:root { --bg-dark:#0a0b0d; --card-bg:#1c1d21; --card-bg-expanded:#24262b; --text-main:#ffffff; --text-sub:#7a7e85; --green:#4ade80; --red:#dc2626; --alert:#ef4444; --orange:#f97316; --blue:#60a5fa; --border-color:#3a3c42; }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+input, select, textarea { -webkit-user-select: auto; user-select: auto; touch-action: auto; }
+html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: var(--bg-dark); color: var(--text-main); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overscroll-behavior: none; }
+.app-container { width: 100%; height: 100dvh; display: flex; flex-direction: column; position: relative; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); margin: 0; }
+
+.overlay-base { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; flex-direction: column; backdrop-filter: blur(4px); z-index: 1000;}
+#login-overlay { z-index: 6000; display: flex; } #disconnect-overlay { z-index: 6000; background: rgba(220, 38, 38, 0.95); } #audio-overlay { z-index: 6000; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+.btn-green-solid { background: var(--green); color: #000; border: none; padding: 15px 30px; font-size: 18px; font-weight: bold; border-radius: 30px; cursor: pointer; transition: 0.2s;}
+.btn-green-solid:hover { background: #34d399; }
+
+.login-modal { background: var(--card-bg); padding: 40px 50px; border-radius: 16px; width: 90%; max-width: 480px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 15px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); margin: auto; position: relative;}
+.login-modal .btn-close-login { position: absolute; top: 10px; right: 10px; background: transparent; border: none; color: #9ca3af; font-size: 24px; cursor: pointer; padding: 15px; display: none; align-items: center; justify-content: center; z-index: 2010; font-weight: normal; }
+.login-modal .btn-close-login:hover { color: #ffffff; }
+
+.login-modal button:not(.btn-close-login) { padding: 16px; border: none; border-radius: 8px; font-weight: bold; color: #000; cursor: pointer; font-size: 15px; z-index: 2001; transition: 0.2s;}
+.login-modal button:not(.btn-close-login):active { transform: scale(0.98); } 
+.login-modal button:not(.btn-close-login):disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-join-member { background: var(--blue); color: white!important; width: 100%; } 
+.btn-join-admin { background: #2a2c33; border: 1px solid #444 !important; color: #aaa !important; width: 100%; } 
+.btn-stop { background: var(--red); width: 100%; color: #fff!important; display: none;}
+.status-text { font-size: 12px; color: var(--text-sub); text-align: center; margin-top: 5px; font-family: 'JetBrains Mono', monospace;}
+
+@keyframes pulse-blue-border { 0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.6); border-color: var(--blue); } 70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); border-color: var(--blue); } 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); border-color: var(--border-color); } }
+.pulse-anim { animation: pulse-blue-border 1.5s infinite; }
+.login-input { width: 100%; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); background: #0a0b0d; color: var(--text-main); font-size: 16px; text-align: center; font-family: 'JetBrains Mono', monospace; outline: none; transition: 0.2s; }
+.login-input:focus { border-color: var(--blue) !important; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3) !important; animation: none !important; }
+
+/* Header - Always on top */
+.header { display: flex; align-items: center; justify-content: space-between; padding: 8px 15px; background: var(--bg-dark); flex-shrink: 0; z-index: 5000; position: relative; border-bottom: 1px solid #1e2128;}
+.header-left { display: flex; align-items: center; } #app-logo { height: 26px; width: auto; margin-right: 15px; } @media (min-width: 600px) { #app-logo { height: 32px; } }
+.room-info-group { display: flex; flex-direction: row; gap: 15px; align-items: center; border-left: 1px solid var(--border-color); padding-left: 15px; height: 32px;}
+.room-info-label { font-size: 9px; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1px; font-weight: bold; line-height: 1; margin-bottom: 4px; font-family: 'JetBrains Mono', monospace;}
+#header-room-name, #header-user-id { font-size: 15px; font-weight: bold; color: var(--text-main); line-height: 1; font-family: 'JetBrains Mono', monospace; min-height: 15px;}
+.header-right { display: flex; align-items: center; gap: 6px; }
+.btn-header-icon, .btn-header-layout { background: transparent; border: 1.5px solid var(--text-sub); color: var(--text-sub); width: 32px; height: 32px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; font-size: 14px; padding: 0;}
+#btn-settings.active { border-color: var(--blue); color: var(--blue); background: rgba(59, 130, 246, 0.1); } .admin-only { display: none; }
+#btn-show-login.online { border-color: var(--green); color: var(--green); }
+
+.layout-dropdown { position: absolute; top: 40px; right: 0; background: #111216; border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); display: none; flex-direction: column; z-index: 5500; overflow: hidden; min-width: 150px; }
+.layout-dropdown.show { display: flex; } .layout-item { background: transparent; border: none; color: var(--text-main); padding: 12px 15px; text-align: left; font-size: 13px; font-weight: bold; cursor: pointer; font-family: 'JetBrains Mono', monospace; border-bottom: 1px solid var(--border-color); transition: background 0.2s; display: flex; align-items: center; }
+.layout-item:hover { background: rgba(255,255,255,0.05); } .layout-item.active { color: var(--blue); }
+
     /* Layout Configurations */
-    .monitor-section { width: 100%; background: #000; display: none; flex-direction: column; align-items: center; padding: 10px 0; border-bottom: 2px solid var(--border-color); flex-shrink: 0; position: relative;}
-    
-    /* ======== ハイブリッドレイアウト修正 ======== */
-    .app-container.layout-hybrid .monitor-section { display: flex; flex: 1; min-height: 0; padding: 10px 0; flex-direction: column; align-items: center; border-bottom: 2px solid var(--border-color); overflow: hidden; }
-    .app-container.layout-hybrid .monitor-section .video-wrapper { width: 100%; max-width: 100%; height: auto; max-height: calc(100% - 25px); aspect-ratio: 16 / 9; border: none; margin: 0 auto; }
-    
+.monitor-section { width: 100%; background: #000; display: none; flex-direction: column; align-items: center; padding: 10px 0; border-bottom: 2px solid var(--border-color); flex-shrink: 0; position: relative;}
+    .app-container.layout-hybrid .monitor-section { display: flex; flex: 1; min-height: 0; border-bottom: 2px solid var(--border-color); padding: 0; background: #000; position: relative; justify-content: center;}
+    .app-container.layout-hybrid .monitor-section .video-wrapper { height: 100%; width: 100%; max-height: 100%; max-width: 100%; border: none; }
+    .app-container.layout-hybrid .monitor-section { display: flex; flex: 0 0 auto; max-height: 50vh; padding: 0; justify-content: center; overflow: hidden; }
+    .app-container.layout-hybrid .monitor-section .video-wrapper { width: 100%; height: auto; max-height: 100%; aspect-ratio: 16 / 9; border: none; margin: 0 auto; }
+.app-container.layout-hybrid .monitor-label { position: absolute; top: 10px; left: 10px; z-index: 10; background: rgba(0,0,0,0.6); padding: 4px 10px; border-radius: 6px; width: auto; margin: 0; pointer-events: none; }
     .app-container.layout-hybrid .channel-list-container { flex: 0 0 auto; padding: 15px; background: var(--bg-dark); display: flex; flex-direction: row; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none; align-content: flex-start;}
     .app-container.layout-hybrid .channel-list-container::-webkit-scrollbar { display: none; }
     .app-container.layout-hybrid #channel-list-wrap { display: flex; flex-direction: row; flex-wrap: nowrap; gap: 15px; width: max-content; align-items: flex-start; }
     .app-container.layout-hybrid .channel-card { flex: 0 0 280px; scroll-snap-align: start; height: max-content; }
     
-    .app-container.layout-monitor .monitor-section { display: flex; flex: 1; border-bottom: none; justify-content: flex-start; align-items: center; overflow: hidden; padding-top: 10px; }
-    .app-container.layout-monitor .monitor-section .video-wrapper { width: 100vw; max-width: none; height: auto; aspect-ratio: 16 / 9; max-height: calc(100dvh - 80px); margin: 0 auto auto auto; }
-    .app-container.layout-monitor .global-controls,.app-container.layout-monitor .channel-list-container,.app-container.layout-monitor .master-meter-container { display: none !important; }
-    .monitor-label { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: bold; color: #ddd; margin-bottom: 6px; letter-spacing: 1px; width: 100%; text-align: center; }
-    .video-wrapper { width: 100%; max-width: 100%; aspect-ratio: 16 / 9; background: #1a1a1a; display: flex; align-items: center; justify-content: center; border: none; border-bottom: 1px solid #333; position: relative; transition: all 0.15s ease-out; }
-    .video-wrapper.tally-on { border: 4px solid var(--alert) !important; box-shadow: 0 0 30px rgba(239, 68, 68, 0.8), inset 0 0 30px rgba(239, 68, 68, 0.6); }
-    .video-dummy-text { color: #555; font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: bold; z-index: 1;} .video-wrapper video { width: 100%; height: 100%; object-fit: contain; background: #000; position: absolute; inset: 0; z-index: 5;}
-    
-    /* Admin Modal */
-    #admin-overlay { z-index: 4000; align-items: center; justify-content: flex-start; padding-top: 20px;}
-    .admin-modal { width: 98%; max-width: 1100px; height: calc(100dvh - 90px); display: flex; flex-direction: column; padding: 25px; margin: 0 auto; position: relative; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color); box-shadow:
+.app-container.layout-monitor .monitor-section { display: flex; flex: 1; border-bottom: none; justify-content: flex-start; align-items: center; overflow: hidden; padding-top: 10px; }
+.app-container.layout-monitor .monitor-section .video-wrapper { width: 100vw; max-width: none; height: auto; aspect-ratio: 16 / 9; max-height: calc(100dvh - 80px); margin: 0 auto auto auto; }
+.app-container.layout-monitor .global-controls,.app-container.layout-monitor .channel-list-container,.app-container.layout-monitor .master-meter-container { display: none !important; }
+.monitor-label { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: bold; color: #ddd; margin-bottom: 6px; letter-spacing: 1px; width: 100%; text-align: center; }
+.video-wrapper { width: 100%; max-width: 100%; aspect-ratio: 16 / 9; background: #1a1a1a; display: flex; align-items: center; justify-content: center; border: none; border-bottom: 1px solid #333; position: relative; transition: all 0.15s ease-out; }
+.video-wrapper.tally-on { border: 4px solid var(--alert) !important; box-shadow: 0 0 30px rgba(239, 68, 68, 0.8), inset 0 0 30px rgba(239, 68, 68, 0.6); }
+.video-dummy-text { color: #555; font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: bold; z-index: 1;} .video-wrapper video { width: 100%; height: 100%; object-fit: contain; background: #000; position: absolute; inset: 0; z-index: 5;}
+
+/* Admin Modal */
+#admin-overlay { z-index: 4000; align-items: center; justify-content: flex-start; padding-top: 20px;}
+.admin-modal { width: 98%; max-width: 1100px; height: calc(100dvh - 90px); display: flex; flex-direction: column; padding: 25px; margin: 0 auto; position: relative; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);}
+.admin-tabs-container { display: flex; gap: 8px; margin-bottom: 20px; width: 100%; flex-shrink: 0;}
+.btn-close-modal { position: absolute; top: 10px; right: 10px; background: transparent; border: none; color: #9ca3af; font-size: 24px; cursor: pointer; padding: 15px; display: flex; align-items: center; justify-content: center; z-index: 200; font-weight: normal; transition: color 0.2s ease;}
+.btn-close-modal:hover { color: #ffffff; }
+
+.admin-tab-btn { flex: 1; min-width: 0; background: rgba(0, 0, 0, 0.4); border: 1px solid transparent; color: #555 !important; padding: 12px 4px; font-size: 13px; font-weight: bold; border-radius: 8px 8px 0 0; cursor: pointer; transition: all 0.2s ease; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; line-height: 1.2; text-align: center; position: relative; z-index: 1; margin-bottom: 0; }
+.admin-tab-btn i { font-size: 20px; opacity: 0.6; transition: all 0.2s; } .admin-tab-btn:hover { color: #aaa !important; }
+.admin-tab-btn.active { background-color: var(--card-bg); background-image: linear-gradient(to bottom, rgba(96, 165, 250, 0.15) 0%, rgba(96, 165, 250, 0) 100%); border: 1px solid var(--border-color); color: #ffffff !important; box-shadow: none; text-shadow: 0 0 6px rgba(255,255,255,0.4); z-index: 2; border-radius: 8px 8px 0 0; }
+.admin-tab-btn.active i { opacity: 1; color: #ffffff; filter: drop-shadow(0 0 4px rgba(255,255,255,0.4)); }
+.scroll-area { flex: 1; overflow-y: auto; padding-right: 5px; scrollbar-width: none; -webkit-overflow-scrolling: touch; min-height: 0; } .scroll-area::-webkit-scrollbar { display: none; }
+
+.admin-settings-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; margin-bottom: 25px; background: #111216; padding: 25px; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+.setting-group { display: flex; flex-direction: column; gap: 5px; align-items: center; width: 100%; } @media(min-width:600px){ .setting-group{width:auto;} }
+.setting-group label { font-size: 11px; color: var(--text-sub); font-weight: bold; letter-spacing: 1px; }
+.setting-group input:not([type="range"]), .setting-group select { background: #1c1d21; border: 1px solid var(--border-color); color: #fff; border-radius: 4px; font-size: 13px; padding: 4px 6px; height: 32px; font-family: 'JetBrains Mono', monospace, sans-serif; text-align: center; text-align-last: center; }
+.setting-group input { width: 14ch; } .setting-group select { width: 100%; max-width: 30ch; cursor: pointer;} 
+.setting-group input:not([type="range"]):focus, .setting-group select:focus { outline: none; border-color: var(--blue); } .setting-group select:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.io-panel { display: flex; flex-direction: column; gap: 30px; margin-bottom: 20px;}
+.io-toggle-wrapper { width: 240px; height: 56px; background: #111216; border-radius: 28px; border: 2px solid var(--border-color); position: relative; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; box-shadow: inset 0 2px 8px rgba(0,0,0,0.8); margin: 0 auto; touch-action: none;}
+.io-toggle-slider { width: 48px; height: 48px; background: #7a7e85; border-radius: 50%; position: absolute; left: 2px; transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.6); z-index: 2; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: bold; color: #fff;}
+.io-toggle-wrapper.active { background: var(--green); border-color: var(--green); box-shadow: inset 0 2px 8px rgba(0,0,0,0.4), 0 0 15px rgba(74, 222, 128, 0.3); }
+.io-toggle-wrapper.active .io-toggle-slider { left: calc(100% - 52px); background: #ffffff; color: #000;}
+.io-toggle-text { position: absolute; width: 100%; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: bold; transition: transform 0.3s ease, color 0.3s ease; z-index: 1; pointer-events: none; margin-top: 1px; letter-spacing: 1px;}
+.io-toggle-wrapper.active .io-toggle-text { color: #000; transform: translateX(-24px); } .io-toggle-wrapper:not(.active) .io-toggle-text { color: #7a7e85; transform: translateX(24px); }
+.io-select { width: 100%; height: 32px; background: #1c1d21; border: 1px solid var(--border-color); color: #fff; border-radius: 6px; font-size: 13px; padding: 0 10px; font-family: 'JetBrains Mono', monospace; cursor: pointer; transition: all 0.2s; text-align: center; text-align-last: center;}
+.io-select:focus { outline: none; border-color: var(--text-sub); }
+
+.io-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+.io-card { background: #111216; padding: 25px; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; flex-direction: column; gap: 15px;}
+.io-ch-row { display: flex; gap: 20px; }
+
+.io-interface-section { display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px;} .interface-title { font-size: 13px; font-weight: bold; color: var(--text-main); letter-spacing: 2px; margin: 0; padding-left: 10px; border-left: 3px solid var(--blue); font-family: 'JetBrains Mono', monospace; }
+.tally-row { display: flex; align-items: center; justify-content: center; padding: 10px 15px; background: #1c1d21; border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 8px; gap: 20px; flex-wrap: wrap; }
+.tally-member-info { display: flex; align-items: center; justify-content: center; gap: 8px; flex-shrink: 0; width: 100px;}
+.tally-btn-group { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; width: 240px; }
+.tally-btn { width: 100%; aspect-ratio: 1/1; max-height: 32px; border-radius: 4px; background: #121418; border: 1px solid #444; color: #888; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; transition: all 0.1s; }
+.tally-btn.active { background: var(--alert); color: #fff; border-color: var(--alert); box-shadow: 0 0 8px rgba(239, 68, 68, 0.6); }
+
+.io-gain-slider-wrap { display: flex; align-items: center; gap: 8px; width: 100%; margin-top: 5px; margin-bottom: 5px; }
+.io-meter-horizontal-bg { width: 100%; height: 8px; background: #000; border-radius: 4px; position: relative; overflow: hidden; box-shadow: inset 0 0 3px rgba(0,0,0,0.8); margin-bottom: 5px;}
+.io-meter-horizontal-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #22c55e 0%, #eab308 75%, #ef4444 100%); transition: width 0.05s ease-out; }
+
+.admin-matrix-wrapper { width: 100%; overflow-x: auto; overscroll-behavior-x: none; -webkit-overflow-scrolling: touch; border-radius: 12px; background: #111216; border: 1px solid var(--border-color); position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin-bottom: 15px;}
+.admin-matrix { width: 100%; border-collapse: separate; border-spacing: 0; min-width: max-content; text-align: center; font-size: 13px; }
+.admin-matrix th, .admin-matrix td { border-bottom: 1px solid var(--border-color); border-right: 1px solid var(--border-color); padding: 6px; }
+.admin-matrix th { background-color: transparent; color: var(--text-sub); font-weight: normal; position: sticky; top: 0; z-index: 5; border-top: 1px solid var(--border-color); min-width: 80px; }
+.diagonal-header { position: sticky; left: 0; z-index: 10 !important; min-width: 120px; min-height: 40px; background: linear-gradient(to top right, #1c1d21 49%, #3a3c42 49%, #3a3c42 51%, #1c1d21 51%); border-right: 2px solid var(--border-color) !important; box-shadow: 2px 0 5px rgba(0,0,0,0.4); }
+.diagonal-header .dh-member { position: absolute; top: 4px; right: 10px; font-weight: bold; color: var(--text-sub); font-size: 11px; } .diagonal-header .dh-party { position: absolute; bottom: 4px; left: 10px; font-weight: bold; color: var(--text-sub); font-size: 11px; }
+.matrix-user-header { cursor: pointer; transition: background 0.2s; }
+
+.admin-matrix th.user-col, .admin-matrix td.user-col { width: 140px; min-width: 140px; max-width: 140px; }
+.admin-matrix td.ch-cell { text-align: left; background-color: #0a0b0d; min-width: 120px; padding: 6px; position: sticky; left: 0; z-index: 9; border-right: 2px solid var(--border-color) !important; box-shadow: 2px 0 5px rgba(0,0,0,0.4); vertical-align: middle;}
+.admin-edit-name { width: 80px; font-size: 12px; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; text-align: center; background: #1c1d21; border: 1px solid var(--border-color); color: #fff; border-radius: 6px; padding: 6px; outline: none; transition: border-color 0.2s; } .admin-edit-name:focus { border-color: var(--blue); }
+.admin-matrix td.ch-cell select.admin-edit-type { width: 75px; height: 30px; text-align: center; font-family: 'JetBrains Mono', monospace; background: #1c1d21; border: 1px solid var(--border-color); color: #fff; border-radius: 6px; font-size: 12px; padding: 4px; outline: none; transition: border-color 0.2s; cursor: pointer;} .admin-matrix td.ch-cell select.admin-edit-type:focus { border-color: var(--blue); }
+.btn-delete-col, .btn-delete-row { background: var(--red); color: #fff; border: none; border-radius: 4px; cursor: pointer; padding: 5px 10px; font-size: 10px; transition: all 0.2s; display: inline-block; font-weight: bold; white-space: nowrap; flex-shrink: 0; } .btn-delete-col:hover, .btn-delete-row:hover { filter: brightness(1.2); } .btn-delete-row { margin-top: 0; }
+
+.cell-layout { display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 8px; }
+.matrix-toggle { width: 36px; height: 24px; margin: 0; background: linear-gradient(to bottom, #2a2c33, #1c1d21); border: 1px solid #000; border-radius: 3px; cursor: pointer; position: relative; transition: all 0.1s ease-out; box-shadow: 0 2px 2px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.1); display: flex; align-items: flex-end; justify-content: center; padding-bottom: 2px; font-size: 9px; font-family: 'JetBrains Mono', monospace; font-weight: bold; color: #555; user-select: none; }
+.matrix-toggle::after { content: "-"; } .matrix-toggle::before { content: ""; position: absolute; top: 3px; left: 4px; right: 4px; height: 3px; background: #111; border-radius: 1px; box-shadow: inset 0 1px 1px rgba(0,0,0,0.8); transition: all 0.15s ease-out; }
+.matrix-toggle.active { background: linear-gradient(to bottom, #1c1d21, #121418); box-shadow: 0 0px 0px rgba(0,0,0,0.5), inset 0 2px 4px rgba(0,0,0,0.8); color: #fff; text-shadow: 0 0 4px rgba(255,255,255,0.6); } .matrix-toggle.active::after { content: "SET"; } .matrix-toggle.active::before { background: var(--green); box-shadow: 0 0 6px var(--green); }
+
+.remote-group { display: flex; flex-direction: column; align-items: center; background: #111216; border: 1px solid #2a2c33; border-radius: 6px; padding: 4px 6px 6px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.5); }
+.remote-label { font-family: 'JetBrains Mono', monospace; font-size: 8px; font-weight: bold; color: #666; margin-bottom: 4px; letter-spacing: 1px; } .remote-buttons { display: flex; gap: 6px; }
+.circle-btn { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #1c1d21; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.05); }
+.circle-btn svg { width: 12px; height: 12px; fill: currentColor; pointer-events: none; } .circle-btn.disabled { border-color: #444 !important; color: #444 !important; background: #15161a; box-shadow: none; cursor: not-allowed; opacity: 0.5; }
+.remote-spk-btn { border: 1.5px solid var(--green); color: var(--green); } .remote-spk-btn.active { background-color: var(--green); color: #000; box-shadow: inset 0 2px 4px rgba(255,255,255,0.4), 0 0 10px rgba(74, 222, 128, 0.5); }
+.remote-mic-btn { border: 1.5px solid var(--red); color: var(--red); } .remote-mic-btn.active { background-color: var(--red); color: #fff; box-shadow: inset 0 2px 4px rgba(255,255,255,0.3), 0 0 10px rgba(220, 38, 38, 0.5); }
+.cp-meter-bg { width: 6px; height: 36px; background: #000; border-radius: 2px; position: relative; box-shadow: inset 0 0 3px rgba(0,0,0,0.8); overflow: hidden; margin-left: 2px;} .cp-meter-bar { width: 100%; height: 100%; background: linear-gradient(to top, #22c55e, #eab308, #ef4444); position: absolute; bottom: 0; left: 0; transform-origin: bottom; transform: scaleY(0); transition: transform 0.05s ease-out; }
+
+.global-controls { display: flex; gap: 10px; padding: 5px 15px 10px; background: var(--bg-dark); border-bottom: 2px solid var(--green); flex-shrink: 0; z-index: 10;}
+.btn-global { flex: 1; padding: 8px 10px; border: none; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; font-family: 'JetBrains Mono', monospace; }
+.slash-line { display: none; } .muted-slash .slash-line { display: block; opacity: 1; }
+@keyframes pulse-green { 0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.6); } 70% { box-shadow: 0 0 0 10px rgba(74, 222, 128, 0); } 100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); } }
+@keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.6); } 70% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); } 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); } }
+.btn-master-spk { background: #1c1d21; color: var(--text-main); border: 1px solid var(--border-color); } .btn-master-spk.active { background: var(--green); color: #000; border-color: var(--green); animation: pulse-green 1.5s infinite; }
+.btn-master-mic { background: #1c1d21; color: var(--text-main); border: 1px solid var(--border-color); } .btn-master-mic.active { background: var(--red); color: #000; border-color: var(--red); animation: pulse-red 1.5s infinite; }
+
+.channel-list-container { flex: 1 1 auto; overflow-y: auto; padding: 10px 15px 20px; display: flex; flex-direction: column; gap: 10px; scrollbar-width: none; -webkit-overflow-scrolling: touch; min-height: 0; z-index: 1; touch-action: pan-y; align-content: start;} .channel-list-container::-webkit-scrollbar { display: none; }
+#channel-list-wrap { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 10px; align-content: start; } 
+@media (min-width: 600px) { #channel-list-wrap { gap: 15px; } }
+
+.channel-card { background-color: var(--card-bg); border-radius: 8px; position: relative; overflow: hidden; display: flex; flex-direction: column; transition: background 0.3s ease; border: 1px solid var(--border-color); } .channel-card.expanded { background-color: var(--card-bg-expanded); }
+.channel-card::before, .channel-card::after { content: ""; position: absolute; top: 0; bottom: 0; width: 50%; opacity: 0; transition: opacity 0.3s ease; pointer-events: none; z-index: 0; }
+.channel-card::before { left: 0; background: linear-gradient(to right, rgba(74, 222, 128, 0.25) 0%, transparent 100%); } .channel-card::after { right: 0; background: linear-gradient(to left, rgba(220, 38, 38, 0.25) 0%, transparent 100%); }
+.channel-card.listen-on::before { opacity: 1; } .channel-card.talk-on::after { opacity: 1; } .channel-card > * { position: relative; z-index: 1; }
+
+/* ★メーターのスタイル（縦＝ボリューム、横＝声の波形）背景色をうっすらグレー（#2a2c33）に指定 */
+.status-line-bg { position: absolute; left: 0; top: 10%; bottom: 10%; width: 4px; background-color: #2a2c33; border-radius: 0 4px 4px 0; overflow: hidden; z-index: 2; }
+.status-line-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to top, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); } 
+.status-line-mask { position: absolute; top: 0; left: 0; right: 0; height: 100%; background-color: #2a2c33; transition: height 0.05s ease-out; }
+
+.ch-meter-container { height: 4px; background: #2a2c33; margin: 0 45px 4px; border-radius: 2px; overflow: hidden; position: relative; z-index: 2;}
+.ch-meter-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); } 
+.ch-meter-mask { position: absolute; right: 0; top: 0; bottom: 0; width: 100%; background-color: #2a2c33; transition: width 0.1s ease-out; }
+
+.volume-panel { display: none; padding: 5px 20px; align-items: center; gap: 10px; } .channel-card.expanded .volume-panel { display: flex; }
+.vol-icon { font-size: 14px; color: var(--text-sub); flex-shrink: 0; width: 14px; height: 14px; } .vol-slider-wrap { flex: 1; position: relative; display: flex; align-items: center; touch-action: pan-x; }
+.vol-slider-track-bg { position: absolute; left: 0; right: 0; height: 4px; background: var(--border-color); border-radius: 2px; z-index: 1; } .vol-slider-fill { position: absolute; left: 0; height: 4px; background: var(--orange); border-radius: 2px; z-index: 2; width: 50%; pointer-events: none; }
+
+input[type=range] { width: 100%; -webkit-appearance: none; background: transparent; height: 30px; position: relative; z-index: 3; margin: 0; outline: none; border: none; }
+input[type=range]:focus { outline: none; border: none; }
+input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 30px; background: transparent; border: none; } 
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 18px; width: 18px; border-radius: 50%; background: #ffffff; box-shadow: 0 0 8px rgba(0,0,0,0.6); cursor: pointer; margin-top: 6px; border: none; }
+
+/* カード内のレイアウト崩れ対策（flex-shrink, overflow制御） */
+.card-main { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; position: relative; z-index: 2;} 
+.ch-info { text-align: center; flex: 1; padding: 0 5px; min-width: 0; overflow: hidden;}
+.ch-name { font-size: 14px; font-weight: 500; margin-bottom: 2px; display: inline-block; padding: 2px 6px; border-radius: 4px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;} 
+.ch-type { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-sub); display: inline-block; padding: 0px 6px; border-radius: 4px; pointer-events: auto; }
+.btn-action { width: 44px; height: 44px; flex-shrink: 0; border-radius: 50%; border: 2px solid; display: flex; align-items: center; justify-content: center; background: #1c1d21; touch-action: none; z-index: 10; user-select: none; box-shadow: 0 4px 8px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.05); transition: background-color 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, color 0.2s ease; cursor: pointer; font-size: 16px;}
+.btn-action.disabled-btn { opacity: 0.3; cursor: not-allowed; pointer-events: none; border-color: var(--border-color) !important; color: var(--text-sub) !important; background: #15161a !important; box-shadow: none !important; }
+.btn-icon { width: 20px; height: 20px; fill: currentColor; pointer-events: none; }
+.btn-listen { border-color: var(--green); color: var(--green); } .btn-listen.active, .btn-listen.latched { background-color: var(--green); color: var(--bg-dark); box-shadow: inset 0 2px 4px rgba(255,255,255,0.4), 0 4px 15px rgba(74, 222, 128, 0.5); }
+.btn-talk { border-color: var(--red); color: var(--red); } .btn-talk.active, .btn-talk.latched { background-color: var(--red); color: var(--text-main); box-shadow: inset 0 2px 4px rgba(255,255,255,0.3), 0 4px 15px rgba(220, 38, 38, 0.5); }
+.card-footer { display: flex; justify-content: center; align-items: center; padding: 0 15px 4px; position: relative; z-index: 5;}
+.btn-expand { display: inline-block; padding: 4px 40px; color: var(--text-sub); font-size: 14px; letter-spacing: 2px; cursor: grab; margin: 0 auto; border-radius: 20px; touch-action: none;} .btn-expand:active { cursor: grabbing; background-color: rgba(255,255,255,0.05); }
+.sortable-ghost { opacity: 0.2 !important; background-color: #000 !important; } .sortable-drag { cursor: grabbing !important; box-shadow: 0 20px 40px rgba(0,0,0,0.8) !important; background-color: var(--card-bg-expanded) !important; border: 1px solid var(--border-color) !important; opacity: 1 !important; z-index: 9999 !important; }
+
+.master-meter-container { height: 8px; width: 100%; background: var(--bg-dark); position: relative; flex-shrink: 0; z-index: 10;}
+.master-meter-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); } .master-meter-mask { position: absolute; right: 0; top: 0; bottom: 0; width: 100%; background-color: var(--bg-dark); transition: width 0.05s ease-out; }
+
+@media (max-width: 600px) {
+.admin-modal { padding: 60px 15px 15px; width: 100%; height: 100dvh; max-height: 100dvh; border-radius: 0; margin: 0; justify-content: flex-start;}
+.admin-settings-row { flex-direction: column; padding: 15px; }
+.io-grid { grid-template-columns: 1fr; }
+.io-ch-row { flex-direction: column; gap: 15px; }
+.io-card { padding: 15px; }
+.header-right { gap: 4px; }
+.btn-header-icon { width: 28px; height: 28px; font-size: 12px; }
+.scroll-area { padding-bottom: 50px; }
+      .app-container.layout-hybrid .channel-card { flex: 0 0 85vw; }
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+.header { padding: 4px 15px; border-bottom: 1px solid #1e2128; min-height: 36px;} #app-logo { height: 18px; } 
+.global-controls { padding: 2px 15px 4px; gap: 8px; min-height: 36px;} .btn-global { padding: 4px 8px; font-size: 11px; height: 28px; }
+.channel-list-container { padding: 4px 15px 10px; gap: 6px;} #channel-list-wrap { grid-template-columns: 1fr 1fr; gap: 6px; } 
+.card-main { padding: 4px 10px; } .btn-action { width: 34px; height: 34px; border-width: 1.5px; } .btn-icon { width: 16px; height: 16px; }
+.ch-name { font-size: 13px; } .ch-type { font-size: 9px; } .card-footer { padding: 0 10px 2px !important; } .btn-expand { padding: 2px 30px !important; font-size: 12px !important; }
+.master-meter-container { height: 6px; } .monitor-section { padding: 5px 0; }
+.video-wrapper { height: auto; max-height: 45vh; width: 100%; max-width: 80vh; aspect-ratio: 16 / 9; margin: 0 auto; }
+.video-wrapper video { object-fit: contain; } .video-dummy-text { font-size: 12px; }
+.admin-modal { margin-top: 5px; height: calc(100dvh - 45px); max-height: calc(100dvh - 45px); }
+}
+</style>
+</head>
+<body onload="if(window.forceResize) window.forceResize()">
+
+<div class="app-container" id="main-app-container">
+<div id="audio-overlay" class="overlay-base"><p style="font-weight:bold;margin-bottom:20px;font-size:18px;">通話に参加しますか？</p><button id="btn-enable-audio" class="btn-green-solid">音声を有効にして参加</button></div>
+
+<div id="disconnect-overlay" class="overlay-base" style="z-index: 6000; background: rgba(220, 38, 38, 0.95);">
+<div class="loader-spinner" style="border: 4px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px;"></div>
+<div style="font-size: 20px; font-weight: bold; margin-bottom: 10px; color: white;">CONNECTION LOST</div>
+<div id="disconnect-text" style="font-size: 14px; color: rgba(255,255,255,0.8); margin-bottom: 30px;">通信が切断されました。自動再接続を試行中...</div>
+</div>
+
+<!-- ログイン画面 -->
+<div id="login-overlay" class="overlay-base" style="display: flex;">
+<div class="login-modal">
+<button class="btn-close-login" id="btn-close-login"><i class="fa-solid fa-xmark"></i></button>
+<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 30px; width: 100%;">
+<div style="display: flex; align-items: center; justify-content: space-between; width: 195px; margin-bottom: 5px;">
+<svg viewBox="0 0 66 60" style="height: 38px; width: auto; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4)); display: block;">
+<defs><linearGradient id="logo-grad-login" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" /><stop offset="100%" style="stop-color:#4ade80;stop-opacity:1" /></linearGradient></defs>
+<path d="M 12 30 L 20 42 L 20 54 M 28 30 L 20 42" stroke="url(#logo-grad-login)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+<path d="M 12 20 Q 20 12 28 20 M 6 12 Q 20 0 34 12" stroke="url(#logo-grad-login)" stroke-width="4" stroke-linecap="round" fill="none" />
+<path d="M 42 30 L 50 42 L 50 54 M 58 30 L 50 42" stroke="url(#logo-grad-login)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+<path d="M 42 20 Q 50 12 58 20 M 36 12 Q 50 0 64 12" stroke="url(#logo-grad-login)" stroke-width="4" stroke-linecap="round" fill="none" />
+</svg>
+<span style="font-family:'Noto Sans JP', sans-serif; font-weight:900; font-size:35px; color:#ffffff; line-height: 1; letter-spacing: -1px; transform: translateX(-5px);">YY-Talk</span>
+</div>
+<div style="display: flex; align-items: center; justify-content: space-between; width: 195px;">
+<h2 style="margin: 0; font-size: 16px; font-family: 'JetBrains Mono', monospace; letter-spacing: 2px; color: var(--text-main); white-space: nowrap; line-height: 1;">CONNECT SYSTEM</h2>
+<i class="fa-solid fa-satellite-dish" style="font-size: 19px; color: var(--blue); line-height: 1; transform: translateY(-1px);"></i>
+</div>
+</div>
+<div id="host-id-input-container" style="width: 100%; margin-bottom: 8px;">
+<label style="display: block; text-align: left; font-size: 11px; color: var(--text-sub); font-weight: bold; letter-spacing: 1px; margin-bottom: 5px;">ROOM NAME</label>
+<input type="text" id="host-id" class="login-input" placeholder="例: STUDIO_A">
+</div>
+<div id="join-userid-input-container" style="width: 100%; margin-bottom: 35px;">
+<label style="display: block; text-align: left; font-size: 11px; color: var(--text-sub); font-weight: bold; letter-spacing: 1px; margin-bottom: 5px;">USER ID</label>
+<input type="text" id="join-userid" class="login-input" placeholder="例: CAM1">
+</div>
+<button id="btn-join-member" class="btn-reload btn-join-member">接続 (Connect)</button>
+<button id="btn-join-admin" class="btn-reload btn-join-admin">管理者接続 (Admin)</button>
+<button id="btn-stop" class="btn-reload btn-stop">切断 (Disconnect)</button>
+<div class="status-text" id="status-msg">待機中... ルーム名とユーザーIDを入力</div>
+</div>
+</div>
+
+<!-- メインアプリUI (ヘッダーを最前面に) -->
+<div class="header">
+<div class="header-left">
+<svg id="app-logo" viewBox="0 0 200 60"><defs><linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" /><stop offset="100%" style="stop-color:#4ade80;stop-opacity:1" /></linearGradient></defs><path d="M 12 30 L 20 42 L 20 54 M 28 30 L 20 42" stroke="url(#logo-grad)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none" /><path d="M 12 20 Q 20 12 28 20 M 6 12 Q 20 0 34 12" stroke="url(#logo-grad)" stroke-width="4" stroke-linecap="round" fill="none" /><path d="M 42 30 L 50 42 L 50 54 M 58 30 L 50 42" stroke="url(#logo-grad)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none" /><path d="M 42 20 Q 50 12 58 20 M 36 12 Q 50 0 64 12" stroke="url(#logo-grad)" stroke-width="4" stroke-linecap="round" fill="none" /><text x="75" y="44" font-family="sans-serif" font-weight="900" font-size="34" fill="#ffffff">Talk</text></svg>
+<div class="room-info-group">
+<div style="display: flex; flex-direction: column; justify-content: center;"><div class="room-info-label">ROOM</div><div id="header-room-name">---</div></div>
+<div style="width: 1px; height: 24px; background: var(--border-color);"></div>
+<div style="display: flex; flex-direction: column; justify-content: center;"><div class="room-info-label">USER</div><div id="header-user-id">---</div></div>
+</div>
+</div>
+<div class="header-right">
+<div style="display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 2px; margin-right: 5px;">
+<div id="header-active-count" style="font-size: 11px; font-weight: bold; color: var(--green); display: none; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.5px;"><i class="fa-solid fa-users"></i> <span id="active-num">0</span></div>
+<div id="status-rtt" style="font-size: 10px; font-family: 'JetBrains Mono', monospace; font-weight: bold; color: var(--text-sub); display: none;">-- ms</div>
+</div>
+<div style="position: relative;">
+<button id="btn-layout" class="btn-header-icon" title="レイアウト変更"><i class="fa-solid fa-border-all"></i></button>
+<div id="layout-dropdown" class="layout-dropdown">
+<button class="layout-item active" data-layout="normal"><i class="fa-solid fa-microphone-lines" style="margin-right:10px; width:16px; text-align:center;"></i>INTERCOM</button>
+<button class="layout-item" data-layout="hybrid"><i class="fa-solid fa-table-columns" style="margin-right:10px; width:16px; text-align:center;"></i>HYBRID</button>
+<button class="layout-item" data-layout="monitor"><i class="fa-solid fa-tv" style="margin-right:10px; width:16px; text-align:center;"></i>MONITOR</button>
+</div>
+</div>
+<button id="btn-settings" class="btn-header-icon admin-only" title="設定"><i class="fa-solid fa-gear"></i></button>
+<button id="btn-show-login" class="btn-header-icon"><i class="fa-solid fa-satellite-dish"></i></button>
+</div>
+</div>
+
+<!-- 管理者パネル (ヘッダーの下に潜り込ませる) -->
+<div id="admin-overlay" class="overlay-base" style="align-items: center; justify-content: flex-start; padding-top: 60px;">
+<div class="login-modal admin-modal">
+<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; position: relative;">
+<div class="admin-tabs-container" style="margin: 0; padding: 0; flex-grow: 1;">
+<button id="tab-video" class="admin-tab-btn active"><i class="fa-solid fa-tv"></i><span>VIDEO TALLY</span></button>
+<button id="tab-patch" class="admin-tab-btn"><i class="fa-solid fa-network-wired"></i><span>PATCH PANEL</span></button>
+<button id="tab-io" class="admin-tab-btn"><i class="fa-solid fa-sliders"></i><span>I/O BRIDGE</span></button>
+</div>
+</div>
+<div class="scroll-area">
+<div id="admin-video-section">
+<div class="io-interface-section">
+<h4 class="interface-title">MONITOR SETTINGS</h4>
+<div class="admin-settings-row">
+<div class="setting-group"><label>MONITOR NAME</label><input type="text" id="edit-monitor-title" value="MONITOR"></div>
+<div class="setting-group"><label>VIDEO SOURCE</label><select id="edit-monitor-source"><option value="off">OFF</option><option value="screen">画面共有</option></select></div>
+<div class="setting-group"><label>VIDEO QUALITY</label>
+<select id="edit-video-quality">
+<option value="128000">128 Kbps (~57MB/h)</option>
+<option value="256000">256 Kbps (~115MB/h)</option>
+<option value="512000" selected>512 Kbps (~230MB/h)</option>
+<option value="1000000">1 Mbps (~450MB/h)</option>
+<option value="5000000">5 Mbps (~2.2GB/h)</option>
+</select>
+</div>
+</div>
+</div>
+<div class="io-interface-section">
+<h4 class="interface-title">TALLY ROUTING</h4>
+<div class="admin-settings-row" style="flex-direction: column; align-items: stretch;">
+<div id="tally-assignment-list" style="display: flex; flex-direction: column;"></div>
+</div>
+</div>
+</div>
+<div id="admin-patch-section" style="display: none;">
+<div id="admin-matrix-container"></div>
+<button id="btn-add-ch" style="background: rgba(96, 165, 250, 0.1); color: var(--blue); border: 1px solid rgba(96, 165, 250, 0.4); width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background 0.2s;">＋ 新規パーティーを追加</button>
+</div>
+<div id="admin-io-section" style="display: none;">
+<div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; padding: 20px; background: #111216; border-radius: 12px; border: 1px solid var(--border-color);">
+<span style="font-size: 16px; letter-spacing: 4px; color: var(--green); margin-bottom: 15px; font-weight: bold; font-family: 'JetBrains Mono', monospace;">I/O BRIDGE MODE</span>
+<div id="btn-io-toggle" class="io-toggle-wrapper"><div class="io-toggle-slider"><span id="io-slider-text">OFF</span></div><span class="io-toggle-text">I/O BRIDGE</span></div>
+</div>
+<div id="io-bridge-container" class="io-panel">
+<!-- 動的生成されるI/O UIのコンテナ -->
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div id="monitor-section" class="monitor-section">
+<div class="monitor-label" id="main-monitor-title">MONITOR</div>
+<div class="video-wrapper" id="monitor-video-wrapper"><div class="video-dummy-text" id="main-monitor-source-text">[ NO VIDEO ]</div></div>
+</div>
+
+<div class="global-controls">
+<button id="btn-master-spk" class="btn-global btn-master-spk"><span id="global-spk-icon"><svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></span> SPK MUTE</button>
+<button id="btn-master-mic" class="btn-global btn-master-mic"><span id="global-mic-icon"><svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg></span> MIC MUTE</button>
+</div>
+
+<div class="channel-list-container" id="channel-list-wrap"></div>
+<div class="master-meter-container"><div class="master-meter-grad"></div><div class="master-meter-mask" id="master-meter-fill"></div></div>
+</div>
+
+<!-- Audio Context 起動用のダミー要素 -->
+<audio id="dummy-audio" loop playsinline src="https://raw.githubusercontent.com/anars/blank-audio/master/250-milliseconds-of-silence.mp3"></audio>
+
+<script>
+const $ = id => document.getElementById(id);
+
+window.addEventListener('offline', () => {
+const ov = $('disconnect-overlay'); if (ov) { ov.style.display = 'flex'; const dt = $('disconnect-text'); if(dt) dt.textContent = 'ネットワークが切断されました。回復を待っています...'; }
+});
+
+// 空欄同期アニメーション
+function syncPulse() { 
+const host = $('host-id'); const user = $('join-userid'); 
+if (!host || !user) return;
+const hostEmpty = host.value.trim() === '';
+const userEmpty = user.value.trim() === '';
+
+host.classList.remove('pulse-anim'); user.classList.remove('pulse-anim');
+void host.offsetWidth; void user.offsetWidth;
+
+if (hostEmpty || userEmpty) {
+if(hostEmpty) host.classList.add('pulse-anim');
+if(userEmpty) user.classList.add('pulse-anim');
+}
+}
+
+// --- HTML圧縮用 I/O Bridge 動的生成 ---
+function generateIoHtml() {
+const volL = `<svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M18.5 12A4.5 4.5 0 0 0 16 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg>`;
+const volR = `<svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
+function buildSec(title, dLab, dId, items) {
+let h = `<div class="io-interface-section"><h4 class="interface-title">${title}</h4><div class="io-grid">`;
+h += `<div class="io-card">`;
+h += `<div class="setting-group" style="align-items: center; width: 100%; max-width: none; margin-bottom: 15px;"><label>${dLab}</label><select id="${dId}" class="io-select" style="max-width: none;"></select></div>`;
+h += `<div class="io-ch-row">`;
+items.forEach(item => {
+h += `<div class="setting-group" style="flex:1; align-items: stretch;"><label>${item.label}</label><select id="select-${item.id}" class="io-select"></select><div class="io-gain-slider-wrap">${volL}<div class="vol-slider-wrap"><div class="vol-slider-track-bg"></div><div class="vol-slider-fill" id="fill-gain-${item.id}" style="width: 50%;"></div><input type="range" id="gain-${item.id}" min="0" max="200" value="100"></div>${volR}</div><div class="io-meter-horizontal-bg"><div id="meter-${item.id}" class="io-meter-horizontal-fill"></div></div></div>`;
+});
+h += `</div></div></div></div>`; return h;
+}
+const container = $('io-bridge-container');
+if(container) {
+container.innerHTML = 
+buildSec('4W INTERFACE (IN)', 'INPUT DEVICE (MIC)', 'select-4w-in-device', [{label:'IN 1(L) ➔ PL', id:'4w-in-l'}, {label:'IN 2(R) ➔ PL', id:'4w-in-r'}]) +
+buildSec('4W INTERFACE (OUT)', 'OUTPUT DEVICE (SPK)', 'select-4w-out-device', [{label:'PL ➔ OUT 1(L)', id:'4w-out-l'}, {label:'PL ➔ OUT 2(R)', id:'4w-out-r'}]) +
+buildSec('PGM INTERFACE (IN ONLY)', 'PGM INPUT DEVICE (MIC)', 'select-pgm-in-device', [{label:'PGM 1(L) ➔ PL', id:'pgm-in-l'}, {label:'PGM 2(R) ➔ PL', id:'pgm-in-r'}]);
+}
+}
+generateIoHtml();
+
+function patchIoToggle() {
+const tw = $('btn-io-toggle'); const st = $('io-slider-text'); const tt = tw?.querySelector('.io-toggle-text'); const ts = tw?.querySelector('.io-toggle-slider'); if(!tw) return;
+tw.onpointerdown = (e) => { 
+tw.setPointerCapture(e.pointerId); tw.isDragging = true; tw.startX = e.clientX; 
+tw.startLeft = state.ioBridge.enabled ? (tw.clientWidth - 52) : 0;
+ts.style.transition = 'none'; tt.style.transition = 'none'; 
+};
+tw.onpointermove = (e) => {
+if (!tw.isDragging) return; tw.moved = true; 
+let dx = e.clientX - tw.startX; let maxL = tw.clientWidth - 52;
+let nL = Math.max(0, Math.min(tw.startLeft + dx, maxL)); 
+ts.style.left = `calc(2px + ${nL}px)`; 
+let ratio = nL / maxL; tt.style.transform = `translateX(${24 - ratio * 48}px)`;
+};
+const handlePointerUp = (e) => {
+if (!tw.isDragging) return; tw.isDragging = false; tw.releasePointerCapture(e.pointerId);
+ts.style.transition = 'left 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.3s'; tt.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), color 0.3s ease'; ts.style.cssText = ''; tt.style.cssText = '';
+let dx = e.clientX - tw.startX; let maxL = tw.clientWidth - 52;
+let finalLeft = Math.max(0, Math.min(tw.startLeft + dx, maxL)); 
+let ns = finalLeft > (maxL / 2);
+if (ns !== state.ioBridge.enabled) toggleAction(ns); else tw.classList.toggle('active', state.ioBridge.enabled);
+};
+tw.onpointerup = handlePointerUp;
+
+async function toggleAction(newState) {
+state.ioBridge.enabled = newState; st.textContent = newState ? "ON" : "OFF"; tw.classList.toggle('active', newState);
+if (typeof updateIoElementsState === 'function') updateIoElementsState(); if (typeof updatePttButtonsState === 'function') updatePttButtonsState();
+if (newState) {
+let changed = false; state.channels?.forEach(ch => { if (state.talkStates[ch.id]) { state.talkStates[ch.id] = false; changed = true; } if (state.listenStates[ch.id]) { state.listenStates[ch.id] = false; changed = true; } const card = $(`card-${ch.id}`); if (card) card.classList.remove('talk-on', 'listen-on'); const tBtn = $(`talk-${ch.id}`); if (tBtn) tBtn.classList.remove('active', 'latched'); const lBtn = $(`listen-${ch.id}`); if (lBtn) lBtn.classList.remove('active', 'latched'); });
+if(changed) { updateAudioRouting(); updateChannelIcons(); syncTalkStates(); syncListenStates(); }
+} else {
+['meter-4w-in-l', 'meter-4w-in-r', 'meter-4w-out-l', 'meter-4w-out-r', 'meter-pgm-in-l', 'meter-pgm-in-r'].forEach(id => { const el = $(id); if(el) el.style.width = '0%'; });
+}
+saveRoomState(); sendData({ type: 'update-io-bridge', ioBridge: state.ioBridge }); await updateAudioDevices(); applyOutputDevice();
+}
+}
+
+navigator.mediaDevices.addEventListener('devicechange', async () => {
+if (!state.ioBridge || !state.ioBridge.enabled) return;
+const devices = await navigator.mediaDevices.enumerateDevices();
+if (state.ioBridge.outDevice4w && state.ioBridge.outDevice4w !== 'default' && state.ioBridge.outDevice4w !== '') {
+const exists = devices.some(d => d.deviceId === state.ioBridge.outDevice4w);
+if (!exists) { state.ioBridge.outDevice4w = 'default'; if($('select-4w-out-device')) $('select-4w-out-device').value = 'default'; applyOutputDevice(); uiLog("Warning: Audio output device lost."); saveRoomState(); }
+}
+});
+
+const iconSpeaker = `<svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
+const iconSpeakerOff = `<svg class="btn-icon" viewBox="0 0 24 24"><path fill="currentColor" opacity="0.4" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/><line x1="4" y1="4" x2="20" y2="20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
+const iconMic = `<svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>`;
+const iconMicOff = `<svg class="btn-icon" viewBox="0 0 24 24"><path fill="currentColor" opacity="0.4" d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/><line x1="4" y1="4" x2="20" y2="20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
+
+const memStorage = {};
+const safeStorage = { 
+get: (key) => { try { return localStorage.getItem(key) || memStorage[key] || null; } catch(e) { return memStorage[key] || null; } }, 
+set: (key, val) => { memStorage[key] = val; try { localStorage.setItem(key, val); } catch(e) {} }, 
+remove: (key) => { delete memStorage[key]; try { localStorage.removeItem(key); } catch(e) {} } 
+};
+const LocalProfile = { get: () => { try { return JSON.parse(safeStorage.get('yytalk_user_profile')); } catch(e) { return null; } }, set: (data) => { try { safeStorage.set('yytalk_user_profile', JSON.stringify(data)); } catch(e) {} }, clear: () => { try { safeStorage.remove('yytalk_user_profile'); } catch(e) {} } };
+
+// ★ 状態管理
+const state = {
+room: null, localStream: null, localMicTrack: null, roomId: '', myUserId: '', isAdmin: false,
+channels: [], registeredUsers: [], userAssignments: {}, tallyAssignments: {}, mediaCalls: {}, 
+talkStates: {}, listenStates: {}, channelVolumes: {}, remoteTalkStates: {}, remoteListenStates: {}, channelNodes: {}, 
+audioEnabled: false, isMasterSpkMuted: false, isMasterMicMuted: false, monitorTitle: 'MONITOR', activeVideoSender: null, videoQuality: '512000', layout: 'normal',
+ioBridge: { enabled: false, inDevice4w: 'default', outDevice4w: 'default', inAssign4wL: '', inAssign4wR: '', outAssign4wL: '', outAssign4wR: '', inDevicePgm: '', inAssignPgmL: '', inAssignPgmR: '', inGain4wL: 1.0, inGain4wR: 1.0, outGain4wL: 1.0, outGain4wR: 1.0, inGainPgmL: 1.0, inGainPgmR: 1.0 },
+ioNodes: { gain4wL: null, gain4wR: null, gainPgmL: null, gainPgmR: null, gainOutL: null, gainOutR: null, analyser4wL: null, analyser4wR: null, analyserPgmL: null, analyserPgmR: null, analyserOutL: null, analyserOutR: null },
+ioTrack4wL: null, ioTrack4wR: null, ioTrackPgmL: null, ioTrackPgmR: null, masterAudioEl: null, hasSuccessfullyConnected: false,
+audioCtx: null, masterAnalyser: null, localMicAnalyser: null, currentLocalVideoTrack: null
+};
+
+const LIVEKIT_WS_URL = "wss://yy-talk-pe8z9ycq.livekit.cloud";
+const WORKER_AUTH_URL = "https://yy-talk.yoshimitsu-y.workers.dev";
+
+if($('main-app-container')) $('main-app-container').classList.add('layout-normal');
+
+window.addEventListener('DOMContentLoaded', () => {
+const hId = $('host-id'); const jId = $('join-userid');
+if(hId) hId.addEventListener('input', syncPulse); 
+if(jId) jId.addEventListener('input', syncPulse); 
+syncPulse();
+
+const bLay = $('btn-layout');
+if(bLay) bLay.onclick = (e) => { e.stopPropagation(); $('layout-dropdown')?.classList.toggle('show'); };
+document.addEventListener('click', () => { $('layout-dropdown')?.classList.remove('show'); });
+document.querySelectorAll('.layout-item').forEach(item => { item.onclick = (e) => { applyLayout(item.getAttribute('data-layout')); state.layout = item.getAttribute('data-layout'); saveRoomState(); }; });
+
+const bsLog = $('btn-show-login'); if(bsLog) bsLog.onclick = () => { 
+const ov = $('login-overlay'); if(ov) ov.style.display = 'flex'; 
+if(state.hasSuccessfullyConnected) {
+if($('btn-join-member')) $('btn-join-member').style.display = 'none';
+if($('btn-join-admin')) $('btn-join-admin').style.display = 'none';
+if($('btn-stop')) $('btn-stop').style.display = 'block';
+const bc = $('btn-close-login'); if(bc) bc.style.display = 'flex';
+const hcon = $('host-id-input-container'); if(hcon) hcon.style.display = 'none';
+const ucon = $('join-userid-input-container'); if(ucon) ucon.style.display = 'none';
+}
+};
+const bcLog = $('btn-close-login'); if(bcLog) bcLog.onclick = () => { $('login-overlay').style.display = 'none'; };
+
+const tVid = $('tab-video'); if(tVid) tVid.onclick = () => switchTab($('tab-video'), $('admin-video-section'));
+const tPat = $('tab-patch'); if(tPat) tPat.onclick = () => switchTab($('tab-patch'), $('admin-patch-section'));
+const tIo = $('tab-io'); if(tIo) tIo.onclick = () => { switchTab($('tab-io'), $('admin-io-section')); buildIoUI(); };
+
+const bSet = $('btn-settings');
+if(bSet) bSet.onclick = () => { 
+if (!state.isAdmin) return; 
+const ov = $('admin-overlay');
+if (ov.style.display === 'flex') {
+ov.style.display = 'none';
+bSet.classList.remove('active');
+} else {
+ov.style.display = 'flex'; 
+bSet.classList.add('active'); 
+buildAdminMatrix(); 
+buildTallyAssignmentUI(); 
+updateVideoSources(); 
+}
+};
+
+const bjm = $('btn-join-member'); if(bjm) bjm.onclick = () => joinNetwork(false);
+const bja = $('btn-join-admin'); if(bja) bja.onclick = () => joinNetwork(true);
+const bStop = $('btn-stop'); if(bStop) bStop.onclick = () => { LocalProfile.clear(); location.reload(); };
+
+const bea = $('btn-enable-audio'); if(bea) bea.onclick = () => { 
+$('audio-overlay').style.display = 'none'; 
+state.audioEnabled = true; 
+initAudioContext(); 
+$('dummy-audio')?.play().catch(()=>{});
+
+// Audio Context開始後にマイク取得
+if (state.myUserId.toLowerCase() !== 'debug') {
+const constraints = state.ioBridge.enabled ? { echoCancellation: false, noiseSuppression: false, autoGainControl: false } : { echoCancellation: true, noiseSuppression: true, autoGainControl: true };
+navigator.mediaDevices.getUserMedia({ audio: constraints })
+.then(stream => {
+state.localStream = stream;
+if (state.audioCtx) { 
+if (state.localMicAnalyser) state.localMicAnalyser.disconnect(); 
+const localSrc = state.audioCtx.createMediaStreamSource(state.localStream); 
+state.localMicAnalyser = state.audioCtx.createAnalyser(); 
+state.localMicAnalyser.fftSize = 256; 
+localSrc.connect(state.localMicAnalyser); 
+}
+if(state.room && state.room.state === 'connected') {
+publishLocalMic();
+}
+})
+.catch(err => console.error("マイクアクセス拒否:" + err.message));
+}
+};
+
+const cWrap = $('channel-list-wrap');
+if (typeof Sortable !== 'undefined' && cWrap) { new Sortable(cWrap, { animation: 200, handle: '.btn-expand', delay: 150, delayOnTouchOnly: true, touchStartThreshold: 5, ghostClass: 'sortable-ghost', dragClass: 'sortable-drag', onEnd: function (evt) { let newOrder = []; cWrap.querySelectorAll('.channel-card').forEach(card => { newOrder.push(card.id.replace('card-', '')); }); safeStorage.set('yytalk-ch-order', JSON.stringify(newOrder)); } }); }
+
+const bAdd = $('btn-add-ch');
+if(bAdd) bAdd.onclick = () => {
+try {
+const id = 'ch' + Date.now(); const newCh = { id, name: 'NEW', type: 'PL' }; 
+if (!state.channels.find(c => c.id === id)) state.channels.push(newCh); 
+initChannelsDOM(); setupChannelAudio(newCh.id);
+state.registeredUsers?.forEach(uid => { if (!state.userAssignments[uid]) state.userAssignments[uid] = []; state.userAssignments[uid].push(id); });
+sendData({ type: 'add-channel', ch: newCh, assignments: state.userAssignments, registered: state.registeredUsers });
+Object.values(state.mediaCalls || {}).forEach(call => { if (call?.source && state.audioCtx && newCh && !call.isIOTrack) { const splitGain = state.audioCtx.createGain(); const panner = state.audioCtx.createStereoPanner(); splitGain.gain.value = 0; call.source.connect(panner); panner.connect(splitGain); if(state.channelNodes[newCh.id]) splitGain.connect(state.channelNodes[newCh.id].analyser); call.chGains[newCh.id] = { gain: splitGain, panner: panner }; } });
+saveRoomState(); buildAdminMatrix(); if (state.userAssignments && state.myUserId) { applyAssignments(state.userAssignments[state.myUserId] || state.channels.map(c=>c.id)); }
+} catch (err) {}
+};
+
+const bms = $('btn-master-spk'); if(bms) bms.onclick = toggleMasterSpk;
+const bmm = $('btn-master-mic'); if(bmm) bmm.onclick = toggleMasterMic;
+updateChannelIcons();
+
+const savedProfile = LocalProfile.get(); if (savedProfile) { if($('host-id')) $('host-id').value = savedProfile.roomId || ''; if($('join-userid')) $('join-userid').value = savedProfile.userId || ''; syncPulse(); }
+});
+
+function applyLayout(layout) {
+const appC = $('main-app-container');
+appC.classList.remove('layout-normal', 'layout-hybrid', 'layout-monitor'); appC.classList.add('layout-' + layout);
+document.querySelectorAll('.layout-item').forEach(btn => { if(btn.getAttribute('data-layout') === layout) btn.classList.add('active'); else btn.classList.remove('active'); });
+const bl = $('btn-layout'); if(bl) { if (layout === 'normal') bl.classList.remove('active'); else bl.classList.add('active'); }
+setTimeout(window.forceResize, 100);
+}
+
+function switchTab(activeTab, activeSec) { 
+const tVid=$('tab-video'), tPat=$('tab-patch'), tIo=$('tab-io'); 
+if(tVid && tPat && tIo) [tVid, tPat, tIo].forEach(t => t.classList.remove('active')); 
+const sVid=$('admin-video-section'), sPat=$('admin-patch-section'), sIo=$('admin-io-section'); 
+if(sVid && sPat && sIo) [sVid, sPat, sIo].forEach(s => s.style.display = 'none'); 
+if(activeTab) activeTab.classList.add('active'); 
+if(activeSec) activeSec.style.display = 'block'; 
+const scrollArea = document.querySelector('.scroll-area');
+if(scrollArea) scrollArea.scrollTop = 0;
+}
+
+function updateUserCount() {
+if(!state.room) return;
+const count = state.room.remoteParticipants.size + 1;
+const activeEl = $('header-active-count');
+if(activeEl) { 
+activeEl.innerHTML = `<i class="fa-solid fa-users"></i> <span id="active-num">${count}</span>`; 
+activeEl.style.display = 'block'; 
+}
+}
+
+function showDisconnectOverlay(msg) {
+const ov = $('disconnect-overlay'); if(!ov) return;
+ov.style.display = 'flex';
+const dt = $('disconnect-text'); if(dt) dt.textContent = msg || '通信が切断されました。自動再接続を試行中...';
+}
+
+async function updateAudioDevices() {
+if (!state.room || !state.room.localParticipant) return;
+const micConstraints = state.ioBridge.enabled ? { echoCancellation: false, noiseSuppression: false, autoGainControl: false } : { echoCancellation: true, noiseSuppression: true, autoGainControl: true };
+try {
+const existingPub = state.room.localParticipant.getTrackPublication(LivekitClient.Track.Source.Microphone);
+if (existingPub && existingPub.track) { await state.room.localParticipant.unpublishTrack(existingPub.track); existingPub.track.stop(); }
+if (state.localMicTrack) { if(typeof state.localMicTrack.stop === 'function') state.localMicTrack.stop(); state.localMicTrack = null; }
+if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+const stream = await navigator.mediaDevices.getUserMedia({ audio: micConstraints });
+state.localStream = stream;
+
+if (state.audioCtx) { 
+if (state.localMicAnalyser) state.localMicAnalyser.disconnect(); 
+const localSrc = state.audioCtx.createMediaStreamSource(state.localStream); 
+state.localMicAnalyser = state.audioCtx.createAnalyser(); 
+state.localMicAnalyser.fftSize = 256; 
+localSrc.connect(state.localMicAnalyser); 
+}
+
+publishLocalMic();
+}
+} catch(e) {}
+
+const handleIOTracks = async () => {
+if (!state.ioBridge.enabled) { ['ioTrack4wL', 'ioTrack4wR', 'ioTrackPgmL', 'ioTrackPgmR'].forEach(async key => { if (state[key]) { await state.room.localParticipant.unpublishTrack(state[key].track); state[key].track.stop(); state[key] = null; } }); return; }
+if (state.ioBridge.inDevice4w) { try { let audioConst = { echoCancellation: false, noiseSuppression: false, autoGainControl: false }; if (state.ioBridge.inDevice4w !== 'default') audioConst.deviceId = { exact: state.ioBridge.inDevice4w }; const stream = await navigator.mediaDevices.getUserMedia({ audio: audioConst }); const source = state.audioCtx.createMediaStreamSource(stream); const splitter = state.audioCtx.createChannelSplitter(2); source.connect(splitter); const gainL = state.audioCtx.createGain(); gainL.gain.value = state.ioBridge.inGain4wL ?? 1.0; state.ioNodes.gain4wL = gainL; const analyserL = state.audioCtx.createAnalyser(); analyserL.fftSize = 256; state.ioNodes.analyser4wL = analyserL; const destL = state.audioCtx.createMediaStreamDestination(); splitter.connect(gainL, 0); gainL.connect(analyserL); gainL.connect(destL); const gainR = state.audioCtx.createGain(); gainR.gain.value = state.ioBridge.inGain4wR ?? 1.0; state.ioNodes.gain4wR = gainR; const analyserR = state.audioCtx.createAnalyser(); analyserR.fftSize = 256; state.ioNodes.analyser4wR = analyserR; const destR = state.audioCtx.createMediaStreamDestination(); splitter.connect(gainR, 1); gainR.connect(analyserR); connect(destR); const trackL = new LivekitClient.LocalAudioTrack(destL.stream.getAudioTracks()[0]); const trackR = new LivekitClient.LocalAudioTrack(destR.stream.getAudioTracks()[0]); if(state.ioTrack4wL) await state.room.localParticipant.unpublishTrack(state.ioTrack4wL.track); if(state.ioTrack4wR) await state.room.localParticipant.unpublishTrack(state.ioTrack4wR.track); state.ioTrack4wL = await state.room.localParticipant.publishTrack(trackL, { name: 'io_4w_l', source: LivekitClient.Track.Source.Unknown }); state.ioTrack4wR = await state.room.localParticipant.publishTrack(trackR, { name: 'io_4w_r', source: LivekitClient.Track.Source.Unknown }); } catch(e) { } }
+if (state.ioBridge.inDevicePgm) { try { let audioConst = { echoCancellation: false, noiseSuppression: false, autoGainControl: false }; if (state.ioBridge.inDevicePgm !== 'default') audioConst.deviceId = { exact: state.ioBridge.inDevicePgm }; const stream = await navigator.mediaDevices.getUserMedia({ audio: audioConst }); const source = state.audioCtx.createMediaStreamSource(stream); const splitter = state.audioCtx.createChannelSplitter(2); source.connect(splitter); const gainL = state.audioCtx.createGain(); gainL.gain.value = state.ioBridge.inGainPgmL ?? 1.0; state.ioNodes.gainPgmL = gainL; const analyserL = state.audioCtx.createAnalyser(); analyserL.fftSize = 256; state.ioNodes.analyserPgmL = analyserL; const destL = state.audioCtx.createMediaStreamDestination(); splitter.connect(gainL, 0); gainL.connect(analyserL); gainL.connect(destL); const gainR = state.audioCtx.createGain(); gainR.gain.value = state.ioBridge.inGainPgmR ?? 1.0; state.ioNodes.gainPgmR = gainR; const analyserR = state.audioCtx.createAnalyser(); analyserR.fftSize = 256; state.ioNodes.analyserPgmR = analyserR; const destR = state.audioCtx.createMediaStreamDestination(); splitter.connect(gainR, 1); gainR.connect(analyserR); connect(destR); const trackL = new LivekitClient.LocalAudioTrack(destL.stream.getAudioTracks()[0]); const trackR = new LivekitClient.LocalAudioTrack(destR.stream.getAudioTracks()[0]); if(state.ioTrackPgmL) await state.room.localParticipant.unpublishTrack(state.ioTrackPgmL.track); if(state.ioTrackPgmR) await state.room.localParticipant.unpublishTrack(state.ioTrackPgmR.track); state.ioTrackPgmL = await state.room.localParticipant.publishTrack(trackL, { name: 'io_pgm_l', source: LivekitClient.Track.Source.Unknown }); state.ioTrackPgmR = await state.room.localParticipant.publishTrack(trackR, { name: 'io_pgm_r', source: LivekitClient.Track.Source.Unknown }); } catch(e) { } }
+};
+await handleIOTracks(); updateAudioRouting();
+}
+
+function buildIoUI() {
+const sliderText = $('io-slider-text'); if(sliderText) sliderText.textContent = state.ioBridge.enabled ? "ON" : "OFF"; const bIo=$('btn-io-toggle'); if(bIo){ if(state.ioBridge.enabled) bIo.classList.add('active'); else bIo.classList.remove('active'); } patchIoToggle();
+window.updateIoElementsState = function() { const isIoOn = state.ioBridge.enabled; document.querySelectorAll('#admin-io-section .io-interface-section').forEach(el => { el.style.opacity = isIoOn ? '1' : '0.4'; el.style.pointerEvents = isIoOn ? 'auto' : 'none'; }); }; updateIoElementsState();
+navigator.mediaDevices.enumerateDevices().then(devices => {
+const defaultOpt = '<option value="default">System Default</option>'; const noneOpt = '<option value="">(None)</option>'; if(!$('select-4w-out-device')) return; $('select-4w-out-device').innerHTML = defaultOpt; $('select-4w-in-device').innerHTML = defaultOpt; $('select-pgm-in-device').innerHTML = noneOpt;
+devices.forEach(d => { const opt = document.createElement('option'); opt.value = d.deviceId; opt.textContent = d.label || `${d.kind} ${d.deviceId.slice(0,5)}`; if (d.kind === 'audiooutput' && d.deviceId !== 'default') { $('select-4w-out-device').appendChild(opt); } else if (d.kind === 'audioinput' && d.deviceId !== 'default') { $('select-4w-in-device').appendChild(opt.cloneNode(true)); $('select-pgm-in-device').appendChild(opt.cloneNode(true)); } });
+$('select-4w-out-device').value = state.ioBridge.outDevice4w || 'default'; $('select-4w-in-device').value = state.ioBridge.inDevice4w || 'default'; $('select-pgm-in-device').value = state.ioBridge.inDevicePgm || '';
+}).catch(()=>{});
+
+const sendIoUpdate = () => { saveRoomState(); sendData({ type: 'update-io-bridge', ioBridge: state.ioBridge }); updateAudioRouting(); };
+
+if($('select-4w-out-device')) {
+if ($('gain-4w-in-l')) {
+const setIoGainUI = () => { $('gain-4w-in-l').value = (state.ioBridge.inGain4wL ?? 1.0) * 100; $('fill-gain-4w-in-l').style.width = ($('gain-4w-in-l').value / 2) + '%'; $('gain-4w-in-r').value = (state.ioBridge.inGain4wR ?? 1.0) * 100; $('fill-gain-4w-in-r').style.width = ($('gain-4w-in-r').value / 2) + '%'; $('gain-4w-out-l').value = (state.ioBridge.outGain4wL ?? 1.0) * 100; $('fill-gain-4w-out-l').style.width = ($('gain-4w-out-l').value / 2) + '%'; $('gain-4w-out-r').value = (state.ioBridge.outGain4wR ?? 1.0) * 100; $('fill-gain-4w-out-r').style.width = ($('gain-4w-out-r').value / 2) + '%'; $('gain-pgm-in-l').value = (state.ioBridge.inGainPgmL ?? 1.0) * 100; $('fill-gain-pgm-in-l').style.width = ($('gain-pgm-in-l').value / 2) + '%'; $('gain-pgm-in-r').value = (state.ioBridge.inGainPgmR ?? 1.0) * 100; $('fill-gain-pgm-in-r').style.width = ($('gain-pgm-in-r').value / 2) + '%'; }; setIoGainUI();
+const updateGain = (key, val, nodeKey, fillId) => { state.ioBridge[key] = val / 100; if (state.ioNodes[nodeKey]) state.ioNodes[nodeKey].gain.setTargetAtTime(state.ioBridge[key], state.audioCtx.currentTime, 0.05); const fillEl = $(fillId); if(fillEl) fillEl.style.width = (val / 2) + '%'; sendIoUpdate(); };
+$('gain-4w-in-l').oninput = (e) => updateGain('inGain4wL', e.target.value, 'gain4wL', 'fill-gain-4w-in-l'); $('gain-4w-in-r').oninput = (e) => updateGain('inGain4wR', e.target.value, 'gain4wR', 'fill-gain-4w-in-r'); $('gain-4w-out-l').oninput = (e) => updateGain('outGain4wL', e.target.value, 'gainOutL', 'fill-gain-4w-out-l'); $('gain-4w-out-r').oninput = (e) => updateGain('outGain4wR', e.target.value, 'gainOutR', 'fill-gain-4w-out-r'); $('gain-pgm-in-l').oninput = (e) => updateGain('inGainPgmL', e.target.value, 'gainPgmL', 'fill-gain-pgm-in-l'); $('gain-pgm-in-r').oninput = (e) => updateGain('inGainPgmR', e.target.value, 'gainPgmR', 'fill-gain-pgm-in-r');
+}
+$('select-4w-out-device').onchange = (e) => { state.ioBridge.outDevice4w = e.target.value; sendIoUpdate(); applyOutputDevice(); }; $('select-4w-in-device').onchange = (e) => { state.ioBridge.inDevice4w = e.target.value; sendIoUpdate(); if(state.ioBridge.enabled) updateAudioDevices(); }; $('select-pgm-in-device').onchange = (e) => { state.ioBridge.inDevicePgm = e.target.value; sendIoUpdate(); if(state.ioBridge.enabled) updateAudioDevices(); };
+['select-4w-in-l', 'select-4w-in-r', 'select-4w-out-l', 'select-4w-out-r', 'select-pgm-in-l', 'select-pgm-in-r'].forEach(id => { const sel = $(id); sel.innerHTML = '<option value="">(None)</option>'; state.channels.forEach(ch => { if(ch.id !== 'ch-video') { const opt = document.createElement('option'); opt.value = ch.id; opt.textContent = ch.name; sel.appendChild(opt); } }); });
+$('select-4w-in-l').value = state.ioBridge.inAssign4wL || ''; $('select-4w-in-r').value = state.ioBridge.inAssign4wR || ''; $('select-4w-out-l').value = state.ioBridge.outAssign4wL || ''; $('select-4w-out-r').value = state.ioBridge.outAssign4wR || ''; $('select-pgm-in-l').value = state.ioBridge.inAssignPgmL || ''; $('select-pgm-in-r').value = state.ioBridge.inAssignPgmR || '';
+$('select-4w-in-l').onchange = (e) => { state.ioBridge.inAssign4wL = e.target.value; sendIoUpdate(); }; $('select-4w-in-r').onchange = (e) => { state.ioBridge.inAssign4wR = e.target.value; sendIoUpdate(); }; $('select-4w-out-l').onchange = (e) => { state.ioBridge.outAssign4wL = e.target.value; sendIoUpdate(); }; $('select-4w-out-r').onchange = (e) => { state.ioBridge.outAssign4wR = e.target.value; sendIoUpdate(); }; $('select-pgm-in-l').onchange = (e) => { state.ioBridge.inAssignPgmL = e.target.value; sendIoUpdate(); }; $('select-pgm-in-r').onchange = (e) => { state.ioBridge.inAssignPgmR = e.target.value; sendIoUpdate(); };
+}
+}
+
+function buildTallyAssignmentUI() {
+const list = $('tally-assignment-list'); if(!list) return; list.innerHTML = '';
+state.registeredUsers?.forEach(uid => {
+const row = document.createElement('div'); row.className = 'tally-row';
+const isOnline = uid === state.myUserId || (state.room && state.room.remoteParticipants && state.room.remoteParticipants.has(uid));
+const statusColor = isOnline ? 'var(--green)' : 'var(--text-sub)';
+row.innerHTML = `<div class="tally-member-info" style="justify-content:center; width:80px;"><span style="color:${statusColor}; font-size:10px;">●</span><span style="color:#fff; font-size:14px; font-weight:600;">${uid}</span></div>`;
+const btnGroup = document.createElement('div'); btnGroup.className = 'tally-btn-group'; const assigned = state.tallyAssignments[uid] || [];
+for(let i=1; i<=10; i++) {
+const btn = document.createElement('button'); btn.className = 'tally-btn' + (assigned.includes(i) ? ' active' : ''); btn.textContent = i;
+btn.onclick = () => { let current = state.tallyAssignments[uid] || []; if (current.includes(i)) { current = current.filter(id => id !== i); btn.classList.remove('active'); } else { current.push(i); btn.classList.add('active'); } state.tallyAssignments[uid] = current; saveRoomState(); sendData({ type: 'update-tally-assignments', assignments: state.tallyAssignments }); if(uid === state.myUserId) evaluateTallyGlow(); };
+btnGroup.appendChild(btn);
+}
+row.appendChild(btnGroup); list.appendChild(row);
+});
+}
+
+let activeTallies = new Set();
+function evaluateTallyGlow() {
+const myAssigned = state.tallyAssignments[state.myUserId] || []; const shouldGlow = myAssigned.some(id => activeTallies.has(id)); let fallbackGlow = false; if (myAssigned.length === 0 && activeTallies.has(1)) fallbackGlow = true;
+const wrap = $('monitor-video-wrapper'); if(!wrap) return;
+if (shouldGlow || fallbackGlow) wrap.classList.add('tally-on'); else wrap.classList.remove('tally-on');
+}
+
+const editMonitorTitle = $('edit-monitor-title');
+if(editMonitorTitle) { editMonitorTitle.addEventListener('input', (e) => { state.monitorTitle = e.target.value; const mt=$('main-monitor-title'); if(mt) mt.textContent = state.monitorTitle || 'MONITOR'; saveRoomState(); sendData({ type: 'update-monitor-title', title: state.monitorTitle }); }); }
+
+// ★ 映像切り替えイベントの確実な再トリガー
+const editVideoQual = $('edit-video-quality');
+if(editVideoQual) { editVideoQual.addEventListener('change', async (e) => { 
+state.videoQuality = e.target.value; saveRoomState(); 
+if (state.activeVideoSender === state.myUserId) {
+const srcSelect = $('edit-monitor-source');
+if (srcSelect && srcSelect.value !== 'off') {
+srcSelect.dispatchEvent(new Event('change'));
+}
+}
+}); }
+
+async function updateVideoSources() {
+if (!state.activeVideoSender || state.activeVideoSender === state.myUserId) {
+const select = $('edit-monitor-source'); if(!select) return; const currentValue = select.value;
+try { try { const tempStream = await navigator.mediaDevices.getUserMedia({ video: true }); tempStream.getTracks().forEach(track => track.stop()); } catch (e) {} const devices = await navigator.mediaDevices.enumerateDevices(); const videoInputs = devices.filter(device => device.kind === 'videoinput'); select.innerHTML = '<option value="off">OFF</option><option value="screen">画面共有</option>'; videoInputs.forEach((device, index) => { const option = document.createElement('option'); option.value = device.deviceId; option.text = device.label || `Camera ${index + 1}`; select.appendChild(option); }); if (Array.from(select.options).some(opt => opt.value === currentValue)) select.value = currentValue; else select.value = 'off'; } catch (e) {} 
+const eq = $('edit-video-quality'); if(eq) eq.value = state.videoQuality || '512000';
+}
+}
+
+const editMonitorSrc = $('edit-monitor-source');
+if(editMonitorSrc) { editMonitorSrc.addEventListener('change', async (e) => {
+if (!state.room || !state.room.localParticipant) return;
+const deviceId = e.target.value; const eq = $('edit-video-quality'); const mst = $('main-monitor-source-text');
+editMonitorSrc.disabled = true; if(eq) eq.disabled = true; if(mst) { mst.textContent = '[ VIDEO SWITCHING NOW ]'; mst.style.display = 'block'; }
+try {
+if (state.currentLocalVideoTrack) { detachVideoTrack(state.currentLocalVideoTrack); state.currentLocalVideoTrack = null; }
+await state.room.localParticipant.setScreenShareEnabled(false); await state.room.localParticipant.setCameraEnabled(false);
+const existingPubs = Array.from(state.room.localParticipant.videoTrackPublications.values()); for (const pub of existingPubs) { if (pub.track) { pub.track.stop(); await state.room.localParticipant.unpublishTrack(pub.track); } }
+$('monitor-video-wrapper')?.querySelectorAll('video').forEach(v => v.remove()); await new Promise(resolve => setTimeout(resolve, 600));
+if (deviceId === 'off') { state.activeVideoSender = null; saveRoomState(); sendData({ type: 'update-video-sender', senderId: null, sourceText: 'OFF' }); if(mst) mst.textContent = '[ NO VIDEO ]'; editMonitorSrc.disabled = false; if(eq) eq.disabled = false; return; }
+state.activeVideoSender = state.myUserId; const sourceText = deviceId === 'screen' ? 'SCREEN SHARE' : 'CAMERA'; let targetBitrate = parseInt(state.videoQuality) || 512000;
+if (deviceId === 'screen') { await state.room.localParticipant.setScreenShareEnabled(true); const activePub = state.room.localParticipant.getTrackPublication(LivekitClient.Track.Source.ScreenShare); if (activePub && activePub.track) { state.currentLocalVideoTrack = activePub.track; attachVideoTrack(state.currentLocalVideoTrack); } else { if(mst) mst.textContent = '[ NO VIDEO ]'; } } else { let stream; try { stream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: deviceId } } }); } catch (exactErr) { stream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: { ideal: deviceId } } }); } const rawTrack = stream.getVideoTracks()[0]; const localVideoTrack = new LivekitClient.LocalVideoTrack(rawTrack); await state.room.localParticipant.publishTrack(localVideoTrack, { name: 'camera', source: LivekitClient.Track.Source.Camera, simulcast: false, videoEncoding: { maxBitrate: targetBitrate } }); state.currentLocalVideoTrack = localVideoTrack; attachVideoTrack(state.currentLocalVideoTrack); }
+saveRoomState(); sendData({ type: 'update-video-sender', senderId: state.myUserId, sourceText: sourceText });
+} catch (err) { editMonitorSrc.value = 'off'; state.activeVideoSender = null; sendData({ type: 'update-video-sender', senderId: null, sourceText: 'OFF' }); if(mst) mst.textContent = '[ NO VIDEO ]'; } finally { editMonitorSrc.disabled = false; if(eq) eq.disabled = false; }
+}); }
+
+function attachVideoTrack(track) { const mw = $('monitor-video-wrapper'); if(!mw) return; mw.querySelectorAll('video').forEach(v => v.remove()); const videoEl = track.attach(); videoEl.style.width = '100%'; videoEl.style.height = '100%'; videoEl.style.objectFit = 'contain'; videoEl.style.background = '#000'; videoEl.style.position = 'absolute'; videoEl.style.inset = '0'; videoEl.style.zIndex = '5'; mw.appendChild(videoEl); const mst = $('main-monitor-source-text'); if(mst) mst.style.display = 'none'; }
+function detachVideoTrack(track) { if (track) track.detach(); const mw = $('monitor-video-wrapper'); if(mw) mw.querySelectorAll('video').forEach(v => v.remove()); const mst = $('main-monitor-source-text'); if(mst) mst.style.display = 'block'; }
+
+function updateChannelIcons() { const bs = $('btn-master-spk'); const bm = $('btn-master-mic'); if(bs) bs.classList.toggle('active', state.isMasterSpkMuted); if(bm) bm.classList.toggle('active', state.isMasterMicMuted); state.channels?.forEach(ch => { const lBtn = $(`listen-${ch.id}`); const tBtn = $(`talk-${ch.id}`); if (lBtn) { lBtn.innerHTML = state.isMasterSpkMuted ? iconSpeakerOff : iconSpeaker; lBtn.classList.toggle('muted-slash', state.isMasterSpkMuted); } if (tBtn) { tBtn.innerHTML = state.isMasterMicMuted ? iconMicOff : iconMic; tBtn.classList.toggle('muted-slash', state.isMasterMicMuted); } }); }
+function toggleMasterSpk() { state.isMasterSpkMuted = !state.isMasterSpkMuted; updateAudioRouting(); updateChannelIcons(); } function toggleMasterMic() { state.isMasterMicMuted = !state.isMasterMicMuted; updateAudioRouting(); updateChannelIcons(); syncTalkStates(); }
+
+function saveRoomState() { 
+if(!state.roomId) return; 
+const data = { channels: state.channels, userAssignments: state.userAssignments, tallyAssignments: state.tallyAssignments, registeredUsers: state.registeredUsers, monitorTitle: state.monitorTitle, videoQuality: state.videoQuality, ioBridge: state.ioBridge, layout: state.layout }; 
+safeStorage.set('yytalk_room_' + state.roomId, JSON.stringify(data)); 
+}
+
+function resetAndApplyChannels(newChannels, newAssignments, newTallyAssignments, newRegistered) {
+if (state.audioCtx) { Object.values(state.channelNodes || {}).forEach(node => { try { node?.masterGain?.disconnect(); } catch(e){} }); Object.values(state.mediaCalls || {}).forEach(call => { Object.values(call?.chGains || {}).forEach(g => { try { g.gain?.disconnect(); } catch(e){} }); if(call) call.chGains = {}; }); }
+state.channelNodes = {}; state.channels = newChannels || [];
+if (!state.channels.find(c => c.id === 'ch-video')) state.channels.unshift({ id: 'ch-video', name: 'VIDEO', type: 'Listen', fixed: true });
+if (newAssignments) state.userAssignments = newAssignments; if (newTallyAssignments) state.tallyAssignments = newTallyAssignments;
+if (newRegistered && newRegistered.length > 0) { state.registeredUsers = newRegistered; } else { state.registeredUsers = Object.keys(state.userAssignments || {}); }
+initChannelsDOM();
+if (state.audioCtx) { state.channels.forEach(ch => setupChannelAudio(ch.id)); Object.values(state.mediaCalls || {}).forEach(call => { if (call?.source && !call.isIOTrack) { state.channels.forEach(ch => { const splitGain = state.audioCtx.createGain(); const panner = state.audioCtx.createStereoPanner(); splitGain.gain.value = 0; call.source.connect(panner); panner.connect(splitGain); if(state.channelNodes[ch.id]) splitGain.connect(state.channelNodes[ch.id].analyser); call.chGains[ch.id] = { gain: splitGain, panner: panner }; }); } }); }
+if (state.userAssignments && state.myUserId) { applyAssignments(state.userAssignments[state.myUserId] || state.channels.map(c=>c.id)); } else { applyAssignments(state.channels.map(c=>c.id)); }
+updateAudioRouting(); updateChannelIcons(); evaluateTallyGlow();
+}
+
+function loadRoomState(roomId) {
+const saved = safeStorage.get('yytalk_room_' + roomId);
+if (saved) { try { const parsed = JSON.parse(saved); if(parsed.monitorTitle) { state.monitorTitle = parsed.monitorTitle; const mt = $('main-monitor-title'); if(mt) mt.textContent = state.monitorTitle; const et = $('edit-monitor-title'); if(et) et.value = state.monitorTitle; } if(parsed.videoQuality) { state.videoQuality = parsed.videoQuality; const ev = $('edit-video-quality'); if(ev) ev.value = state.videoQuality; } if(parsed.ioBridge) state.ioBridge = parsed.ioBridge; if(parsed.layout) { state.layout = parsed.layout; applyLayout(state.layout); } if (parsed?.channels?.length > 0) { resetAndApplyChannels(parsed.channels, parsed.userAssignments, parsed.tallyAssignments, parsed.registeredUsers); return; } } catch(e){} }
+const defaultChannels = [ { id: 'ch-video', name: 'VIDEO', type: 'Listen', fixed: true }, { id: 'ch1', name: 'NEW', type: 'PL' } ];
+resetAndApplyChannels(defaultChannels, {}, {}, []);
+}
+
+// ★ カードのメーターの役割を修正（縦＝ボリューム、横＝波形）
+function createChannelCard(ch) {
+if(!ch || ch.id === 'ch-video') return; 
+if(state.listenStates[ch.id] === undefined) state.listenStates[ch.id] = false; if(state.talkStates[ch.id] === undefined) state.talkStates[ch.id] = false; if(state.channelVolumes[ch.id] === undefined) state.channelVolumes[ch.id] = 1.5;
+const listenClass = state.listenStates[ch.id] ? 'listen-on' : ''; const talkClass = state.talkStates[ch.id] ? 'talk-on' : '';
+const curListenIcon = state.isMasterSpkMuted ? iconSpeakerOff : iconSpeaker; const curTalkIcon = state.isMasterMicMuted ? iconMicOff : iconMic;
+const lMuted = state.isMasterSpkMuted ? 'muted-slash' : ''; const tMuted = state.isMasterMicMuted ? 'muted-slash' : '';
+
+const card = document.createElement('div'); card.className = `channel-card ${listenClass} ${talkClass}`; card.id = `card-${ch.id}`;
+// ★ 左の縦バーを「ボリューム設定(vol-indicator)」、下の横バーを「トークレベル(meter)」に修正
+card.innerHTML = `<div class="status-line-bg"><div class="status-line-grad"></div><div class="status-line-mask" id="vol-indicator-${ch.id}"></div></div><div class="card-main"><div class="btn-action btn-listen ${state.listenStates[ch.id] ? 'active latched' : ''} ${lMuted}" id="listen-${ch.id}">${curListenIcon}</div><div class="ch-info"><div class="ch-name" id="name-${ch.id}">${ch.name || 'Unknown'}</div><div class="ch-type" id="type-${ch.id}">${ch.type || 'PL'}</div></div>${ch.type === 'Listen' ? `<div style="width: 44px; height: 44px;"></div>` : `<div class="btn-action btn-talk ${state.talkStates[ch.id] ? 'active latched' : ''} ${tMuted}" id="talk-${ch.id}">${curTalkIcon}</div>`}</div><div class="ch-meter-container"><div class="ch-meter-grad"></div><div class="ch-meter-mask" id="meter-${ch.id}"></div></div><div class="volume-panel"><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M18.5 12A4.5 4.5 0 0 0 16 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg><div class="vol-slider-wrap"><div class="vol-slider-track-bg"></div><div class="vol-slider-fill" id="fill-${ch.id}"></div><input type="range" id="vol-${ch.id}" min="0" max="100" value="50"></div><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></div><div class="card-footer"><div class="btn-expand" id="expand-${ch.id}">○ ○ ○</div></div>`;
+const cw = $('channel-list-wrap'); if(cw) cw.appendChild(card);
+
+const slider = card.querySelector(`#vol-${ch.id}`); const fill = card.querySelector(`#fill-${ch.id}`); const volIndicator = card.querySelector(`#vol-indicator-${ch.id}`);
+slider.value = (state.channelVolumes[ch.id] / 3.0) * 100; 
+if(fill) fill.style.width = slider.value + '%'; 
+if(volIndicator) volIndicator.style.height = (100 - slider.value) + '%'; 
+
+slider.addEventListener('input', (e) => { 
+if(fill) fill.style.width = e.target.value + '%'; 
+if(volIndicator) volIndicator.style.height = (100 - e.target.value) + '%'; 
+state.channelVolumes[ch.id] = (e.target.value / 100) * 3.0; 
+updateAudioRouting(); 
+});
+card.querySelector(`#expand-${ch.id}`).addEventListener('click', () => card.classList.toggle('expanded'));
+setupPTTButton(card.querySelector(`#listen-${ch.id}`), 'listen', ch.id); 
+if(ch.type !== 'Listen') setupPTTButton(card.querySelector(`#talk-${ch.id}`), 'talk', ch.id);
+}
+
+window.updatePttButtonsState = function() {
+const isIoOn = state.ioBridge && state.ioBridge.enabled;
+state.channels?.forEach(ch => { const lBtn = $(`listen-${ch.id}`); const tBtn = $(`talk-${ch.id}`); if (lBtn) { if (isIoOn) lBtn.classList.add('disabled-btn'); else lBtn.classList.remove('disabled-btn'); } if (tBtn) { if (isIoOn) tBtn.classList.add('disabled-btn'); else tBtn.classList.remove('disabled-btn'); } });
+if (state.isAdmin) { const adminContainer = $('admin-matrix-container'); if (adminContainer) { adminContainer.querySelectorAll('.remote-group').forEach(group => { if (group.getAttribute('data-is-local') === 'true') { group.style.opacity = isIoOn ? '0.3' : '1'; group.style.pointerEvents = isIoOn ? 'none' : 'auto'; } }); } }
+};
+
+function initChannelsDOM() {
+const cw = $('channel-list-wrap'); if(!cw) return;
+cw.innerHTML = ''; let order = JSON.parse(safeStorage.get('yytalk-ch-order')) || []; state.channels?.forEach(ch => { if (!order.includes(ch.id)) order.push(ch.id); }); order = order.filter(id => state.channels?.some(c => c?.id === id));
+if(order.includes('ch-video')) { order = order.filter(id => id !== 'ch-video'); order.unshift('ch-video'); } safeStorage.set('yytalk-ch-order', JSON.stringify(order));
+order.forEach(id => { const ch = state.channels?.find(c => c?.id === id); if (ch) createChannelCard(ch); }); if (typeof updatePttButtonsState === 'function') updatePttButtonsState();
+}
+
+async function sendData(payload) { 
+if (state.room && state.room.localParticipant && state.room.state === 'connected') { 
+try {
+const str = JSON.stringify(payload); const payloadData = new TextEncoder().encode(str); 
+try { await state.room.localParticipant.publishData(payloadData, { reliable: true }); } 
+catch (e) { await state.room.localParticipant.publishData(payloadData, 1); }
+} catch (err) {}
+} 
+}
+
+function removeChannel(chId) {
+state.channels = state.channels.filter(c => c?.id !== chId); const card = $(`card-${chId}`); if(card) card.remove(); delete state.listenStates[chId]; delete state.talkStates[chId];
+if (state.channelNodes[chId] && state.audioCtx) { state.channelNodes[chId].masterGain.disconnect(); delete state.channelNodes[chId]; }
+Object.keys(state.userAssignments || {}).forEach(uid => { state.userAssignments[uid] = state.userAssignments[uid].filter(id => id !== chId); });
+updateAudioRouting(); updateChannelIcons(); let order = JSON.parse(safeStorage.get('yytalk-ch-order')) || []; order = order.filter(id => id !== chId); safeStorage.set('yytalk-ch-order', JSON.stringify(order));
+}
+
+function removePeer(peerId) {
+if (state.mediaCalls[peerId]) {
+if (state.mediaCalls[peerId].audioEl) { state.mediaCalls[peerId].audioEl.pause(); state.mediaCalls[peerId].audioEl.removeAttribute('src'); state.mediaCalls[peerId].audioEl.load(); }
+if (state.mediaCalls[peerId].chGains) { Object.values(state.mediaCalls[peerId].chGains).forEach(nodes => { try { nodes.gain.disconnect(); nodes.panner.disconnect(); } catch(e){} }); }
+delete state.mediaCalls[peerId];
+}
+delete state.remoteTalkStates[peerId]; delete state.remoteListenStates[peerId];
+updateAudioRouting(); if(state.isAdmin) buildAdminMatrix(); updateUserCount();
+}
+
+async function applyOutputDevice() {
+if (!state.masterAudioEl) return;
+let deviceId = ''; if (state.ioBridge.enabled && state.ioBridge.outDevice4w && state.ioBridge.outDevice4w !== 'default') { deviceId = state.ioBridge.outDevice4w; }
+if (typeof state.masterAudioEl.setSinkId === 'function') { try { await state.masterAudioEl.setSinkId(deviceId); } catch(e) {} }
+}
+
+function initAudioContext() {
+if (!state.audioCtx) { 
+state.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); 
+state.masterAnalyser = state.audioCtx.createAnalyser(); state.masterAnalyser.fftSize = 256; 
+const masterSplitter = state.audioCtx.createChannelSplitter(2); state.masterAnalyser.connect(masterSplitter);
+state.ioNodes.gainOutL = state.audioCtx.createGain(); state.ioNodes.gainOutL.gain.value = state.ioBridge.outGain4wL ?? 1.0; state.ioNodes.analyserOutL = state.audioCtx.createAnalyser(); state.ioNodes.analyserOutL.fftSize = 256;
+state.ioNodes.gainOutR = state.audioCtx.createGain(); state.ioNodes.gainOutR.gain.value = state.ioBridge.outGain4wR ?? 1.0; state.ioNodes.analyserOutR = state.audioCtx.createAnalyser(); state.ioNodes.analyserOutR.fftSize = 256;
+masterSplitter.connect(state.ioNodes.gainOutL, 0); state.ioNodes.gainOutL.connect(state.ioNodes.analyserOutL); masterSplitter.connect(state.ioNodes.gainOutR, 1); state.ioNodes.gainOutR.connect(state.ioNodes.analyserOutR);
+const masterMerger = state.audioCtx.createChannelMerger(2); state.ioNodes.analyserOutL.connect(masterMerger, 0, 0); state.ioNodes.analyserOutR.connect(masterMerger, 0, 1);
+const masterDest = state.audioCtx.createMediaStreamDestination(); masterMerger.connect(masterDest);
+state.masterAudioEl = new Audio(); state.masterAudioEl.srcObject = masterDest.stream; state.masterAudioEl.play().catch(e => {});
+
+startMeterDraw(); state.channels?.forEach(ch => setupChannelAudio(ch.id)); applyOutputDevice();
+}
+if(state.audioCtx.state === 'suspended') state.audioCtx.resume(); Object.values(state.mediaCalls || {}).forEach(callData => { if (!callData?.source) setupPeerMixer(callData); });
+}
+
+function publishLocalMic() {
+if (!state.room || !state.localStream || state.room.state !== 'connected') return;
+const audioTrack = state.localStream.getAudioTracks()[0];
+if (audioTrack && !state.localMicTrack) {
+try {
+// クローンしたトラックをパブリッシュし、大元のストリームはミュートしない
+const clonedTrack = audioTrack.clone();
+state.room.localParticipant.publishTrack(clonedTrack, { name: 'mic', source: LivekitClient.Track.Source.Microphone }).then(pub => {
+state.localMicTrack = pub.track;
+// ★ 常にマイクを送信状態にする (ミュートはマスターミュート時のみ)
+if(state.localMicTrack && state.localMicTrack.mediaStreamTrack) {
+state.localMicTrack.mediaStreamTrack.enabled = !state.isMasterMicMuted;
+}
+}).catch(err => console.error(err));
+} catch (err) { console.error(err); }
+}
+}
+
+function setupChannelAudio(chId) { if (!state.audioCtx || state.channelNodes[chId]) return; const analyser = state.audioCtx.createAnalyser(); analyser.fftSize = 256; const masterGain = state.audioCtx.createGain(); masterGain.gain.value = 0; analyser.connect(masterGain); masterGain.connect(state.masterAnalyser); state.channelNodes[chId] = { analyser, masterGain }; }
+
+function setupPeerMixer(callData) { 
+if(!state.audioCtx || !callData?.stream) return; 
+const source = state.audioCtx.createMediaStreamSource(callData.stream); callData.source = source; 
+const peerAnalyser = state.audioCtx.createAnalyser(); peerAnalyser.fftSize = 256; source.connect(peerAnalyser); callData.analyser = peerAnalyser; 
+callData.chGains = {}; 
+state.channels?.forEach(ch => { 
+const splitGain = state.audioCtx.createGain(); const panner = state.audioCtx.createStereoPanner(); splitGain.gain.value = 0; source.connect(panner); panner.connect(splitGain); 
+if(state.channelNodes[ch.id]) splitGain.connect(state.channelNodes[ch.id].analyser); callData.chGains[ch.id] = { gain: splitGain, panner: panner }; 
+}); 
+updateAudioRouting(); 
+}
+
+let lastDrawTime = 0;
+
+function getPeak(data) {
+let peak = 0;
+for(let i=5; i<data.length; i++) { if(data[i] > peak) peak = data[i]; }
+return peak < 8 ? 0 : peak; 
+}
+
+function startMeterDraw() {
+const masterData = new Uint8Array(state.masterAnalyser.frequencyBinCount); 
+let localData = null;
+
+function draw(timestamp) {
+requestAnimationFrame(draw); if (timestamp - lastDrawTime < 30) return; lastDrawTime = timestamp;
+
+if (!localData && state.localMicAnalyser) {
+localData = new Uint8Array(state.localMicAnalyser.frequencyBinCount);
+}
+
+state.masterAnalyser.getByteFrequencyData(masterData); 
+let mPeak = getPeak(masterData);
+const masterPercent = Math.min((mPeak / 255) * 100 * 2.0, 100); 
+const mf = $('master-meter-fill'); if(mf) mf.style.width = Math.max(100 - masterPercent, 0) + '%';
+
+let localPercent = 0; 
+if (state.localMicAnalyser && localData) { 
+state.localMicAnalyser.getByteFrequencyData(localData); 
+let lPeak = getPeak(localData); 
+localPercent = Math.min((lPeak / 255) * 100 * 2.0, 100); 
+}
+
+state.channels?.forEach(ch => { 
+if (state.channelNodes[ch.id]) { 
+const chData = new Uint8Array(state.channelNodes[ch.id].analyser.frequencyBinCount); 
+state.channelNodes[ch.id].analyser.getByteFrequencyData(chData); 
+let chPeak = getPeak(chData); 
+let chPercent = Math.min((chPeak / 255) * 100 * 2.0, 100); 
+
+// 他の人が喋っている場合のメーター反映
+for (let pid in state.mediaCalls) {
+if (state.remoteTalkStates[pid] && state.remoteTalkStates[pid][ch.id] && state.mediaCalls[pid].analyser && !state.mediaCalls[pid].isIOTrack) {
+const pData = new Uint8Array(state.mediaCalls[pid].analyser.frequencyBinCount);
+state.mediaCalls[pid].analyser.getByteFrequencyData(pData);
+let pPeak = getPeak(pData);
+if (pPeak > 0) {
+const pPercent = Math.min((pPeak / 255) * 100 * 2.0, 100);
+chPercent = Math.max(chPercent, pPercent);
+}
+}
+}
+
+if (state.talkStates[ch.id]) chPercent = Math.max(chPercent, localPercent); 
+
+// ★下の横バーの"幅"を波形として更新（マスクを右から左へ消す）
+const meterEl = $(`meter-${ch.id}`); 
+if (meterEl) meterEl.style.width = Math.max(100 - chPercent, 0) + '%'; 
+} 
+});
+
+if (state.isAdmin) {
+// IOメーター
+if (state.ioBridge.enabled) {
+const updateIoMeterHorizontal = (analyser, meterId) => { if (!analyser) return; const meterEl = $(meterId); if (!meterEl) return; const data = new Uint8Array(analyser.frequencyBinCount); analyser.getByteFrequencyData(data); let peak = getPeak(data); const volPercent = Math.min((peak / 255) * 100 * 2.0, 100); meterEl.style.width = `${volPercent}%`; };
+updateIoMeterHorizontal(state.ioNodes.analyser4wL, 'meter-4w-in-l'); updateIoMeterHorizontal(state.ioNodes.analyser4wR, 'meter-4w-in-r'); updateIoMeterHorizontal(state.ioNodes.analyserOutL, 'meter-4w-out-l'); updateIoMeterHorizontal(state.ioNodes.analyserOutR, 'meter-4w-out-r'); updateIoMeterHorizontal(state.ioNodes.analyserPgmL, 'meter-pgm-in-l'); updateIoMeterHorizontal(state.ioNodes.analyserPgmR, 'meter-pgm-in-r');
+}
+
+// ★パッチパネルの常時メーター
+state.registeredUsers?.forEach(uid => {
+let userVolRatio = 0;
+if (uid === state.myUserId) { 
+if (state.localMicAnalyser && localData) { 
+let peak = getPeak(localData); 
+userVolRatio = Math.min((peak / 255) * 2.0, 1.0); 
+} 
+}
+else { 
+const callInfo = state.mediaCalls[uid]; 
+if (callInfo && callInfo.analyser && !callInfo.isIOTrack) { 
+const pData = new Uint8Array(callInfo.analyser.frequencyBinCount); 
+callInfo.analyser.getByteFrequencyData(pData); 
+let peak = getPeak(pData); 
+userVolRatio = Math.min((peak / 255) * 2.0, 1.0); 
+} 
+}
+if (userVolRatio < 0.05) userVolRatio = 0;
+
+const userMeter = $(`user-meter-${uid}`); 
+if (userMeter) userMeter.style.transform = `scaleY(${userVolRatio})`;
+
+state.channels?.forEach(ch => { 
+const cpMeter = $(`cp-meter-${uid}-${ch.id}`); 
+if (cpMeter) { 
+let isTalking = false; 
+if (uid === state.myUserId) isTalking = state.talkStates[ch.id] === true && !state.isMasterMicMuted; 
+else isTalking = state.remoteTalkStates[uid] && state.remoteTalkStates[uid][ch.id] === true; 
+cpMeter.style.transform = `scaleY(${isTalking ? userVolRatio : 0})`; 
+} 
+});
+});
+}
+} draw(0);
+}
+
+function updateAudioRouting() {
+if (!state.audioCtx) return;
+state.channels?.forEach(ch => { 
+if (state.channelNodes[ch.id]) { 
+const isIoOutTarget = state.ioBridge.enabled && (ch.id === state.ioBridge.outAssign4wL || ch.id === state.ioBridge.outAssign4wR); let vol = 0;
+if (isIoOutTarget) { vol = state.channelVolumes[ch.id] !== undefined ? state.channelVolumes[ch.id] : 1.5; } else { vol = (state.listenStates[ch.id] && !state.isMasterSpkMuted) ? (state.channelVolumes[ch.id] !== undefined ? state.channelVolumes[ch.id] : 1.5) : 0; }
+state.channelNodes[ch.id].masterGain.gain.setTargetAtTime(vol, state.audioCtx.currentTime, 0.05); 
+} 
+});
+
+for (const callKey in state.mediaCalls) { 
+const callData = state.mediaCalls[callKey]; 
+if (callData.isIOTrack) {
+let targetCh = ''; if(callData.trackName === 'io_4w_l') targetCh = state.ioBridge.inAssign4wL; if(callData.trackName === 'io_4w_r') targetCh = state.ioBridge.inAssign4wR; if(callData.trackName === 'io_pgm_l') targetCh = state.ioBridge.inAssignPgmL; if(callData.trackName === 'io_pgm_r') targetCh = state.ioBridge.inAssignPgmR;
+const isSelf = callKey.startsWith(state.myUserId + '_');
+state.channels?.forEach(ch => {
+if (callData.chGains && callData.chGains[ch.id]) {
+const isTarget = (ch.id === targetCh) && (targetCh !== ''); const isIoOutTarget = state.ioBridge.enabled && (ch.id === state.ioBridge.outAssign4wL || ch.id === state.ioBridge.outAssign4wR);
+let vol = 0; if (isSelf) { vol = 0; } else if (isIoOutTarget) { vol = isTarget ? 1 : 0; } else { vol = (isTarget && state.listenStates[ch.id] && !state.isMasterSpkMuted) ? 1 : 0; }
+callData.chGains[ch.id].gain.gain.setTargetAtTime(vol, state.audioCtx.currentTime, 0.05);
+let panValue = 0; if (state.ioBridge.enabled) { if (ch.id === state.ioBridge.outAssign4wL && ch.id !== state.ioBridge.outAssign4wR) panValue = -1.0; else if (ch.id === state.ioBridge.outAssign4wR && ch.id !== state.ioBridge.outAssign4wL) panValue = 1.0; }
+callData.chGains[ch.id].panner.pan.setTargetAtTime(panValue, state.audioCtx.currentTime, 0.05);
+}
+});
+continue;
+}
+
+const peerId = callKey; const remoteTalk = state.remoteTalkStates[peerId] || {}; 
+state.channels?.forEach(ch => { 
+if (callData?.chGains && callData.chGains[ch.id]) { 
+const isTalking = remoteTalk[ch.id] === true; const isIoOutTargetL = state.ioBridge.enabled && (ch.id === state.ioBridge.outAssign4wL); const isIoOutTargetR = state.ioBridge.enabled && (ch.id === state.ioBridge.outAssign4wR);
+let vol = 0; let panValue = 0;
+if (isIoOutTargetL || isIoOutTargetR) { vol = isTalking ? 1 : 0; if (isIoOutTargetL && !isIoOutTargetR) panValue = -1.0; else if (isIoOutTargetR && !isIoOutTargetL) panValue = 1.0; } else { vol = (isTalking && state.listenStates[ch.id] && !state.isMasterSpkMuted) ? 1 : 0; }
+callData.chGains[ch.id].gain.gain.setTargetAtTime(vol, state.audioCtx.currentTime, 0.05); callData.chGains[ch.id].panner.pan.setTargetAtTime(panValue, state.audioCtx.currentTime, 0.05);
+} 
+}); 
+}
+}
+
+function syncTalkStates() { 
+sendData({ type: 'update-talk-states', states: state.talkStates }); 
+if (state.localMicTrack && state.localMicTrack.mediaStreamTrack) {
+state.localMicTrack.mediaStreamTrack.enabled = !state.isMasterMicMuted;
+}
+} 
+function syncListenStates() { sendData({ type: 'update-listen-states', states: state.listenStates }); }
+
+function setupPTTButton(btn, type, channelId) {
+if(!btn) return; let isDown = false, startX = 0; let isLatched = btn.classList.contains('latched'); const slideDir = type === 'listen' ? 1 : -1;
+function applyState(active) {
+let changed = false; const card = $(`card-${channelId}`);
+if (type === 'talk' && state.talkStates[channelId] !== active) { state.talkStates[channelId] = active; changed = true; if (card) { if(active) card.classList.add('talk-on'); else card.classList.remove('talk-on'); } if (state.isAdmin) { const adminMicBtn = document.querySelector(`.remote-mic-btn[data-uid="${state.myUserId}"][data-chid="${channelId}"]`); if (adminMicBtn) { if(active) adminMicBtn.classList.add('active'); else adminMicBtn.classList.remove('active'); } } }
+if (type === 'listen' && state.listenStates[channelId] !== active) { state.listenStates[channelId] = active; changed = true; if (card) { if(active) card.classList.add('listen-on'); else card.classList.remove('listen-on'); } if (state.isAdmin) { const adminSpkBtn = document.querySelector(`.remote-spk-btn[data-uid="${state.myUserId}"][data-chid="${channelId}"]`); if (adminSpkBtn) { if(active) adminSpkBtn.classList.add('active'); else adminSpkBtn.classList.remove('active'); } } }
+updateAudioRouting(); updateChannelIcons(); if (changed && type === 'talk') syncTalkStates(); if (changed && type === 'listen') syncListenStates();
+}
+btn.addEventListener('pointerdown', (e) => { 
+if (state.ioBridge && state.ioBridge.enabled) return;
+if (type === 'talk') { const ch = state.channels.find(c => c.id === channelId); if (ch && ch.type === 'Local') { let activeTalkers = 0; state.registeredUsers.forEach(uid => { if (state.room && state.room.remoteParticipants && state.room.remoteParticipants.has(uid) && state.remoteTalkStates[uid] && state.remoteTalkStates[uid][channelId]) activeTalkers++; }); if (activeTalkers >= 2) { btn.style.opacity = '0.3'; setTimeout(() => btn.style.opacity = '1', 300); return; } } }
+btn.setPointerCapture(e.pointerId); isDown = true; startX = e.clientX; $('dummy-audio')?.play().catch(()=>{}); btn.style.transition = 'none'; if (!isLatched) { btn.classList.add('active'); applyState(true); } 
+});
+btn.addEventListener('pointermove', (e) => { if (!isDown) return; let deltaX = e.clientX - startX; if ((slideDir === 1 && deltaX < 0) || (slideDir === -1 && deltaX > 0)) { deltaX = 0; } const targetDistance = 120; let visualMoveX = deltaX; if (Math.abs(deltaX) > 20) { const sign = Math.sign(deltaX); const over = Math.abs(deltaX) - 20; visualMoveX = sign * (20 + Math.pow(over, 0.4) * 15); } if (Math.abs(deltaX) > targetDistance && Math.sign(deltaX) === slideDir) { isDown = false; btn.releasePointerCapture(e.pointerId); btn.style.transition = 'transform 0.15s ease-out'; btn.style.transform = `translateX(0px)`; if (isLatched) { isLatched = false; btn.classList.remove('latched', 'active'); if (navigator.vibrate) navigator.vibrate([30, 50, 30]); applyState(false); } else { isLatched = true; btn.classList.add('latched'); if (navigator.vibrate) navigator.vibrate(50); applyState(true); } return; } btn.style.transform = `translateX(${visualMoveX}px)`; });
+const release = (e) => { if (!isDown) return; isDown = false; btn.style.transition = 'transform 0.15s ease-out'; btn.style.transform = `translateX(0px)`; if (Math.abs(e.clientX - startX) < 5) { if (isLatched) { isLatched = false; btn.classList.remove('latched', 'active'); applyState(false); } else { btn.classList.remove('active'); applyState(false); } } else { if (!isLatched) { btn.classList.remove('active'); applyState(false); } } };
+btn.addEventListener('pointerup', release); btn.addEventListener('pointercancel', release);
+}
+
+function syncChannelInfo() { sendData({ type: 'update-ch-info', data: state.channels }); }
+
+window.toggleAllUserAssignments = function(uid) { 
+const allAssigned = state.channels?.filter(c => c.id !== 'ch-video').every(ch => state.userAssignments[uid] && state.userAssignments[uid].includes(ch.id)); 
+if (allAssigned) { state.userAssignments[uid] = ['ch-video']; } else { let newAssigned = ['ch-video']; state.channels?.forEach(ch => { if (ch.id === 'ch-video') return; if (ch.type === 'Local') { const isAlready = (state.userAssignments[uid] || []).includes(ch.id); if (isAlready) { newAssigned.push(ch.id); } else { let count = 0; state.registeredUsers.forEach(u => { if (Array.isArray(state.userAssignments[u]) && state.userAssignments[u].includes(ch.id)) count++; }); if (count < 2) newAssigned.push(ch.id); } } else { newAssigned.push(ch.id); } }); state.userAssignments[uid] = newAssigned; } 
+saveRoomState(); buildAdminMatrix(); sendData({ type: 'assign-channels', channels: state.userAssignments[uid], targetUid: uid }); if (uid === state.myUserId) applyAssignments(state.userAssignments[uid]); 
+};
+
+function buildAdminMatrix() {
+if (!state.isAdmin) return; const container = $('admin-matrix-container'); if(!container) return;
+let headerHtml = `<thead><tr><th class="diagonal-header" style="min-width:180px;"><span class="dh-member" style="color:var(--text-sub);">USER</span><span class="dh-party" style="color:var(--text-sub);">PARTY</span></th>`;
+state.registeredUsers?.forEach(uid => {
+const isOnline = uid === state.myUserId || (state.room && state.room.remoteParticipants && state.room.remoteParticipants.has(uid)); const statusColor = isOnline ? 'var(--green)' : 'var(--text-sub)';
+headerHtml += `<th style="width:140px; min-width:140px;"><div style="display:flex; align-items:center; justify-content:center; gap:8px; height: 50px;"><div class="matrix-user-header" onclick="toggleAllUserAssignments('${uid}')" style="display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer; padding:4px; border-radius:4px;"><span style="color:${statusColor}; font-size:10px; line-height:1;">●</span><span style="font-weight:bold; color:var(--text-main); font-family: 'JetBrains Mono', monospace; font-size:12px; line-height:1;">${uid}</span></div><div style="position:relative; width:8px; height:46px; background:#000; border-radius:4px; overflow:hidden; box-shadow:inset 0 0 2px rgba(0,0,0,0.8);"><div id="user-meter-${uid}" style="position:absolute; bottom:0; left:0; width:100%; height:100%; background:linear-gradient(to top, #22c55e, #eab308, #ef4444); transform-origin:bottom; transform:scaleY(0); transition:transform 0.05s ease-out;"></div></div><button class="btn-delete-col" data-uid="${uid}" onclick="event.stopPropagation();">削除</button></div></th>`;
+});
+headerHtml += `<th style="width: 100%; text-align: left; padding-left: 15px;"><button id="btn-add-user" style="background:rgba(96,165,250,0.1); color:var(--blue); border:1px solid rgba(96,165,250,0.4); padding:6px 12px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;">＋ 追加</button></th></tr></thead><tbody>`;
+let html = `<div class="admin-matrix-wrapper"><table class="admin-matrix">${headerHtml}`;
+
+state.channels?.forEach(ch => {
+if(!ch || ch.id === 'ch-video') return; 
+const typeSelect = `<select class="admin-edit-type" data-id="${ch.id}"><option value="PL" ${ch.type==='PL'?'selected':''}>PL</option><option value="Local" ${ch.type==='Local'?'selected':''}>Local</option><option value="Listen" ${ch.type==='Listen'?'selected':''}>Listen</option></select>`;
+html += `<tr><td class="ch-cell" style="vertical-align: middle;"><div style="display:flex; gap:6px; align-items:center; justify-content:space-between; width:100%; height:100%;"><div style="display:flex; gap:4px; flex:1; align-items:center;"><input type="text" class="admin-edit-name" data-id="${ch.id}" value="${ch.name}" style="width:80px; font-size:12px; font-family:'JetBrains Mono', monospace; text-transform:uppercase; text-align:center;" ${ch.fixed?'disabled':''}>${typeSelect}</div>${ch.fixed?'<div style="width:48px;"></div>':`<button class="btn-delete-row" data-id="${ch.id}">削除</button>`}</div></td>`;
+state.registeredUsers?.forEach(uid => { 
+const isSelf = uid === state.myUserId; const isIoOn = state.ioBridge && state.ioBridge.enabled; const isAssigned = (state.userAssignments[uid] || []).includes(ch.id); const activeClass = isAssigned ? 'active' : ''; const disabledClass = isAssigned ? '' : 'disabled';
+let isMicOn = false; let isSpkOn = false;
+if (isSelf) { isMicOn = state.talkStates[ch.id] === true; isSpkOn = state.listenStates[ch.id] === true; } else { isMicOn = state.remoteTalkStates[uid] && state.remoteTalkStates[uid][ch.id] === true; isSpkOn = state.remoteListenStates[uid] && state.remoteListenStates[uid][ch.id] === true; }
+const micActiveClass = isMicOn ? 'active' : ''; const spkActiveClass = isSpkOn ? 'active' : ''; 
+let micBtnHtml = ''; if (ch.type !== 'Listen') { micBtnHtml = `<div class="circle-btn remote-mic-btn ${disabledClass} ${micActiveClass}" data-uid="${uid}" data-chid="${ch.id}"><svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg></div>`; } else { micBtnHtml = `<div style="width: 26px; height: 26px;"></div>`; }
+let spkBtnHtml = `<div class="circle-btn remote-spk-btn ${disabledClass} ${spkActiveClass}" data-uid="${uid}" data-chid="${ch.id}"><svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></div>`;
+const remoteGroupStyle = (isSelf && isIoOn) ? `style="opacity: 0.3; pointer-events: none;"` : ''; const remoteLabelText = isSelf ? 'LOCAL' : 'REMOTE'; const dataIsLocal = isSelf ? `data-is-local="true"` : '';
+html += `<td style="width:140px; min-width:140px;"><div class="cell-layout"><div class="matrix-toggle ${activeClass}" data-uid="${uid}" data-chid="${ch.id}"></div><div class="remote-group" ${remoteGroupStyle} ${dataIsLocal}><div class="remote-label">${remoteLabelText}</div><div class="remote-buttons">${spkBtnHtml}${micBtnHtml}</div></div><div class="cp-meter-bg"><div class="cp-meter-bar" id="cp-meter-${uid}-${ch.id}"></div></div></div></td>`; 
+});
+html += `<td></td></tr>`;
+});
+html += `</tbody></table></div>`; container.innerHTML = html;
+
+container.querySelectorAll('.matrix-toggle').forEach(btn => {
+btn.onclick = (e) => {
+const uid = e.target.getAttribute('data-uid'); const chid = e.target.getAttribute('data-chid'); let assigned = state.userAssignments[uid] || []; const ch = state.channels?.find(c => c?.id === chid);
+if (assigned.includes(chid)) { assigned = assigned.filter(id => id !== chid); } else { if (ch && ch.type === 'Local') { let count = 0; state.registeredUsers.forEach(u => { if (Array.isArray(state.userAssignments[u]) && state.userAssignments[u].includes(chid)) count++; }); if (count >= 2) { alert(`【制限】 Localパーティー（${ch.name}）は最大2人までしか割り当てできません。`); return; } } assigned.push(chid); }
+state.userAssignments[uid] = assigned; saveRoomState(); if (uid === state.myUserId) applyAssignments(assigned); sendData({ type: 'assign-channels', channels: assigned, targetUid: uid }); buildAdminMatrix(); 
+};
+});
+
+container.querySelectorAll('.remote-spk-btn').forEach(btn => {
+btn.onclick = (e) => {
+if (btn.classList.contains('disabled')) return; const uid = btn.getAttribute('data-uid'); const chid = btn.getAttribute('data-chid'); const willBeActive = !btn.classList.contains('active');
+if(willBeActive) btn.classList.add('active'); else btn.classList.remove('active');
+if (uid === state.myUserId) { const lBtn = $(`listen-${chid}`); if (lBtn) { if(willBeActive) lBtn.classList.add('active', 'latched'); else lBtn.classList.remove('active', 'latched'); } state.listenStates[chid] = willBeActive; const card = $(`card-${chid}`); if (card) { if(willBeActive) card.classList.add('listen-on'); else card.classList.remove('listen-on'); } updateAudioRouting(); updateChannelIcons(); syncListenStates(); } else { sendData({ type: 'force-listen', targetUid: uid, chId: chid, active: willBeActive }); }
+};
+});
+
+container.querySelectorAll('.remote-mic-btn').forEach(btn => {
+btn.onclick = (e) => {
+if (btn.classList.contains('disabled')) return; const uid = btn.getAttribute('data-uid'); const chid = btn.getAttribute('data-chid'); const willBeActive = !btn.classList.contains('active');
+if(willBeActive) btn.classList.add('active'); else btn.classList.remove('active');
+if (uid === state.myUserId) { const tBtn = $(`talk-${chid}`); if (tBtn) { if(willBeActive) tBtn.classList.add('active', 'latched'); else tBtn.classList.remove('active', 'latched'); } state.talkStates[chid] = willBeActive; const card = $(`card-${chid}`); if (card) { if(willBeActive) card.classList.add('talk-on'); else card.classList.remove('talk-on'); } updateAudioRouting(); updateChannelIcons(); syncTalkStates(); } else { sendData({ type: 'force-talk', targetUid: uid, chId: chid, active: willBeActive }); }
+};
+});
+
+const btnAddUser = $('btn-add-user');
+if(btnAddUser) { btnAddUser.onclick = () => { const uid = prompt('事前登録するメンバーのユーザーIDを入力してください:'); if (uid && uid.trim() !== '' && !state.registeredUsers.includes(uid)) { state.registeredUsers.push(uid); state.userAssignments[uid] = state.channels?.map(c => c.id) || []; state.tallyAssignments[uid] = []; saveRoomState(); buildAdminMatrix(); buildTallyAssignmentUI(); sendData({ type: 'update-registered', registered: state.registeredUsers }); sendData({ type: 'update-tally-assignments', assignments: state.tallyAssignments }); } }; }
+
+container.querySelectorAll('.btn-delete-col').forEach(btn => { btn.onclick = (e) => { const uid = e.target.getAttribute('data-uid'); if(confirm(`ユーザー「${uid}」をリストから削除しますか？`)) { state.registeredUsers = state.registeredUsers.filter(u => u !== uid); delete state.userAssignments[uid]; delete state.tallyAssignments[uid]; saveRoomState(); buildAdminMatrix(); buildTallyAssignmentUI(); sendData({ type: 'update-registered', registered: state.registeredUsers }); sendData({ type: 'update-tally-assignments', assignments: state.tallyAssignments }); } }; });
+
+container.querySelectorAll('.admin-edit-name, .admin-edit-type').forEach(input => { 
+input.addEventListener('change', (e) => { 
+const chId = e.target.getAttribute('data-id'); const ch = state.channels?.find(c => c?.id === chId); if(!ch) return; 
+if (e.target.classList.contains('admin-edit-name')) ch.name = e.target.value.toUpperCase(); 
+if (e.target.classList.contains('admin-edit-type')) {
+ch.type = e.target.value; 
+state.registeredUsers.forEach(u => { if(state.userAssignments[u]) { state.userAssignments[u] = state.userAssignments[u].filter(id => id !== chId); } });
+state.listenStates[chId] = false; state.talkStates[chId] = false;
+for(let u in state.remoteTalkStates) if(state.remoteTalkStates[u]) state.remoteTalkStates[u][chId] = false;
+for(let u in state.remoteListenStates) if(state.remoteListenStates[u]) state.remoteListenStates[u][chId] = false;
+}
+const nameEl = $(`name-${chId}`); const typeEl = $(`type-${chId}`); 
+if (nameEl) nameEl.textContent = ch.name; if (typeEl) typeEl.textContent = ch.type; 
+saveRoomState(); syncChannelInfo(); 
+if (e.target.classList.contains('admin-edit-type')) { applyAssignments(state.userAssignments[state.myUserId]); buildAdminMatrix(); initChannelsDOM(); updateAudioRouting(); sendData({ type: 'init-state', channels: state.channels, assignments: state.userAssignments, tallyAssignments: state.tallyAssignments, registered: state.registeredUsers, ioBridge: state.ioBridge }); }
+}); });
+
+container.querySelectorAll('.btn-delete-row').forEach(btn => { btn.onclick = (e) => { const chId = e.target.getAttribute('data-id'); const ch = state.channels?.find(c => c?.id === chId); if(!ch || !confirm(`パーティー「${ch.name}」を削除しますか？`)) return; removeChannel(chId); saveRoomState(); sendData({ type: 'remove-channel', chId: chId }); buildAdminMatrix(); }; });
+}
+
+function applyAssignments(assignedIds) {
+if (!assignedIds) return;
+state.channels?.forEach(ch => {
+if(!ch) return; const card = $(`card-${ch.id}`);
+if(card) {
+if(assignedIds.includes(ch.id)) { card.style.display = 'flex'; } 
+else { card.style.display = 'none'; state.listenStates[ch.id] = false; state.talkStates[ch.id] = false; card.classList.remove('listen-on', 'talk-on'); const lBtn = $(`listen-${ch.id}`); const tBtn = $(`talk-${ch.id}`); if(lBtn) { lBtn.classList.remove('active', 'latched'); lBtn.style.transform = 'translateX(0px)'; } if(tBtn) { tBtn.classList.remove('active', 'latched'); tBtn.style.transform = 'translateX(0px)'; } }
+}
+});
+updateAudioRouting(); updateChannelIcons(); syncTalkStates(); syncListenStates();
+}
+
+function handleNetworkData(data, senderId) {
+if (!data) return;
+if (data.type === 'hello') {
+const joinedUserId = data.userId || senderId;
+if (joinedUserId !== state.myUserId && !state.registeredUsers.includes(joinedUserId)) { 
+state.registeredUsers.push(joinedUserId); 
+state.userAssignments[joinedUserId] = state.channels?.map(c => c.id) || []; 
+if (!state.tallyAssignments[joinedUserId]) state.tallyAssignments[joinedUserId] = []; 
+saveRoomState(); 
+if (state.isAdmin) { 
+buildAdminMatrix(); buildTallyAssignmentUI(); 
+} else {
+sendData({ type: 'hello_reply', userId: state.myUserId });
+}
+}
+if(state.isAdmin) { sendData({ type: 'init-state', channels: state.channels, assignments: state.userAssignments, tallyAssignments: state.tallyAssignments, registered: state.registeredUsers, ioBridge: state.ioBridge }); if(state.activeVideoSender === state.myUserId) { const sourceText = $('main-monitor-source-text')?.textContent.replace('[ VIDEO SWITCHING NOW ]', '').replace('[ NO VIDEO ]', 'CAMERA').trim() || 'OFF'; sendData({ type: 'update-video-sender', senderId: state.myUserId, sourceText: sourceText }); } }
+}
+else if (data.type === 'hello_reply') {
+const joinedUserId = data.userId || senderId;
+if (joinedUserId !== state.myUserId && !state.registeredUsers.includes(joinedUserId)) { 
+state.registeredUsers.push(joinedUserId); 
+state.userAssignments[joinedUserId] = state.channels?.map(c => c.id) || []; 
+if (!state.tallyAssignments[joinedUserId]) state.tallyAssignments[joinedUserId] = []; 
+saveRoomState(); 
+if (state.isAdmin) { buildAdminMatrix(); buildTallyAssignmentUI(); }
+}
+}
+else if (data.type === 'init-state') { 
+if(data.channels && Array.isArray(data.channels)) {
+if (data.ioBridge) { state.ioBridge.inAssign4wL = data.ioBridge.inAssign4wL || ''; state.ioBridge.inAssign4wR = data.ioBridge.inAssign4wR || ''; state.ioBridge.outAssign4wL = data.ioBridge.outAssign4wL || ''; state.ioBridge.outAssign4wR = data.ioBridge.outAssign4wR || ''; state.ioBridge.inAssignPgmL = data.ioBridge.inAssignPgmL || ''; state.ioBridge.inAssignPgmR = data.ioBridge.inAssignPgmR || ''; state.ioBridge.inGain4wL = data.ioBridge.inGain4wL ?? 1.0; state.ioBridge.inGain4wR = data.ioBridge.inGain4wR ?? 1.0; state.ioBridge.outGain4wL = data.ioBridge.outGain4wL ?? 1.0; state.ioBridge.outGain4wR = data.ioBridge.outGain4wR ?? 1.0; state.ioBridge.inGainPgmL = data.ioBridge.inGainPgmL ?? 1.0; state.ioBridge.inGainPgmR = data.ioBridge.inGainPgmR ?? 1.0; }
+resetAndApplyChannels(data.channels, data.assignments, data.tallyAssignments, data.registered); saveRoomState(); if(state.isAdmin) { buildAdminMatrix(); buildTallyAssignmentUI(); } 
+}
+}
+else if (data.type === 'update-ch-info') { 
+if(data.data && Array.isArray(data.data)) { state.channels = data.data; state.channels.forEach((ch) => { if(!ch) return; const nameEl = $(`name-${ch.id}`); const typeEl = $(`type-${ch.id}`); if(nameEl) nameEl.textContent = ch.name; if(typeEl) typeEl.textContent = ch.type; }); saveRoomState(); if(state.isAdmin) { document.querySelectorAll('.admin-edit-name').forEach(input => { const ch = state.channels.find(c => c?.id === input.getAttribute('data-id')); if(ch) input.value = ch.name; }); document.querySelectorAll('.admin-edit-type').forEach(input => { const ch = state.channels.find(c => c?.id === input.getAttribute('data-id')); if(ch) input.value = ch.type; }); } initChannelsDOM(); buildAdminMatrix(); }
+}
+else if (data.type === 'update-registered') { 
+if(data.registered && Array.isArray(data.registered)) { state.registeredUsers = data.registered; saveRoomState(); if(state.isAdmin) { buildAdminMatrix(); buildTallyAssignmentUI(); } }
+}
+else if (data.type === 'update-tally-assignments') { state.tallyAssignments = data.assignments || {}; saveRoomState(); if (state.isAdmin) buildTallyAssignmentUI(); if (state.myUserId) evaluateTallyGlow(); }
+else if (data.type === 'update-talk-states') { state.remoteTalkStates[senderId] = data.states || {}; updateAudioRouting(); if (state.isAdmin) { Object.keys(data.states).forEach(chid => { const micBtn = document.querySelector(`.remote-mic-btn[data-uid="${senderId}"][data-chid="${chid}"]`); if (micBtn) { if (data.states[chid]) micBtn.classList.add('active'); else micBtn.classList.remove('active'); } }); } }
+else if (data.type === 'update-listen-states') { state.remoteListenStates[senderId] = data.states || {}; if (state.isAdmin) { Object.keys(data.states).forEach(chid => { const spkBtn = document.querySelector(`.remote-spk-btn[data-uid="${senderId}"][data-chid="${chid}"]`); if (spkBtn) { if (data.states[chid]) spkBtn.classList.add('active'); else spkBtn.classList.remove('active'); } }); } }
+else if (data.type === 'force-talk') { if (data.targetUid === state.myUserId) { state.talkStates[data.chId] = data.active; const card = $(`card-${data.chId}`); if (card) { if(data.active) card.classList.add('talk-on'); else card.classList.remove('talk-on'); } const tBtn = $(`talk-${data.chId}`); if (tBtn) { if(data.active) tBtn.classList.add('active', 'latched'); else tBtn.classList.remove('active', 'latched'); } updateAudioRouting(); updateChannelIcons(); syncTalkStates(); } }
+else if (data.type === 'force-listen') { if (data.targetUid === state.myUserId) { state.listenStates[data.chId] = data.active; const card = $(`card-${data.chId}`); if (card) { if(data.active) card.classList.add('listen-on'); else card.classList.remove('listen-on'); } const lBtn = $(`listen-${data.chId}`); if (lBtn) { if(data.active) lBtn.classList.add('active', 'latched'); else lBtn.classList.remove('active', 'latched'); } updateAudioRouting(); updateChannelIcons(); syncListenStates(); } }
+else if (data.type === 'assign-channels') {
+if (data.channels && Array.isArray(data.channels)) {
+if (data.targetUid === state.myUserId) { applyAssignments(data.channels); }
+if (data.targetUid) { state.userAssignments[data.targetUid] = data.channels; if (state.isAdmin) buildAdminMatrix(); } else { if (!state.isAdmin) applyAssignments(data.channels); } 
+saveRoomState();
+}
+}
+else if (data.type === 'add-channel') { 
+if(data.ch && !state.channels.find(c => c.id === data.ch.id)) { state.channels.push(data.ch); initChannelsDOM(); setupChannelAudio(data.ch.id); } 
+Object.values(state.mediaCalls || {}).forEach(call => { if (call?.source && state.audioCtx && data.ch && !call.isIOTrack) { const splitGain = state.audioCtx.createGain(); const panner = state.audioCtx.createStereoPanner(); splitGain.gain.value = 0; call.source.connect(panner); panner.connect(splitGain); if(state.channelNodes[data.ch.id]) splitGain.connect(state.channelNodes[data.ch.id].analyser); call.chGains[data.ch.id] = {gain: splitGain, panner: panner}; } }); if(data.registered) state.registeredUsers = data.registered; if(data.assignments) state.userAssignments = data.assignments; if(state.userAssignments && state.userAssignments[state.myUserId]) { applyAssignments(state.userAssignments[state.myUserId]); } saveRoomState(); if(state.isAdmin) buildAdminMatrix(); 
+}
+else if (data.type === 'remove-channel') { if(data.chId) removeChannel(data.chId); saveRoomState(); if(state.isAdmin) buildAdminMatrix(); }
+else if (data.type === 'update-monitor-title') { state.monitorTitle = data.title; const mmt=$('main-monitor-title'); if(mmt) mmt.textContent = data.title || 'MONITOR'; if (state.isAdmin) {const emt=$('edit-monitor-title'); if(emt) emt.value = data.title;} saveRoomState(); }
+else if (data.type === 'update-video-sender') {
+state.activeVideoSender = data.senderId;
+const mst = $('main-monitor-source-text'); const es = $('edit-monitor-source');
+if (data.senderId && data.senderId !== state.myUserId) {
+if(mst) mst.textContent = `[ VIDEO SWITCHING NOW ]`;
+if (state.isAdmin && es) { es.disabled = true; if (es.options[0].value === 'locked') { es.options[0].text = `[Locked by ${data.senderId}]`; } else { const opt = document.createElement('option'); opt.value = 'locked'; opt.text = `[Locked by ${data.senderId}]`; es.add(opt, es[0]); } es.value = 'locked'; }
+} else if (!data.senderId) {
+if(mst) mst.textContent = '[ NO VIDEO ]';
+if (state.isAdmin && es) { es.disabled = false; if (es.options[0].value === 'locked') { es.remove(0); } es.value = 'off'; }
+}
+}
+else if (data.type === 'update-io-bridge') {
+state.ioBridge.inAssign4wL = data.ioBridge.inAssign4wL || ''; state.ioBridge.inAssign4wR = data.ioBridge.inAssign4wR || ''; state.ioBridge.outAssign4wL = data.ioBridge.outAssign4wL || ''; state.ioBridge.outAssign4wR = data.ioBridge.outAssign4wR || ''; state.ioBridge.inAssignPgmL = data.ioBridge.inAssignPgmL || ''; state.ioBridge.inAssignPgmR = data.ioBridge.inAssignPgmR || ''; state.ioBridge.inGain4wL = data.ioBridge.inGain4wL ?? 1.0; state.ioBridge.inGain4wR = data.ioBridge.inGain4wR ?? 1.0; state.ioBridge.outGain4wL = data.ioBridge.outGain4wL ?? 1.0; state.ioBridge.outGain4wR = data.ioBridge.outGain4wR ?? 1.0; state.ioBridge.inGainPgmL = data.ioBridge.inGainPgmL ?? 1.0; state.ioBridge.inGainPgmR = data.ioBridge.inGainPgmR ?? 1.0;
+updateAudioRouting();
+if (state.isAdmin) {
+const u = state.ioBridge;
+if ($('select-4w-in-l')) {
+$('select-4w-in-l').value = u.inAssign4wL; $('select-4w-in-r').value = u.inAssign4wR; $('select-4w-out-l').value = u.outAssign4wL; $('select-4w-out-r').value = u.outAssign4wR; $('select-pgm-in-l').value = u.inAssignPgmL; $('select-pgm-in-r').value = u.inAssignPgmR;
+$('gain-4w-in-l').value = u.inGain4wL * 100; $('fill-gain-4w-in-l').style.width = ($('gain-4w-in-l').value / 2) + '%';
+$('gain-4w-in-r').value = u.inGain4wR * 100; $('fill-gain-4w-in-r').style.width = ($('gain-4w-in-r').value / 2) + '%';
+$('gain-4w-out-l').value = u.outGain4wL * 100; $('fill-gain-4w-out-l').style.width = ($('gain-4w-out-l').value / 2) + '%';
+$('gain-4w-out-r').value = u.outGain4wR * 100; $('fill-gain-4w-out-r').style.width = ($('gain-4w-out-r').value / 2) + '%';
+$('gain-pgm-in-l').value = u.inGainPgmL * 100; $('fill-gain-pgm-in-l').style.width = ($('gain-pgm-in-l').value / 2) + '%';
+$('gain-pgm-in-r').value = u.inGainPgmR * 100; $('fill-gain-pgm-in-r').style.width = ($('gain-pgm-in-r').value / 2) + '%';
+}
+if (state.ioNodes.gain4wL) state.ioNodes.gain4wL.gain.setTargetAtTime(u.inGain4wL, state.audioCtx.currentTime, 0.05); if (state.ioNodes.gain4wR) state.ioNodes.gain4wR.gain.setTargetAtTime(u.inGain4wR, state.audioCtx.currentTime, 0.05);
+if (state.ioNodes.gainOutL) state.ioNodes.gainOutL.gain.setTargetAtTime(u.outGain4wL, state.audioCtx.currentTime, 0.05); if (state.ioNodes.gainOutR) state.ioNodes.gainOutR.gain.setTargetAtTime(u.outGain4wR, state.audioCtx.currentTime, 0.05);
+if (state.ioNodes.gainPgmL) state.ioNodes.gainPgmL.gain.setTargetAtTime(u.inGainPgmL, state.audioCtx.currentTime, 0.05); if (state.ioNodes.gainPgmR) state.ioNodes.gainPgmR.gain.setTargetAtTime(u.inGainPgmR, state.audioCtx.currentTime, 0.05);
+}
+}
+}
+
+const joinNetwork = async function(isAdmin) {
+const rawRoomId = $('host-id')?.value.trim(); const myName = $('join-userid')?.value.trim();
+if (!rawRoomId || !myName) { const sm=$('status-msg'); if(sm){sm.textContent = "ルーム名とIDを入力してください"; sm.style.color = "var(--alert)"; setTimeout(() => { sm.textContent = "待機中... ルーム名とIDを入力"; sm.style.color = "var(--text-sub)"; }, 3000);} return; }
+if (isAdmin && myName.toLowerCase() !== 'debug') { const pass = prompt("管理者パスワードを入力してください"); if (pass !== "tmax") { if(pass !== null) alert("パスワードが違います。"); return; } }
+
+const btn = isAdmin ? $('btn-join-admin') : $('btn-join-member'); const originalText = btn?.textContent;
+if($('btn-join-member')) $('btn-join-member').disabled = true; if($('btn-join-admin')) $('btn-join-admin').disabled = true; if(btn){btn.textContent = "認証中..."; btn.style.opacity = "0.5";}
+
+state.roomId = rawRoomId; state.myUserId = myName; state.isAdmin = isAdmin;
+if($('header-room-name')) $('header-room-name').textContent = rawRoomId;
+if ($('header-user-id')) { $('header-user-id').textContent = myName; $('header-user-id').style.display = 'block'; }
+if (isAdmin) { document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex'); } else { document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none'); }
+LocalProfile.set({ roomId: rawRoomId, userId: myName, isAdmin });
+
+if($('login-overlay')) $('login-overlay').style.display = 'none'; 
+if(btn){btn.textContent = originalText; btn.style.opacity = "1";} if($('btn-join-member')) $('btn-join-member').disabled = false; if($('btn-join-admin')) $('btn-join-admin').disabled = false;
+const bsl = $('btn-show-login'); if(bsl){ bsl.classList.add('online'); }
+
+const sr = $('status-role'); if (sr) sr.style.display = 'none'; 
+
+loadRoomState(state.roomId);
+if (!state.registeredUsers.includes(state.myUserId)) {
+state.registeredUsers.push(state.myUserId);
+if (!state.userAssignments[state.myUserId]) state.userAssignments[state.myUserId] = state.channels?.map(c => c.id) || [];
+if (!state.tallyAssignments[state.myUserId]) state.tallyAssignments[state.myUserId] = [];
+saveRoomState();
+}
+
+if (myName.toLowerCase() !== 'debug') {
+const ao = $('audio-overlay');
+if(ao) ao.style.display = 'flex';
+}
+
+(async () => {
+if (myName.toLowerCase() === 'debug') {
+state.registeredUsers = ['debug', 'Cam1', 'Cam2', 'Director', 'VE'];
+state.registeredUsers.forEach(u => {
+if(!state.userAssignments[u]) state.userAssignments[u] = state.channels.map(c=>c.id);
+if(!state.tallyAssignments[u]) state.tallyAssignments[u] = [1, 2];
+});
+state.room = { 
+state: 'connected',
+remoteParticipants: new Map([['Cam1', {}], ['Director', {}]]),
+localParticipant: {
+publishData: () => {}, setMicrophoneEnabled: async () => {}, setScreenShareEnabled: async () => {},
+setCameraEnabled: async () => {}, unpublishTrack: async () => {}, publishTrack: async () => {}, getTrackPublication: () => { return null; }
+},
+engine: { pcManager: { subscriber: { pc: { getStats: async () => [] } } } } 
+};
+if (state.channels.length > 1) state.remoteTalkStates = { 'Cam1': { [state.channels[1].id]: true } };
+
+applyAssignments(state.userAssignments[state.myUserId]);
+updateUserCount();
+if(isAdmin) { buildAdminMatrix(); buildTallyAssignmentUI(); }
+return;
+}
+
+try {
+const tallyTopic = "yytalk/tally/" + rawRoomId;
+const mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
+mqttClient.on('connect', () => { mqttClient.subscribe(tallyTopic); });
+mqttClient.on('reconnect', () => { mqttClient.subscribe(tallyTopic); }); 
+mqttClient.on('message', (topic, message) => {
+try {
+const rawMsg = message.toString().trim(); let tId = 1; let act = rawMsg;
+if (rawMsg.includes(':')) { const parts = rawMsg.split(':'); tId = parseInt(parts[0], 10); act = parts[1]; }
+if (act === "ON") activeTallies.add(tId); else if (act === "OFF") activeTallies.delete(tId);
+evaluateTallyGlow();
+} catch(e) {}
+});
+} catch(e) {}
+
+let token = "";
+try {
+const res = await fetch(`${WORKER_AUTH_URL}/?room=${encodeURIComponent(rawRoomId)}&user=${encodeURIComponent(myName)}`);
+if (!res.ok) throw new Error("認証に失敗しました");
+const data = await res.json(); token = data.token;
+} catch (e) { 
+alert("【致命的エラー】\n認証サーバーからのトークン取得に失敗しました。\n\n詳細: " + e.message); 
+const sm=$('status-msg'); if(sm){sm.textContent = "接続エラー"; sm.style.color = "var(--alert)";} if($('btn-stop')) $('btn-stop').style.display = 'block';
+return; 
+}
+
+const room = new LivekitClient.Room({ adaptiveStream: false, dynacast: false }); state.room = room;
+
+function showDisconnect(msg) {
+const ov = $('disconnect-overlay'); if (ov) { ov.style.display = 'flex'; const dt = $('disconnect-text'); if(dt) dt.textContent = msg || '通信が切断されました。自動再接続を試行中...'; }
+}
+function hideDisconnect() { const ov = $('disconnect-overlay'); if (ov) ov.style.display = 'none'; }
+
+room.on(LivekitClient.RoomEvent.Reconnecting, () => { showDisconnect(); });
+room.on(LivekitClient.RoomEvent.Reconnected, () => { hideDisconnect(); });
+room.on(LivekitClient.RoomEvent.Disconnected, () => { showDisconnect('サーバーから切断されました。リロードしてください。'); if (state.hasSuccessfullyConnected) triggerAutoReconnect(); });
+
+room.on(LivekitClient.RoomEvent.TrackSubscribed, (track, publication, participant) => {
+if (track.kind === LivekitClient.Track.Kind.Audio) {
+const stream = new MediaStream([track.mediaStreamTrack]); 
+const audioEl = new Audio(); audioEl.srcObject = stream; audioEl.muted = true; audioEl.play().catch(()=>{});
+if(state.ioBridge.outDevice4w && state.ioBridge.outDevice4w !== 'default' && typeof audioEl.setSinkId === 'function') {
+try { audioEl.setSinkId(state.ioBridge.outDevice4w); } catch(err){}
+}
+const isIOTrack = publication.trackName.startsWith('io_');
+const callKey = isIOTrack ? participant.identity + '_' + publication.trackName : participant.identity;
+const callData = { stream, audioEl, isIOTrack, trackName: publication.trackName }; 
+state.mediaCalls[callKey] = callData; 
+if (state.audioCtx) setupPeerMixer(callData); 
+updateUserCount();
+} else if (track.kind === LivekitClient.Track.Kind.Video) { attachVideoTrack(track); }
+});
+
+room.on(LivekitClient.RoomEvent.TrackUnsubscribed, (track, publication, participant) => { 
+if (track.kind === LivekitClient.Track.Kind.Video) { detachVideoTrack(track); } 
+else { 
+const isIOTrack = publication.trackName.startsWith('io_');
+const callKey = isIOTrack ? participant.identity + '_' + publication.trackName : participant.identity;
+removePeer(callKey); 
+}
+});
+room.on(LivekitClient.RoomEvent.ParticipantDisconnected, (participant) => { 
+removePeer(participant.identity); 
+removePeer(participant.identity + '_io_4w_l'); removePeer(participant.identity + '_io_4w_r');
+removePeer(participant.identity + '_io_pgm_l'); removePeer(participant.identity + '_io_pgm_r');
+});
+room.on(LivekitClient.RoomEvent.ParticipantConnected, (participant) => { updateUserCount(); sendData({ type: 'hello', userId: state.myUserId }); syncTalkStates(); syncListenStates(); });
+
+room.on(LivekitClient.RoomEvent.DataReceived, (payload, participant) => { 
+try { 
+const data = JSON.parse(new TextDecoder().decode(payload)); 
+const senderId = participant?.identity || 'unknown';
+handleNetworkData(data, senderId); 
+} catch(e){} 
+});
+
+try {
+await room.connect(LIVEKIT_WS_URL, token);
+state.hasSuccessfullyConnected = true;
+
+if (room.remoteParticipants) {
+room.remoteParticipants.forEach((p, identity) => {
+if (!state.registeredUsers.includes(identity)) {
+state.registeredUsers.push(identity);
+if (!state.userAssignments[identity]) state.userAssignments[identity] = state.channels.map(c=>c.id);
+if (!state.tallyAssignments[identity]) state.tallyAssignments[identity] = [];
+}
+});
+}
+
+updateUserCount(); 
+if (state.isAdmin) { buildAdminMatrix(); buildTallyAssignmentUI(); }
+sendData({ type: 'hello', userId: state.myUserId }); 
+syncTalkStates(); syncListenStates();
+
+} catch (e) { 
+showDisconnect('接続エラー: ' + e.message);
+}
+})();
+};
+
+setInterval(async () => {
+const rttEl = $('status-rtt'); if (!rttEl) return;
+if (state.myUserId && state.myUserId.toLowerCase() === 'debug') { const fakeRtt = Math.floor(Math.random() * 10) + 12; rttEl.style.display = 'block'; rttEl.textContent = `${fakeRtt} ms`; rttEl.style.color = 'var(--green)'; return; }
+
+if (!state.room || state.room.state !== 'connected') { 
+rttEl.style.display = 'none'; 
+if(state.hasSuccessfullyConnected && state.room && state.room.state !== 'reconnecting') {
+const ov = $('disconnect-overlay'); if (ov) { ov.style.display = 'flex'; const dt = $('disconnect-text'); if(dt) dt.textContent = '通信が切断されました。自動再接続を試行中...'; }
+}
+return; 
+}
+
+try {
+let pc = state.room.engine?.pcManager?.subscriber?.pc || state.room.engine?.subscriber?.pc || state.room.engine?.client?.pc;
+if (pc && typeof pc.getStats === 'function') {
+const stats = await pc.getStats(); let found = false;
+stats.forEach(report => {
+if (report.type === 'candidate-pair' && (report.state === 'succeeded' || report.nominated)) {
+let rttVal = report.currentRoundTripTime !== undefined ? report.currentRoundTripTime : report.roundTripTime;
+if (rttVal !== undefined) { const rttMs = Math.round(rttVal * 1000); rttEl.style.display = 'block'; rttEl.textContent = `${rttMs} ms`; if (rttMs < 100) rttEl.style.color = 'var(--green)'; else if (rttMs < 250) rttEl.style.color = 'var(--orange)'; else rttEl.style.color = 'var(--red)'; found = true; }
+}
+});
+if (!found && state.room.state === 'connected') { rttEl.style.display = 'block'; rttEl.textContent = `< 50 ms`; rttEl.style.color = 'var(--green)'; }
+} else if (state.room.state === 'connected') { rttEl.style.display = 'block'; rttEl.textContent = `Connected`; rttEl.style.color = 'var(--green)'; }
+} catch(e) {}
+}, 2000);
+
+</script>
+</body>
+</html>
