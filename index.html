@@ -12,16 +12,6 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <script>
-    // --- 🚨 UI Debug Logger ---
-    function uiLog(msg, color='#4ade80') {
-      const d = document.getElementById('debug-logger'); if(!d) return;
-      const l = document.createElement('div'); l.style.color = color;
-      l.textContent = `[${new Date().toISOString().split('T')[1].slice(0,-1)}] ${msg}`;
-      d.appendChild(l); d.scrollTop = d.scrollHeight;
-    }
-    window.onerror = function(msg, src, line, col, err) { uiLog(`ERROR: ${msg} (${line}:${col})`, '#ef4444'); return false; };
-    window.onunhandledrejection = function(e) { uiLog(`PROMISE ERR: ${e.reason}`, '#ef4444'); };
-    
     // --- Safe Resize ---
     window.forceResize = function() {
       const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
@@ -52,15 +42,11 @@
     };
   </script>
 
-  <!-- LiveKitの安定バージョン -->
   <script src="https://cdn.jsdelivr.net/npm/livekit-client@2.5.9/dist/livekit-client.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
   
   <style>
-    /* ==========================================
-       RICH UI STYLES
-       ========================================== */
     :root { --bg-dark:#0a0b0d; --card-bg:#1c1d21; --card-bg-expanded:#24262b; --text-main:#ffffff; --text-sub:#7a7e85; --green:#4ade80; --red:#dc2626; --alert:#ef4444; --orange:#f97316; --blue:#60a5fa; --border-color:#3a3c42; }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
     input, select, textarea { -webkit-user-select: auto; user-select: auto; touch-action: auto; }
@@ -68,15 +54,14 @@
     .app-container { width: 100%; height: 100dvh; display: flex; flex-direction: column; position: relative; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); margin: 0; }
     
     .overlay-base { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; flex-direction: column; backdrop-filter: blur(4px); z-index: 1000;}
-    #login-overlay { z-index: 2000; display: flex; } #disconnect-overlay { z-index: 3000; background: rgba(220, 38, 38, 0.95); } #audio-overlay { z-index: 1100; }
+    #login-overlay { z-index: 6000; display: flex; } #disconnect-overlay { z-index: 6000; background: rgba(220, 38, 38, 0.95); } #audio-overlay { z-index: 6000; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     
     .btn-green-solid { background: var(--green); color: #000; border: none; padding: 15px 30px; font-size: 18px; font-weight: bold; border-radius: 30px; cursor: pointer; transition: 0.2s;}
     .btn-green-solid:hover { background: #34d399; }
     .login-modal { background: var(--card-bg); padding: 40px 50px; border-radius: 16px; width: 90%; max-width: 480px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 15px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); margin: auto; position: relative;}
-    .login-modal .btn-close-login { position: absolute; top: 10px; right: 10px; background: transparent; border: none; color: #9ca3af; font-size: 24px; cursor: pointer; padding: 15px; display: none; align-items: center; justify-content: center; z-index: 2010; font-weight: normal; }
-    .login-modal button:not(.btn-close-login) { padding: 16px; border: none; border-radius: 8px; font-weight: bold; color: #000; cursor: pointer; font-size: 15px; z-index: 2001; transition: 0.2s;}
-    .login-modal button:not(.btn-close-login):active { transform: scale(0.98); } .login-modal button:not(.btn-close-login):disabled { opacity: 0.5; cursor: not-allowed; }
+    .login-modal button { padding: 16px; border: none; border-radius: 8px; font-weight: bold; color: #000; cursor: pointer; font-size: 15px; z-index: 2001; transition: 0.2s;}
+    .login-modal button:active { transform: scale(0.98); } .login-modal button:disabled { opacity: 0.5; cursor: not-allowed; }
     .btn-join-member { background: var(--blue); color: white!important; width: 100%; } 
     .btn-join-admin { background: #2a2c33; border: 1px solid #444 !important; color: #aaa !important; width: 100%; } 
     .btn-stop { background: var(--red); width: 100%; color: #fff!important; display: none;}
@@ -87,17 +72,18 @@
     .login-input { width: 100%; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); background: #0a0b0d; color: var(--text-main); font-size: 16px; text-align: center; font-family: 'JetBrains Mono', monospace; outline: none; transition: 0.2s; }
     .login-input:focus { border-color: var(--blue) !important; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3) !important; animation: none !important; }
     
-    .header { display: flex; align-items: center; justify-content: space-between; padding: 8px 15px; background: var(--bg-dark); flex-shrink: 0; z-index: 100; border-bottom: 1px solid #1e2128;}
+    /* Header - Always on top */
+    .header { display: flex; align-items: center; justify-content: space-between; padding: 8px 15px; background: var(--bg-dark); flex-shrink: 0; z-index: 5000; position: relative; border-bottom: 1px solid #1e2128;}
     .header-left { display: flex; align-items: center; } #app-logo { height: 26px; width: auto; margin-right: 15px; } @media (min-width: 600px) { #app-logo { height: 32px; } }
     .room-info-group { display: flex; flex-direction: row; gap: 15px; align-items: center; border-left: 1px solid var(--border-color); padding-left: 15px; height: 32px;}
     .room-info-label { font-size: 9px; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1px; font-weight: bold; line-height: 1; margin-bottom: 4px; font-family: 'JetBrains Mono', monospace;}
     #header-room-name, #header-user-id { font-size: 15px; font-weight: bold; color: var(--text-main); line-height: 1; font-family: 'JetBrains Mono', monospace; min-height: 15px;}
     .header-right { display: flex; align-items: center; gap: 6px; }
     .btn-header-icon, .btn-header-layout { background: transparent; border: 1.5px solid var(--text-sub); color: var(--text-sub); width: 32px; height: 32px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; font-size: 14px; padding: 0;}
-    #btn-settings.active { border-color: var(--text-sub); color: var(--text-sub); background: transparent; } .admin-only { display: none; }
+    #btn-settings.active { border-color: var(--blue); color: var(--blue); background: rgba(59, 130, 246, 0.1); } .admin-only { display: none; }
     #btn-show-login.online { border-color: var(--green); color: var(--green); }
     
-    .layout-dropdown { position: absolute; top: 40px; right: 0; background: #111216; border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); display: none; flex-direction: column; z-index: 200; overflow: hidden; min-width: 150px; }
+    .layout-dropdown { position: absolute; top: 40px; right: 0; background: #111216; border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); display: none; flex-direction: column; z-index: 5500; overflow: hidden; min-width: 150px; }
     .layout-dropdown.show { display: flex; } .layout-item { background: transparent; border: none; color: var(--text-main); padding: 12px 15px; text-align: left; font-size: 13px; font-weight: bold; cursor: pointer; font-family: 'JetBrains Mono', monospace; border-bottom: 1px solid var(--border-color); transition: background 0.2s; display: flex; align-items: center; }
     .layout-item:hover { background: rgba(255,255,255,0.05); } .layout-item.active { color: var(--blue); }
     
@@ -110,13 +96,10 @@
     .video-wrapper.tally-on { border: 4px solid var(--alert) !important; box-shadow: 0 0 30px rgba(239, 68, 68, 0.8), inset 0 0 30px rgba(239, 68, 68, 0.6); }
     .video-dummy-text { color: #555; font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: bold; z-index: 1;} .video-wrapper video { width: 100%; height: 100%; object-fit: contain; background: #000; position: absolute; inset: 0; z-index: 5;}
     
-    /* Admin Modal */
-    .admin-modal { width: 98%; max-width: 1100px; height: 90vh; max-height: 90vh; display: flex; flex-direction: column; padding: 25px; margin: auto; position: relative; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);}
-    .admin-header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; width: 100%; flex-shrink: 0;}
-    .admin-tabs-container { display: flex; gap: 8px; flex-grow: 1; margin-right: 40px;}
-    .btn-close-modal { position: absolute; top: 10px; right: 10px; background: transparent; border: none; color: #9ca3af; font-size: 24px; cursor: pointer; padding: 15px; display: flex; align-items: center; justify-content: center; z-index: 200; font-weight: normal; transition: color 0.2s ease;}
-    .btn-close-modal:hover { color: #ffffff; }
-    
+    /* Admin Modal - Header sits on top, so this slides under it */
+    #admin-overlay { z-index: 4000; align-items: center; justify-content: flex-start; padding-top: 20px;}
+    .admin-modal { width: 98%; max-width: 1100px; height: calc(100dvh - 90px); display: flex; flex-direction: column; padding: 25px; margin: 0 auto; position: relative; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.5);}
+    .admin-tabs-container { display: flex; gap: 8px; margin-bottom: 20px; width: 100%; flex-shrink: 0;}
     .admin-tab-btn { flex: 1; min-width: 0; background: rgba(0, 0, 0, 0.4); border: 1px solid transparent; color: #555 !important; padding: 12px 4px; font-size: 13px; font-weight: bold; border-radius: 8px 8px 0 0; cursor: pointer; transition: all 0.2s ease; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; line-height: 1.2; text-align: center; position: relative; z-index: 1; margin-bottom: 0; }
     .admin-tab-btn i { font-size: 20px; opacity: 0.6; transition: all 0.2s; } .admin-tab-btn:hover { color: #aaa !important; }
     .admin-tab-btn.active { background-color: var(--card-bg); background-image: linear-gradient(to bottom, rgba(96, 165, 250, 0.15) 0%, rgba(96, 165, 250, 0) 100%); border: 1px solid var(--border-color); color: #ffffff !important; box-shadow: none; text-shadow: 0 0 6px rgba(255,255,255,0.4); z-index: 2; border-radius: 8px 8px 0 0; }
@@ -199,14 +182,14 @@
     .channel-card::before { left: 0; background: linear-gradient(to right, rgba(74, 222, 128, 0.25) 0%, transparent 100%); } .channel-card::after { right: 0; background: linear-gradient(to left, rgba(220, 38, 38, 0.25) 0%, transparent 100%); }
     .channel-card.listen-on::before { opacity: 1; } .channel-card.talk-on::after { opacity: 1; } .channel-card > * { position: relative; z-index: 1; }
     
-    /* ★メーターのスタイル（縦＝ボリューム、横＝声の波形） */
+    /* ★メーターのスタイル（縦＝声の波形、横＝ボリューム） */
     .status-line-bg { position: absolute; left: 0; top: 10%; bottom: 10%; width: 4px; background-color: #0a0b0d; border-radius: 0 4px 4px 0; overflow: hidden; z-index: 2; }
     .status-line-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to top, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); } 
-    .status-line-mask { position: absolute; top: 0; left: 0; right: 0; height: 100%; background-color: var(--card-bg); transition: height 0.1s ease-out; }
+    .status-line-mask { position: absolute; top: 0; left: 0; right: 0; height: 100%; background-color: var(--card-bg); transition: height 0.05s ease-out; }
     
     .ch-meter-container { height: 4px; background: var(--bg-dark); margin: 0 45px 0; border-radius: 2px; overflow: hidden; position: relative; opacity: 0.8; z-index: 2;}
     .ch-meter-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); } 
-    .ch-meter-mask { position: absolute; right: 0; top: 0; bottom: 0; width: 100%; background-color: var(--card-bg); transition: width 0.05s ease-out; }
+    .ch-meter-mask { position: absolute; right: 0; top: 0; bottom: 0; width: 100%; background-color: var(--card-bg); transition: width 0.1s ease-out; }
 
     .volume-panel { display: none; padding: 5px 20px; align-items: center; gap: 10px; } .channel-card.expanded .volume-panel { display: flex; }
     .vol-icon { font-size: 14px; color: var(--text-sub); flex-shrink: 0; width: 14px; height: 14px; } .vol-slider-wrap { flex: 1; position: relative; display: flex; align-items: center; touch-action: pan-x; }
@@ -232,14 +215,14 @@
     .master-meter-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); } .master-meter-mask { position: absolute; right: 0; top: 0; bottom: 0; width: 100%; background-color: var(--bg-dark); transition: width 0.05s ease-out; }
 
     @media (max-width: 600px) {
-      .admin-modal { padding: 60px 15px 15px; width: 100%; height: 100dvh; max-height: 100dvh; border-radius: 0; margin: 0;}
+      .admin-modal { padding: 20px 15px; width: 100%; height: auto; max-height: calc(100dvh - 55px); border-radius: 12px 12px 0 0; margin: 0; margin-top: auto;}
       .admin-settings-row { flex-direction: column; padding: 15px; }
       .io-grid { grid-template-columns: 1fr; }
       .io-ch-row { flex-direction: column; gap: 15px; }
       .io-card { padding: 15px; }
       .header-right { gap: 4px; }
       .btn-header-icon { width: 28px; height: 28px; font-size: 12px; }
-      .scroll-area { padding-bottom: 50px; }
+      .scroll-area { padding-bottom: 20px; }
     }
     
     @media (orientation: landscape) and (max-height: 500px) {
@@ -251,20 +234,16 @@
       .master-meter-container { height: 6px; } .monitor-section { padding: 5px 0; }
       .video-wrapper { height: auto; max-height: 45vh; width: 100%; max-width: 80vh; aspect-ratio: 16 / 9; margin: 0 auto; }
       .video-wrapper video { object-fit: contain; } .video-dummy-text { font-size: 12px; }
+      .admin-modal { margin-top: 5px; height: calc(100dvh - 45px); max-height: calc(100dvh - 45px); }
     }
   </style>
 </head>
 <body onload="if(window.forceResize) window.forceResize()">
 
-  <!-- 🚨 デバッグ用 システムロガー 🚨 -->
-  <div id="debug-logger" style="position: fixed; bottom: 0; left: 0; width: 100%; height: 100px; background: rgba(0,0,0,0.85); color: #4ade80; font-family: monospace; font-size: 10px; padding: 10px; overflow-y: auto; z-index: 99999; border-top: 1px solid #444; pointer-events: none;">
-      <div>[System] Logger Initialized. Awaiting Events...</div>
-  </div>
-
   <div class="app-container" id="main-app-container">
     <div id="audio-overlay" class="overlay-base"><p style="font-weight:bold;margin-bottom:20px;font-size:18px;">通話に参加しますか？</p><button id="btn-enable-audio" class="btn-green-solid">音声を有効にして参加</button></div>
     
-    <div id="disconnect-overlay" class="overlay-base" style="z-index: 3000; background: rgba(220, 38, 38, 0.95);">
+    <div id="disconnect-overlay" class="overlay-base" style="z-index: 6000; background: rgba(220, 38, 38, 0.95);">
       <div class="loader-spinner" style="border: 4px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px;"></div>
       <div style="font-size: 20px; font-weight: bold; margin-bottom: 10px; color: white;">CONNECTION LOST</div>
       <div id="disconnect-text" style="font-size: 14px; color: rgba(255,255,255,0.8); margin-bottom: 30px;">通信が切断されました。自動再接続を試行中...</div>
@@ -305,16 +284,43 @@
       </div>
     </div>
 
-    <!-- 管理者パネル -->
-    <div id="admin-overlay" class="overlay-base">
+    <!-- メインアプリUI (ヘッダーを最前面に) -->
+    <div class="header">
+      <div class="header-left">
+        <svg id="app-logo" viewBox="0 0 200 60"><defs><linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" /><stop offset="100%" style="stop-color:#4ade80;stop-opacity:1" /></linearGradient></defs><path d="M 12 30 L 20 42 L 20 54 M 28 30 L 20 42" stroke="url(#logo-grad)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none" /><path d="M 12 20 Q 20 12 28 20 M 6 12 Q 20 0 34 12" stroke="url(#logo-grad)" stroke-width="4" stroke-linecap="round" fill="none" /><path d="M 42 30 L 50 42 L 50 54 M 58 30 L 50 42" stroke="url(#logo-grad)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none" /><path d="M 42 20 Q 50 12 58 20 M 36 12 Q 50 0 64 12" stroke="url(#logo-grad)" stroke-width="4" stroke-linecap="round" fill="none" /><text x="75" y="44" font-family="sans-serif" font-weight="900" font-size="34" fill="#ffffff">Talk</text></svg>
+        <div class="room-info-group">
+          <div style="display: flex; flex-direction: column; justify-content: center;"><div class="room-info-label">ROOM</div><div id="header-room-name">---</div></div>
+          <div style="width: 1px; height: 24px; background: var(--border-color);"></div>
+          <div style="display: flex; flex-direction: column; justify-content: center;"><div class="room-info-label">USER</div><div id="header-user-id">---</div></div>
+        </div>
+      </div>
+      <div class="header-right">
+        <div style="display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 2px; margin-right: 5px;">
+            <div id="header-active-count" style="font-size: 11px; font-weight: bold; color: var(--green); display: none; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.5px;"><i class="fa-solid fa-users"></i> <span id="active-num">0</span></div>
+            <div id="status-rtt" style="font-size: 10px; font-family: 'JetBrains Mono', monospace; font-weight: bold; color: var(--text-sub); display: none;">-- ms</div>
+        </div>
+        <div style="position: relative;">
+          <button id="btn-layout" class="btn-header-icon" title="レイアウト変更"><i class="fa-solid fa-border-all"></i></button>
+          <div id="layout-dropdown" class="layout-dropdown">
+            <button class="layout-item active" data-layout="normal"><i class="fa-solid fa-microphone-lines" style="margin-right:10px; width:16px; text-align:center;"></i>INTERCOM</button>
+            <button class="layout-item" data-layout="hybrid"><i class="fa-solid fa-table-columns" style="margin-right:10px; width:16px; text-align:center;"></i>HYBRID</button>
+            <button class="layout-item" data-layout="monitor"><i class="fa-solid fa-tv" style="margin-right:10px; width:16px; text-align:center;"></i>MONITOR</button>
+          </div>
+        </div>
+        <button id="btn-settings" class="btn-header-icon admin-only" title="設定"><i class="fa-solid fa-gear"></i></button>
+        <button id="btn-show-login" class="btn-header-icon"><i class="fa-solid fa-satellite-dish"></i></button>
+      </div>
+    </div>
+
+    <!-- 管理者パネル (ヘッダーの下に潜り込ませる) -->
+    <div id="admin-overlay" class="overlay-base" style="align-items: center; justify-content: flex-start; padding-top: 60px;">
       <div class="login-modal admin-modal">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; position: relative;">
-          <div class="admin-tabs-container" style="margin: 0; padding: 0; flex-grow: 1; margin-right: 40px;">
+          <div class="admin-tabs-container" style="margin: 0; padding: 0; flex-grow: 1;">
             <button id="tab-video" class="admin-tab-btn active"><i class="fa-solid fa-tv"></i><span>VIDEO TALLY</span></button>
             <button id="tab-patch" class="admin-tab-btn"><i class="fa-solid fa-network-wired"></i><span>PATCH PANEL</span></button>
             <button id="tab-io" class="admin-tab-btn"><i class="fa-solid fa-sliders"></i><span>I/O BRIDGE</span></button>
           </div>
-          <button id="btn-close-admin" class="btn-close-modal" style="position: static; margin-top: -5px;"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="scroll-area">
           <div id="admin-video-section">
@@ -355,34 +361,6 @@
             </div>
           </div>
         </div>
-      </div>
-    </div>
-
-    <!-- メインアプリUI -->
-    <div class="header">
-      <div class="header-left">
-        <svg id="app-logo" viewBox="0 0 200 60"><defs><linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" /><stop offset="100%" style="stop-color:#4ade80;stop-opacity:1" /></linearGradient></defs><path d="M 12 30 L 20 42 L 20 54 M 28 30 L 20 42" stroke="url(#logo-grad)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none" /><path d="M 12 20 Q 20 12 28 20 M 6 12 Q 20 0 34 12" stroke="url(#logo-grad)" stroke-width="4" stroke-linecap="round" fill="none" /><path d="M 42 30 L 50 42 L 50 54 M 58 30 L 50 42" stroke="url(#logo-grad)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none" /><path d="M 42 20 Q 50 12 58 20 M 36 12 Q 50 0 64 12" stroke="url(#logo-grad)" stroke-width="4" stroke-linecap="round" fill="none" /><text x="75" y="44" font-family="sans-serif" font-weight="900" font-size="34" fill="#ffffff">Talk</text></svg>
-        <div class="room-info-group">
-          <div style="display: flex; flex-direction: column; justify-content: center;"><div class="room-info-label">ROOM</div><div id="header-room-name">---</div></div>
-          <div style="width: 1px; height: 24px; background: var(--border-color);"></div>
-          <div style="display: flex; flex-direction: column; justify-content: center;"><div class="room-info-label">USER</div><div id="header-user-id">---</div></div>
-        </div>
-      </div>
-      <div class="header-right">
-        <div style="display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 2px; margin-right: 5px;">
-            <div id="header-active-count" style="font-size: 11px; font-weight: bold; color: var(--green); display: none; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.5px;"><i class="fa-solid fa-users"></i> <span id="active-num">0</span></div>
-            <div id="status-rtt" style="font-size: 10px; font-family: 'JetBrains Mono', monospace; font-weight: bold; color: var(--text-sub); display: none;">-- ms</div>
-        </div>
-        <div style="position: relative;">
-          <button id="btn-layout" class="btn-header-icon" title="レイアウト変更"><i class="fa-solid fa-border-all"></i></button>
-          <div id="layout-dropdown" class="layout-dropdown">
-            <button class="layout-item active" data-layout="normal"><i class="fa-solid fa-microphone-lines" style="margin-right:10px; width:16px; text-align:center;"></i>INTERCOM</button>
-            <button class="layout-item" data-layout="hybrid"><i class="fa-solid fa-table-columns" style="margin-right:10px; width:16px; text-align:center;"></i>HYBRID</button>
-            <button class="layout-item" data-layout="monitor"><i class="fa-solid fa-tv" style="margin-right:10px; width:16px; text-align:center;"></i>MONITOR</button>
-          </div>
-        </div>
-        <button id="btn-settings" class="btn-header-icon admin-only" title="設定"><i class="fa-solid fa-gear"></i></button>
-        <button id="btn-show-login" class="btn-header-icon"><i class="fa-solid fa-satellite-dish"></i></button>
       </div>
     </div>
 
@@ -492,7 +470,7 @@
         const devices = await navigator.mediaDevices.enumerateDevices();
         if (state.ioBridge.outDevice4w && state.ioBridge.outDevice4w !== 'default' && state.ioBridge.outDevice4w !== '') {
             const exists = devices.some(d => d.deviceId === state.ioBridge.outDevice4w);
-            if (!exists) { state.ioBridge.outDevice4w = 'default'; if($('select-4w-out-device')) $('select-4w-out-device').value = 'default'; applyOutputDevice(); uiLog("Warning: Audio output device lost."); saveRoomState(); }
+            if (!exists) { state.ioBridge.outDevice4w = 'default'; if($('select-4w-out-device')) $('select-4w-out-device').value = 'default'; applyOutputDevice(); saveRoomState(); }
         }
     });
 
@@ -527,7 +505,6 @@
     if($('main-app-container')) $('main-app-container').classList.add('layout-normal');
     
     window.addEventListener('DOMContentLoaded', () => {
-        uiLog("DOM Loaded. Binding Events...");
         const hId = $('host-id'); const jId = $('join-userid');
         if(hId) hId.addEventListener('input', syncPulse); 
         if(jId) jId.addEventListener('input', syncPulse); 
@@ -556,8 +533,20 @@
         const tIo = $('tab-io'); if(tIo) tIo.onclick = () => { switchTab($('tab-io'), $('admin-io-section')); buildIoUI(); };
         
         const bSet = $('btn-settings');
-        if(bSet) bSet.onclick = () => { if (!state.isAdmin) return; $('admin-overlay').style.display = 'flex'; $('btn-settings').classList.add('active'); buildAdminMatrix(); buildTallyAssignmentUI(); updateVideoSources(); };
-        const bcAdm = $('btn-close-admin'); if(bcAdm) bcAdm.onclick = () => { $('admin-overlay').style.display = 'none'; $('btn-settings').classList.remove('active'); };
+        if(bSet) bSet.onclick = () => { 
+            if (!state.isAdmin) return; 
+            const ov = $('admin-overlay');
+            if (ov.style.display === 'flex') {
+                ov.style.display = 'none';
+                bSet.classList.remove('active');
+            } else {
+                ov.style.display = 'flex'; 
+                bSet.classList.add('active'); 
+                buildAdminMatrix(); 
+                buildTallyAssignmentUI(); 
+                updateVideoSources(); 
+            }
+        };
 
         const bjm = $('btn-join-member'); if(bjm) bjm.onclick = () => joinNetwork(false);
         const bja = $('btn-join-admin'); if(bja) bja.onclick = () => joinNetwork(true);
@@ -569,9 +558,10 @@
             initAudioContext(); 
             $('dummy-audio')?.play().catch(()=>{});
             
-            // Audio Context開始後にマイク取得
             if (state.myUserId.toLowerCase() !== 'debug') {
-                const constraints = state.ioBridge.enabled ? { echoCancellation: false, noiseSuppression: false, autoGainControl: false } : { echoCancellation: true, noiseSuppression: true };
+                const constraints = state.ioBridge.enabled 
+                    ? { echoCancellation: false, noiseSuppression: false, autoGainControl: false } 
+                    : { echoCancellation: true, noiseSuppression: true, autoGainControl: true };
                 navigator.mediaDevices.getUserMedia({ audio: constraints })
                 .then(stream => {
                     state.localStream = stream;
@@ -586,7 +576,7 @@
                         publishLocalMic();
                     }
                 })
-                .catch(err => uiLog("マイクアクセス拒否:" + err.message, '#f97316'));
+                .catch(err => console.error("マイクアクセス拒否:" + err.message));
             }
         };
 
@@ -603,7 +593,7 @@
                 sendData({ type: 'add-channel', ch: newCh, assignments: state.userAssignments, registered: state.registeredUsers });
                 Object.values(state.mediaCalls || {}).forEach(call => { if (call?.source && state.audioCtx && newCh && !call.isIOTrack) { const splitGain = state.audioCtx.createGain(); const panner = state.audioCtx.createStereoPanner(); splitGain.gain.value = 0; call.source.connect(panner); panner.connect(splitGain); if(state.channelNodes[newCh.id]) splitGain.connect(state.channelNodes[newCh.id].analyser); call.chGains[newCh.id] = { gain: splitGain, panner: panner }; } });
                 saveRoomState(); buildAdminMatrix(); if (state.userAssignments && state.myUserId) { applyAssignments(state.userAssignments[state.myUserId] || state.channels.map(c=>c.id)); }
-            } catch (err) { uiLog("Failed to add channel:" + err, '#f00'); }
+            } catch (err) {}
         };
 
         const bms = $('btn-master-spk'); if(bms) bms.onclick = toggleMasterSpk;
@@ -628,7 +618,6 @@
         if(sVid && sPat && sIo) [sVid, sPat, sIo].forEach(s => s.style.display = 'none'); 
         if(activeTab) activeTab.classList.add('active'); 
         if(activeSec) activeSec.style.display = 'block'; 
-        // ★ タブ切り替え時にスクロールを上に戻す
         const scrollArea = document.querySelector('.scroll-area');
         if(scrollArea) scrollArea.scrollTop = 0;
     }
@@ -643,7 +632,6 @@
       }
     }
 
-    // --- 切断時の即時反応 ---
     function showDisconnectOverlay(msg) {
         const ov = $('disconnect-overlay'); if(!ov) return;
         ov.style.display = 'flex';
@@ -652,7 +640,9 @@
 
     async function updateAudioDevices() {
         if (!state.room || !state.room.localParticipant) return;
-        const micConstraints = state.ioBridge.enabled ? { echoCancellation: false, noiseSuppression: false, autoGainControl: false } : { echoCancellation: true, noiseSuppression: true };
+        const micConstraints = state.ioBridge.enabled 
+            ? { echoCancellation: false, noiseSuppression: false, autoGainControl: false } 
+            : { echoCancellation: true, noiseSuppression: true, autoGainControl: true };
         try {
             const existingPub = state.room.localParticipant.getTrackPublication(LivekitClient.Track.Source.Microphone);
             if (existingPub && existingPub.track) { await state.room.localParticipant.unpublishTrack(existingPub.track); existingPub.track.stop(); }
@@ -661,7 +651,6 @@
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: micConstraints });
                 state.localStream = stream;
                 
-                // メーター用結線
                 if (state.audioCtx) { 
                     if (state.localMicAnalyser) state.localMicAnalyser.disconnect(); 
                     const localSrc = state.audioCtx.createMediaStreamSource(state.localStream); 
@@ -672,7 +661,7 @@
                 
                 publishLocalMic();
             }
-        } catch(e) { uiLog("Mic Update Error", '#f00'); }
+        } catch(e) {}
 
         const handleIOTracks = async () => {
             if (!state.ioBridge.enabled) { ['ioTrack4wL', 'ioTrack4wR', 'ioTrackPgmL', 'ioTrackPgmR'].forEach(async key => { if (state[key]) { await state.room.localParticipant.unpublishTrack(state[key].track); state[key].track.stop(); state[key] = null; } }); return; }
@@ -736,17 +725,11 @@
     const editVideoQual = $('edit-video-quality');
     if(editVideoQual) { editVideoQual.addEventListener('change', async (e) => { 
         state.videoQuality = e.target.value; saveRoomState(); 
-        if (state.activeVideoSender === state.myUserId && state.currentLocalVideoTrack) {
-            const mst = $('main-monitor-source-text'); const es = $('edit-monitor-source');
-            if(mst) { mst.textContent = '[ SWITCHING QUALITY ]'; mst.style.display = 'block'; } if(es) es.disabled = true; editVideoQual.disabled = true;
-            try { 
-                let targetBitrate = parseInt(state.videoQuality) || 512000; 
-                const oldTrack = state.currentLocalVideoTrack;
-                await state.room.localParticipant.unpublishTrack(oldTrack); 
-                const pub = await state.room.localParticipant.publishTrack(oldTrack, { name: 'camera', source: oldTrack.source || LivekitClient.Track.Source.Camera, simulcast: false, videoEncoding: { maxBitrate: targetBitrate } }); 
-                state.currentLocalVideoTrack = pub.track || oldTrack;
-                attachVideoTrack(state.currentLocalVideoTrack);
-            } catch (err) { uiLog("Video switch err: " + err.message); } finally { if(mst) mst.style.display = 'none'; if(es) es.disabled = false; editVideoQual.disabled = false; }
+        if (state.activeVideoSender === state.myUserId) {
+            const srcSelect = $('edit-monitor-source');
+            if (srcSelect && srcSelect.value !== 'off') {
+                srcSelect.dispatchEvent(new Event('change'));
+            }
         }
     }); }
 
@@ -814,13 +797,21 @@
       const lMuted = state.isMasterSpkMuted ? 'muted-slash' : ''; const tMuted = state.isMasterMicMuted ? 'muted-slash' : '';
 
       const card = document.createElement('div'); card.className = `channel-card ${listenClass} ${talkClass}`; card.id = `card-${ch.id}`;
-      // ★ 左の縦バーを「ボリューム設定(vol-indicator)」、下の横バーを「トークレベル(meter)」に修正
-      card.innerHTML = `<div class="status-line-bg"><div class="status-line-grad"></div><div class="status-line-mask" id="vol-indicator-${ch.id}"></div></div><div class="card-main"><div class="btn-action btn-listen ${state.listenStates[ch.id] ? 'active latched' : ''} ${lMuted}" id="listen-${ch.id}">${curListenIcon}</div><div class="ch-info"><div class="ch-name" id="name-${ch.id}">${ch.name || 'Unknown'}</div><div class="ch-type" id="type-${ch.id}">${ch.type || 'PL'}</div></div>${ch.type === 'Listen' ? `<div style="width: 44px; height: 44px;"></div>` : `<div class="btn-action btn-talk ${state.talkStates[ch.id] ? 'active latched' : ''} ${tMuted}" id="talk-${ch.id}">${curTalkIcon}</div>`}</div><div class="ch-meter-container"><div class="ch-meter-grad"></div><div class="ch-meter-mask" id="meter-${ch.id}"></div></div><div class="volume-panel"><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M18.5 12A4.5 4.5 0 0 0 16 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg><div class="vol-slider-wrap"><div class="vol-slider-track-bg"></div><div class="vol-slider-fill" id="fill-${ch.id}"></div><input type="range" id="vol-${ch.id}" min="0" max="100" value="50"></div><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></div><div class="card-footer"><div class="btn-expand" id="expand-${ch.id}">○ ○ ○</div></div>`;
+      // ★ 左の縦バー＝波形(meter-ch.id), 下の横バー＝ボリューム(vol-indicator-ch.id)
+      card.innerHTML = `<div class="status-line-bg"><div class="status-line-grad"></div><div class="status-line-mask" id="meter-${ch.id}"></div></div><div class="card-main"><div class="btn-action btn-listen ${state.listenStates[ch.id] ? 'active latched' : ''} ${lMuted}" id="listen-${ch.id}">${curListenIcon}</div><div class="ch-info"><div class="ch-name" id="name-${ch.id}">${ch.name || 'Unknown'}</div><div class="ch-type" id="type-${ch.id}">${ch.type || 'PL'}</div></div>${ch.type === 'Listen' ? `<div style="width: 44px; height: 44px;"></div>` : `<div class="btn-action btn-talk ${state.talkStates[ch.id] ? 'active latched' : ''} ${tMuted}" id="talk-${ch.id}">${curTalkIcon}</div>`}</div><div class="ch-meter-container"><div class="ch-meter-grad"></div><div class="ch-meter-mask" id="vol-indicator-${ch.id}"></div></div><div class="volume-panel"><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M18.5 12A4.5 4.5 0 0 0 16 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg><div class="vol-slider-wrap"><div class="vol-slider-track-bg"></div><div class="vol-slider-fill" id="fill-${ch.id}"></div><input type="range" id="vol-${ch.id}" min="0" max="100" value="50"></div><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></div><div class="card-footer"><div class="btn-expand" id="expand-${ch.id}">○ ○ ○</div></div>`;
       const cw = $('channel-list-wrap'); if(cw) cw.appendChild(card);
       
       const slider = card.querySelector(`#vol-${ch.id}`); const fill = card.querySelector(`#fill-${ch.id}`); const volIndicator = card.querySelector(`#vol-indicator-${ch.id}`);
-      slider.value = (state.channelVolumes[ch.id] / 3.0) * 100; fill.style.width = slider.value + '%'; if(volIndicator) volIndicator.style.height = (100 - slider.value) + '%'; 
-      slider.addEventListener('input', (e) => { fill.style.width = e.target.value + '%'; if(volIndicator) volIndicator.style.height = (100 - e.target.value) + '%'; state.channelVolumes[ch.id] = (e.target.value / 100) * 3.0; updateAudioRouting(); });
+      slider.value = (state.channelVolumes[ch.id] / 3.0) * 100; 
+      if(fill) fill.style.width = slider.value + '%'; 
+      if(volIndicator) volIndicator.style.width = (100 - slider.value) + '%'; 
+      
+      slider.addEventListener('input', (e) => { 
+          if(fill) fill.style.width = e.target.value + '%'; 
+          if(volIndicator) volIndicator.style.width = (100 - e.target.value) + '%'; 
+          state.channelVolumes[ch.id] = (e.target.value / 100) * 3.0; 
+          updateAudioRouting(); 
+      });
       card.querySelector(`#expand-${ch.id}`).addEventListener('click', () => card.classList.toggle('expanded'));
       setupPTTButton(card.querySelector(`#listen-${ch.id}`), 'listen', ch.id); 
       if(ch.type !== 'Listen') setupPTTButton(card.querySelector(`#talk-${ch.id}`), 'talk', ch.id);
@@ -845,7 +836,7 @@
                 const str = JSON.stringify(payload); const payloadData = new TextEncoder().encode(str); 
                 try { await state.room.localParticipant.publishData(payloadData, { reliable: true }); } 
                 catch (e) { await state.room.localParticipant.publishData(payloadData, 1); }
-            } catch (err) { uiLog("Data Publish Error: " + err.message, "#f00"); }
+            } catch (err) {}
         } 
     }
 
@@ -884,12 +875,6 @@
           const masterDest = state.audioCtx.createMediaStreamDestination(); masterMerger.connect(masterDest);
           state.masterAudioEl = new Audio(); state.masterAudioEl.srcObject = masterDest.stream; state.masterAudioEl.play().catch(e => {});
           
-          if (state.localStream) { 
-              const localSrc = state.audioCtx.createMediaStreamSource(state.localStream); 
-              state.localMicAnalyser = state.audioCtx.createAnalyser(); 
-              state.localMicAnalyser.fftSize = 256; 
-              localSrc.connect(state.localMicAnalyser);
-          } 
           startMeterDraw(); state.channels?.forEach(ch => setupChannelAudio(ch.id)); applyOutputDevice();
       }
       if(state.audioCtx.state === 'suspended') state.audioCtx.resume(); Object.values(state.mediaCalls || {}).forEach(callData => { if (!callData?.source) setupPeerMixer(callData); });
@@ -900,20 +885,16 @@
         const audioTrack = state.localStream.getAudioTracks()[0];
         if (audioTrack && !state.localMicTrack) {
             try {
-                // 生のTrackをパブリッシュし、返り値のパブリケーションからTrackオブジェクトを保持する
-                state.room.localParticipant.publishTrack(audioTrack, { name: 'mic', source: LivekitClient.Track.Source.Microphone }).then(pub => {
+                // クローンしたトラックをパブリッシュし、大元のストリームはミュートしない
+                const clonedTrack = audioTrack.clone();
+                state.room.localParticipant.publishTrack(clonedTrack, { name: 'mic', source: LivekitClient.Track.Source.Microphone }).then(pub => {
                     state.localMicTrack = pub.track;
-                    const isAnyTalking = Object.values(state.talkStates).some(v => v === true) && !state.isMasterMicMuted;
-                    
-                    if (isAnyTalking) {
-                        state.localMicTrack.unmute().catch(() => { if(state.localMicTrack.mediaStreamTrack) state.localMicTrack.mediaStreamTrack.enabled = true; });
-                    } else {
-                        state.localMicTrack.mute().catch(() => { if(state.localMicTrack.mediaStreamTrack) state.localMicTrack.mediaStreamTrack.enabled = false; });
+                    // ★ 常にマイクを送信状態にする (ミュートはマスターミュート時のみ)
+                    if(state.localMicTrack && state.localMicTrack.mediaStreamTrack) {
+                        state.localMicTrack.mediaStreamTrack.enabled = !state.isMasterMicMuted;
                     }
-                    
-                    uiLog("Mic Track Published.");
-                }).catch(err => uiLog(`Mic Publish Error: ${err.message}`, '#ef4444'));
-            } catch (err) { uiLog(`Mic Publish Error: ${err.message}`, '#ef4444'); }
+                }).catch(err => console.error(err));
+            } catch (err) { console.error(err); }
         }
     }
 
@@ -933,11 +914,11 @@
 
     let lastDrawTime = 0;
     
-    // ★ 微小なノイズをカットし、無音時にメーターを完全に0にする処理
+    // 微小なノイズをカットし、無音時にメーターを完全に0にする処理
     function getPeak(data) {
         let peak = 0;
         for(let i=5; i<data.length; i++) { if(data[i] > peak) peak = data[i]; }
-        return peak < 8 ? 0 : peak; // 閾値を少し緩和
+        return peak < 8 ? 0 : peak; 
     }
 
     function startMeterDraw() {
@@ -947,7 +928,6 @@
       function draw(timestamp) {
         requestAnimationFrame(draw); if (timestamp - lastDrawTime < 30) return; lastDrawTime = timestamp;
         
-        // ローカルデータの初期化（遅延生成対応）
         if (!localData && state.localMicAnalyser) {
             localData = new Uint8Array(state.localMicAnalyser.frequencyBinCount);
         }
@@ -986,9 +966,9 @@
 
                 if (state.talkStates[ch.id]) chPercent = Math.max(chPercent, localPercent); 
                 
-                // ★下の横バーの"幅"を波形として更新（マスクを右から左へ消す）
+                // ★左の縦バーの"高さ"を波形として更新（マスクを下から上へ消す）
                 const meterEl = $(`meter-${ch.id}`); 
-                if (meterEl) meterEl.style.width = Math.max(100 - chPercent, 0) + '%'; 
+                if (meterEl) meterEl.style.height = Math.max(100 - chPercent, 0) + '%'; 
             } 
         });
         
@@ -1075,21 +1055,11 @@
       }
     }
 
+    // ★ マイクをミュートする処理を「MIC MUTE」時のみに制限
     function syncTalkStates() { 
         sendData({ type: 'update-talk-states', states: state.talkStates }); 
-        const isAnyTalking = Object.values(state.talkStates).some(v => v === true) && !state.isMasterMicMuted;
-        if (state.localMicTrack) {
-            try {
-                if (isAnyTalking) {
-                    state.localMicTrack.unmute().catch(e => {
-                        if(state.localMicTrack.mediaStreamTrack) state.localMicTrack.mediaStreamTrack.enabled = true;
-                    });
-                } else {
-                    state.localMicTrack.mute().catch(e => {
-                        if(state.localMicTrack.mediaStreamTrack) state.localMicTrack.mediaStreamTrack.enabled = false;
-                    });
-                }
-            } catch(e) { uiLog("Mic Mute Error", '#f00'); }
+        if (state.localMicTrack && state.localMicTrack.mediaStreamTrack) {
+            state.localMicTrack.mediaStreamTrack.enabled = !state.isMasterMicMuted;
         }
     } 
     function syncListenStates() { sendData({ type: 'update-listen-states', states: state.listenStates }); }
@@ -1211,7 +1181,6 @@
 
     function handleNetworkData(data, senderId) {
         if (!data) return;
-        uiLog(`[RECV] ${data.type} from ${senderId}`);
         if (data.type === 'hello') {
           const joinedUserId = data.userId || senderId;
           if (joinedUserId !== state.myUserId && !state.registeredUsers.includes(joinedUserId)) { 
@@ -1317,8 +1286,6 @@
       if(btn){btn.textContent = originalText; btn.style.opacity = "1";} if($('btn-join-member')) $('btn-join-member').disabled = false; if($('btn-join-admin')) $('btn-join-admin').disabled = false;
       const bsl = $('btn-show-login'); if(bsl){ bsl.classList.add('online'); }
       
-      const sr = $('status-role'); if (sr) sr.style.display = 'none'; 
-      
       loadRoomState(state.roomId);
       if (!state.registeredUsers.includes(state.myUserId)) {
           state.registeredUsers.push(state.myUserId);
@@ -1346,7 +1313,7 @@
                     publishData: () => {}, setMicrophoneEnabled: async () => {}, setScreenShareEnabled: async () => {},
                     setCameraEnabled: async () => {}, unpublishTrack: async () => {}, publishTrack: async () => {}, getTrackPublication: () => { return null; }
                 },
-                engine: { pcManager: { subscriber: { pc: { getStats: async () => [] } } } } // RTT用ダミー
+                engine: { pcManager: { subscriber: { pc: { getStats: async () => [] } } } } 
             };
             if (state.channels.length > 1) state.remoteTalkStates = { 'Cam1': { [state.channels[1].id]: true } };
             
@@ -1369,7 +1336,7 @@
                   evaluateTallyGlow();
                 } catch(e) {}
               });
-          } catch(e) { uiLog("MQTT Connection Warning: " + e.message, '#f97316'); }
+          } catch(e) {}
 
           let token = "";
           try {
@@ -1377,7 +1344,6 @@
             if (!res.ok) throw new Error("認証に失敗しました");
             const data = await res.json(); token = data.token;
           } catch (e) { 
-              uiLog(`Token Fetch Error: ${e.message}`, '#ef4444');
               alert("【致命的エラー】\n認証サーバーからのトークン取得に失敗しました。\n\n詳細: " + e.message); 
               const sm=$('status-msg'); if(sm){sm.textContent = "接続エラー"; sm.style.color = "var(--alert)";} if($('btn-stop')) $('btn-stop').style.display = 'block';
               return; 
@@ -1434,10 +1400,8 @@
           });
 
           try {
-              uiLog("Connecting to LiveKit Server...");
               await room.connect(LIVEKIT_WS_URL, token);
               state.hasSuccessfullyConnected = true;
-              uiLog("LiveKit Connected Successfully.", '#4ade80');
               
               if (room.remoteParticipants) {
                   room.remoteParticipants.forEach((p, identity) => {
@@ -1455,7 +1419,6 @@
               syncTalkStates(); syncListenStates();
 
           } catch (e) { 
-              uiLog(`LiveKit Connect Error: ${e.message}`, '#ef4444');
               showDisconnect('接続エラー: ' + e.message);
           }
       })();
