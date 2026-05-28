@@ -69,7 +69,7 @@
     .btn-green-solid:hover { background: #34d399; }
     
     .login-modal { background: var(--card-bg); padding: 40px 50px; border-radius: 16px; width: 90%; max-width: 480px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 15px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); margin: auto; position: relative;}
-    .login-modal .btn-close-login { position: absolute; top: 10px; right: 10px; background: transparent; border: none; color: #9ca3af; font-size: 24px; cursor: pointer; padding: 15px; display: flex; align-items: center; justify-content: center; z-index: 2010; font-weight: normal; }
+    .login-modal .btn-close-login { position: absolute; top: 10px; right: 10px; background: transparent; border: none; color: #9ca3af; font-size: 24px; cursor: pointer; padding: 15px; display: none; align-items: center; justify-content: center; z-index: 2010; font-weight: normal; }
     .login-modal .btn-close-login:hover { color: #ffffff; }
     
     .login-modal button:not(.btn-close-login) { padding: 16px; border: none; border-radius: 8px; font-weight: bold; color: #000; cursor: pointer; font-size: 15px; z-index: 2001; transition: 0.2s;}
@@ -100,19 +100,20 @@
     .layout-dropdown.show { display: flex; } .layout-item { background: transparent; border: none; color: var(--text-main); padding: 12px 15px; text-align: left; font-size: 13px; font-weight: bold; cursor: pointer; font-family: 'JetBrains Mono', monospace; border-bottom: 1px solid var(--border-color); transition: background 0.2s; display: flex; align-items: center; }
     .layout-item:hover { background: rgba(255,255,255,0.05); } .layout-item.active { color: var(--blue); }
     
-    /* ======== Monitor Section (Responsive & 16:9 fixed) ======== */
+    /* ======== Monitor Section (Responsive & 16:9 Auto Fit) ======== */
     .monitor-section { width: 100%; background: #000; display: none; flex-direction: column; align-items: center; padding: 10px; border-bottom: 2px solid var(--border-color); flex-shrink: 0; position: relative; box-sizing: border-box; }
     
-    .app-container.layout-hybrid .monitor-section, .app-container.layout-monitor .monitor-section { display: flex; flex: 1; min-height: 0; }
+    .app-container.layout-hybrid .monitor-section, .app-container.layout-monitor .monitor-section { display: flex; flex: 1 1 auto; min-height: 0; }
     .app-container.layout-monitor .monitor-section { border-bottom: none; }
     
     .app-container.layout-hybrid .channel-list-container { flex: 0 0 auto; max-height: 45vh; padding: 15px;}
     .app-container.layout-monitor .global-controls, .app-container.layout-monitor .channel-list-container, .app-container.layout-monitor .master-meter-container { display: none !important; }
     
-    .monitor-label { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: bold; color: #ddd; margin-bottom: 6px; letter-spacing: 1px; width: 100%; text-align: center; flex: 0 0 auto;}
-    .video-container { flex: 1; min-height: 0; width: 100%; display: flex; align-items: center; justify-content: center; }
-    .video-wrapper { aspect-ratio: 16 / 9; max-width: 100%; max-height: 100%; flex-shrink: 1; background: #1a1a1a; display: flex; align-items: center; justify-content: center; border: 4px solid transparent; position: relative; transition: border-color 0.15s ease-out; box-sizing: border-box; }
+    .video-container { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; min-height: 0; min-width: 0; position: relative;}
+    .video-wrapper { position: absolute; inset: 0; margin: auto; aspect-ratio: 16 / 9; max-width: 100%; max-height: 100%; background: #1a1a1a; display: flex; align-items: center; justify-content: center; border: 4px solid transparent; box-sizing: border-box; transition: border-color 0.15s ease-out; }
     .video-wrapper.tally-on { border-color: var(--alert) !important; box-shadow: 0 0 30px rgba(239, 68, 68, 0.8), inset 0 0 30px rgba(239, 68, 68, 0.6); }
+    
+    .monitor-label { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); z-index: 10; background: rgba(0,0,0,0.6); padding: 4px 12px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: bold; color: #ddd; letter-spacing: 1px; pointer-events: none; margin: 0; white-space: nowrap; }
     .video-dummy-text { color: #555; font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: bold; z-index: 1;} 
     .video-wrapper video { width: 100%; height: 100%; object-fit: contain; background: #000; position: absolute; inset: 0; z-index: 5;}
     
@@ -160,7 +161,7 @@
     .io-meter-horizontal-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #22c55e 0%, #eab308 75%, #ef4444 100%); transition: width 0.05s ease-out; }
 
     .admin-matrix-wrapper { width: 100%; overflow-x: auto; overscroll-behavior-x: none; -webkit-overflow-scrolling: touch; border-radius: 12px; background: #111216; border: 1px solid var(--border-color); position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin-bottom: 15px;}
-    .admin-matrix { width: auto; border-collapse: separate; border-spacing: 0; text-align: center; font-size: 13px; margin: 0; }
+    .admin-matrix { width: max-content; border-collapse: separate; border-spacing: 0; text-align: center; font-size: 13px; margin: 0; }
     .admin-matrix th, .admin-matrix td { border-bottom: 1px solid var(--border-color); border-right: 1px solid var(--border-color); padding: 6px; }
     .admin-matrix th { background-color: transparent; color: var(--text-sub); font-weight: normal; position: sticky; top: 0; z-index: 5; border-top: 1px solid var(--border-color); min-width: 80px; }
     .diagonal-header { position: sticky; left: 0; z-index: 10 !important; min-width: 120px; min-height: 50px; background: linear-gradient(to top right, #1c1d21 49%, #3a3c42 49%, #3a3c42 51%, #1c1d21 51%); border-right: 2px solid var(--border-color) !important; box-shadow: 2px 0 5px rgba(0,0,0,0.4); }
@@ -172,7 +173,7 @@
     .admin-edit-name { width: 80px; font-size: 12px; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; text-align: center; background: #1c1d21; border: 1px solid var(--border-color); color: #fff; border-radius: 6px; padding: 6px; outline: none; transition: border-color 0.2s; } .admin-edit-name:focus { border-color: var(--blue); }
     .admin-matrix td.ch-cell select.admin-edit-type { width: 75px; height: 30px; text-align: center; font-family: 'JetBrains Mono', monospace; background: #1c1d21; border: 1px solid var(--border-color); color: #fff; border-radius: 6px; font-size: 12px; padding: 4px; outline: none; transition: border-color 0.2s; cursor: pointer;} .admin-matrix td.ch-cell select.admin-edit-type:focus { border-color: var(--blue); }
     
-    .btn-delete-col, .btn-delete-row, .btn-batch-col, .btn-batch-row { border: none; border-radius: 4px; cursor: pointer; font-size: 12px; line-height: 1; transition: all 0.2s; font-weight: bold; white-space: nowrap; flex-shrink: 0; height: 16px; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0;}
+    .btn-delete-col, .btn-delete-row, .btn-batch-col, .btn-batch-row { border: none; border-radius: 4px; cursor: pointer; font-size: 8px; line-height: 1; transition: all 0.2s; font-weight: bold; white-space: nowrap; flex-shrink: 0; height: 14px; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0;}
     .btn-delete-col, .btn-delete-row { background: var(--red); color: #fff; }
     .btn-batch-col, .btn-batch-row { background: var(--green); color: #000; }
     .btn-delete-col:hover, .btn-delete-row:hover, .btn-batch-col:hover, .btn-batch-row:hover { filter: brightness(1.2); }
@@ -270,14 +271,16 @@
     <div id="audio-overlay" class="overlay-base"><p style="font-weight:bold;margin-bottom:20px;font-size:18px;">通話に参加しますか？</p><button id="btn-enable-audio" class="btn-green-solid">音声を有効にして参加</button></div>
     
     <div id="disconnect-overlay" class="overlay-base" style="z-index: 6000; background: rgba(220, 38, 38, 0.95);">
+      <button class="btn-close-login" id="btn-close-disconnect" style="position: absolute; top: 10px; right: 10px; background: transparent; border: none; color: #fff; font-size: 24px; cursor: pointer; padding: 15px; display: flex; align-items: center; justify-content: center; font-weight: normal;"><i class="fa-solid fa-xmark"></i></button>
       <div class="loader-spinner" style="border: 4px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px;"></div>
       <div style="font-size: 20px; font-weight: bold; margin-bottom: 10px; color: white;">CONNECTION LOST</div>
       <div id="disconnect-text" style="font-size: 14px; color: rgba(255,255,255,0.8); margin-bottom: 30px;">通信が切断されました。自動再接続を試行中...</div>
     </div>
 
+    <!-- ログイン画面（バツボタン廃止） -->
     <div id="login-overlay" class="overlay-base" style="display: flex;">
       <div class="login-modal">
-        <button class="btn-close-login" id="btn-close-login"><i class="fa-solid fa-xmark"></i></button>
+        <button class="btn-close-login" id="btn-close-login" style="display:none;"><i class="fa-solid fa-xmark"></i></button>
         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 30px; width: 100%;">
           <div style="display: flex; align-items: center; justify-content: space-between; width: 195px; margin-bottom: 5px;">
             <svg viewBox="0 0 66 60" style="height: 38px; width: auto; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4)); display: block;">
@@ -386,6 +389,7 @@
       </div>
     </div>
 
+    <!-- ★ モニターサイズのジャストフィット調整 -->
     <div id="monitor-section" class="monitor-section">
       <div class="video-container">
         <div class="video-wrapper" id="monitor-video-wrapper">
@@ -412,6 +416,14 @@
     window.addEventListener('offline', () => {
         const ov = $('disconnect-overlay'); if (ov) { ov.style.display = 'flex'; const dt = $('disconnect-text'); if(dt) dt.textContent = 'ネットワークが切断されました。回復を待っています...'; }
     });
+    
+    // ディスコネクト画面のバツボタン処理
+    const bdClose = $('btn-close-disconnect');
+    if (bdClose) {
+        bdClose.onclick = () => {
+            $('disconnect-overlay').style.display = 'none';
+        };
+    }
 
     function syncPulse() { 
         const host = $('host-id'); const user = $('join-userid'); 
@@ -493,7 +505,7 @@
         const devices = await navigator.mediaDevices.enumerateDevices();
         if (state.ioBridge.outDevice4w && state.ioBridge.outDevice4w !== 'default' && state.ioBridge.outDevice4w !== '') {
             const exists = devices.some(d => d.deviceId === state.ioBridge.outDevice4w);
-            if (!exists) { state.ioBridge.outDevice4w = 'default'; if($('select-4w-out-device')) $('select-4w-out-device').value = 'default'; applyOutputDevice(); saveRoomState(); }
+            if (!exists) { state.ioBridge.outDevice4w = 'default'; if($('select-4w-out-device')) $('select-4w-out-device').value = 'default'; applyOutputDevice(); uiLog("Warning: Audio output device lost."); saveRoomState(); }
         }
     });
 
