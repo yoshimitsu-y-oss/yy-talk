@@ -69,7 +69,7 @@
     .btn-green-solid:hover { background: #34d399; }
     
     .login-modal { background: var(--card-bg); padding: 40px 50px; border-radius: 16px; width: 90%; max-width: 480px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 15px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); margin: auto; position: relative;}
-    .login-modal .btn-close-login { position: absolute; top: 10px; right: 10px; background: transparent; border: none; color: #9ca3af; font-size: 24px; cursor: pointer; padding: 15px; display: none; align-items: center; justify-content: center; z-index: 2010; font-weight: normal; }
+    .login-modal .btn-close-login { position: absolute; top: 10px; right: 10px; background: transparent; border: none; color: #9ca3af; font-size: 24px; cursor: pointer; padding: 15px; display: flex; align-items: center; justify-content: center; z-index: 2010; font-weight: normal; }
     .login-modal .btn-close-login:hover { color: #ffffff; }
     
     .login-modal button:not(.btn-close-login) { padding: 16px; border: none; border-radius: 8px; font-weight: bold; color: #000; cursor: pointer; font-size: 15px; z-index: 2001; transition: 0.2s;}
@@ -79,7 +79,6 @@
     .btn-join-member { background: var(--blue); color: white!important; width: 100%; } 
     .btn-join-admin { background: #2a2c33; border: 1px solid #444 !important; color: #aaa !important; width: 100%; } 
     .btn-stop { background: var(--red); width: 100%; color: #fff!important; display: none;}
-    .status-text { font-size: 12px; color: var(--text-sub); text-align: center; margin-top: 5px; font-family: 'JetBrains Mono', monospace;}
     
     @keyframes pulse-blue-border { 0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.6); border-color: var(--blue); } 70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); border-color: var(--blue); } 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); border-color: var(--border-color); } }
     .pulse-anim { animation: pulse-blue-border 1.5s infinite; }
@@ -94,7 +93,7 @@
     #header-room-name, #header-user-id { font-weight: bold; color: var(--text-main); line-height: 1; font-family: 'JetBrains Mono', monospace; font-size: clamp(11px, 3.5vw, 15px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 15ch;}
     .header-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0;}
     .btn-header-icon, .btn-header-layout { background: transparent; border: 1.5px solid var(--text-sub); color: var(--text-sub); width: 32px; height: 32px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; font-size: 14px; padding: 0;}
-    #btn-settings.active { border-color: var(--blue); color: var(--blue); background: rgba(59, 130, 246, 0.1); } .admin-only { display: none; }
+    #btn-settings.active, #btn-layout.active { border-color: var(--blue); color: var(--blue); background: rgba(59, 130, 246, 0.1); } .admin-only { display: none; }
     #btn-show-login.online { border-color: var(--green); color: var(--green); }
     
     .layout-dropdown { position: absolute; top: 40px; right: 0; background: #111216; border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); display: none; flex-direction: column; z-index: 5500; overflow: hidden; min-width: 150px; }
@@ -102,16 +101,17 @@
     .layout-item:hover { background: rgba(255,255,255,0.05); } .layout-item.active { color: var(--blue); }
     
     /* ======== Monitor Section (Responsive & 16:9 fixed) ======== */
-    .monitor-section { width: 100%; background: #000; display: none; padding: 0; flex-shrink: 0; position: relative; overflow: hidden; align-items: center; justify-content: center;}
+    .monitor-section { width: 100%; background: #000; display: none; flex-direction: column; align-items: center; padding: 10px; border-bottom: 2px solid var(--border-color); flex-shrink: 0; position: relative; box-sizing: border-box; }
     
-    .app-container.layout-hybrid .monitor-section { display: flex; flex: 1; min-height: 0; border-bottom: 2px solid var(--border-color); }
+    .app-container.layout-hybrid .monitor-section, .app-container.layout-monitor .monitor-section { display: flex; flex: 1; min-height: 0; }
+    .app-container.layout-monitor .monitor-section { border-bottom: none; }
+    
     .app-container.layout-hybrid .channel-list-container { flex: 0 0 auto; max-height: 45vh; padding: 15px;}
-    
-    .app-container.layout-monitor .monitor-section { display: flex; flex: 1; min-height: 0; border-bottom: none; }
     .app-container.layout-monitor .global-controls, .app-container.layout-monitor .channel-list-container, .app-container.layout-monitor .master-meter-container { display: none !important; }
     
-    .monitor-label { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); z-index: 10; background: rgba(0,0,0,0.6); padding: 4px 12px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: bold; color: #ddd; letter-spacing: 1px; pointer-events: none; margin: 0; white-space: nowrap; }
-    .video-wrapper { max-width: 100%; max-height: 100%; aspect-ratio: 16 / 9; background: #1a1a1a; display: flex; align-items: center; justify-content: center; border: 4px solid transparent; position: relative; transition: border-color 0.15s ease-out; box-sizing: border-box; margin: auto; }
+    .monitor-label { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: bold; color: #ddd; margin-bottom: 6px; letter-spacing: 1px; width: 100%; text-align: center; flex: 0 0 auto;}
+    .video-container { flex: 1; min-height: 0; width: 100%; display: flex; align-items: center; justify-content: center; }
+    .video-wrapper { aspect-ratio: 16 / 9; max-width: 100%; max-height: 100%; flex-shrink: 1; background: #1a1a1a; display: flex; align-items: center; justify-content: center; border: 4px solid transparent; position: relative; transition: border-color 0.15s ease-out; box-sizing: border-box; }
     .video-wrapper.tally-on { border-color: var(--alert) !important; box-shadow: 0 0 30px rgba(239, 68, 68, 0.8), inset 0 0 30px rgba(239, 68, 68, 0.6); }
     .video-dummy-text { color: #555; font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: bold; z-index: 1;} 
     .video-wrapper video { width: 100%; height: 100%; object-fit: contain; background: #000; position: absolute; inset: 0; z-index: 5;}
@@ -160,7 +160,7 @@
     .io-meter-horizontal-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #22c55e 0%, #eab308 75%, #ef4444 100%); transition: width 0.05s ease-out; }
 
     .admin-matrix-wrapper { width: 100%; overflow-x: auto; overscroll-behavior-x: none; -webkit-overflow-scrolling: touch; border-radius: 12px; background: #111216; border: 1px solid var(--border-color); position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin-bottom: 15px;}
-    .admin-matrix { width: max-content; border-collapse: separate; border-spacing: 0; text-align: center; font-size: 13px; margin: 0; }
+    .admin-matrix { width: auto; border-collapse: separate; border-spacing: 0; text-align: center; font-size: 13px; margin: 0; }
     .admin-matrix th, .admin-matrix td { border-bottom: 1px solid var(--border-color); border-right: 1px solid var(--border-color); padding: 6px; }
     .admin-matrix th { background-color: transparent; color: var(--text-sub); font-weight: normal; position: sticky; top: 0; z-index: 5; border-top: 1px solid var(--border-color); min-width: 80px; }
     .diagonal-header { position: sticky; left: 0; z-index: 10 !important; min-width: 120px; min-height: 50px; background: linear-gradient(to top right, #1c1d21 49%, #3a3c42 49%, #3a3c42 51%, #1c1d21 51%); border-right: 2px solid var(--border-color) !important; box-shadow: 2px 0 5px rgba(0,0,0,0.4); }
@@ -172,7 +172,7 @@
     .admin-edit-name { width: 80px; font-size: 12px; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; text-align: center; background: #1c1d21; border: 1px solid var(--border-color); color: #fff; border-radius: 6px; padding: 6px; outline: none; transition: border-color 0.2s; } .admin-edit-name:focus { border-color: var(--blue); }
     .admin-matrix td.ch-cell select.admin-edit-type { width: 75px; height: 30px; text-align: center; font-family: 'JetBrains Mono', monospace; background: #1c1d21; border: 1px solid var(--border-color); color: #fff; border-radius: 6px; font-size: 12px; padding: 4px; outline: none; transition: border-color 0.2s; cursor: pointer;} .admin-matrix td.ch-cell select.admin-edit-type:focus { border-color: var(--blue); }
     
-    .btn-delete-col, .btn-delete-row, .btn-batch-col, .btn-batch-row { border: none; border-radius: 4px; cursor: pointer; font-size: 12px; line-height: 1; transition: all 0.2s; font-weight: bold; white-space: nowrap; flex-shrink: 0; height: 18px; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0;}
+    .btn-delete-col, .btn-delete-row, .btn-batch-col, .btn-batch-row { border: none; border-radius: 4px; cursor: pointer; font-size: 12px; line-height: 1; transition: all 0.2s; font-weight: bold; white-space: nowrap; flex-shrink: 0; height: 16px; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0;}
     .btn-delete-col, .btn-delete-row { background: var(--red); color: #fff; }
     .btn-batch-col, .btn-batch-row { background: var(--green); color: #000; }
     .btn-delete-col:hover, .btn-delete-row:hover, .btn-batch-col:hover, .btn-batch-row:hover { filter: brightness(1.2); }
@@ -259,9 +259,7 @@
       .card-main { padding: 4px 10px; } .btn-action { width: 34px; height: 34px; border-width: 1.5px; } .btn-icon { width: 16px; height: 16px; }
       .ch-name { font-size: 13px; } .ch-type { font-size: 9px; } .card-footer { padding: 0 10px 2px !important; } .btn-expand { padding: 2px 30px !important; font-size: 12px !important; }
       .master-meter-container { height: 6px; } 
-      .app-container.layout-hybrid .monitor-section { min-height: 0; height: auto; max-height: 60vh; }
-      .app-container.layout-hybrid .monitor-section .video-wrapper { max-height: calc(100% - 20px); width: auto; max-width: 100vw; margin: 0 auto;}
-      .app-container.layout-monitor .monitor-section .video-wrapper { height: 100%; max-height: calc(100dvh - 40px); max-width: 100vw; width: auto; margin: 0 auto; aspect-ratio: 16/9; }
+      .app-container.layout-hybrid .monitor-section { padding: 5px 0; }
       .admin-modal { margin-top: 5px; height: calc(100dvh - 45px); max-height: calc(100dvh - 45px); }
     }
   </style>
@@ -279,6 +277,7 @@
 
     <div id="login-overlay" class="overlay-base" style="display: flex;">
       <div class="login-modal">
+        <button class="btn-close-login" id="btn-close-login"><i class="fa-solid fa-xmark"></i></button>
         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 30px; width: 100%;">
           <div style="display: flex; align-items: center; justify-content: space-between; width: 195px; margin-bottom: 5px;">
             <svg viewBox="0 0 66 60" style="height: 38px; width: auto; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4)); display: block;">
@@ -306,7 +305,6 @@
         <button id="btn-join-member" class="btn-reload btn-join-member">接続 (Connect)</button>
         <button id="btn-join-admin" class="btn-reload btn-join-admin">管理者接続 (Admin)</button>
         <button id="btn-stop" class="btn-reload btn-stop">切断 (Disconnect)</button>
-        <div class="status-text" id="status-msg">待機中... ルーム名とユーザーIDを入力</div>
       </div>
     </div>
 
@@ -389,9 +387,11 @@
     </div>
 
     <div id="monitor-section" class="monitor-section">
-      <div class="video-wrapper" id="monitor-video-wrapper">
-        <div class="monitor-label" id="main-monitor-title">MONITOR</div>
-        <div class="video-dummy-text" id="main-monitor-source-text">[ NO VIDEO ]</div>
+      <div class="video-container">
+        <div class="video-wrapper" id="monitor-video-wrapper">
+          <div class="monitor-label" id="main-monitor-title">MONITOR</div>
+          <div class="video-dummy-text" id="main-monitor-source-text">[ NO VIDEO ]</div>
+        </div>
       </div>
     </div>
 
@@ -534,8 +534,20 @@
         syncPulse();
         
         const bLay = $('btn-layout');
-        if(bLay) bLay.onclick = (e) => { e.stopPropagation(); $('layout-dropdown')?.classList.toggle('show'); };
-        document.addEventListener('click', () => { $('layout-dropdown')?.classList.remove('show'); });
+        if(bLay) bLay.onclick = (e) => { 
+            e.stopPropagation(); 
+            const drop = $('layout-dropdown');
+            drop?.classList.toggle('show'); 
+            if (drop?.classList.contains('show')) {
+                bLay.classList.add('active');
+            } else {
+                bLay.classList.remove('active');
+            }
+        };
+        document.addEventListener('click', () => { 
+            $('layout-dropdown')?.classList.remove('show'); 
+            $('btn-layout')?.classList.remove('active');
+        });
         document.querySelectorAll('.layout-item').forEach(item => { item.onclick = (e) => { applyLayout(item.getAttribute('data-layout')); state.layout = item.getAttribute('data-layout'); saveRoomState(); }; });
 
         const bsLog = $('btn-show-login'); if(bsLog) bsLog.onclick = () => { 
@@ -1118,7 +1130,7 @@
       let headerHtml = `<thead><tr><th class="diagonal-header" style="min-width:180px;"><span class="dh-member" style="color:var(--text-sub);">USER</span><span class="dh-party" style="color:var(--text-sub);">PARTY</span></th>`;
       state.registeredUsers?.forEach(uid => {
           const isOnline = uid === state.myUserId || (state.room && state.room.remoteParticipants && state.room.remoteParticipants.has(uid)); const statusColor = isOnline ? 'var(--green)' : 'var(--text-sub)';
-          headerHtml += `<th style="width:140px; min-width:140px; max-width:140px;"><div style="display:flex; align-items:center; justify-content:center; gap:8px; height: 50px;"><div class="matrix-user-header"><span class="status-dot-${uid}" style="color:${statusColor}; font-size:10px; line-height:1;">●</span><span style="font-weight:bold; color:var(--text-main); font-family: 'JetBrains Mono', monospace; font-size:12px; line-height:1;">${uid}</span></div><div style="position:relative; width:8px; height:46px; background:#000; border-radius:4px; overflow:hidden; box-shadow:inset 0 0 2px rgba(0,0,0,0.8);"><div id="user-meter-${uid}" style="position:absolute; bottom:0; left:0; width:100%; height:100%; background:linear-gradient(to top, #22c55e, #eab308, #ef4444); transform-origin:bottom; transform:scaleY(0); transition:transform 0.05s ease-out;"></div></div><div style="display:flex; flex-direction:column; gap:2px; width: 30px;"><button class="btn-batch-col" onclick="toggleAllUserAssignments('${uid}')">一括</button><button class="btn-delete-col" data-uid="${uid}" onclick="event.stopPropagation();">削除</button></div></div></th>`;
+          headerHtml += `<th style="width:140px; min-width:140px; max-width:140px;"><div style="display:flex; align-items:center; justify-content:center; gap:8px; height: 50px;"><div class="matrix-user-header"><span class="status-dot-${uid}" style="color:${statusColor}; font-size:10px; line-height:1;">●</span><span style="font-weight:bold; color:var(--text-main); font-family: 'JetBrains Mono', monospace; font-size:12px; line-height:1;">${uid}</span></div><div style="position:relative; width:8px; height:46px; background:#000; border-radius:4px; overflow:hidden; box-shadow:inset 0 0 2px rgba(0,0,0,0.8);"><div id="user-meter-${uid}" style="position:absolute; bottom:0; left:0; width:100%; height:100%; background:linear-gradient(to top, #22c55e, #eab308, #ef4444); transform-origin:bottom; transform:scaleY(0); transition:transform 0.05s ease-out;"></div></div><div style="display:flex; flex-direction:column; gap:2px; width: 36px;"><button class="btn-batch-col" onclick="toggleAllUserAssignments('${uid}')">一括</button><button class="btn-delete-col" data-uid="${uid}" onclick="event.stopPropagation();">削除</button></div></div></th>`;
       });
       headerHtml += `<th style="width: auto; min-width: 100px; text-align: left; padding-left: 15px;"><button id="btn-add-user" style="background:rgba(96,165,250,0.1); color:var(--blue); border:1px solid rgba(96,165,250,0.4); padding:6px 12px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;">＋ 追加</button></th></tr></thead><tbody>`;
       let html = `<div class="admin-matrix-wrapper"><table class="admin-matrix">${headerHtml}`;
@@ -1126,7 +1138,7 @@
       state.channels?.forEach(ch => {
           if(!ch || ch.id === 'ch-video') return; 
           const typeSelect = `<select class="admin-edit-type" data-id="${ch.id}"><option value="PL" ${ch.type==='PL'?'selected':''}>PL</option><option value="Local" ${ch.type==='Local'?'selected':''}>Local</option><option value="Listen" ${ch.type==='Listen'?'selected':''}>Listen</option></select>`;
-          html += `<tr><td class="ch-cell" style="vertical-align: middle;"><div style="display:flex; gap:6px; align-items:center; justify-content:space-between; width:100%; height:100%;"><div style="display:flex; gap:4px; flex:1; align-items:center;"><input type="text" class="admin-edit-name" data-id="${ch.id}" value="${ch.name}" style="width:80px; font-size:12px; font-family:'JetBrains Mono', monospace; text-transform:uppercase; text-align:center;" ${ch.fixed?'disabled':''}>${typeSelect}</div>${ch.fixed?'<div style="width:30px;"></div>':`<div style="display:flex; flex-direction:column; gap:2px; width: 30px;"><button class="btn-batch-row" data-id="${ch.id}">一括</button><button class="btn-delete-row" data-id="${ch.id}">削除</button></div>`}</div></td>`;
+          html += `<tr><td class="ch-cell" style="vertical-align: middle;"><div style="display:flex; gap:6px; align-items:center; justify-content:space-between; width:100%; height:100%;"><div style="display:flex; gap:4px; flex:1; align-items:center;"><input type="text" class="admin-edit-name" data-id="${ch.id}" value="${ch.name}" style="width:80px; font-size:12px; font-family:'JetBrains Mono', monospace; text-transform:uppercase; text-align:center;" ${ch.fixed?'disabled':''}>${typeSelect}</div>${ch.fixed?'<div style="width:36px;"></div>':`<div style="display:flex; flex-direction:column; gap:2px; width: 36px;"><button class="btn-batch-row" data-id="${ch.id}">一括</button><button class="btn-delete-row" data-id="${ch.id}">削除</button></div>`}</div></td>`;
           state.registeredUsers?.forEach(uid => { 
             const isSelf = uid === state.myUserId; const isIoOn = state.ioBridge && state.ioBridge.enabled; const isAssigned = (state.userAssignments[uid] || []).includes(ch.id); const activeClass = isAssigned ? 'active' : ''; const disabledClass = isAssigned ? '' : 'disabled';
             let isMicOn = false; let isSpkOn = false;
@@ -1309,7 +1321,7 @@
 
     const joinNetwork = async function(isAdmin) {
       const rawRoomId = $('host-id')?.value.trim(); const myName = $('join-userid')?.value.trim();
-      if (!rawRoomId || !myName) { const sm=$('status-msg'); if(sm){sm.textContent = "ルーム名とIDを入力してください"; sm.style.color = "var(--alert)"; setTimeout(() => { sm.textContent = "待機中... ルーム名とIDを入力"; sm.style.color = "var(--text-sub)"; }, 3000);} return; }
+      if (!rawRoomId || !myName) { return; }
       if (isAdmin && myName.toLowerCase() !== 'debug') { const pass = prompt("管理者パスワードを入力してください"); if (pass !== "tmax") { if(pass !== null) alert("パスワードが違います。"); return; } }
 
       const btn = isAdmin ? $('btn-join-admin') : $('btn-join-member'); const originalText = btn?.textContent;
@@ -1384,7 +1396,7 @@
             const data = await res.json(); token = data.token;
           } catch (e) { 
               alert("【致命的エラー】\n認証サーバーからのトークン取得に失敗しました。\n\n詳細: " + e.message); 
-              const sm=$('status-msg'); if(sm){sm.textContent = "接続エラー"; sm.style.color = "var(--alert)";} if($('btn-stop')) $('btn-stop').style.display = 'block';
+              if($('btn-stop')) $('btn-stop').style.display = 'block';
               return; 
           }
 
