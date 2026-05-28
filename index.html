@@ -101,22 +101,20 @@
     .layout-dropdown.show { display: flex; } .layout-item { background: transparent; border: none; color: var(--text-main); padding: 12px 15px; text-align: left; font-size: 13px; font-weight: bold; cursor: pointer; font-family: 'JetBrains Mono', monospace; border-bottom: 1px solid var(--border-color); transition: background 0.2s; display: flex; align-items: center; }
     .layout-item:hover { background: rgba(255,255,255,0.05); } .layout-item.active { color: var(--blue); }
     
-    /* Layout Configurations */
-    .monitor-section { width: 100%; background: #000; display: none; flex-direction: column; align-items: center; padding: 10px 0; border-bottom: 2px solid var(--border-color); flex-shrink: 0; position: relative;}
+    /* ======== Monitor Section (Responsive & 16:9 fixed) ======== */
+    .monitor-section { width: 100%; background: #000; display: none; padding: 0; flex-shrink: 0; position: relative; overflow: hidden; align-items: center; justify-content: center;}
     
-    /* ハイブリッドレイアウト：モニターを最大限広げ、下部はグリッドリスト */
-    .app-container.layout-hybrid .monitor-section { display: flex; flex: 1; flex-direction: column; justify-content: flex-start; align-items: center; min-height: 25vh; padding: 10px 0; border-bottom: 2px solid var(--border-color); background: #000; overflow: hidden;}
-    .app-container.layout-hybrid .monitor-section .video-wrapper { width: 100vw; max-width: 100%; height: auto; max-height: calc(100% - 25px); aspect-ratio: 16 / 9; border: 4px solid transparent; border-bottom: 1px solid #333; margin: 0 auto auto auto; box-sizing: border-box;}
+    .app-container.layout-hybrid .monitor-section { display: flex; flex: 1; min-height: 0; border-bottom: 2px solid var(--border-color); }
     .app-container.layout-hybrid .channel-list-container { flex: 0 0 auto; max-height: 45vh; padding: 15px;}
     
-    .app-container.layout-monitor .monitor-section { display: flex; flex: 1; flex-direction: column; justify-content: flex-start; align-items: center; border-bottom: none; overflow: hidden; padding-top: 10px; }
-    .app-container.layout-monitor .monitor-section .video-wrapper { width: 100vw; max-width: none; height: auto; aspect-ratio: 16 / 9; max-height: calc(100% - 25px); margin: 0 auto auto auto; box-sizing: border-box;}
-    .app-container.layout-monitor .global-controls,.app-container.layout-monitor .channel-list-container,.app-container.layout-monitor .master-meter-container { display: none !important; }
+    .app-container.layout-monitor .monitor-section { display: flex; flex: 1; min-height: 0; border-bottom: none; }
+    .app-container.layout-monitor .global-controls, .app-container.layout-monitor .channel-list-container, .app-container.layout-monitor .master-meter-container { display: none !important; }
     
-    .monitor-label { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: bold; color: #ddd; margin-bottom: 6px; letter-spacing: 1px; width: 100%; text-align: center; }
-    .video-wrapper { width: 100%; max-width: 100%; aspect-ratio: 16 / 9; background: #1a1a1a; display: flex; align-items: center; justify-content: center; border: 4px solid transparent; border-bottom: 1px solid #333; position: relative; transition: border-color 0.15s ease-out; box-sizing: border-box; }
+    .monitor-label { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); z-index: 10; background: rgba(0,0,0,0.6); padding: 4px 12px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: bold; color: #ddd; letter-spacing: 1px; pointer-events: none; margin: 0; white-space: nowrap; }
+    .video-wrapper { max-width: 100%; max-height: 100%; aspect-ratio: 16 / 9; background: #1a1a1a; display: flex; align-items: center; justify-content: center; border: 4px solid transparent; position: relative; transition: border-color 0.15s ease-out; box-sizing: border-box; margin: auto; }
     .video-wrapper.tally-on { border-color: var(--alert) !important; box-shadow: 0 0 30px rgba(239, 68, 68, 0.8), inset 0 0 30px rgba(239, 68, 68, 0.6); }
-    .video-dummy-text { color: #555; font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: bold; z-index: 1;} .video-wrapper video { width: 100%; height: 100%; object-fit: contain; background: #000; position: absolute; inset: 0; z-index: 5;}
+    .video-dummy-text { color: #555; font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: bold; z-index: 1;} 
+    .video-wrapper video { width: 100%; height: 100%; object-fit: contain; background: #000; position: absolute; inset: 0; z-index: 5;}
     
     /* Admin Modal */
     #admin-overlay { z-index: 4000; align-items: center; justify-content: flex-start; padding-top: 48px;}
@@ -162,7 +160,7 @@
     .io-meter-horizontal-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #22c55e 0%, #eab308 75%, #ef4444 100%); transition: width 0.05s ease-out; }
 
     .admin-matrix-wrapper { width: 100%; overflow-x: auto; overscroll-behavior-x: none; -webkit-overflow-scrolling: touch; border-radius: 12px; background: #111216; border: 1px solid var(--border-color); position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin-bottom: 15px;}
-    .admin-matrix { width: max-content; border-collapse: separate; border-spacing: 0; text-align: center; font-size: 13px; margin: 0 auto;}
+    .admin-matrix { width: max-content; border-collapse: separate; border-spacing: 0; text-align: center; font-size: 13px; margin: 0; }
     .admin-matrix th, .admin-matrix td { border-bottom: 1px solid var(--border-color); border-right: 1px solid var(--border-color); padding: 6px; }
     .admin-matrix th { background-color: transparent; color: var(--text-sub); font-weight: normal; position: sticky; top: 0; z-index: 5; border-top: 1px solid var(--border-color); min-width: 80px; }
     .diagonal-header { position: sticky; left: 0; z-index: 10 !important; min-width: 120px; min-height: 50px; background: linear-gradient(to top right, #1c1d21 49%, #3a3c42 49%, #3a3c42 51%, #1c1d21 51%); border-right: 2px solid var(--border-color) !important; box-shadow: 2px 0 5px rgba(0,0,0,0.4); }
@@ -174,7 +172,7 @@
     .admin-edit-name { width: 80px; font-size: 12px; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; text-align: center; background: #1c1d21; border: 1px solid var(--border-color); color: #fff; border-radius: 6px; padding: 6px; outline: none; transition: border-color 0.2s; } .admin-edit-name:focus { border-color: var(--blue); }
     .admin-matrix td.ch-cell select.admin-edit-type { width: 75px; height: 30px; text-align: center; font-family: 'JetBrains Mono', monospace; background: #1c1d21; border: 1px solid var(--border-color); color: #fff; border-radius: 6px; font-size: 12px; padding: 4px; outline: none; transition: border-color 0.2s; cursor: pointer;} .admin-matrix td.ch-cell select.admin-edit-type:focus { border-color: var(--blue); }
     
-    .btn-delete-col, .btn-delete-row, .btn-batch-col, .btn-batch-row { border: none; border-radius: 4px; cursor: pointer; font-size: 9px; transition: all 0.2s; font-weight: bold; white-space: nowrap; flex-shrink: 0; height: 18px; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0;}
+    .btn-delete-col, .btn-delete-row, .btn-batch-col, .btn-batch-row { border: none; border-radius: 4px; cursor: pointer; font-size: 12px; line-height: 1; transition: all 0.2s; font-weight: bold; white-space: nowrap; flex-shrink: 0; height: 18px; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0;}
     .btn-delete-col, .btn-delete-row { background: var(--red); color: #fff; }
     .btn-batch-col, .btn-batch-row { background: var(--green); color: #000; }
     .btn-delete-col:hover, .btn-delete-row:hover, .btn-batch-col:hover, .btn-batch-row:hover { filter: brightness(1.2); }
@@ -391,8 +389,10 @@
     </div>
 
     <div id="monitor-section" class="monitor-section">
-      <div class="monitor-label" id="main-monitor-title">MONITOR</div>
-      <div class="video-wrapper" id="monitor-video-wrapper"><div class="video-dummy-text" id="main-monitor-source-text">[ NO VIDEO ]</div></div>
+      <div class="video-wrapper" id="monitor-video-wrapper">
+        <div class="monitor-label" id="main-monitor-title">MONITOR</div>
+        <div class="video-dummy-text" id="main-monitor-source-text">[ NO VIDEO ]</div>
+      </div>
     </div>
 
     <div class="global-controls">
