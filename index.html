@@ -173,7 +173,8 @@
     .admin-edit-name { width: 80px; font-size: 12px; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; text-align: center; background: #1c1d21; border: 1px solid var(--border-color); color: #fff; border-radius: 6px; padding: 6px; outline: none; transition: border-color 0.2s; } .admin-edit-name:focus { border-color: var(--blue); }
     .admin-matrix td.ch-cell select.admin-edit-type { width: 75px; height: 30px; text-align: center; font-family: 'JetBrains Mono', monospace; background: #1c1d21; border: 1px solid var(--border-color); color: #fff; border-radius: 6px; font-size: 12px; padding: 4px; outline: none; transition: border-color 0.2s; cursor: pointer;} .admin-matrix td.ch-cell select.admin-edit-type:focus { border-color: var(--blue); }
     
-    .btn-delete-col, .btn-delete-row, .btn-batch-col, .btn-batch-row { border: none; border-radius: 4px; cursor: pointer; font-size: 8px; line-height: 1; transition: all 0.2s; font-weight: bold; white-space: nowrap; flex-shrink: 0; height: 14px; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0;}
+    /* ボタンサイズを9pxに縮小 */
+    .btn-delete-col, .btn-delete-row, .btn-batch-col, .btn-batch-row { border: none; border-radius: 4px; cursor: pointer; font-size: 9px; line-height: 1; transition: all 0.2s; font-weight: bold; white-space: nowrap; flex-shrink: 0; height: 9px; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0;}
     .btn-delete-col, .btn-delete-row { background: var(--red); color: #fff; }
     .btn-batch-col, .btn-batch-row { background: var(--green); color: #000; }
     .btn-delete-col:hover, .btn-delete-row:hover, .btn-batch-col:hover, .btn-batch-row:hover { filter: brightness(1.2); }
@@ -260,7 +261,9 @@
       .card-main { padding: 4px 10px; } .btn-action { width: 34px; height: 34px; border-width: 1.5px; } .btn-icon { width: 16px; height: 16px; }
       .ch-name { font-size: 13px; } .ch-type { font-size: 9px; } .card-footer { padding: 0 10px 2px !important; } .btn-expand { padding: 2px 30px !important; font-size: 12px !important; }
       .master-meter-container { height: 6px; } 
-      .app-container.layout-hybrid .monitor-section { padding: 5px 0; }
+      .app-container.layout-hybrid .monitor-section { min-height: 0; height: auto; max-height: 60vh; }
+      .app-container.layout-hybrid .monitor-section .video-wrapper { max-height: calc(100% - 20px); width: auto; max-width: 100vw; margin: 0 auto;}
+      .app-container.layout-monitor .monitor-section .video-wrapper { height: 100%; max-height: calc(100dvh - 40px); max-width: 100vw; width: auto; margin: 0 auto; aspect-ratio: 16/9; }
       .admin-modal { margin-top: 5px; height: calc(100dvh - 45px); max-height: calc(100dvh - 45px); }
     }
   </style>
@@ -277,10 +280,8 @@
       <div id="disconnect-text" style="font-size: 14px; color: rgba(255,255,255,0.8); margin-bottom: 30px;">通信が切断されました。自動再接続を試行中...</div>
     </div>
 
-    <!-- ログイン画面（バツボタン廃止） -->
     <div id="login-overlay" class="overlay-base" style="display: flex;">
       <div class="login-modal">
-        <button class="btn-close-login" id="btn-close-login" style="display:none;"><i class="fa-solid fa-xmark"></i></button>
         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 30px; width: 100%;">
           <div style="display: flex; align-items: center; justify-content: space-between; width: 195px; margin-bottom: 5px;">
             <svg viewBox="0 0 66 60" style="height: 38px; width: auto; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4)); display: block;">
@@ -307,7 +308,6 @@
         </div>
         <button id="btn-join-member" class="btn-reload btn-join-member">接続 (Connect)</button>
         <button id="btn-join-admin" class="btn-reload btn-join-admin">管理者接続 (Admin)</button>
-        <button id="btn-stop" class="btn-reload btn-stop">切断 (Disconnect)</button>
       </div>
     </div>
 
@@ -389,7 +389,6 @@
       </div>
     </div>
 
-    <!-- ★ モニターサイズのジャストフィット調整 -->
     <div id="monitor-section" class="monitor-section">
       <div class="video-container">
         <div class="video-wrapper" id="monitor-video-wrapper">
@@ -417,7 +416,6 @@
         const ov = $('disconnect-overlay'); if (ov) { ov.style.display = 'flex'; const dt = $('disconnect-text'); if(dt) dt.textContent = 'ネットワークが切断されました。回復を待っています...'; }
     });
     
-    // ディスコネクト画面のバツボタン処理
     const bdClose = $('btn-close-disconnect');
     if (bdClose) {
         bdClose.onclick = () => {
@@ -531,7 +529,8 @@
       ioBridge: { enabled: false, inDevice4w: 'default', outDevice4w: 'default', inAssign4wL: '', inAssign4wR: '', outAssign4wL: '', outAssign4wR: '', inDevicePgm: '', inAssignPgmL: '', inAssignPgmR: '', inGain4wL: 1.0, inGain4wR: 1.0, outGain4wL: 1.0, outGain4wR: 1.0, inGainPgmL: 1.0, inGainPgmR: 1.0 },
       ioNodes: { gain4wL: null, gain4wR: null, gainPgmL: null, gainPgmR: null, gainOutL: null, gainOutR: null, analyser4wL: null, analyser4wR: null, analyserPgmL: null, analyserPgmR: null, analyserOutL: null, analyserOutR: null },
       ioTrack4wL: null, ioTrack4wR: null, ioTrackPgmL: null, ioTrackPgmR: null, masterAudioEl: null, hasSuccessfullyConnected: false,
-      audioCtx: null, masterAnalyser: null, localMicAnalyser: null, currentLocalVideoTrack: null
+      audioCtx: null, masterAnalyser: null, localMicAnalyser: null, currentLocalVideoTrack: null,
+      mqttClient: null
     };
 
     const LIVEKIT_WS_URL = "wss://yy-talk-pe8z9ycq.livekit.cloud";
@@ -762,13 +761,24 @@
 
     let activeTallies = new Set();
     function evaluateTallyGlow() {
-      const myAssigned = state.tallyAssignments[state.myUserId] || []; const shouldGlow = myAssigned.some(id => activeTallies.has(id)); let fallbackGlow = false; if (myAssigned.length === 0 && activeTallies.has(1)) fallbackGlow = true;
+      const myAssigned = state.tallyAssignments[state.myUserId] || []; const shouldGlow = myAssigned.some(id => activeTallies.has(id));
       const wrap = $('monitor-video-wrapper'); if(!wrap) return;
-      if (shouldGlow || fallbackGlow) wrap.classList.add('tally-on'); else wrap.classList.remove('tally-on');
+      if (shouldGlow) wrap.classList.add('tally-on'); else wrap.classList.remove('tally-on');
     }
 
     const editMonitorTitle = $('edit-monitor-title');
-    if(editMonitorTitle) { editMonitorTitle.addEventListener('input', (e) => { state.monitorTitle = e.target.value; const mt=$('main-monitor-title'); if(mt) mt.textContent = state.monitorTitle || 'MONITOR'; saveRoomState(); sendData({ type: 'update-monitor-title', title: state.monitorTitle }); }); }
+    if(editMonitorTitle) { 
+        editMonitorTitle.addEventListener('input', (e) => { 
+            state.monitorTitle = e.target.value; 
+            const mt=$('main-monitor-title'); 
+            if(mt) {
+                mt.textContent = state.monitorTitle; 
+                mt.style.display = (!state.monitorTitle || state.monitorTitle.trim() === '') ? 'none' : 'block';
+            }
+            saveRoomState(); 
+            sendData({ type: 'update-monitor-title', title: state.monitorTitle }); 
+        }); 
+    }
     
     const editVideoQual = $('edit-video-quality');
     if(editVideoQual) { editVideoQual.addEventListener('change', async (e) => { 
@@ -835,7 +845,7 @@
 
     function loadRoomState(roomId) {
       const saved = safeStorage.get('yytalk_room_' + roomId);
-      if (saved) { try { const parsed = JSON.parse(saved); if(parsed.monitorTitle) { state.monitorTitle = parsed.monitorTitle; const mt = $('main-monitor-title'); if(mt) mt.textContent = state.monitorTitle; const et = $('edit-monitor-title'); if(et) et.value = state.monitorTitle; } if(parsed.videoQuality) { state.videoQuality = parsed.videoQuality; const ev = $('edit-video-quality'); if(ev) ev.value = state.videoQuality; } if(parsed.ioBridge) state.ioBridge = parsed.ioBridge; if(parsed.layout) { state.layout = parsed.layout; applyLayout(state.layout); } if (parsed?.channels?.length > 0) { resetAndApplyChannels(parsed.channels, parsed.userAssignments, parsed.tallyAssignments, parsed.registeredUsers); return; } } catch(e){} }
+      if (saved) { try { const parsed = JSON.parse(saved); if(parsed.monitorTitle !== undefined) { state.monitorTitle = parsed.monitorTitle; const mt = $('main-monitor-title'); if(mt) { mt.textContent = state.monitorTitle; mt.style.display = (!state.monitorTitle || state.monitorTitle.trim() === '') ? 'none' : 'block'; } const et = $('edit-monitor-title'); if(et) et.value = state.monitorTitle; } if(parsed.videoQuality) { state.videoQuality = parsed.videoQuality; const ev = $('edit-video-quality'); if(ev) ev.value = state.videoQuality; } if(parsed.ioBridge) state.ioBridge = parsed.ioBridge; if(parsed.layout) { state.layout = parsed.layout; applyLayout(state.layout); } if (parsed?.channels?.length > 0) { resetAndApplyChannels(parsed.channels, parsed.userAssignments, parsed.tallyAssignments, parsed.registeredUsers); return; } } catch(e){} }
       const defaultChannels = [ { id: 'ch-video', name: 'VIDEO', type: 'Listen', fixed: true }, { id: 'ch1', name: 'NEW', type: 'PL' } ];
       resetAndApplyChannels(defaultChannels, {}, {}, []);
     }
@@ -1298,7 +1308,7 @@
             Object.values(state.mediaCalls || {}).forEach(call => { if (call?.source && state.audioCtx && data.ch && !call.isIOTrack) { const splitGain = state.audioCtx.createGain(); const panner = state.audioCtx.createStereoPanner(); splitGain.gain.value = 0; call.source.connect(panner); panner.connect(splitGain); if(state.channelNodes[data.ch.id]) splitGain.connect(state.channelNodes[data.ch.id].analyser); call.chGains[data.ch.id] = {gain: splitGain, panner: panner}; } }); if(data.registered) state.registeredUsers = data.registered; if(data.assignments) state.userAssignments = data.assignments; if(state.userAssignments && state.userAssignments[state.myUserId]) { applyAssignments(state.userAssignments[state.myUserId]); } saveRoomState(); if(state.isAdmin) buildAdminMatrix(); 
         }
         else if (data.type === 'remove-channel') { if(data.chId) removeChannel(data.chId); saveRoomState(); if(state.isAdmin) buildAdminMatrix(); }
-        else if (data.type === 'update-monitor-title') { state.monitorTitle = data.title; const mmt=$('main-monitor-title'); if(mmt) mmt.textContent = data.title || 'MONITOR'; if (state.isAdmin) {const emt=$('edit-monitor-title'); if(emt) emt.value = data.title;} saveRoomState(); }
+        else if (data.type === 'update-monitor-title') { state.monitorTitle = data.title; const mmt=$('main-monitor-title'); if(mmt) { mmt.textContent = data.title || ''; mmt.style.display = (!data.title || data.title.trim() === '') ? 'none' : 'block'; } if (state.isAdmin) {const emt=$('edit-monitor-title'); if(emt) emt.value = data.title || '';} saveRoomState(); }
         else if (data.type === 'update-video-sender') {
           state.activeVideoSender = data.senderId;
           const mst = $('main-monitor-source-text'); const es = $('edit-monitor-source');
@@ -1337,9 +1347,41 @@
       if (isAdmin && myName.toLowerCase() !== 'debug') { const pass = prompt("管理者パスワードを入力してください"); if (pass !== "tmax") { if(pass !== null) alert("パスワードが違います。"); return; } }
 
       const btn = isAdmin ? $('btn-join-admin') : $('btn-join-member'); const originalText = btn?.textContent;
-      if($('btn-join-member')) $('btn-join-member').disabled = true; if($('btn-join-admin')) $('btn-join-admin').disabled = true; if(btn){btn.textContent = "認証中..."; btn.style.opacity = "0.5";}
+      if($('btn-join-member')) $('btn-join-member').disabled = true; if($('btn-join-admin')) $('btn-join-admin').disabled = true; if(btn){btn.textContent = "確認中..."; btn.style.opacity = "0.5";}
 
       state.roomId = rawRoomId; state.myUserId = myName; state.isAdmin = isAdmin;
+
+      if (myName.toLowerCase() !== 'debug') {
+          let isDuplicate = false;
+          const presenceTopic = "yytalk/presence/" + rawRoomId;
+          const checkClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
+          
+          await new Promise((resolve) => {
+              const timeout = setTimeout(() => { checkClient.end(); resolve(); }, 1500);
+              checkClient.on('connect', () => {
+                  checkClient.subscribe(presenceTopic, () => { checkClient.publish(presenceTopic, JSON.stringify({ type: 'ping', userId: myName })); });
+              });
+              checkClient.on('message', (topic, message) => {
+                  try {
+                      const data = JSON.parse(message.toString());
+                      if (data.type === 'pong' && data.userId === myName) {
+                          isDuplicate = true; clearTimeout(timeout); checkClient.end(); resolve();
+                      }
+                  } catch(e) {}
+              });
+          });
+
+          if (isDuplicate) {
+              alert(`警告：すでに同じルームに同じユーザーID（${myName}）がオンラインです。\n二重ログインは禁止されています。別のIDを使用してください。`);
+              if(btn){btn.textContent = originalText; btn.style.opacity = "1";}
+              if($('btn-join-member')) $('btn-join-member').disabled = false;
+              if($('btn-join-admin')) $('btn-join-admin').disabled = false;
+              return; 
+          }
+      }
+
+      if(btn){btn.textContent = "認証中...";}
+
       if($('header-room-name')) $('header-room-name').textContent = rawRoomId;
       if ($('header-user-id')) { $('header-user-id').textContent = myName; $('header-user-id').style.display = 'block'; }
       if (isAdmin) { document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex'); } else { document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none'); }
@@ -1367,7 +1409,7 @@
             state.registeredUsers = ['debug', 'Cam1', 'Cam2', 'Director', 'VE'];
             state.registeredUsers.forEach(u => {
                 if(!state.userAssignments[u]) state.userAssignments[u] = state.channels.map(c=>c.id);
-                if(!state.tallyAssignments[u]) state.tallyAssignments[u] = [1, 2];
+                if(!state.tallyAssignments[u]) state.tallyAssignments[u] = [];
             });
             state.room = { 
                 state: 'connected',
@@ -1388,16 +1430,33 @@
 
           try {
               const tallyTopic = "yytalk/tally/" + rawRoomId;
-              const mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
-              mqttClient.on('connect', () => { mqttClient.subscribe(tallyTopic); });
-              mqttClient.on('reconnect', () => { mqttClient.subscribe(tallyTopic); }); 
-              mqttClient.on('message', (topic, message) => {
-                try {
-                  const rawMsg = message.toString().trim(); let tId = 1; let act = rawMsg;
-                  if (rawMsg.includes(':')) { const parts = rawMsg.split(':'); tId = parseInt(parts[0], 10); act = parts[1]; }
-                  if (act === "ON") activeTallies.add(tId); else if (act === "OFF") activeTallies.delete(tId);
-                  evaluateTallyGlow();
-                } catch(e) {}
+              const presenceTopic = "yytalk/presence/" + rawRoomId;
+              state.mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
+              state.mqttClient.on('connect', () => { 
+                  state.mqttClient.subscribe(tallyTopic); 
+                  state.mqttClient.subscribe(presenceTopic);
+              });
+              state.mqttClient.on('reconnect', () => { 
+                  state.mqttClient.subscribe(tallyTopic); 
+                  state.mqttClient.subscribe(presenceTopic);
+              }); 
+              state.mqttClient.on('message', (topic, message) => {
+                  if (topic === presenceTopic) {
+                      try {
+                          const data = JSON.parse(message.toString());
+                          if (data.type === 'ping' && data.userId === state.myUserId) {
+                              state.mqttClient.publish(presenceTopic, JSON.stringify({ type: 'pong', userId: state.myUserId }));
+                          }
+                      } catch(e) {}
+                      return;
+                  }
+                  
+                  try {
+                    const rawMsg = message.toString().trim(); let tId = 1; let act = rawMsg;
+                    if (rawMsg.includes(':')) { const parts = rawMsg.split(':'); tId = parseInt(parts[0], 10); act = parts[1]; }
+                    if (act === "ON") activeTallies.add(tId); else if (act === "OFF") activeTallies.delete(tId);
+                    evaluateTallyGlow();
+                  } catch(e) {}
               });
           } catch(e) {}
 
