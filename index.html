@@ -173,8 +173,8 @@
     .admin-edit-name { width: 80px; font-size: 12px; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; text-align: center; background: #1c1d21; border: 1px solid var(--border-color); color: #fff; border-radius: 6px; padding: 6px; outline: none; transition: border-color 0.2s; } .admin-edit-name:focus { border-color: var(--blue); }
     .admin-matrix td.ch-cell select.admin-edit-type { width: 75px; height: 30px; text-align: center; font-family: 'JetBrains Mono', monospace; background: #1c1d21; border: 1px solid var(--border-color); color: #fff; border-radius: 6px; font-size: 12px; padding: 4px; outline: none; transition: border-color 0.2s; cursor: pointer;} .admin-matrix td.ch-cell select.admin-edit-type:focus { border-color: var(--blue); }
     
-    /* ボタンサイズを9pxに縮小 */
-    .btn-delete-col, .btn-delete-row, .btn-batch-col, .btn-batch-row { border: none; border-radius: 4px; cursor: pointer; font-size: 9px; line-height: 1; transition: all 0.2s; font-weight: bold; white-space: nowrap; flex-shrink: 0; height: 9px; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0;}
+    /* ボタンサイズを6pxに縮小、文字サイズ4px */
+    .btn-delete-col, .btn-delete-row, .btn-batch-col, .btn-batch-row { border: none; border-radius: 4px; cursor: pointer; font-size: 4px; line-height: 1; transition: all 0.2s; font-weight: bold; white-space: nowrap; flex-shrink: 0; height: 6px; width: 100%; display: flex; align-items: center; justify-content: center; padding: 0;}
     .btn-delete-col, .btn-delete-row { background: var(--red); color: #fff; }
     .btn-batch-col, .btn-batch-row { background: var(--green); color: #000; }
     .btn-delete-col:hover, .btn-delete-row:hover, .btn-batch-col:hover, .btn-batch-row:hover { filter: brightness(1.2); }
@@ -214,7 +214,7 @@
     .status-line-mask { position: absolute; top: 0; left: 0; right: 0; height: 100%; background-color: #2a2c33; transition: height 0.05s ease-out; }
     
     .ch-meter-container { height: 4px; background: #2a2c33; margin: 0 45px 4px; border-radius: 2px; overflow: hidden; position: relative; z-index: 2;}
-    .ch-meter-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); } 
+    .ch-meter-grad { absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); } 
     .ch-meter-mask { position: absolute; right: 0; top: 0; bottom: 0; width: 100%; background-color: #2a2c33; transition: width 0.1s ease-out; }
 
     .volume-panel { display: none; padding: 5px 20px; align-items: center; gap: 10px; } .channel-card.expanded .volume-panel { display: flex; }
@@ -308,6 +308,7 @@
         </div>
         <button id="btn-join-member" class="btn-reload btn-join-member">接続 (Connect)</button>
         <button id="btn-join-admin" class="btn-reload btn-join-admin">管理者接続 (Admin)</button>
+        <button id="btn-stop" class="btn-reload btn-stop">切断 (Disconnect)</button>
       </div>
     </div>
 
