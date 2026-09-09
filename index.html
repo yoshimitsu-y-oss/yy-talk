@@ -1708,6 +1708,62 @@ html, body, #main-app-container {
 }
 </style>
 
+
+<style id="v11-monitor-assignment-fixes">
+/* ===== v11: monitor-only must beat the v9 #channel-list-wrap grid restore =====
+   #channel-list-wrap has an ID + !important in v9, so the monitor-only selector
+   must be at least as specific and appear later. */
+#main-app-container.layout-monitor #channel-list-wrap {
+  display: none !important;
+  visibility: hidden !important;
+  flex: 0 0 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: 0 !important;
+  max-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+#main-app-container.layout-monitor .global-controls,
+#main-app-container.layout-monitor .master-meter-container {
+  display: none !important;
+}
+#main-app-container.layout-monitor #monitor-section {
+  display: flex !important;
+  visibility: visible !important;
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  height: auto !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: 100% !important;
+  max-height: none !important;
+  margin: 0 !important;
+  border-bottom: 0 !important;
+}
+#main-app-container.layout-monitor #monitor-section .video-container {
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+}
+
+/* Mobile Safari/Android: explicitly preserve the same monitor-only visibility
+   after all responsive grid rules. */
+@media (max-width: 600px) {
+  #main-app-container.layout-monitor #channel-list-wrap { display: none !important; }
+  #main-app-container.layout-monitor #monitor-section {
+    display: flex !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+  }
+}
+</style>
+
 </head>
 
 <body onload="if(window.forceResize) window.forceResize()">
@@ -3848,7 +3904,37 @@ html, body, #main-app-container {
 
         else if (data.type === 'update-ch-info') { 
 
-            if(data.data && Array.isArray(data.data)) { state.channels = data.data; state.channels.forEach((ch) => { if(!ch) return; const nameEl = $(`name-${ch.id}`); const typeEl = $(`type-${ch.id}`); if(nameEl) nameEl.textContent = ch.name; if(typeEl) typeEl.textContent = ch.type; }); saveRoomState(); if(state.isAdmin) { document.querySelectorAll('.admin-edit-name').forEach(input => { const ch = state.channels.find(c => c?.id === input.getAttribute('data-id')); if(ch) input.value = ch.name; }); document.querySelectorAll('.admin-edit-type').forEach(input => { const ch = state.channels.find(c => c?.id === input.getAttribute('data-id')); if(ch) input.value = ch.type; }); } initChannelsDOM(); buildAdminMatrix(); }
+            if(data.data && Array.isArray(data.data)) {
+                /* v11: channel metadata updates must never change PATCH PANEL assignments.
+                   Renaming a party used to rebuild every card via initChannelsDOM(), which
+                   temporarily made unassigned parties visible. Update labels in-place only;
+                   structural/type changes are synchronized by the existing init-state flow. */
+                state.channels = data.data;
+                state.channels.forEach((ch) => {
+                    if(!ch) return;
+                    const nameEl = $(`name-${ch.id}`);
+                    const typeEl = $(`type-${ch.id}`);
+                    if(nameEl) nameEl.textContent = ch.name;
+                    if(typeEl) typeEl.textContent = ch.type;
+                });
+                saveRoomState();
+                if(state.isAdmin) {
+                    document.querySelectorAll('.admin-edit-name').forEach(input => {
+                        const ch = state.channels.find(c => c?.id === input.getAttribute('data-id'));
+                        if(ch) input.value = ch.name;
+                    });
+                    document.querySelectorAll('.admin-edit-type').forEach(input => {
+                        const ch = state.channels.find(c => c?.id === input.getAttribute('data-id'));
+                        if(ch) input.value = ch.type;
+                    });
+                    buildAdminMatrix();
+                }
+                /* Re-assert the local SET state without recreating cards. */
+                const myAssigned = Array.isArray(state.userAssignments?.[state.myUserId])
+                    ? state.userAssignments[state.myUserId]
+                    : [];
+                applyAssignments(myAssigned);
+            }
 
         }
 
