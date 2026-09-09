@@ -1440,6 +1440,51 @@
   }
 </style>
 
+
+<style id="v8-intercom-card-width-fix">
+/* ===== v8: compact intercom card width =====
+   Do not stretch a small number of party cards across the full viewport. */
+#channel-list-wrap {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 340px)) !important;
+  justify-content: center !important;
+  justify-items: stretch !important;
+}
+.channel-card {
+  width: 100% !important;
+  max-width: 340px !important;
+  justify-self: center !important;
+}
+
+/* iPhone / phones: keep comfortable side margins while using available width on narrow screens. */
+@media (max-width: 600px) {
+  #channel-list-wrap {
+    grid-template-columns: min(100%, 350px) !important;
+    justify-content: center !important;
+  }
+  .channel-card {
+    max-width: 350px !important;
+  }
+}
+
+/* Very narrow webviews: never force horizontal overflow. */
+@media (max-width: 360px) {
+  #channel-list-wrap {
+    grid-template-columns: 1fr !important;
+  }
+  .channel-card {
+    max-width: 100% !important;
+  }
+}
+
+/* Phone landscape: retain two-column density, but cap each card rather than stretching it. */
+@media (orientation: landscape) and (max-height: 600px) and (min-width: 601px) {
+  #channel-list-wrap {
+    grid-template-columns: repeat(2, minmax(0, 340px)) !important;
+    justify-content: center !important;
+  }
+}
+</style>
+
 </head>
 
 <body onload="if(window.forceResize) window.forceResize()">
