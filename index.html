@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 
 <html lang="ja">
-<!-- YY-Talk PRO Brush-up v2: stability, reconnect, I/O routing, accessibility, UI polish -->
+<!-- YY-Talk PRO Brush-up v6: card reorder restored + patch-panel fit -->
 
 <head>
 
@@ -1321,6 +1321,141 @@
 
   </style>
 
+
+<style id="v6-card-matrix-fixes">
+  /* ===== v6: Intercom card drag handle ===== */
+  .btn-expand {
+    appearance: none;
+    -webkit-appearance: none;
+    border: 0;
+    background: transparent;
+    min-width: 112px;
+    min-height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    transform: none !important;
+  }
+  .btn-expand:hover { transform: none !important; }
+  .btn-expand:active,
+  .sortable-chosen .btn-expand,
+  .channel-card.is-reordering .btn-expand { cursor: grabbing; }
+  .channel-card.is-reordering { transition: none !important; }
+  .sortable-ghost { opacity: .28 !important; }
+  .sortable-chosen { transform: none !important; }
+
+  /* ===== v6: Patch panel cells / batch & delete buttons stay inside cells ===== */
+  .admin-matrix-wrapper { overflow-x: auto !important; overflow-y: visible; }
+  .admin-matrix { table-layout: fixed; }
+
+  .diagonal-header,
+  .admin-matrix td.ch-cell {
+    width: 218px !important;
+    min-width: 218px !important;
+    max-width: 218px !important;
+  }
+
+  .admin-matrix th.user-col,
+  .admin-matrix td.user-col {
+    width: 154px !important;
+    min-width: 154px !important;
+    max-width: 154px !important;
+  }
+
+  .admin-matrix th,
+  .admin-matrix td {
+    box-sizing: border-box;
+  }
+
+  .admin-matrix td.ch-cell > div,
+  .admin-matrix th.user-col > div {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .admin-matrix td.ch-cell > div > div:first-child {
+    min-width: 0;
+    flex: 1 1 auto !important;
+    overflow: hidden;
+  }
+
+  .admin-matrix td.ch-cell .admin-edit-name {
+    width: 82px !important;
+    min-width: 0 !important;
+    flex: 1 1 82px;
+  }
+
+  .admin-matrix td.ch-cell select.admin-edit-type {
+    width: 72px !important;
+    min-width: 64px !important;
+    flex: 0 1 72px;
+  }
+
+  .matrix-action-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    width: 28px;
+    min-width: 28px;
+    max-width: 28px;
+    flex: 0 0 28px;
+    align-items: stretch;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .matrix-action-stack .btn-delete-col,
+  .matrix-action-stack .btn-delete-row,
+  .matrix-action-stack .btn-batch-col,
+  .matrix-action-stack .btn-batch-row {
+    width: 28px !important;
+    min-width: 0 !important;
+    max-width: 28px !important;
+    height: 19px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    flex: 0 0 19px !important;
+    overflow: hidden;
+  }
+
+  .matrix-user-header {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 82px;
+    overflow: hidden;
+  }
+  .matrix-user-header span:last-child {
+    display: block;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 600px) {
+    .diagonal-header,
+    .admin-matrix td.ch-cell {
+      width: 202px !important;
+      min-width: 202px !important;
+      max-width: 202px !important;
+    }
+    .admin-matrix th.user-col,
+    .admin-matrix td.user-col {
+      width: 146px !important;
+      min-width: 146px !important;
+      max-width: 146px !important;
+    }
+    .admin-matrix td.ch-cell .admin-edit-name { width: 72px !important; }
+    .admin-matrix td.ch-cell select.admin-edit-type { width: 66px !important; min-width: 60px !important; }
+    .btn-expand { min-height: 32px; min-width: 118px; }
+  }
+</style>
+
 </head>
 
 <body onload="if(window.forceResize) window.forceResize()">
@@ -2071,7 +2206,32 @@
 
 
 
-        // v4: party-card expand/reorder handle removed.
+        // v6: 「○ ○ ○」はタップで展開、ドラッグでカード並べ替え。
+        const cWrap = $('channel-list-wrap');
+        if (typeof Sortable !== 'undefined' && cWrap && !cWrap._yySortable) {
+            cWrap._yySortable = new Sortable(cWrap, {
+                animation: 200,
+                handle: '.btn-expand',
+                delay: 150,
+                delayOnTouchOnly: true,
+                touchStartThreshold: 5,
+                fallbackTolerance: 4,
+                ghostClass: 'sortable-ghost',
+                dragClass: 'sortable-drag',
+                chosenClass: 'sortable-chosen',
+                onStart: function(evt) {
+                    evt.item?.classList.add('is-reordering');
+                },
+                onEnd: function(evt) {
+                    evt.item?.classList.remove('is-reordering');
+                    const newOrder = [];
+                    cWrap.querySelectorAll('.channel-card').forEach(card => {
+                        newOrder.push(card.id.replace('card-', ''));
+                    });
+                    safeStorage.set('yytalk-ch-order', JSON.stringify(newOrder));
+                }
+            });
+        }
 
         const bAdd = $('btn-add-ch');
 
@@ -2573,7 +2733,7 @@
           <svg class="vol-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
         </div>
         <div class="card-footer">
-          <button type="button" class="btn-expand" id="expand-${ch.id}" aria-expanded="false" aria-controls="volume-panel-${ch.id}" aria-label="${escapeHtml(ch.name || 'Intercom')} の音量設定を開閉">○ ○ ○</button>
+          <div class="btn-expand" id="expand-${ch.id}" role="button" tabindex="0" aria-expanded="false" aria-controls="volume-panel-${ch.id}" aria-label="${escapeHtml(ch.name || 'Intercom')} の音量設定を開閉・長押しで並べ替え">○ ○ ○</div>
         </div>`;
 
       const cw = $('channel-list-wrap');
@@ -2600,9 +2760,16 @@
       }
 
       if(expandBtn) {
-        expandBtn.addEventListener('click', () => {
+        const toggleExpanded = () => {
           const expanded = card.classList.toggle('expanded');
           expandBtn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+        };
+        expandBtn.addEventListener('click', toggleExpanded);
+        expandBtn.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            toggleExpanded();
+          }
         });
       }
 
@@ -3161,7 +3328,7 @@
 
           const isOnline = uid === state.myUserId || (state.room && state.room.remoteParticipants && state.room.remoteParticipants.has(uid)); const statusColor = isOnline ? 'var(--green)' : 'var(--text-sub)';
 
-          headerHtml += `<th style="width:140px; min-width:140px; max-width:140px;"><div style="display:flex; align-items:center; justify-content:center; gap:8px; height: 50px;"><div class="matrix-user-header"><span class="status-dot" data-uid="${escapeHtml(uid)}" style="color:${statusColor}; font-size:10px; line-height:1;">●</span><span style="font-weight:bold; color:var(--text-main); font-family: 'JetBrains Mono', monospace; font-size:12px; line-height:1;">${escapeHtml(uid)}</span></div><div style="position:relative; width:8px; height:46px; background:#000; border-radius:4px; overflow:hidden; box-shadow:inset 0 0 2px rgba(0,0,0,0.8);"><div id="user-meter-${uid}" style="position:absolute; bottom:0; left:0; width:100%; height:100%; background:linear-gradient(to top, #22c55e, #eab308, #ef4444); transform-origin:bottom; transform:scaleY(0); transition:transform 0.05s ease-out;"></div></div><div style="display:flex; flex-direction:column; gap:2px; width: 28px;"><button class="btn-batch-col" title="一括割り当て" onclick="toggleAllUserAssignments('${uid}')"><i class="fa-solid fa-check-double"></i></button><button class="btn-delete-col" title="ユーザー削除" data-uid="${uid}" onclick="event.stopPropagation();"><i class="fa-solid fa-trash-can"></i></button></div></div></th>`;
+          headerHtml += `<th style="width:140px; min-width:140px; max-width:140px;"><div style="display:flex; align-items:center; justify-content:center; gap:8px; height: 50px;"><div class="matrix-user-header"><span class="status-dot" data-uid="${escapeHtml(uid)}" style="color:${statusColor}; font-size:10px; line-height:1;">●</span><span style="font-weight:bold; color:var(--text-main); font-family: 'JetBrains Mono', monospace; font-size:12px; line-height:1;">${escapeHtml(uid)}</span></div><div style="position:relative; width:8px; height:46px; background:#000; border-radius:4px; overflow:hidden; box-shadow:inset 0 0 2px rgba(0,0,0,0.8);"><div id="user-meter-${uid}" style="position:absolute; bottom:0; left:0; width:100%; height:100%; background:linear-gradient(to top, #22c55e, #eab308, #ef4444); transform-origin:bottom; transform:scaleY(0); transition:transform 0.05s ease-out;"></div></div><div class="matrix-action-stack"><button class="btn-batch-col" title="一括割り当て" onclick="toggleAllUserAssignments('${uid}')"><i class="fa-solid fa-check-double"></i></button><button class="btn-delete-col" title="ユーザー削除" data-uid="${uid}" onclick="event.stopPropagation();"><i class="fa-solid fa-trash-can"></i></button></div></div></th>`;
 
       });
 
@@ -3177,7 +3344,7 @@
 
           const typeSelect = `<select class="admin-edit-type" data-id="${ch.id}"><option value="PL" ${ch.type==='PL'?'selected':''}>PL</option><option value="Local" ${ch.type==='Local'?'selected':''}>Local</option><option value="Listen" ${ch.type==='Listen'?'selected':''}>Listen</option></select>`;
 
-          html += `<tr><td class="ch-cell" style="vertical-align: middle;"><div style="display:flex; gap:6px; align-items:center; justify-content:space-between; width:100%; height:100%;"><div style="display:flex; gap:4px; flex:1; align-items:center;"><input type="text" class="admin-edit-name" data-id="${ch.id}" value="${escapeHtml(ch.name)}" style="width:80px; font-size:12px; font-family:'JetBrains Mono', monospace; text-transform:uppercase; text-align:center;" ${ch.fixed?'disabled':''}>${typeSelect}</div>${ch.fixed?'<div style="width:28px;"></div>':`<div style="display:flex; flex-direction:column; gap:2px; width: 28px;"><button class="btn-batch-row" title="一括割り当て" data-id="${ch.id}"><i class="fa-solid fa-check-double"></i></button><button class="btn-delete-row" title="パーティー削除" data-id="${ch.id}"><i class="fa-solid fa-trash-can"></i></button></div>`}</div></td>`;
+          html += `<tr><td class="ch-cell" style="vertical-align: middle;"><div style="display:flex; gap:6px; align-items:center; justify-content:space-between; width:100%; height:100%;"><div style="display:flex; gap:4px; flex:1; align-items:center;"><input type="text" class="admin-edit-name" data-id="${ch.id}" value="${escapeHtml(ch.name)}" style="width:80px; font-size:12px; font-family:'JetBrains Mono', monospace; text-transform:uppercase; text-align:center;" ${ch.fixed?'disabled':''}>${typeSelect}</div>${ch.fixed?'<div style="width:28px;"></div>':`<div class="matrix-action-stack"><button class="btn-batch-row" title="一括割り当て" data-id="${ch.id}"><i class="fa-solid fa-check-double"></i></button><button class="btn-delete-row" title="パーティー削除" data-id="${ch.id}"><i class="fa-solid fa-trash-can"></i></button></div>`}</div></td>`;
 
           state.registeredUsers?.forEach(uid => { 
 
