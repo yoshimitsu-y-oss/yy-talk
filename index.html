@@ -866,7 +866,7 @@
     .login-modal { background:linear-gradient(180deg, rgba(31,34,41,.98), rgba(22,24,29,.98)); }
     .channel-card { box-shadow:0 8px 24px rgba(0,0,0,.18); }
     @media (hover:hover) {
-      .channel-card:hover { border-color:#4a4e57; background:#202228; transform:translateY(-1px); }
+      .channel-card:hover { border-color:#4a4e57; background:#202228; }
       .btn-header-icon:hover, .btn-header-layout:hover { border-color:#a4a8b0; color:#fff; background:rgba(255,255,255,.04); }
       .btn-global:hover { filter:brightness(1.08); }
     }
@@ -1035,9 +1035,7 @@
     }
     #admin-overlay .admin-tab-btn { flex: 1 1 0 !important; min-width:0 !important; }
 
-    /* Intercom party cards have no secondary popup/expand UI. */
-    .channel-card.expanded { background-color: var(--card-bg) !important; }
-    .volume-panel, .card-footer, .btn-expand { display:none !important; }
+    /* Intercom card expansion is intentionally enabled (volume panel + ellipsis). */
 
     /* Three explicit layout modes. */
     .app-container.layout-normal .monitor-section { display:none !important; }
@@ -1090,6 +1088,235 @@
         border-radius:12px 12px 0 0 !important;
       }
       #admin-overlay .admin-tabs-container { gap:4px !important; margin-bottom:10px !important; }
+    }
+
+  
+    /* ===== v5 INTERCOM EXPANSION + RESPONSIVE LOCK ===== */
+    /* Hover may change tone, but the card must never "lift" or move. */
+    .channel-card,
+    .channel-card:hover,
+    .channel-card:focus-within {
+      transform: none !important;
+    }
+    @media (hover:hover) {
+      .channel-card:hover {
+        transform: none !important;
+        box-shadow: 0 8px 24px rgba(0,0,0,.18) !important;
+      }
+    }
+
+    /* Expansion UI is always present; only the volume row opens/closes. */
+    .channel-card .volume-panel {
+      display: none !important;
+      width: 100%;
+      min-width: 0;
+      padding: 5px clamp(10px, 3vw, 20px) 6px;
+      align-items: center;
+      gap: clamp(7px, 2vw, 10px);
+    }
+    .channel-card.expanded .volume-panel { display: flex !important; }
+    .channel-card .card-footer {
+      display: flex !important;
+      width: 100%;
+      min-width: 0;
+      justify-content: center;
+      align-items: center;
+      padding: 0 10px 4px;
+    }
+    .channel-card .btn-expand {
+      display: inline-flex !important;
+      align-items: center;
+      justify-content: center;
+      min-width: 84px;
+      min-height: 24px;
+      max-width: 100%;
+      margin: 0 auto;
+      padding: 2px clamp(22px, 7vw, 40px);
+      border: 0;
+      border-radius: 20px;
+      background: transparent;
+      color: var(--text-sub);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: clamp(10px, 2.8vw, 14px);
+      line-height: 1;
+      letter-spacing: clamp(1px, .35vw, 2px);
+      cursor: grab;
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    .channel-card .btn-expand:active { cursor: grabbing; background: rgba(255,255,255,.05); }
+    .channel-card.expanded .btn-expand { color: #b8bcc4; }
+    .btn-action-spacer { width:44px; height:44px; flex:0 0 44px; }
+
+    /* Slider remains easy to operate on both mouse and touch screens. */
+    .volume-panel .vol-slider-wrap { min-width: 0; flex: 1 1 auto; }
+    .volume-panel input[type="range"] { min-width: 0; width: 100%; height: 32px; touch-action: pan-x; }
+    .volume-panel .vol-icon { flex: 0 0 16px; width: 16px; height: 16px; }
+
+    /* App sizing: visualViewport writes --app-height; svh is the safe fallback. */
+    html, body { width:100%; max-width:100%; min-width:0; height:100%; overflow:hidden !important; }
+    .app-container {
+      width:100%; max-width:100vw; min-width:0;
+      height:var(--app-height, 100svh) !important;
+      min-height:0 !important;
+      overflow:hidden !important;
+    }
+
+    /* Header: preserve all action buttons; compress information before overflowing. */
+    .header {
+      width:100%; min-width:0; max-width:100%;
+      padding-left:max(8px, var(--safe-left));
+      padding-right:max(8px, var(--safe-right));
+      gap:clamp(4px, 1.2vw, 8px);
+      overflow:visible !important;
+    }
+    .header-left { flex:1 1 auto; min-width:0; overflow:hidden; }
+    .header-right { flex:0 0 auto; min-width:0; gap:clamp(3px, .8vw, 6px); }
+    .room-info-group { min-width:0; max-width:min(48vw,430px); overflow:hidden; }
+    #header-room-name, #header-user-id { min-width:0; max-width:clamp(7ch, 14vw, 18ch); }
+
+    /* Intercom area: fluid columns without horizontal overflow. */
+    .channel-list-container {
+      width:100%; min-width:0; max-width:100%;
+      overflow-x:hidden !important;
+      overscroll-behavior:contain;
+    }
+    #channel-list-wrap {
+      width:100%; min-width:0; max-width:100%;
+      grid-template-columns:repeat(auto-fit,minmax(min(100%, 280px),1fr)) !important;
+      gap:clamp(7px, 1.25vw, 14px) !important;
+      align-content:start;
+    }
+    .channel-card { width:100%; min-width:0; max-width:100%; overflow:hidden; }
+    .card-main { width:100%; min-width:0; gap:clamp(6px, 1.5vw, 12px); }
+    .ch-info { flex:1 1 auto; min-width:0; }
+    .ch-name, .ch-type { width:100%; min-width:0; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+    /* Layout modes: authoritative visibility rules. */
+    .app-container.layout-normal .monitor-section { display:none !important; }
+    .app-container.layout-normal .global-controls { display:flex !important; flex:0 0 auto !important; }
+    .app-container.layout-normal .channel-list-container { display:block !important; flex:1 1 auto !important; min-height:0 !important; max-height:none !important; overflow-y:auto !important; }
+    .app-container.layout-normal .master-meter-container { display:block !important; flex:0 0 auto !important; }
+
+    .app-container.layout-monitor .monitor-section { display:flex !important; flex:1 1 0 !important; height:auto !important; min-height:0 !important; max-height:none !important; border-bottom:0 !important; }
+    .app-container.layout-monitor .global-controls,
+    .app-container.layout-monitor .channel-list-container,
+    .app-container.layout-monitor .master-meter-container { display:none !important; }
+
+    .app-container.layout-hybrid .monitor-section {
+      display:flex !important;
+      flex:1 1 0 !important;
+      height:auto !important;
+      min-height:0 !important;
+      max-height:none !important;
+    }
+    .app-container.layout-hybrid .global-controls { display:flex !important; flex:0 0 auto !important; }
+    .app-container.layout-hybrid .channel-list-container { display:block !important; flex:1 1 0 !important; min-height:0 !important; max-height:none !important; overflow-y:auto !important; }
+    .app-container.layout-hybrid .master-meter-container { display:block !important; flex:0 0 auto !important; }
+
+    /* Monitor always keeps 16:9 and never pushes outside its allocation. */
+    .monitor-section { min-width:0 !important; overflow:hidden !important; padding:clamp(3px, 1vw, 10px) !important; }
+    .video-container { width:100% !important; height:100% !important; min-width:0 !important; min-height:0 !important; overflow:hidden !important; }
+    .video-wrapper {
+      aspect-ratio:16 / 9 !important;
+      width:min(100%, calc(100% * 16 / 9)) !important;
+      height:auto !important;
+      max-width:100% !important;
+      max-height:100% !important;
+      margin:auto !important;
+    }
+
+    /* Admin menu: three tabs stay in one row and content scrolls internally. */
+    #admin-overlay { overflow:hidden !important; }
+    #admin-overlay .admin-modal { min-width:0 !important; min-height:0 !important; overflow:hidden !important; }
+    #admin-overlay .admin-tabs-container { display:grid !important; grid-template-columns:repeat(3,minmax(0,1fr)) !important; width:100% !important; min-width:0 !important; }
+    #admin-overlay .admin-tab-btn { width:100% !important; min-width:0 !important; overflow:hidden !important; }
+    #admin-overlay .admin-tab-btn span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    #admin-overlay .scroll-area { width:100%; min-width:0; min-height:0; overflow-y:auto !important; overflow-x:hidden !important; }
+
+    /* Medium tablets: allow two/three cards naturally. */
+    @media (min-width:601px) and (max-width:1024px) {
+      #channel-list-wrap { grid-template-columns:repeat(auto-fit,minmax(260px,1fr)) !important; }
+      .channel-list-container { padding-left:clamp(10px,2vw,16px) !important; padding-right:clamp(10px,2vw,16px) !important; }
+      .admin-modal { width:min(96vw,1100px) !important; }
+    }
+
+    /* Phones. */
+    @media (max-width:600px) {
+      :root { --header-height:44px; }
+      .header { min-height:44px !important; padding-top:5px !important; padding-bottom:5px !important; }
+      #app-logo { height:23px !important; max-width:28vw !important; margin-right:5px !important; }
+      .room-info-group { max-width:42vw !important; gap:5px !important; padding-left:5px !important; }
+      #header-room-name, #header-user-id { max-width:10ch !important; font-size:10.5px !important; }
+      .room-info-label { font-size:7.5px !important; }
+      .btn-header-icon, .btn-header-layout { width:30px !important; height:30px !important; flex:0 0 30px !important; }
+      .global-controls { padding:5px 8px 6px !important; gap:6px !important; }
+      .btn-global { min-height:34px !important; font-size:10.5px !important; }
+      .channel-list-container { padding:7px 8px max(10px,var(--safe-bottom)) !important; }
+      #channel-list-wrap { grid-template-columns:1fr !important; gap:7px !important; }
+      .card-main { padding:7px 10px !important; }
+      .btn-action, .btn-action-spacer { width:40px !important; height:40px !important; flex-basis:40px !important; }
+      .btn-icon { width:18px !important; height:18px !important; }
+      .ch-name { font-size:13px !important; }
+      .ch-type { font-size:9px !important; }
+      .ch-meter-container { margin-left:42px !important; margin-right:42px !important; }
+      .channel-card .volume-panel { padding-left:12px !important; padding-right:12px !important; }
+      .channel-card .btn-expand { min-height:22px !important; padding-left:26px !important; padding-right:26px !important; }
+      #layout-dropdown.layout-dropdown { right:-2px !important; width:min(205px, calc(100vw - 12px)) !important; }
+      #admin-overlay { padding:6px 0 max(0px,var(--safe-bottom)) !important; align-items:flex-end !important; }
+      #admin-overlay .admin-modal { width:100% !important; border-radius:12px 12px 0 0 !important; padding:10px !important; }
+      #admin-overlay .admin-tabs-container { gap:4px !important; margin-bottom:8px !important; }
+      #admin-overlay .admin-tab-btn { min-height:48px !important; padding:6px 2px !important; font-size:9px !important; }
+    }
+
+    /* Narrow phones: status is less important than keeping the three controls reachable. */
+    @media (max-width:390px) {
+      .header-right > div:first-child { display:none !important; }
+      #app-logo { height:20px !important; max-width:24vw !important; }
+      .room-info-group { max-width:43vw !important; }
+      #header-room-name, #header-user-id { max-width:8ch !important; font-size:10px !important; }
+      .btn-header-icon, .btn-header-layout { width:29px !important; height:29px !important; flex-basis:29px !important; }
+      .card-main { padding-left:8px !important; padding-right:8px !important; }
+      .btn-action, .btn-action-spacer { width:38px !important; height:38px !important; flex-basis:38px !important; }
+      .ch-meter-container { margin-left:40px !important; margin-right:40px !important; }
+      .volume-panel .vol-icon { flex-basis:14px !important; width:14px !important; height:14px !important; }
+    }
+
+    /* Very narrow / compact embedded browsers. */
+    @media (max-width:340px) {
+      #app-logo { display:none !important; }
+      .room-info-group { border-left:0 !important; padding-left:0 !important; max-width:calc(100vw - 106px) !important; }
+      #header-room-name, #header-user-id { max-width:7ch !important; }
+      .btn-global { font-size:9px !important; padding-left:3px !important; padding-right:3px !important; }
+      .channel-card .volume-panel { padding-left:8px !important; padding-right:8px !important; gap:6px !important; }
+    }
+
+    /* Landscape phones: keep both halves usable instead of letting cards force height. */
+    @media (orientation:landscape) and (max-height:600px) {
+      :root { --header-height:38px; }
+      .header { min-height:38px !important; padding-top:3px !important; padding-bottom:3px !important; }
+      #app-logo { height:19px !important; }
+      .btn-header-icon, .btn-header-layout { width:28px !important; height:28px !important; flex-basis:28px !important; }
+      .global-controls { padding:3px 8px 4px !important; }
+      .btn-global { min-height:28px !important; }
+      .channel-list-container { padding-top:5px !important; padding-bottom:max(6px,var(--safe-bottom)) !important; }
+      #channel-list-wrap { grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:6px !important; }
+      .card-main { padding:4px 8px !important; }
+      .btn-action, .btn-action-spacer { width:34px !important; height:34px !important; flex-basis:34px !important; }
+      .ch-meter-container { margin-left:36px !important; margin-right:36px !important; }
+      .channel-card .volume-panel { padding-top:2px !important; padding-bottom:2px !important; }
+      .channel-card .card-footer { padding-bottom:2px !important; }
+      .channel-card .btn-expand { min-height:18px !important; font-size:10px !important; padding-top:1px !important; padding-bottom:1px !important; }
+      .app-container.layout-hybrid .monitor-section,
+      .app-container.layout-hybrid .channel-list-container { flex:1 1 0 !important; min-height:0 !important; }
+      #admin-overlay .admin-tab-btn { min-height:40px !important; }
+    }
+
+    /* Large desktops: cap density so cards do not become comically wide. */
+    @media (min-width:1400px) {
+      #channel-list-wrap { grid-template-columns:repeat(auto-fit,minmax(300px,1fr)) !important; }
+      .channel-list-container { padding-left:clamp(18px,2vw,30px) !important; padding-right:clamp(18px,2vw,30px) !important; }
     }
 
   </style>
@@ -2302,34 +2529,86 @@
 
     function createChannelCard(ch) {
 
-      if(!ch || ch.id === 'ch-video') return; 
+      if(!ch || ch.id === 'ch-video') return;
+      if(state.listenStates[ch.id] === undefined) state.listenStates[ch.id] = false;
+      if(state.talkStates[ch.id] === undefined) state.talkStates[ch.id] = false;
+      if(state.channelVolumes[ch.id] === undefined) state.channelVolumes[ch.id] = 1.5;
 
-      if(state.listenStates[ch.id] === undefined) state.listenStates[ch.id] = false; if(state.talkStates[ch.id] === undefined) state.talkStates[ch.id] = false; if(state.channelVolumes[ch.id] === undefined) state.channelVolumes[ch.id] = 1.5;
+      const listenClass = state.listenStates[ch.id] ? 'listen-on' : '';
+      const talkClass = state.talkStates[ch.id] ? 'talk-on' : '';
+      const curListenIcon = state.isMasterSpkMuted ? iconSpeakerOff : iconSpeaker;
+      const curTalkIcon = state.isMasterMicMuted ? iconMicOff : iconMic;
+      const lMuted = state.isMasterSpkMuted ? 'muted-slash' : '';
+      const tMuted = state.isMasterMicMuted ? 'muted-slash' : '';
 
-      const listenClass = state.listenStates[ch.id] ? 'listen-on' : ''; const talkClass = state.talkStates[ch.id] ? 'talk-on' : '';
+      const card = document.createElement('div');
+      card.className = `channel-card ${listenClass} ${talkClass}`;
+      card.id = `card-${ch.id}`;
+      card.innerHTML = `
+        <div class="status-line-bg">
+          <div class="status-line-grad"></div>
+          <div class="status-line-mask" id="vol-indicator-${ch.id}"></div>
+        </div>
+        <div class="card-main">
+          <div class="btn-action btn-listen ${state.listenStates[ch.id] ? 'active latched' : ''} ${lMuted}" id="listen-${ch.id}">${curListenIcon}</div>
+          <div class="ch-info">
+            <div class="ch-name" id="name-${ch.id}">${escapeHtml(ch.name || 'Unknown')}</div>
+            <div class="ch-type" id="type-${ch.id}">${escapeHtml(ch.type || 'PL')}</div>
+          </div>
+          ${ch.type === 'Listen'
+            ? `<div class="btn-action-spacer" aria-hidden="true"></div>`
+            : `<div class="btn-action btn-talk ${state.talkStates[ch.id] ? 'active latched' : ''} ${tMuted}" id="talk-${ch.id}">${curTalkIcon}</div>`}
+        </div>
+        <div class="ch-meter-container">
+          <div class="ch-meter-grad"></div>
+          <div class="ch-meter-mask" id="meter-${ch.id}"></div>
+        </div>
+        <div class="volume-panel" id="volume-panel-${ch.id}">
+          <svg class="vol-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.5 12A4.5 4.5 0 0 0 16 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg>
+          <div class="vol-slider-wrap">
+            <div class="vol-slider-track-bg"></div>
+            <div class="vol-slider-fill" id="fill-${ch.id}"></div>
+            <input type="range" id="vol-${ch.id}" min="0" max="100" value="50" aria-label="${escapeHtml(ch.name || 'Intercom')} 音量">
+          </div>
+          <svg class="vol-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+        </div>
+        <div class="card-footer">
+          <button type="button" class="btn-expand" id="expand-${ch.id}" aria-expanded="false" aria-controls="volume-panel-${ch.id}" aria-label="${escapeHtml(ch.name || 'Intercom')} の音量設定を開閉">○ ○ ○</button>
+        </div>`;
 
-      const curListenIcon = state.isMasterSpkMuted ? iconSpeakerOff : iconSpeaker; const curTalkIcon = state.isMasterMicMuted ? iconMicOff : iconMic;
+      const cw = $('channel-list-wrap');
+      if(cw) cw.appendChild(card);
 
-      const lMuted = state.isMasterSpkMuted ? 'muted-slash' : ''; const tMuted = state.isMasterMicMuted ? 'muted-slash' : '';
-
-
-
-      const card = document.createElement('div'); card.className = `channel-card ${listenClass} ${talkClass}`; card.id = `card-${ch.id}`;
-
-      card.innerHTML = `<div class="status-line-bg"><div class="status-line-grad"></div><div class="status-line-mask" id="vol-indicator-${ch.id}"></div></div><div class="card-main"><div class="btn-action btn-listen ${state.listenStates[ch.id] ? 'active latched' : ''} ${lMuted}" id="listen-${ch.id}">${curListenIcon}</div><div class="ch-info"><div class="ch-name" id="name-${ch.id}">${escapeHtml(ch.name || 'Unknown')}</div><div class="ch-type" id="type-${ch.id}">${escapeHtml(ch.type || 'PL')}</div></div>${ch.type === 'Listen' ? `<div style="width: 44px; height: 44px; flex-shrink:0;"></div>` : `<div class="btn-action btn-talk ${state.talkStates[ch.id] ? 'active latched' : ''} ${tMuted}" id="talk-${ch.id}">${curTalkIcon}</div>`}</div><div class="ch-meter-container"><div class="ch-meter-grad"></div><div class="ch-meter-mask" id="meter-${ch.id}"></div></div>`;
-
-      const cw = $('channel-list-wrap'); if(cw) cw.appendChild(card);
-
-      const volIndicator = card.querySelector(`#vol-indicator-${ch.id}`);
+      const slider = card.querySelector(`#vol-${CSS.escape(ch.id)}`);
+      const fill = card.querySelector(`#fill-${CSS.escape(ch.id)}`);
+      const volIndicator = card.querySelector(`#vol-indicator-${CSS.escape(ch.id)}`);
+      const expandBtn = card.querySelector(`#expand-${CSS.escape(ch.id)}`);
       const normalizedVol = Math.max(0, Math.min(100, ((state.channelVolumes[ch.id] ?? 1.5) / 3.0) * 100));
+
+      if(slider) slider.value = String(normalizedVol);
+      if(fill) fill.style.width = normalizedVol + '%';
       if(volIndicator) volIndicator.style.height = (100 - normalizedVol) + '%';
 
-      setupPTTButton(card.querySelector(`#listen-${ch.id}`), 'listen', ch.id); 
+      if(slider) {
+        slider.addEventListener('input', (e) => {
+          const v = Math.max(0, Math.min(100, Number(e.target.value) || 0));
+          if(fill) fill.style.width = v + '%';
+          if(volIndicator) volIndicator.style.height = (100 - v) + '%';
+          state.channelVolumes[ch.id] = (v / 100) * 3.0;
+          updateAudioRouting();
+        });
+      }
 
-      if(ch.type !== 'Listen') setupPTTButton(card.querySelector(`#talk-${ch.id}`), 'talk', ch.id);
+      if(expandBtn) {
+        expandBtn.addEventListener('click', () => {
+          const expanded = card.classList.toggle('expanded');
+          expandBtn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+        });
+      }
 
+      setupPTTButton(card.querySelector(`#listen-${CSS.escape(ch.id)}`), 'listen', ch.id);
+      if(ch.type !== 'Listen') setupPTTButton(card.querySelector(`#talk-${CSS.escape(ch.id)}`), 'talk', ch.id);
     }
-
 
 
     window.updatePttButtonsState = function() {
