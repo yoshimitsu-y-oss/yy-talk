@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 
 <html lang="ja">
+<!-- YY-Talk PRO Brush-up v2: stability, reconnect, I/O routing, accessibility, UI polish -->
 
 <head>
 
@@ -10,7 +11,9 @@
 
   <meta name="apple-mobile-web-app-capable" content="yes">
 
-  <title>YY-Talk PRO - Ultimate Edition</title>
+  <title>YY-Talk PRO - Broadcast Intercom</title>
+  <meta name="theme-color" content="#0a0b0d">
+  <meta name="color-scheme" content="dark">
 
   
 
@@ -88,15 +91,15 @@
 
 
 
-    const origSetLocalDescription = RTCPeerConnection.prototype.setLocalDescription;
-
-    RTCPeerConnection.prototype.setLocalDescription = function(desc) {
-
-      if (desc && (desc.type === 'offer' || desc.type === 'answer')) desc.sdp = desc.sdp.replace(/(a=fmtp:111.*)/g, '$1;usedtx=1');
-
-      return origSetLocalDescription.apply(this, arguments);
-
-    };
+    if (typeof RTCPeerConnection !== 'undefined' && RTCPeerConnection.prototype?.setLocalDescription) {
+      const origSetLocalDescription = RTCPeerConnection.prototype.setLocalDescription;
+      RTCPeerConnection.prototype.setLocalDescription = function(desc) {
+        if (desc && (desc.type === 'offer' || desc.type === 'answer') && typeof desc.sdp === 'string') {
+          desc.sdp = desc.sdp.replace(/(a=fmtp:111.*)/g, '$1;usedtx=1');
+        }
+        return origSetLocalDescription.apply(this, arguments);
+      };
+    }
 
   </script>
 
@@ -458,7 +461,7 @@
 
     .ch-meter-container { height: 4px; background: #2a2c33; margin: 0 45px 4px; border-radius: 2px; overflow: hidden; position: relative; z-index: 2;}
 
-    .ch-meter-grad { absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); } 
+    .ch-meter-grad { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, #4ade80 0%, #4ade80 50%, #eab308 75%, #f87171 100%); } 
 
     .ch-meter-mask { position: absolute; right: 0; top: 0; bottom: 0; width: 100%; background-color: #2a2c33; transition: width 0.1s ease-out; }
 
@@ -852,6 +855,35 @@
       .btn-action { flex:0 0 auto !important; }
     }
 
+    /* ===== YY-Talk v2 visual / interaction polish ===== */
+    :root {
+      --surface-1:#111318; --surface-2:#181b21; --surface-3:#20242b;
+      --focus-ring:rgba(96,165,250,.42); --shadow-lg:0 18px 55px rgba(0,0,0,.48);
+    }
+    body { background:radial-gradient(circle at 50% -15%, rgba(96,165,250,.08), transparent 34%), var(--bg-dark); }
+    .header { background:rgba(10,11,13,.94); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); }
+    .login-modal, .admin-modal { border-color:rgba(255,255,255,.1); box-shadow:var(--shadow-lg); }
+    .login-modal { background:linear-gradient(180deg, rgba(31,34,41,.98), rgba(22,24,29,.98)); }
+    .channel-card { box-shadow:0 8px 24px rgba(0,0,0,.18); }
+    @media (hover:hover) {
+      .channel-card:hover { border-color:#4a4e57; background:#202228; transform:translateY(-1px); }
+      .btn-header-icon:hover, .btn-header-layout:hover { border-color:#a4a8b0; color:#fff; background:rgba(255,255,255,.04); }
+      .btn-global:hover { filter:brightness(1.08); }
+    }
+    button:focus-visible, input:focus-visible, select:focus-visible, [tabindex]:focus-visible {
+      outline:2px solid var(--blue) !important; outline-offset:2px; box-shadow:0 0 0 4px var(--focus-ring) !important;
+    }
+    button:disabled { cursor:not-allowed !important; }
+    .layout-dropdown { background:rgba(17,18,22,.98); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); }
+    .layout-item.active::after { content:'✓'; margin-left:auto; font-size:11px; }
+    #disconnect-overlay { text-align:center; }
+    #disconnect-text { max-width:min(520px, 88vw); line-height:1.6; }
+    .status-line-bg, .master-meter-container, .ch-meter-container { contain:paint; }
+    .btn-action { will-change:transform; }
+    @media (prefers-reduced-motion:reduce) {
+      *, *::before, *::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; scroll-behavior:auto !important; }
+    }
+
   </style>
 
 </head>
@@ -862,7 +894,7 @@
 
   <div class="app-container" id="main-app-container">
 
-    <div id="audio-overlay" class="overlay-base"><p style="font-weight:bold;margin-bottom:20px;font-size:18px;">通話に参加しますか？</p><button id="btn-enable-audio" class="btn-green-solid">音声を有効にして参加</button></div>
+    <div id="audio-overlay" class="overlay-base"><p style="font-weight:bold;margin-bottom:20px;font-size:18px;">通話に参加しますか？</p><button type="button" id="btn-enable-audio" class="btn-green-solid">音声を有効にして参加</button></div>
 
     
 
@@ -874,7 +906,7 @@
 
       <div style="font-size: 20px; font-weight: bold; margin-bottom: 10px; color: white;">CONNECTION LOST</div>
 
-      <div id="disconnect-text" style="font-size: 14px; color: rgba(255,255,255,0.8); margin-bottom: 30px;">通信が切断されました。自動再接続を試行中...</div>
+      <div id="disconnect-text" role="status" aria-live="polite" style="font-size: 14px; color: rgba(255,255,255,0.8); margin-bottom: 30px;">通信が切断されました。自動再接続を試行中...</div>
 
     </div>
 
@@ -883,6 +915,8 @@
     <div id="login-overlay" class="overlay-base" style="display: flex;">
 
       <div class="login-modal">
+
+        <button class="btn-close-login" id="btn-close-login" type="button" aria-label="接続画面を閉じる"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
 
         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 30px; width: 100%;">
 
@@ -932,11 +966,11 @@
 
         </div>
 
-        <button id="btn-join-member" class="btn-reload btn-join-member">接続 (Connect)</button>
+        <button type="button" id="btn-join-member" class="btn-reload btn-join-member">接続 (Connect)</button>
 
-        <button id="btn-join-admin" class="btn-reload btn-join-admin">管理者接続 (Admin)</button>
+        <button type="button" id="btn-join-admin" class="btn-reload btn-join-admin">管理者接続 (Admin)</button>
 
-        <button id="btn-stop" class="btn-reload btn-stop">切断 (Disconnect)</button>
+        <button type="button" id="btn-stop" class="btn-reload btn-stop">切断 (Disconnect)</button>
 
       </div>
 
@@ -968,13 +1002,13 @@
 
             <div id="header-active-count" style="font-size: 11px; font-weight: bold; color: var(--green); display: none; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.5px;"><i class="fa-solid fa-users"></i> <span id="active-num">0</span></div>
 
-            <div id="status-rtt" style="font-size: 10px; font-family: 'JetBrains Mono', monospace; font-weight: bold; color: var(--text-sub); display: none;">-- ms</div>
+            <div id="status-rtt" role="status" aria-live="polite" style="font-size: 10px; font-family: 'JetBrains Mono', monospace; font-weight: bold; color: var(--text-sub); display: none;">-- ms</div>
 
         </div>
 
         <div style="position: relative;">
 
-          <button id="btn-layout" class="btn-header-icon" title="レイアウト変更"><i class="fa-solid fa-border-all"></i></button>
+          <button type="button" id="btn-layout" class="btn-header-icon" title="レイアウト変更"><i class="fa-solid fa-border-all"></i></button>
 
           <div id="layout-dropdown" class="layout-dropdown">
 
@@ -988,9 +1022,9 @@
 
         </div>
 
-        <button id="btn-settings" class="btn-header-icon admin-only" title="設定"><i class="fa-solid fa-gear"></i></button>
+        <button type="button" id="btn-settings" class="btn-header-icon admin-only" title="設定"><i class="fa-solid fa-gear"></i></button>
 
-        <button id="btn-show-login" class="btn-header-icon"><i class="fa-solid fa-satellite-dish"></i></button>
+        <button type="button" id="btn-show-login" class="btn-header-icon"><i class="fa-solid fa-satellite-dish"></i></button>
 
       </div>
 
@@ -1072,7 +1106,7 @@
 
             <div id="admin-matrix-container"></div>
 
-            <button id="btn-add-ch" style="background: rgba(96, 165, 250, 0.1); color: var(--blue); border: 1px solid rgba(96, 165, 250, 0.4); width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background 0.2s;">＋ 新規パーティーを追加</button>
+            <button type="button" id="btn-add-ch" style="background: rgba(96, 165, 250, 0.1); color: var(--blue); border: 1px solid rgba(96, 165, 250, 0.4); width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background 0.2s;">＋ 新規パーティーを追加</button>
 
           </div>
 
@@ -1120,9 +1154,9 @@
 
     <div class="global-controls">
 
-      <button id="btn-master-spk" class="btn-global btn-master-spk"><span id="global-spk-icon"><svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></span> SPK MUTE</button>
+      <button type="button" id="btn-master-spk" class="btn-global btn-master-spk"><span id="global-spk-icon"><svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></span> SPK MUTE</button>
 
-      <button id="btn-master-mic" class="btn-global btn-master-mic"><span id="global-mic-icon"><svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg></span> MIC MUTE</button>
+      <button type="button" id="btn-master-mic" class="btn-global btn-master-mic"><span id="global-mic-icon"><svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg></span> MIC MUTE</button>
 
     </div>
 
@@ -1143,6 +1177,11 @@
   <script>
 
     const $ = id => document.getElementById(id);
+    const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (ch) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    const isSafeIdentifier = (value, max = 64) => {
+      const v = String(value ?? '').trim();
+      return v.length > 0 && v.length <= max && /^[\p{L}\p{N}._-]+$/u.test(v);
+    };
 
 
 
@@ -1318,21 +1357,26 @@
 
 
 
-    navigator.mediaDevices.addEventListener('devicechange', async () => {
-
+    if (navigator.mediaDevices?.addEventListener) {
+      navigator.mediaDevices.addEventListener('devicechange', async () => {
         if (!state.ioBridge || !state.ioBridge.enabled) return;
-
-        const devices = await navigator.mediaDevices.enumerateDevices();
-
-        if (state.ioBridge.outDevice4w && state.ioBridge.outDevice4w !== 'default' && state.ioBridge.outDevice4w !== '') {
-
+        try {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          if (state.ioBridge.outDevice4w && state.ioBridge.outDevice4w !== 'default' && state.ioBridge.outDevice4w !== '') {
             const exists = devices.some(d => d.deviceId === state.ioBridge.outDevice4w);
-
-            if (!exists) { state.ioBridge.outDevice4w = 'default'; if($('select-4w-out-device')) $('select-4w-out-device').value = 'default'; applyOutputDevice(); uiLog("Warning: Audio output device lost."); saveRoomState(); }
-
+            if (!exists) {
+              state.ioBridge.outDevice4w = 'default';
+              if($('select-4w-out-device')) $('select-4w-out-device').value = 'default';
+              applyOutputDevice();
+              uiLog('Warning: Audio output device lost.', '#f97316');
+              saveRoomState();
+            }
+          }
+        } catch (err) {
+          uiLog(`Device refresh failed: ${err?.message || err}`, '#f97316');
         }
-
-    });
+      });
+    }
 
 
 
@@ -1696,7 +1740,9 @@
 
         const color = isOnline ? 'var(--green)' : 'var(--text-sub)';
 
-        document.querySelectorAll(`.status-dot-${uid}`).forEach(el => { el.style.color = color; });
+        document.querySelectorAll('.status-dot[data-uid]').forEach(el => {
+          if (el.dataset.uid === uid) el.style.color = color;
+        });
 
     }
 
@@ -1764,9 +1810,9 @@
 
             if (!state.ioBridge.enabled) { ['ioTrack4wL', 'ioTrack4wR', 'ioTrackPgmL', 'ioTrackPgmR'].forEach(async key => { if (state[key]) { await state.room.localParticipant.unpublishTrack(state[key].track); state[key].track.stop(); state[key] = null; } }); return; }
 
-            if (state.ioBridge.inDevice4w) { try { let audioConst = { echoCancellation: false, noiseSuppression: false, autoGainControl: false }; if (state.ioBridge.inDevice4w !== 'default') audioConst.deviceId = { exact: state.ioBridge.inDevice4w }; const stream = await navigator.mediaDevices.getUserMedia({ audio: audioConst }); const source = state.audioCtx.createMediaStreamSource(stream); const splitter = state.audioCtx.createChannelSplitter(2); source.connect(splitter); const gainL = state.audioCtx.createGain(); gainL.gain.value = state.ioBridge.inGain4wL ?? 1.0; state.ioNodes.gain4wL = gainL; const analyserL = state.audioCtx.createAnalyser(); analyserL.fftSize = 256; state.ioNodes.analyser4wL = analyserL; const destL = state.audioCtx.createMediaStreamDestination(); splitter.connect(gainL, 0); gainL.connect(analyserL); gainL.connect(destL); const gainR = state.audioCtx.createGain(); gainR.gain.value = state.ioBridge.inGain4wR ?? 1.0; state.ioNodes.gain4wR = gainR; const analyserR = state.audioCtx.createAnalyser(); analyserR.fftSize = 256; state.ioNodes.analyser4wR = analyserR; const destR = state.audioCtx.createMediaStreamDestination(); splitter.connect(gainR, 1); gainR.connect(analyserR); connect(destR); const trackL = new LivekitClient.LocalAudioTrack(destL.stream.getAudioTracks()[0]); const trackR = new LivekitClient.LocalAudioTrack(destR.stream.getAudioTracks()[0]); if(state.ioTrack4wL) await state.room.localParticipant.unpublishTrack(state.ioTrack4wL.track); if(state.ioTrack4wR) await state.room.localParticipant.unpublishTrack(state.ioTrack4wR.track); state.ioTrack4wL = await state.room.localParticipant.publishTrack(trackL, { name: 'io_4w_l', source: LivekitClient.Track.Source.Unknown }); state.ioTrack4wR = await state.room.localParticipant.publishTrack(trackR, { name: 'io_4w_r', source: LivekitClient.Track.Source.Unknown }); } catch(e) { } }
+            if (state.ioBridge.inDevice4w) { try { let audioConst = { echoCancellation: false, noiseSuppression: false, autoGainControl: false }; if (state.ioBridge.inDevice4w !== 'default') audioConst.deviceId = { exact: state.ioBridge.inDevice4w }; const stream = await navigator.mediaDevices.getUserMedia({ audio: audioConst }); const source = state.audioCtx.createMediaStreamSource(stream); const splitter = state.audioCtx.createChannelSplitter(2); source.connect(splitter); const gainL = state.audioCtx.createGain(); gainL.gain.value = state.ioBridge.inGain4wL ?? 1.0; state.ioNodes.gain4wL = gainL; const analyserL = state.audioCtx.createAnalyser(); analyserL.fftSize = 256; state.ioNodes.analyser4wL = analyserL; const destL = state.audioCtx.createMediaStreamDestination(); splitter.connect(gainL, 0); gainL.connect(analyserL); gainL.connect(destL); const gainR = state.audioCtx.createGain(); gainR.gain.value = state.ioBridge.inGain4wR ?? 1.0; state.ioNodes.gain4wR = gainR; const analyserR = state.audioCtx.createAnalyser(); analyserR.fftSize = 256; state.ioNodes.analyser4wR = analyserR; const destR = state.audioCtx.createMediaStreamDestination(); splitter.connect(gainR, 1); gainR.connect(analyserR); gainR.connect(destR); const trackL = new LivekitClient.LocalAudioTrack(destL.stream.getAudioTracks()[0]); const trackR = new LivekitClient.LocalAudioTrack(destR.stream.getAudioTracks()[0]); if(state.ioTrack4wL) await state.room.localParticipant.unpublishTrack(state.ioTrack4wL.track); if(state.ioTrack4wR) await state.room.localParticipant.unpublishTrack(state.ioTrack4wR.track); state.ioTrack4wL = await state.room.localParticipant.publishTrack(trackL, { name: 'io_4w_l', source: LivekitClient.Track.Source.Unknown }); state.ioTrack4wR = await state.room.localParticipant.publishTrack(trackR, { name: 'io_4w_r', source: LivekitClient.Track.Source.Unknown }); } catch(e) { } }
 
-            if (state.ioBridge.inDevicePgm) { try { let audioConst = { echoCancellation: false, noiseSuppression: false, autoGainControl: false }; if (state.ioBridge.inDevicePgm !== 'default') audioConst.deviceId = { exact: state.ioBridge.inDevicePgm }; const stream = await navigator.mediaDevices.getUserMedia({ audio: audioConst }); const source = state.audioCtx.createMediaStreamSource(stream); const splitter = state.audioCtx.createChannelSplitter(2); source.connect(splitter); const gainL = state.audioCtx.createGain(); gainL.gain.value = state.ioBridge.inGainPgmL ?? 1.0; state.ioNodes.gainPgmL = gainL; const analyserL = state.audioCtx.createAnalyser(); analyserL.fftSize = 256; state.ioNodes.analyserPgmL = analyserL; const destL = state.audioCtx.createMediaStreamDestination(); splitter.connect(gainL, 0); gainL.connect(analyserL); gainL.connect(destL); const gainR = state.audioCtx.createGain(); gainR.gain.value = state.ioBridge.inGainPgmR ?? 1.0; state.ioNodes.gainPgmR = gainR; const analyserR = state.audioCtx.createAnalyser(); analyserR.fftSize = 256; state.ioNodes.analyserPgmR = analyserR; const destR = state.audioCtx.createMediaStreamDestination(); splitter.connect(gainR, 1); gainR.connect(analyserR); connect(destR); const trackL = new LivekitClient.LocalAudioTrack(destL.stream.getAudioTracks()[0]); const trackR = new LivekitClient.LocalAudioTrack(destR.stream.getAudioTracks()[0]); if(state.ioTrackPgmL) await state.room.localParticipant.unpublishTrack(state.ioTrackPgmL.track); if(state.ioTrackPgmR) await state.room.localParticipant.unpublishTrack(state.ioTrackPgmR.track); state.ioTrackPgmL = await state.room.localParticipant.publishTrack(trackL, { name: 'io_pgm_l', source: LivekitClient.Track.Source.Unknown }); state.ioTrackPgmR = await state.room.localParticipant.publishTrack(trackR, { name: 'io_pgm_r', source: LivekitClient.Track.Source.Unknown }); } catch(e) { } }
+            if (state.ioBridge.inDevicePgm) { try { let audioConst = { echoCancellation: false, noiseSuppression: false, autoGainControl: false }; if (state.ioBridge.inDevicePgm !== 'default') audioConst.deviceId = { exact: state.ioBridge.inDevicePgm }; const stream = await navigator.mediaDevices.getUserMedia({ audio: audioConst }); const source = state.audioCtx.createMediaStreamSource(stream); const splitter = state.audioCtx.createChannelSplitter(2); source.connect(splitter); const gainL = state.audioCtx.createGain(); gainL.gain.value = state.ioBridge.inGainPgmL ?? 1.0; state.ioNodes.gainPgmL = gainL; const analyserL = state.audioCtx.createAnalyser(); analyserL.fftSize = 256; state.ioNodes.analyserPgmL = analyserL; const destL = state.audioCtx.createMediaStreamDestination(); splitter.connect(gainL, 0); gainL.connect(analyserL); gainL.connect(destL); const gainR = state.audioCtx.createGain(); gainR.gain.value = state.ioBridge.inGainPgmR ?? 1.0; state.ioNodes.gainPgmR = gainR; const analyserR = state.audioCtx.createAnalyser(); analyserR.fftSize = 256; state.ioNodes.analyserPgmR = analyserR; const destR = state.audioCtx.createMediaStreamDestination(); splitter.connect(gainR, 1); gainR.connect(analyserR); gainR.connect(destR); const trackL = new LivekitClient.LocalAudioTrack(destL.stream.getAudioTracks()[0]); const trackR = new LivekitClient.LocalAudioTrack(destR.stream.getAudioTracks()[0]); if(state.ioTrackPgmL) await state.room.localParticipant.unpublishTrack(state.ioTrackPgmL.track); if(state.ioTrackPgmR) await state.room.localParticipant.unpublishTrack(state.ioTrackPgmR.track); state.ioTrackPgmL = await state.room.localParticipant.publishTrack(trackL, { name: 'io_pgm_l', source: LivekitClient.Track.Source.Unknown }); state.ioTrackPgmR = await state.room.localParticipant.publishTrack(trackR, { name: 'io_pgm_r', source: LivekitClient.Track.Source.Unknown }); } catch(e) { } }
 
         };
 
@@ -1836,7 +1882,7 @@
 
         const statusColor = isOnline ? 'var(--green)' : 'var(--text-sub)';
 
-        row.innerHTML = `<div class="tally-member-info" style="justify-content:center; width:80px;"><span class="status-dot-${uid}" style="color:${statusColor}; font-size:10px;">●</span><span style="color:#fff; font-size:14px; font-weight:600;">${uid}</span></div>`;
+        row.innerHTML = `<div class="tally-member-info" style="justify-content:center; width:80px;"><span class="status-dot" data-uid="${escapeHtml(uid)}" style="color:${statusColor}; font-size:10px;">●</span><span style="color:#fff; font-size:14px; font-weight:600;">${escapeHtml(uid)}</span></div>`;
 
         const btnGroup = document.createElement('div'); btnGroup.className = 'tally-btn-group'; const assigned = state.tallyAssignments[uid] || [];
 
@@ -2056,7 +2102,7 @@
 
       const card = document.createElement('div'); card.className = `channel-card ${listenClass} ${talkClass}`; card.id = `card-${ch.id}`;
 
-      card.innerHTML = `<div class="status-line-bg"><div class="status-line-grad"></div><div class="status-line-mask" id="vol-indicator-${ch.id}"></div></div><div class="card-main"><div class="btn-action btn-listen ${state.listenStates[ch.id] ? 'active latched' : ''} ${lMuted}" id="listen-${ch.id}">${curListenIcon}</div><div class="ch-info"><div class="ch-name" id="name-${ch.id}">${ch.name || 'Unknown'}</div><div class="ch-type" id="type-${ch.id}">${ch.type || 'PL'}</div></div>${ch.type === 'Listen' ? `<div style="width: 44px; height: 44px; flex-shrink:0;"></div>` : `<div class="btn-action btn-talk ${state.talkStates[ch.id] ? 'active latched' : ''} ${tMuted}" id="talk-${ch.id}">${curTalkIcon}</div>`}</div><div class="ch-meter-container"><div class="ch-meter-grad"></div><div class="ch-meter-mask" id="meter-${ch.id}"></div></div><div class="volume-panel"><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M18.5 12A4.5 4.5 0 0 0 16 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg><div class="vol-slider-wrap"><div class="vol-slider-track-bg"></div><div class="vol-slider-fill" id="fill-${ch.id}"></div><input type="range" id="vol-${ch.id}" min="0" max="100" value="50"></div><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></div><div class="card-footer"><div class="btn-expand" id="expand-${ch.id}">○ ○ ○</div></div>`;
+      card.innerHTML = `<div class="status-line-bg"><div class="status-line-grad"></div><div class="status-line-mask" id="vol-indicator-${ch.id}"></div></div><div class="card-main"><div class="btn-action btn-listen ${state.listenStates[ch.id] ? 'active latched' : ''} ${lMuted}" id="listen-${ch.id}">${curListenIcon}</div><div class="ch-info"><div class="ch-name" id="name-${ch.id}">${escapeHtml(ch.name || 'Unknown')}</div><div class="ch-type" id="type-${ch.id}">${escapeHtml(ch.type || 'PL')}</div></div>${ch.type === 'Listen' ? `<div style="width: 44px; height: 44px; flex-shrink:0;"></div>` : `<div class="btn-action btn-talk ${state.talkStates[ch.id] ? 'active latched' : ''} ${tMuted}" id="talk-${ch.id}">${curTalkIcon}</div>`}</div><div class="ch-meter-container"><div class="ch-meter-grad"></div><div class="ch-meter-mask" id="meter-${ch.id}"></div></div><div class="volume-panel"><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M18.5 12A4.5 4.5 0 0 0 16 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg><div class="vol-slider-wrap"><div class="vol-slider-track-bg"></div><div class="vol-slider-fill" id="fill-${ch.id}"></div><input type="range" id="vol-${ch.id}" min="0" max="100" value="50"></div><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></div><div class="card-footer"><div class="btn-expand" id="expand-${ch.id}">○ ○ ○</div></div>`;
 
       const cw = $('channel-list-wrap'); if(cw) cw.appendChild(card);
 
@@ -2644,7 +2690,7 @@
 
           const isOnline = uid === state.myUserId || (state.room && state.room.remoteParticipants && state.room.remoteParticipants.has(uid)); const statusColor = isOnline ? 'var(--green)' : 'var(--text-sub)';
 
-          headerHtml += `<th style="width:140px; min-width:140px; max-width:140px;"><div style="display:flex; align-items:center; justify-content:center; gap:8px; height: 50px;"><div class="matrix-user-header"><span class="status-dot-${uid}" style="color:${statusColor}; font-size:10px; line-height:1;">●</span><span style="font-weight:bold; color:var(--text-main); font-family: 'JetBrains Mono', monospace; font-size:12px; line-height:1;">${uid}</span></div><div style="position:relative; width:8px; height:46px; background:#000; border-radius:4px; overflow:hidden; box-shadow:inset 0 0 2px rgba(0,0,0,0.8);"><div id="user-meter-${uid}" style="position:absolute; bottom:0; left:0; width:100%; height:100%; background:linear-gradient(to top, #22c55e, #eab308, #ef4444); transform-origin:bottom; transform:scaleY(0); transition:transform 0.05s ease-out;"></div></div><div style="display:flex; flex-direction:column; gap:2px; width: 28px;"><button class="btn-batch-col" title="一括割り当て" onclick="toggleAllUserAssignments('${uid}')"><i class="fa-solid fa-check-double"></i></button><button class="btn-delete-col" title="ユーザー削除" data-uid="${uid}" onclick="event.stopPropagation();"><i class="fa-solid fa-trash-can"></i></button></div></div></th>`;
+          headerHtml += `<th style="width:140px; min-width:140px; max-width:140px;"><div style="display:flex; align-items:center; justify-content:center; gap:8px; height: 50px;"><div class="matrix-user-header"><span class="status-dot" data-uid="${escapeHtml(uid)}" style="color:${statusColor}; font-size:10px; line-height:1;">●</span><span style="font-weight:bold; color:var(--text-main); font-family: 'JetBrains Mono', monospace; font-size:12px; line-height:1;">${escapeHtml(uid)}</span></div><div style="position:relative; width:8px; height:46px; background:#000; border-radius:4px; overflow:hidden; box-shadow:inset 0 0 2px rgba(0,0,0,0.8);"><div id="user-meter-${uid}" style="position:absolute; bottom:0; left:0; width:100%; height:100%; background:linear-gradient(to top, #22c55e, #eab308, #ef4444); transform-origin:bottom; transform:scaleY(0); transition:transform 0.05s ease-out;"></div></div><div style="display:flex; flex-direction:column; gap:2px; width: 28px;"><button class="btn-batch-col" title="一括割り当て" onclick="toggleAllUserAssignments('${uid}')"><i class="fa-solid fa-check-double"></i></button><button class="btn-delete-col" title="ユーザー削除" data-uid="${uid}" onclick="event.stopPropagation();"><i class="fa-solid fa-trash-can"></i></button></div></div></th>`;
 
       });
 
@@ -2660,7 +2706,7 @@
 
           const typeSelect = `<select class="admin-edit-type" data-id="${ch.id}"><option value="PL" ${ch.type==='PL'?'selected':''}>PL</option><option value="Local" ${ch.type==='Local'?'selected':''}>Local</option><option value="Listen" ${ch.type==='Listen'?'selected':''}>Listen</option></select>`;
 
-          html += `<tr><td class="ch-cell" style="vertical-align: middle;"><div style="display:flex; gap:6px; align-items:center; justify-content:space-between; width:100%; height:100%;"><div style="display:flex; gap:4px; flex:1; align-items:center;"><input type="text" class="admin-edit-name" data-id="${ch.id}" value="${ch.name}" style="width:80px; font-size:12px; font-family:'JetBrains Mono', monospace; text-transform:uppercase; text-align:center;" ${ch.fixed?'disabled':''}>${typeSelect}</div>${ch.fixed?'<div style="width:28px;"></div>':`<div style="display:flex; flex-direction:column; gap:2px; width: 28px;"><button class="btn-batch-row" title="一括割り当て" data-id="${ch.id}"><i class="fa-solid fa-check-double"></i></button><button class="btn-delete-row" title="パーティー削除" data-id="${ch.id}"><i class="fa-solid fa-trash-can"></i></button></div>`}</div></td>`;
+          html += `<tr><td class="ch-cell" style="vertical-align: middle;"><div style="display:flex; gap:6px; align-items:center; justify-content:space-between; width:100%; height:100%;"><div style="display:flex; gap:4px; flex:1; align-items:center;"><input type="text" class="admin-edit-name" data-id="${ch.id}" value="${escapeHtml(ch.name)}" style="width:80px; font-size:12px; font-family:'JetBrains Mono', monospace; text-transform:uppercase; text-align:center;" ${ch.fixed?'disabled':''}>${typeSelect}</div>${ch.fixed?'<div style="width:28px;"></div>':`<div style="display:flex; flex-direction:column; gap:2px; width: 28px;"><button class="btn-batch-row" title="一括割り当て" data-id="${ch.id}"><i class="fa-solid fa-check-double"></i></button><button class="btn-delete-row" title="パーティー削除" data-id="${ch.id}"><i class="fa-solid fa-trash-can"></i></button></div>`}</div></td>`;
 
           state.registeredUsers?.forEach(uid => { 
 
@@ -3022,11 +3068,68 @@
 
 
 
+    let autoReconnectTimer = null;
+    let autoReconnectAttempts = 0;
+
+    function triggerAutoReconnect() {
+      if (!state.hasSuccessfullyConnected || !state.roomId || !state.myUserId) return;
+      if (state.myUserId.toLowerCase() === 'debug' || autoReconnectTimer) return;
+
+      const schedule = () => {
+        const delay = Math.min(1000 * Math.pow(2, autoReconnectAttempts), 15000);
+        autoReconnectTimer = setTimeout(attemptReconnect, delay);
+      };
+
+      const attemptReconnect = async () => {
+        autoReconnectTimer = null;
+        if (navigator.onLine === false) {
+          autoReconnectAttempts = Math.min(autoReconnectAttempts + 1, 4);
+          schedule();
+          return;
+        }
+        if (state.room?.state === 'connected') {
+          autoReconnectAttempts = 0;
+          const ov = $('disconnect-overlay'); if (ov) ov.style.display = 'none';
+          return;
+        }
+        try {
+          uiLog(`Reconnect attempt ${autoReconnectAttempts + 1}...`, '#60a5fa');
+          const res = await fetch(`${WORKER_AUTH_URL}/?room=${encodeURIComponent(state.roomId)}&user=${encodeURIComponent(state.myUserId)}`, { cache: 'no-store' });
+          if (!res.ok) throw new Error(`token HTTP ${res.status}`);
+          const data = await res.json();
+          if (!data?.token) throw new Error('token missing');
+          await state.room.connect(LIVEKIT_WS_URL, data.token);
+          autoReconnectAttempts = 0;
+          const ov = $('disconnect-overlay'); if (ov) ov.style.display = 'none';
+          sendData({ type: 'hello', userId: state.myUserId });
+          syncTalkStates();
+          syncListenStates();
+          if (state.audioEnabled) { try { await updateAudioDevices(); } catch (_) {} }
+          uiLog('Reconnected.', '#4ade80');
+        } catch (err) {
+          autoReconnectAttempts = Math.min(autoReconnectAttempts + 1, 4);
+          uiLog(`Reconnect failed: ${err?.message || err}`, '#f97316');
+          const dt = $('disconnect-text');
+          if (dt) dt.textContent = `再接続を試行中… (${autoReconnectAttempts})`;
+          schedule();
+        }
+      };
+      schedule();
+    }
+
+    window.addEventListener('online', () => {
+      if (state.hasSuccessfullyConnected && state.room?.state !== 'connected') triggerAutoReconnect();
+    });
+
     const joinNetwork = async function(isAdmin) {
 
       const rawRoomId = $('host-id')?.value.trim(); const myName = $('join-userid')?.value.trim();
 
-      if (!rawRoomId || !myName) { return; }
+      if (!rawRoomId || !myName) { syncPulse(); return; }
+      if (!isSafeIdentifier(rawRoomId, 64) || !isSafeIdentifier(myName, 32)) {
+        alert('ROOM NAME / USER ID は、英数字・日本語・「. _ -」のみ使用できます。\nUSER ID は32文字、ROOM NAME は64文字以内にしてください。');
+        return;
+      }
 
       if (isAdmin && myName.toLowerCase() !== 'debug') { const pass = prompt("管理者パスワードを入力してください"); if (pass !== "tmax") { if(pass !== null) alert("パスワードが違います。"); return; } }
 
@@ -3264,7 +3367,7 @@
 
           try {
 
-            const res = await fetch(`${WORKER_AUTH_URL}/?room=${encodeURIComponent(rawRoomId)}&user=${encodeURIComponent(myName)}`);
+            const res = await fetch(`${WORKER_AUTH_URL}/?room=${encodeURIComponent(rawRoomId)}&user=${encodeURIComponent(myName)}`, { cache: 'no-store' });
 
             if (!res.ok) throw new Error("認証に失敗しました");
 
@@ -3300,7 +3403,7 @@
 
           room.on(LivekitClient.RoomEvent.Reconnected, () => { hideDisconnect(); });
 
-          room.on(LivekitClient.RoomEvent.Disconnected, () => { showDisconnect('サーバーから切断されました。リロードしてください。'); if (state.hasSuccessfullyConnected) triggerAutoReconnect(); });
+          room.on(LivekitClient.RoomEvent.Disconnected, () => { showDisconnect('サーバーから切断されました。自動再接続を試行します…'); if (state.hasSuccessfullyConnected) triggerAutoReconnect(); });
 
 
 
@@ -3314,11 +3417,11 @@
 
               if(state.ioBridge.outDevice4w && state.ioBridge.outDevice4w !== 'default' && typeof audioEl.setSinkId === 'function') {
 
-                  try { audioEl.setSinkId(state.ioBridge.outDevice4w); } catch(err){}
+                  audioEl.setSinkId(state.ioBridge.outDevice4w).catch(err => uiLog(`Output route failed: ${err?.message || err}`, '#f97316'));
 
               }
 
-              const isIOTrack = publication.trackName.startsWith('io_');
+              const isIOTrack = (publication.trackName || '').startsWith('io_');
 
               const callKey = isIOTrack ? participant.identity + '_' + publication.trackName : participant.identity;
 
@@ -3342,7 +3445,7 @@
 
             else { 
 
-                const isIOTrack = publication.trackName.startsWith('io_');
+                const isIOTrack = (publication.trackName || '').startsWith('io_');
 
                 const callKey = isIOTrack ? participant.identity + '_' + publication.trackName : participant.identity;
 
@@ -3532,7 +3635,3 @@
 </body>
 
 </html>
-
-
-
-
