@@ -1441,46 +1441,50 @@
 </style>
 
 
-<style id="v8-intercom-card-width-fix">
-/* ===== v8: compact intercom card width =====
-   Do not stretch a small number of party cards across the full viewport. */
+
+
+<style id="v9-original-intercom-grid-restore">
+/* ===== v9: restore original intercom party grid behavior =====
+   Original intent: fill from top-left, keep empty grid tracks, predictable gaps,
+   and only change column count as the viewport allows. */
 #channel-list-wrap {
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 340px)) !important;
-  justify-content: center !important;
+  display: grid !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)) !important;
+  gap: 10px !important;
+  align-content: start !important;
+  align-items: start !important;
+  justify-content: start !important;
   justify-items: stretch !important;
 }
-.channel-card {
+#channel-list-wrap > .channel-card {
   width: 100% !important;
-  max-width: 340px !important;
-  justify-self: center !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  justify-self: stretch !important;
+  align-self: start !important;
 }
 
-/* iPhone / phones: keep comfortable side margins while using available width on narrow screens. */
-@media (max-width: 600px) {
-  #channel-list-wrap {
-    grid-template-columns: min(100%, 350px) !important;
-    justify-content: center !important;
-  }
-  .channel-card {
-    max-width: 350px !important;
-  }
+/* Original desktop/tablet spacing. */
+@media (min-width: 600px) {
+  #channel-list-wrap { gap: 15px !important; }
 }
 
-/* Very narrow webviews: never force horizontal overflow. */
-@media (max-width: 360px) {
+/* Portrait phones: one card per row, using the original compact gap. */
+@media (max-width: 600px) and (orientation: portrait) {
   #channel-list-wrap {
     grid-template-columns: 1fr !important;
-  }
-  .channel-card {
-    max-width: 100% !important;
+    gap: 8px !important;
   }
 }
 
-/* Phone landscape: retain two-column density, but cap each card rather than stretching it. */
-@media (orientation: landscape) and (max-height: 600px) and (min-width: 601px) {
+/* Phone landscape: restore the original dense two-column layout. */
+@media (orientation: landscape) and (max-height: 600px) {
   #channel-list-wrap {
-    grid-template-columns: repeat(2, minmax(0, 340px)) !important;
-    justify-content: center !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
   }
 }
 </style>
