@@ -884,6 +884,79 @@
       *, *::before, *::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; scroll-behavior:auto !important; }
     }
 
+
+    /* ===== v3 NAVIGATION / LAYOUT UX ===== */
+    /* Keep the main header available while the admin menu is open. */
+    #admin-overlay {
+      top: var(--header-height) !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      left: 0 !important;
+      height: calc(var(--app-height, 100dvh) - var(--header-height)) !important;
+      max-height: calc(var(--app-height, 100dvh) - var(--header-height)) !important;
+      z-index: 4500 !important;
+      padding-top: 8px !important;
+    }
+    #admin-overlay .admin-modal {
+      height: 100% !important;
+      max-height: 100% !important;
+    }
+    .admin-topbar {
+      display: flex;
+      align-items: stretch;
+      gap: 8px;
+      margin-bottom: 10px;
+      flex-shrink: 0;
+    }
+    .admin-topbar .admin-tabs-container { margin: 0 !important; min-width: 0; flex: 1 1 auto; }
+    .btn-admin-home {
+      flex: 0 0 auto;
+      min-width: 78px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background: #111216;
+      color: #fff;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      cursor: pointer;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      font-size: 10px;
+      letter-spacing: .5px;
+      transition: .15s ease;
+    }
+    .btn-admin-home i { font-size: 17px; color: var(--blue); }
+    .btn-admin-home:hover,
+    .btn-admin-home:focus-visible {
+      border-color: var(--blue);
+      background: rgba(96,165,250,.10);
+      outline: none;
+    }
+    #btn-layout[aria-expanded="true"] {
+      border-color: var(--blue);
+      color: var(--blue);
+      background: rgba(59,130,246,.10);
+    }
+    .layout-item { justify-content: flex-start; }
+    .layout-item .layout-copy { display:flex; flex-direction:column; gap:2px; min-width:0; }
+    .layout-item .layout-name { font-size:12px; line-height:1.15; }
+    .layout-item .layout-sub { color:var(--text-sub); font-size:9px; font-weight:400; letter-spacing:.2px; }
+    .layout-item.active .layout-sub { color:rgba(96,165,250,.8); }
+
+    @media (max-width: 600px) {
+      #admin-overlay {
+        padding: 6px 0 max(0px,var(--safe-bottom)) !important;
+        align-items: flex-end !important;
+      }
+      .admin-topbar { gap: 5px; }
+      .btn-admin-home { min-width: 58px; padding: 6px 5px; font-size: 9px; }
+      .btn-admin-home i { font-size: 15px; }
+    }
+
   </style>
 
 </head>
@@ -1008,15 +1081,15 @@
 
         <div style="position: relative;">
 
-          <button type="button" id="btn-layout" class="btn-header-icon" title="レイアウト変更"><i class="fa-solid fa-border-all"></i></button>
+          <button type="button" id="btn-layout" class="btn-header-icon" title="レイアウト変更：インカムオンリー" aria-label="レイアウト変更" aria-haspopup="menu" aria-expanded="false"><i class="fa-solid fa-border-all"></i></button>
 
-          <div id="layout-dropdown" class="layout-dropdown">
+          <div id="layout-dropdown" class="layout-dropdown" role="menu" aria-label="レイアウト変更">
 
-            <button class="layout-item active" data-layout="normal"><i class="fa-solid fa-microphone-lines" style="margin-right:10px; width:16px; text-align:center;"></i>INTERCOM</button>
+            <button class="layout-item active" data-layout="normal" role="menuitem"><i class="fa-solid fa-microphone-lines" style="width:16px; text-align:center;"></i><span class="layout-copy"><span class="layout-name">インカムオンリー</span><span class="layout-sub">INTERCOM ONLY</span></span></button>
 
-            <button class="layout-item" data-layout="hybrid"><i class="fa-solid fa-table-columns" style="margin-right:10px; width:16px; text-align:center;"></i>HYBRID</button>
+            <button class="layout-item" data-layout="monitor" role="menuitem"><i class="fa-solid fa-tv" style="width:16px; text-align:center;"></i><span class="layout-copy"><span class="layout-name">モニターオンリー</span><span class="layout-sub">MONITOR ONLY</span></span></button>
 
-            <button class="layout-item" data-layout="monitor"><i class="fa-solid fa-tv" style="margin-right:10px; width:16px; text-align:center;"></i>MONITOR</button>
+            <button class="layout-item" data-layout="hybrid" role="menuitem"><i class="fa-solid fa-table-columns" style="width:16px; text-align:center;"></i><span class="layout-copy"><span class="layout-name">ハイブリッド</span><span class="layout-sub">INTERCOM + MONITOR</span></span></button>
 
           </div>
 
@@ -1036,7 +1109,7 @@
 
       <div class="login-modal admin-modal">
 
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; position: relative;">
+        <div class="admin-topbar">
 
           <div class="admin-tabs-container" style="margin: 0; padding: 0; flex-grow: 1;">
 
@@ -1047,6 +1120,8 @@
             <button id="tab-io" class="admin-tab-btn"><i class="fa-solid fa-sliders"></i><span>I/O BRIDGE</span></button>
 
           </div>
+
+          <button type="button" id="btn-admin-home" class="btn-admin-home" title="ホーム画面へ戻る" aria-label="ホーム画面へ戻る"><i class="fa-solid fa-house"></i><span>HOME</span></button>
 
         </div>
 
@@ -1472,17 +1547,10 @@
 
             const drop = $('layout-dropdown');
 
-            drop?.classList.toggle('show'); 
-
-            if (drop?.classList.contains('show')) {
-
-                bLay.classList.add('active');
-
-            } else {
-
-                bLay.classList.remove('active');
-
-            }
+            const willOpen = !drop?.classList.contains('show');
+            drop?.classList.toggle('show', willOpen);
+            bLay.classList.toggle('active', willOpen);
+            bLay.setAttribute('aria-expanded', String(willOpen));
 
         };
 
@@ -1491,6 +1559,7 @@
             $('layout-dropdown')?.classList.remove('show'); 
 
             $('btn-layout')?.classList.remove('active');
+            $('btn-layout')?.setAttribute('aria-expanded', 'false');
 
         });
 
@@ -1501,7 +1570,8 @@
             state.layout = selected;
             saveRoomState();
             $('layout-dropdown')?.classList.remove('show');
-            $('btn-layout')?.classList.toggle('active', selected !== 'normal');
+            $('btn-layout')?.classList.remove('active');
+            $('btn-layout')?.setAttribute('aria-expanded', 'false');
         }; });
 
 
@@ -1540,6 +1610,17 @@
 
         
 
+        const bHome = $('btn-admin-home');
+        if (bHome) bHome.onclick = () => {
+            const ov = $('admin-overlay');
+            if (ov) ov.style.display = 'none';
+            $('btn-settings')?.classList.remove('active');
+            $('layout-dropdown')?.classList.remove('show');
+            $('btn-layout')?.classList.remove('active');
+            $('btn-layout')?.setAttribute('aria-expanded', 'false');
+            window.forceResize?.();
+        };
+
         const bSet = $('btn-settings');
 
         if(bSet) bSet.onclick = () => { 
@@ -1571,6 +1652,18 @@
         };
 
 
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key !== 'Escape') return;
+            $('layout-dropdown')?.classList.remove('show');
+            $('btn-layout')?.classList.remove('active');
+            $('btn-layout')?.setAttribute('aria-expanded', 'false');
+            const adminOv = $('admin-overlay');
+            if (adminOv?.style.display === 'flex') {
+                adminOv.style.display = 'none';
+                $('btn-settings')?.classList.remove('active');
+            }
+        });
 
         const bjm = $('btn-join-member'); if(bjm) bjm.onclick = () => joinNetwork(false);
 
@@ -1686,7 +1779,13 @@
 
         document.querySelectorAll('.layout-item').forEach(btn => { if(btn.getAttribute('data-layout') === layout) btn.classList.add('active'); else btn.classList.remove('active'); });
 
-        const bl = $('btn-layout'); if(bl) { if (layout === 'normal') bl.classList.remove('active'); else bl.classList.add('active'); }
+        const layoutNames = { normal: 'インカムオンリー', monitor: 'モニターオンリー', hybrid: 'ハイブリッド' };
+        const bl = $('btn-layout');
+        if (bl) {
+            bl.classList.remove('active');
+            bl.setAttribute('aria-expanded', 'false');
+            bl.title = `レイアウト変更：${layoutNames[layout] || layoutNames.normal}`;
+        }
 
         setTimeout(window.forceResize, 100);
 
