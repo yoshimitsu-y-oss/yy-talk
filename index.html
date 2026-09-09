@@ -957,6 +957,141 @@
       .btn-admin-home i { font-size: 15px; }
     }
 
+  
+
+    /* ===== v4 AUTHORITATIVE LAYOUT / MENU FIX ===== */
+    .header, .header-right { overflow: visible !important; }
+    #layout-dropdown.layout-dropdown {
+      position: absolute !important;
+      top: calc(100% + 7px) !important;
+      right: 0 !important;
+      left: auto !important;
+      width: 210px !important;
+      max-width: calc(100vw - 16px) !important;
+      padding: 4px !important;
+      display: none !important;
+      flex-direction: column !important;
+      background: #111216 !important;
+      border: 1px solid var(--border-color) !important;
+      border-radius: 9px !important;
+      box-shadow: 0 14px 36px rgba(0,0,0,.65) !important;
+      overflow: hidden !important;
+      z-index: 9000 !important;
+    }
+    #layout-dropdown.layout-dropdown.show { display: flex !important; }
+    #layout-dropdown .layout-item {
+      width: 100% !important;
+      min-width: 0 !important;
+      min-height: 44px !important;
+      padding: 0 12px !important;
+      display: flex !important;
+      flex-direction: row !important;
+      align-items: center !important;
+      justify-content: flex-start !important;
+      gap: 10px !important;
+      background: transparent !important;
+      border: 0 !important;
+      border-bottom: 1px solid rgba(255,255,255,.06) !important;
+      border-radius: 6px !important;
+      color: var(--text-main) !important;
+      font: 700 12px/1 'JetBrains Mono', monospace !important;
+      text-align: left !important;
+      white-space: nowrap !important;
+      cursor: pointer !important;
+    }
+    #layout-dropdown .layout-item:last-child { border-bottom: 0 !important; }
+    #layout-dropdown .layout-item i { width: 18px !important; text-align:center !important; color: var(--text-sub) !important; }
+    #layout-dropdown .layout-item:hover { background: rgba(255,255,255,.055) !important; }
+    #layout-dropdown .layout-item.active { color: var(--blue) !important; background: rgba(96,165,250,.08) !important; }
+    #layout-dropdown .layout-item.active i { color: var(--blue) !important; }
+    #layout-dropdown .layout-item.active::after { content:'✓'; margin-left:auto; font-size:11px; }
+
+    /* Keep header visible so the settings/gear button always returns to home. */
+    #admin-overlay {
+      top: var(--header-height, 49px) !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      left: 0 !important;
+      height: auto !important;
+      max-height: none !important;
+      padding: 8px !important;
+      align-items: center !important;
+      justify-content: flex-start !important;
+      z-index: 4500 !important;
+    }
+    #admin-overlay .admin-modal {
+      width: min(1100px, 100%) !important;
+      height: calc(var(--app-height, 100dvh) - var(--header-height, 49px) - 16px) !important;
+      max-height: calc(var(--app-height, 100dvh) - var(--header-height, 49px) - 16px) !important;
+      margin: 0 auto !important;
+    }
+    #admin-overlay .admin-tabs-container {
+      width: 100% !important;
+      display: flex !important;
+      gap: 8px !important;
+      margin: 0 0 20px !important;
+      padding: 0 !important;
+      flex-shrink: 0 !important;
+    }
+    #admin-overlay .admin-tab-btn { flex: 1 1 0 !important; min-width:0 !important; }
+
+    /* Intercom party cards have no secondary popup/expand UI. */
+    .channel-card.expanded { background-color: var(--card-bg) !important; }
+    .volume-panel, .card-footer, .btn-expand { display:none !important; }
+
+    /* Three explicit layout modes. */
+    .app-container.layout-normal .monitor-section { display:none !important; }
+    .app-container.layout-normal .global-controls { display:flex !important; }
+    .app-container.layout-normal .channel-list-container {
+      display:grid !important;
+      flex:1 1 auto !important;
+      max-height:none !important;
+      overflow-y:auto !important;
+    }
+    .app-container.layout-normal .master-meter-container { display:block !important; }
+
+    .app-container.layout-monitor .monitor-section {
+      display:flex !important;
+      flex:1 1 auto !important;
+      height:auto !important;
+      min-height:0 !important;
+      max-height:none !important;
+      border-bottom:0 !important;
+    }
+    .app-container.layout-monitor .global-controls,
+    .app-container.layout-monitor .channel-list-container,
+    .app-container.layout-monitor .master-meter-container { display:none !important; }
+
+    .app-container.layout-hybrid .monitor-section {
+      display:flex !important;
+      flex:0 0 50% !important;
+      height:50% !important;
+      max-height:50% !important;
+      min-height:0 !important;
+    }
+    .app-container.layout-hybrid .global-controls { display:flex !important; flex:0 0 auto !important; }
+    .app-container.layout-hybrid .channel-list-container {
+      display:grid !important;
+      flex:1 1 0 !important;
+      min-height:0 !important;
+      max-height:none !important;
+      overflow-y:auto !important;
+    }
+    .app-container.layout-hybrid .master-meter-container { display:block !important; flex:0 0 auto !important; }
+
+    @media (max-width:600px) {
+      #layout-dropdown.layout-dropdown { width:196px !important; right:-2px !important; }
+      #layout-dropdown .layout-item { min-height:46px !important; padding:0 11px !important; font-size:11px !important; }
+      #admin-overlay { padding:6px 0 max(0px,var(--safe-bottom)) !important; align-items:flex-end !important; }
+      #admin-overlay .admin-modal {
+        width:100% !important;
+        height:calc(var(--app-height, 100dvh) - var(--header-height, 44px) - var(--safe-bottom, 0px)) !important;
+        max-height:calc(var(--app-height, 100dvh) - var(--header-height, 44px) - var(--safe-bottom, 0px)) !important;
+        border-radius:12px 12px 0 0 !important;
+      }
+      #admin-overlay .admin-tabs-container { gap:4px !important; margin-bottom:10px !important; }
+    }
+
   </style>
 
 </head>
@@ -1085,11 +1220,11 @@
 
           <div id="layout-dropdown" class="layout-dropdown" role="menu" aria-label="レイアウト変更">
 
-            <button class="layout-item active" data-layout="normal" role="menuitem"><i class="fa-solid fa-microphone-lines" style="width:16px; text-align:center;"></i><span class="layout-copy"><span class="layout-name">インカムオンリー</span><span class="layout-sub">INTERCOM ONLY</span></span></button>
+            <button type="button" class="layout-item active" data-layout="normal" role="menuitem"><i class="fa-solid fa-headset"></i><span>インカムオンリー</span></button>
 
-            <button class="layout-item" data-layout="monitor" role="menuitem"><i class="fa-solid fa-tv" style="width:16px; text-align:center;"></i><span class="layout-copy"><span class="layout-name">モニターオンリー</span><span class="layout-sub">MONITOR ONLY</span></span></button>
+            <button type="button" class="layout-item" data-layout="monitor" role="menuitem"><i class="fa-solid fa-tv"></i><span>モニターオンリー</span></button>
 
-            <button class="layout-item" data-layout="hybrid" role="menuitem"><i class="fa-solid fa-table-columns" style="width:16px; text-align:center;"></i><span class="layout-copy"><span class="layout-name">ハイブリッド</span><span class="layout-sub">INTERCOM + MONITOR</span></span></button>
+            <button type="button" class="layout-item" data-layout="hybrid" role="menuitem"><i class="fa-solid fa-table-columns"></i><span>ハイブリッド</span></button>
 
           </div>
 
@@ -1109,19 +1244,13 @@
 
       <div class="login-modal admin-modal">
 
-        <div class="admin-topbar">
+        <div class="admin-tabs-container">
 
-          <div class="admin-tabs-container" style="margin: 0; padding: 0; flex-grow: 1;">
+          <button id="tab-video" class="admin-tab-btn active"><i class="fa-solid fa-tv"></i><span>VIDEO TALLY</span></button>
 
-            <button id="tab-video" class="admin-tab-btn active"><i class="fa-solid fa-tv"></i><span>VIDEO TALLY</span></button>
+          <button id="tab-patch" class="admin-tab-btn"><i class="fa-solid fa-network-wired"></i><span>PATCH PANEL</span></button>
 
-            <button id="tab-patch" class="admin-tab-btn"><i class="fa-solid fa-network-wired"></i><span>PATCH PANEL</span></button>
-
-            <button id="tab-io" class="admin-tab-btn"><i class="fa-solid fa-sliders"></i><span>I/O BRIDGE</span></button>
-
-          </div>
-
-          <button type="button" id="btn-admin-home" class="btn-admin-home" title="ホーム画面へ戻る" aria-label="ホーム画面へ戻る"><i class="fa-solid fa-house"></i><span>HOME</span></button>
+          <button id="tab-io" class="admin-tab-btn"><i class="fa-solid fa-sliders"></i><span>I/O BRIDGE</span></button>
 
         </div>
 
@@ -1610,17 +1739,6 @@
 
         
 
-        const bHome = $('btn-admin-home');
-        if (bHome) bHome.onclick = () => {
-            const ov = $('admin-overlay');
-            if (ov) ov.style.display = 'none';
-            $('btn-settings')?.classList.remove('active');
-            $('layout-dropdown')?.classList.remove('show');
-            $('btn-layout')?.classList.remove('active');
-            $('btn-layout')?.setAttribute('aria-expanded', 'false');
-            window.forceResize?.();
-        };
-
         const bSet = $('btn-settings');
 
         if(bSet) bSet.onclick = () => { 
@@ -1725,11 +1843,8 @@
 
 
 
-        const cWrap = $('channel-list-wrap');
 
-        if (typeof Sortable !== 'undefined' && cWrap) { new Sortable(cWrap, { animation: 200, handle: '.btn-expand', delay: 150, delayOnTouchOnly: true, touchStartThreshold: 5, ghostClass: 'sortable-ghost', dragClass: 'sortable-drag', onEnd: function (evt) { let newOrder = []; cWrap.querySelectorAll('.channel-card').forEach(card => { newOrder.push(card.id.replace('card-', '')); }); safeStorage.set('yytalk-ch-order', JSON.stringify(newOrder)); } }); }
-
-        
+        // v4: party-card expand/reorder handle removed.
 
         const bAdd = $('btn-add-ch');
 
@@ -2201,35 +2316,13 @@
 
       const card = document.createElement('div'); card.className = `channel-card ${listenClass} ${talkClass}`; card.id = `card-${ch.id}`;
 
-      card.innerHTML = `<div class="status-line-bg"><div class="status-line-grad"></div><div class="status-line-mask" id="vol-indicator-${ch.id}"></div></div><div class="card-main"><div class="btn-action btn-listen ${state.listenStates[ch.id] ? 'active latched' : ''} ${lMuted}" id="listen-${ch.id}">${curListenIcon}</div><div class="ch-info"><div class="ch-name" id="name-${ch.id}">${escapeHtml(ch.name || 'Unknown')}</div><div class="ch-type" id="type-${ch.id}">${escapeHtml(ch.type || 'PL')}</div></div>${ch.type === 'Listen' ? `<div style="width: 44px; height: 44px; flex-shrink:0;"></div>` : `<div class="btn-action btn-talk ${state.talkStates[ch.id] ? 'active latched' : ''} ${tMuted}" id="talk-${ch.id}">${curTalkIcon}</div>`}</div><div class="ch-meter-container"><div class="ch-meter-grad"></div><div class="ch-meter-mask" id="meter-${ch.id}"></div></div><div class="volume-panel"><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M18.5 12A4.5 4.5 0 0 0 16 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg><div class="vol-slider-wrap"><div class="vol-slider-track-bg"></div><div class="vol-slider-fill" id="fill-${ch.id}"></div><input type="range" id="vol-${ch.id}" min="0" max="100" value="50"></div><svg class="vol-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></div><div class="card-footer"><div class="btn-expand" id="expand-${ch.id}">○ ○ ○</div></div>`;
+      card.innerHTML = `<div class="status-line-bg"><div class="status-line-grad"></div><div class="status-line-mask" id="vol-indicator-${ch.id}"></div></div><div class="card-main"><div class="btn-action btn-listen ${state.listenStates[ch.id] ? 'active latched' : ''} ${lMuted}" id="listen-${ch.id}">${curListenIcon}</div><div class="ch-info"><div class="ch-name" id="name-${ch.id}">${escapeHtml(ch.name || 'Unknown')}</div><div class="ch-type" id="type-${ch.id}">${escapeHtml(ch.type || 'PL')}</div></div>${ch.type === 'Listen' ? `<div style="width: 44px; height: 44px; flex-shrink:0;"></div>` : `<div class="btn-action btn-talk ${state.talkStates[ch.id] ? 'active latched' : ''} ${tMuted}" id="talk-${ch.id}">${curTalkIcon}</div>`}</div><div class="ch-meter-container"><div class="ch-meter-grad"></div><div class="ch-meter-mask" id="meter-${ch.id}"></div></div>`;
 
       const cw = $('channel-list-wrap'); if(cw) cw.appendChild(card);
 
-      
-
-      const slider = card.querySelector(`#vol-${ch.id}`); const fill = card.querySelector(`#fill-${ch.id}`); const volIndicator = card.querySelector(`#vol-indicator-${ch.id}`);
-
-      slider.value = (state.channelVolumes[ch.id] / 3.0) * 100; 
-
-      if(fill) fill.style.width = slider.value + '%'; 
-
-      if(volIndicator) volIndicator.style.height = (100 - slider.value) + '%'; 
-
-      
-
-      slider.addEventListener('input', (e) => { 
-
-          if(fill) fill.style.width = e.target.value + '%'; 
-
-          if(volIndicator) volIndicator.style.height = (100 - e.target.value) + '%'; 
-
-          state.channelVolumes[ch.id] = (e.target.value / 100) * 3.0; 
-
-          updateAudioRouting(); 
-
-      });
-
-      card.querySelector(`#expand-${ch.id}`).addEventListener('click', () => card.classList.toggle('expanded'));
+      const volIndicator = card.querySelector(`#vol-indicator-${ch.id}`);
+      const normalizedVol = Math.max(0, Math.min(100, ((state.channelVolumes[ch.id] ?? 1.5) / 3.0) * 100));
+      if(volIndicator) volIndicator.style.height = (100 - normalizedVol) + '%';
 
       setupPTTButton(card.querySelector(`#listen-${ch.id}`), 'listen', ch.id); 
 
