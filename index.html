@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 
 <html lang="ja">
-<!-- YY-Talk PRO Brush-up v6: card reorder restored + patch-panel fit -->
+<!-- YY-Talk PRO Brush-up v7: original intercom-card visuals + reorder + patch-panel fit -->
 
 <head>
 
@@ -1323,30 +1323,14 @@
 
 
 <style id="v6-card-matrix-fixes">
-  /* ===== v6: Intercom card drag handle ===== */
-  .btn-expand {
-    appearance: none;
-    -webkit-appearance: none;
-    border: 0;
-    background: transparent;
-    min-width: 112px;
-    min-height: 28px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    cursor: grab;
-    touch-action: none;
-    user-select: none;
-    -webkit-user-select: none;
-    transform: none !important;
-  }
-  .btn-expand:hover { transform: none !important; }
+  /* ===== v7: keep the original card size/design; only add drag-state behavior ===== */
   .btn-expand:active,
   .sortable-chosen .btn-expand,
   .channel-card.is-reordering .btn-expand { cursor: grabbing; }
   .channel-card.is-reordering { transition: none !important; }
   .sortable-ghost { opacity: .28 !important; }
   .sortable-chosen { transform: none !important; }
+  .channel-card:hover { transform: none !important; }
 
   /* ===== v6: Patch panel cells / batch & delete buttons stay inside cells ===== */
   .admin-matrix-wrapper { overflow-x: auto !important; overflow-y: visible; }
