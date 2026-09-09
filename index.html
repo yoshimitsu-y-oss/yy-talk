@@ -1772,7 +1772,7 @@ html, body, #main-app-container {
 
   <div class="app-container" id="main-app-container">
 
-    <div id="audio-overlay" class="overlay-base"><p style="font-weight:bold;margin-bottom:20px;font-size:18px;">通話に参加しますか？</p><button type="button" id="btn-enable-audio" class="btn-green-solid">音声を有効にして参加</button></div>
+    <div id="audio-overlay" class="overlay-base"><p style="font-weight:bold;margin-bottom:10px;font-size:18px;">音声を開始できませんでした</p><p style="margin:0 20px 20px;max-width:420px;text-align:center;color:#cbd5e1;font-size:13px;line-height:1.6;">ブラウザのマイク許可を確認して、下のボタンでもう一度お試しください。</p><button type="button" id="btn-enable-audio" class="btn-green-solid">音声を再試行</button></div>
 
     
 
@@ -2298,7 +2298,7 @@ html, body, #main-app-container {
 
       ioTrack4wL: null, ioTrack4wR: null, ioTrackPgmL: null, ioTrackPgmR: null, masterAudioEl: null, hasSuccessfullyConnected: false,
 
-      audioCtx: null, masterAnalyser: null, localMicAnalyser: null, currentLocalVideoTrack: null,
+      audioCtx: null, masterAnalyser: null, localMicAnalyser: null, localMicSource: null, currentLocalVideoTrack: null,
 
       mqttClient: null
 
@@ -2461,55 +2461,17 @@ html, body, #main-app-container {
 
 
 
-        const bea = $('btn-enable-audio'); if(bea) bea.onclick = () => { 
-
-            $('audio-overlay').style.display = 'none'; 
-
-            state.audioEnabled = true; 
-
-            initAudioContext(); 
-
-            $('dummy-audio')?.play().catch(()=>{});
-
-            
-
-            if (state.myUserId.toLowerCase() !== 'debug') {
-
-                const constraints = state.ioBridge.enabled ? { echoCancellation: false, noiseSuppression: false, autoGainControl: false } : { echoCancellation: true, noiseSuppression: true, autoGainControl: true };
-
-                navigator.mediaDevices.getUserMedia({ audio: constraints })
-
-                .then(stream => {
-
-                    state.localStream = stream;
-
-                    if (state.audioCtx) { 
-
-                        if (state.localMicAnalyser) state.localMicAnalyser.disconnect(); 
-
-                        const localSrc = state.audioCtx.createMediaStreamSource(state.localStream); 
-
-                        state.localMicAnalyser = state.audioCtx.createAnalyser(); 
-
-                        state.localMicAnalyser.fftSize = 256; 
-
-                        localSrc.connect(state.localMicAnalyser); 
-
-                    }
-
-                    if(state.room && state.room.state === 'connected') {
-
-                        publishLocalMic();
-
-                    }
-
-                })
-
-                .catch(err => console.error("マイクアクセス拒否:" + err.message));
-
+        const bea = $('btn-enable-audio'); if(bea) bea.onclick = async () => {
+            const ok = await activateAudioForJoin({ forceNewStream: true, showFallback: true });
+            if (ok) {
+                const ao = $('audio-overlay'); if (ao) ao.style.display = 'none';
+                if (state.room?.state === 'connected') {
+                    if (state.ioBridge.enabled) await updateAudioDevices();
+                    else publishLocalMic();
+                }
             }
-
         };
+
 
 
 
@@ -2669,6 +2631,62 @@ html, body, #main-app-container {
 
 
 
+    let joinAudioPromise = null;
+
+    function attachLocalMicAnalyser(stream) {
+        if (!stream || !state.audioCtx) return;
+        try { state.localMicSource?.disconnect?.(); } catch(e) {}
+        try { state.localMicAnalyser?.disconnect?.(); } catch(e) {}
+        try {
+            const source = state.audioCtx.createMediaStreamSource(stream);
+            const analyser = state.audioCtx.createAnalyser();
+            analyser.fftSize = 256;
+            source.connect(analyser);
+            state.localMicSource = source;
+            state.localMicAnalyser = analyser;
+        } catch (e) {
+            uiLog(`Local mic analyser failed: ${e?.message || e}`, '#f97316');
+        }
+    }
+
+    function activateAudioForJoin({ forceNewStream = false, showFallback = true } = {}) {
+        /* v12: JOIN itself is the user gesture that unlocks audio on iPhone/Safari. */
+        state.audioEnabled = true;
+        try {
+            initAudioContext();
+            state.audioCtx?.resume?.().catch(() => {});
+            $('dummy-audio')?.play().catch(() => {});
+        } catch (e) {
+            uiLog(`AudioContext start failed: ${e?.message || e}`, '#f97316');
+        }
+
+        if ((state.myUserId || '').toLowerCase() === 'debug') return Promise.resolve(true);
+        if (!navigator.mediaDevices?.getUserMedia) {
+            if (showFallback) { const ao = $('audio-overlay'); if (ao) ao.style.display = 'flex'; }
+            return Promise.resolve(false);
+        }
+        if (!forceNewStream && state.localStream?.active && state.localStream.getAudioTracks().some(t => t.readyState === 'live')) {
+            attachLocalMicAnalyser(state.localStream);
+            return Promise.resolve(true);
+        }
+
+        /* Call getUserMedia immediately, before JOIN reaches its first await. */
+        const constraints = { echoCancellation: true, noiseSuppression: true, autoGainControl: true };
+        return navigator.mediaDevices.getUserMedia({ audio: constraints }).then(stream => {
+            if (forceNewStream && state.localStream && state.localStream !== stream) {
+                try { state.localStream.getTracks().forEach(t => t.stop()); } catch(e) {}
+            }
+            state.localStream = stream;
+            attachLocalMicAnalyser(stream);
+            const ao = $('audio-overlay'); if (ao) ao.style.display = 'none';
+            return true;
+        }).catch(err => {
+            uiLog(`Mic permission/start failed: ${err?.message || err}`, '#f97316');
+            if (showFallback) { const ao = $('audio-overlay'); if (ao) ao.style.display = 'flex'; }
+            return false;
+        });
+    }
+
     async function updateAudioDevices() {
 
         if (!state.room || !state.room.localParticipant) return;
@@ -2686,27 +2704,11 @@ html, body, #main-app-container {
             if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
 
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: micConstraints });
-
-                state.localStream = stream;
-
-                
-
-                if (state.audioCtx) { 
-
-                    if (state.localMicAnalyser) state.localMicAnalyser.disconnect(); 
-
-                    const localSrc = state.audioCtx.createMediaStreamSource(state.localStream); 
-
-                    state.localMicAnalyser = state.audioCtx.createAnalyser(); 
-
-                    state.localMicAnalyser.fftSize = 256; 
-
-                    localSrc.connect(state.localMicAnalyser); 
-
+                if (state.localStream && state.localStream !== stream) {
+                    try { state.localStream.getTracks().forEach(t => t.stop()); } catch(e) {}
                 }
-
-                
-
+                state.localStream = stream;
+                attachLocalMicAnalyser(stream);
                 publishLocalMic();
 
             }
@@ -3286,6 +3288,43 @@ html, body, #main-app-container {
 
     }
 
+    function analyserPercent(analyser) {
+        if (!analyser) return 0;
+        try {
+            const data = new Uint8Array(analyser.frequencyBinCount);
+            analyser.getByteFrequencyData(data);
+            const peak = getPeak(data);
+            return Math.min((peak / 255) * 100 * 1.2, 100);
+        } catch (e) { return 0; }
+    }
+
+    function ioTrackTargetChannel(trackName) {
+        if (trackName === 'io_4w_l') return state.ioBridge.inAssign4wL || '';
+        if (trackName === 'io_4w_r') return state.ioBridge.inAssign4wR || '';
+        if (trackName === 'io_pgm_l') return state.ioBridge.inAssignPgmL || '';
+        if (trackName === 'io_pgm_r') return state.ioBridge.inAssignPgmR || '';
+        return '';
+    }
+
+    function getIoPercentForParty(chId) {
+        let percent = 0;
+        const localIo = [
+            [state.ioBridge.inAssign4wL, state.ioNodes.analyser4wL],
+            [state.ioBridge.inAssign4wR, state.ioNodes.analyser4wR],
+            [state.ioBridge.inAssignPgmL, state.ioNodes.analyserPgmL],
+            [state.ioBridge.inAssignPgmR, state.ioNodes.analyserPgmR]
+        ];
+        localIo.forEach(([target, analyser]) => {
+            if (target && target === chId && analyser) percent = Math.max(percent, analyserPercent(analyser));
+        });
+        Object.values(state.mediaCalls || {}).forEach(callData => {
+            if (!callData?.isIOTrack || !callData.analyser) return;
+            if (ioTrackTargetChannel(callData.trackName) !== chId) return;
+            percent = Math.max(percent, analyserPercent(callData.analyser));
+        });
+        return percent;
+    }
+
 
 
     function startMeterDraw() {
@@ -3371,6 +3410,9 @@ html, body, #main-app-container {
                 }
 
 
+
+                /* v12: I/O Bridge (4W/PGM) is also visible on its assigned party meter. */
+                chPercent = Math.max(chPercent, getIoPercentForParty(ch.id));
 
                 if (state.talkStates[ch.id]) chPercent = Math.max(chPercent, localPercent); 
 
@@ -4119,6 +4161,9 @@ html, body, #main-app-container {
 
       state.roomId = rawRoomId; state.myUserId = myName; state.isAdmin = isAdmin;
 
+      /* v12: pressing JOIN automatically starts audio; no second confirmation button. */
+      joinAudioPromise = activateAudioForJoin({ forceNewStream: false, showFallback: true });
+
 
 
       if (myName.toLowerCase() !== 'debug') {
@@ -4217,15 +4262,7 @@ html, body, #main-app-container {
 
 
 
-      if (myName.toLowerCase() !== 'debug') {
-
-          const ao = $('audio-overlay');
-
-          if(ao) ao.style.display = 'flex';
-
-      }
-
-
+      /* Audio overlay is fallback-only from v12 onward. */
 
       (async () => {
 
@@ -4508,6 +4545,18 @@ html, body, #main-app-container {
               sendData({ type: 'hello', userId: state.myUserId }); 
 
               syncTalkStates(); syncListenStates();
+
+              /* Finish microphone/I/O publication only after LiveKit is connected. */
+              try {
+                  const audioReady = joinAudioPromise ? await joinAudioPromise : state.audioEnabled;
+                  if (audioReady) {
+                      if (state.ioBridge.enabled) await updateAudioDevices();
+                      else publishLocalMic();
+                  }
+              } catch (audioErr) {
+                  uiLog(`Post-connect audio setup failed: ${audioErr?.message || audioErr}`, '#f97316');
+                  const fallback = $('audio-overlay'); if (fallback) fallback.style.display = 'flex';
+              }
 
 
 
