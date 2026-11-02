@@ -1764,6 +1764,40 @@ html, body, #main-app-container {
 }
 </style>
 
+
+<style id="v13-audio-drag-fixes">
+  /* Hover stays fixed; only drag lifts the card. */
+  .channel-card {
+    transition: transform 220ms cubic-bezier(.22,1,.36,1), box-shadow 220ms ease, opacity 160ms ease !important;
+    transform-origin: center center;
+  }
+  .channel-card:hover { transform: none !important; }
+  .sortable-chosen {
+    transform: translateY(-4px) scale(1.018) !important;
+    box-shadow: 0 14px 32px rgba(0,0,0,.58), 0 0 0 1px rgba(96,165,250,.24) !important;
+    z-index: 8000 !important;
+  }
+  .sortable-drag, .sortable-fallback {
+    transform: translateY(-5px) scale(1.022) rotate(.15deg) !important;
+    box-shadow: 0 22px 48px rgba(0,0,0,.72), 0 0 0 1px rgba(96,165,250,.32) !important;
+    background: var(--card-bg-expanded) !important;
+    border-color: rgba(96,165,250,.45) !important;
+    opacity: .98 !important;
+    cursor: grabbing !important;
+    z-index: 9999 !important;
+    pointer-events: none !important;
+  }
+  .sortable-ghost {
+    opacity: .22 !important;
+    transform: scale(.985) !important;
+    box-shadow: none !important;
+  }
+  .channel-card.is-reordering {
+    transition: transform 180ms cubic-bezier(.22,1,.36,1), box-shadow 180ms ease !important;
+  }
+  .sortable-chosen .btn-expand, .sortable-drag .btn-expand, .sortable-fallback .btn-expand { cursor: grabbing !important; }
+</style>
+
 </head>
 
 <body onload="if(window.forceResize) window.forceResize()">
@@ -2296,7 +2330,7 @@ html, body, #main-app-container {
 
       ioNodes: { gain4wL: null, gain4wR: null, gainPgmL: null, gainPgmR: null, gainOutL: null, gainOutR: null, analyser4wL: null, analyser4wR: null, analyserPgmL: null, analyserPgmR: null, analyserOutL: null, analyserOutR: null },
 
-      ioTrack4wL: null, ioTrack4wR: null, ioTrackPgmL: null, ioTrackPgmR: null, masterAudioEl: null, hasSuccessfullyConnected: false,
+      ioTrack4wL: null, ioTrack4wR: null, ioTrackPgmL: null, ioTrackPgmR: null, masterAudioEl: null, masterSpeakerGain: null, masterStreamDest: null, hasSuccessfullyConnected: false,
 
       audioCtx: null, masterAnalyser: null, localMicAnalyser: null, localMicSource: null, currentLocalVideoTrack: null,
 
@@ -2480,12 +2514,16 @@ html, body, #main-app-container {
         const cWrap = $('channel-list-wrap');
         if (typeof Sortable !== 'undefined' && cWrap && !cWrap._yySortable) {
             cWrap._yySortable = new Sortable(cWrap, {
-                animation: 200,
+                animation: 240,
+                easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
                 handle: '.btn-expand',
-                delay: 150,
+                delay: 130,
                 delayOnTouchOnly: true,
-                touchStartThreshold: 5,
+                touchStartThreshold: 4,
                 fallbackTolerance: 4,
+                forceFallback: true,
+                fallbackOnBody: true,
+                fallbackClass: 'sortable-fallback',
                 ghostClass: 'sortable-ghost',
                 dragClass: 'sortable-drag',
                 chosenClass: 'sortable-chosen',
@@ -3170,11 +3208,40 @@ html, body, #main-app-container {
 
     async function applyOutputDevice() {
 
+        if (!state.audioCtx) return;
+
+        const requestedDevice = (state.ioBridge.enabled && state.ioBridge.outDevice4w && state.ioBridge.outDevice4w !== 'default')
+            ? state.ioBridge.outDevice4w : '';
+        const canSelectSink = !!(state.masterAudioEl && typeof state.masterAudioEl.setSinkId === 'function');
+        const useExternalSink = !!requestedDevice && canSelectSink;
+
+        /* v13: normal LISTEN playback goes directly to the terminal/default speaker. */
+        if (state.masterSpeakerGain) {
+            const target = useExternalSink ? 0 : 1;
+            try { state.masterSpeakerGain.gain.setTargetAtTime(target, state.audioCtx.currentTime, 0.01); }
+            catch(e) { state.masterSpeakerGain.gain.value = target; }
+        }
+
         if (!state.masterAudioEl) return;
 
-        let deviceId = ''; if (state.ioBridge.enabled && state.ioBridge.outDevice4w && state.ioBridge.outDevice4w !== 'default') { deviceId = state.ioBridge.outDevice4w; }
-
-        if (typeof state.masterAudioEl.setSinkId === 'function') { try { await state.masterAudioEl.setSinkId(deviceId); } catch(e) {} }
+        if (useExternalSink) {
+            try {
+                await state.masterAudioEl.setSinkId(requestedDevice);
+                state.masterAudioEl.muted = false;
+                const p = state.masterAudioEl.play();
+                if (p && typeof p.catch === 'function') p.catch(err => uiLog(`Output playback failed: ${err?.message || err}`, '#f97316'));
+            } catch(e) {
+                uiLog(`Output route failed: ${e?.message || e}`, '#f97316');
+                if (state.masterSpeakerGain) {
+                    try { state.masterSpeakerGain.gain.setTargetAtTime(1, state.audioCtx.currentTime, 0.01); }
+                    catch(_) { state.masterSpeakerGain.gain.value = 1; }
+                }
+                state.masterAudioEl.muted = true;
+            }
+        } else {
+            /* Direct Web Audio output is active; prevent duplicate playback. */
+            state.masterAudioEl.muted = true;
+        }
 
     }
 
@@ -3186,7 +3253,13 @@ html, body, #main-app-container {
 
           state.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); 
 
-          state.masterAnalyser = state.audioCtx.createAnalyser(); state.masterAnalyser.fftSize = 256; 
+          state.masterAnalyser = state.audioCtx.createAnalyser(); state.masterAnalyser.fftSize = 256;
+
+          /* v13: reliable terminal speaker path for party LISTEN. */
+          state.masterSpeakerGain = state.audioCtx.createGain();
+          state.masterSpeakerGain.gain.value = 1;
+          state.masterAnalyser.connect(state.masterSpeakerGain);
+          state.masterSpeakerGain.connect(state.audioCtx.destination);
 
           const masterSplitter = state.audioCtx.createChannelSplitter(2); state.masterAnalyser.connect(masterSplitter);
 
@@ -3199,8 +3272,14 @@ html, body, #main-app-container {
           const masterMerger = state.audioCtx.createChannelMerger(2); state.ioNodes.analyserOutL.connect(masterMerger, 0, 0); state.ioNodes.analyserOutR.connect(masterMerger, 0, 1);
 
           const masterDest = state.audioCtx.createMediaStreamDestination(); masterMerger.connect(masterDest);
+          state.masterStreamDest = masterDest;
 
-          state.masterAudioEl = new Audio(); state.masterAudioEl.srcObject = masterDest.stream; state.masterAudioEl.play().catch(e => {});
+          state.masterAudioEl = new Audio();
+          state.masterAudioEl.autoplay = true;
+          state.masterAudioEl.playsInline = true;
+          state.masterAudioEl.muted = true;
+          state.masterAudioEl.srcObject = masterDest.stream;
+          state.masterAudioEl.play().catch(() => {});
 
           
 
@@ -3208,7 +3287,9 @@ html, body, #main-app-container {
 
       }
 
-      if(state.audioCtx.state === 'suspended') state.audioCtx.resume(); Object.values(state.mediaCalls || {}).forEach(callData => { if (!callData?.source) setupPeerMixer(callData); });
+      if(state.audioCtx.state === 'suspended') state.audioCtx.resume().catch(() => {});
+      applyOutputDevice();
+      Object.values(state.mediaCalls || {}).forEach(callData => { if (!callData?.source) setupPeerMixer(callData); });
 
     }
 
