@@ -4849,8 +4849,11 @@ html, body, #main-app-container {
          bridge while allowing terminal LISTEN to be switched locally. */
       for (const callKey in state.mediaCalls) {
           const callData = state.mediaCalls[callKey];
-          if (!callData?.chGains) continue;
+          if (!callData) continue;
 
+          /* v29: Stereo I/O uses ioLegGains, not chGains. In v28 this branch was
+             unreachable because the generic chGains guard ran first. The analysers
+             therefore moved while every L/R routing gain stayed at zero. */
           if (callData.isIOStereoTrack) {
               const targets = ioStereoTargets(callData.trackName);
               const isSelf = callKey.startsWith(state.myUserId + '_');
@@ -4858,11 +4861,13 @@ html, body, #main-app-container {
                   const legs = callData.ioLegGains?.[ch.id]; if (!legs) return;
                   const l = (!isSelf && targets.L && ch.id === targets.L) ? 1 : 0;
                   const r = (!isSelf && targets.R && ch.id === targets.R) ? 1 : 0;
-                  legs.L.gain.setTargetAtTime(l, state.audioCtx.currentTime, 0.04);
-                  legs.R.gain.setTargetAtTime(r, state.audioCtx.currentTime, 0.04);
+                  legs.L.gain.setTargetAtTime(l, state.audioCtx.currentTime, 0.02);
+                  legs.R.gain.setTargetAtTime(r, state.audioCtx.currentTime, 0.02);
               });
               continue;
           }
+
+          if (!callData.chGains) continue;
 
           if (callData.isIOTrack) {
               const targetCh = ioTrackTargetChannel(callData.trackName);
@@ -5061,7 +5066,7 @@ html, body, #main-app-container {
 
             });
 
-            saveRoomState(); buildAdminMatrix(); applyAssignments(state.userAssignments[state.myUserId]); sendData({ type: 'init-state', channels: state.channels, assignments: state.userAssignments, tallyAssignments: state.tallyAssignments, registered: state.registeredUsers, ioBridge: state.ioBridge });
+            saveRoomState(); buildAdminMatrix(); applyAssignments(state.userAssignments[state.myUserId]); sendData({ type: 'init-state', channels: state.channels, assignments: state.userAssignments, tallyAssignments: state.tallyAssignments, registered: state.registeredUsers, ioBridge: state.ioBridge, monitorTitle: state.monitorTitle, videoQuality: state.videoQuality, layout: state.layout });
 
         };
 
@@ -5139,7 +5144,7 @@ html, body, #main-app-container {
 
           saveRoomState(); syncChannelInfo(); 
 
-          if (e.target.classList.contains('admin-edit-type')) { applyAssignments(state.userAssignments[state.myUserId]); buildAdminMatrix(); initChannelsDOM(); updateAudioRouting(); sendData({ type: 'init-state', channels: state.channels, assignments: state.userAssignments, tallyAssignments: state.tallyAssignments, registered: state.registeredUsers, ioBridge: state.ioBridge }); }
+          if (e.target.classList.contains('admin-edit-type')) { applyAssignments(state.userAssignments[state.myUserId]); buildAdminMatrix(); initChannelsDOM(); updateAudioRouting(); sendData({ type: 'init-state', channels: state.channels, assignments: state.userAssignments, tallyAssignments: state.tallyAssignments, registered: state.registeredUsers, ioBridge: state.ioBridge, monitorTitle: state.monitorTitle, videoQuality: state.videoQuality, layout: state.layout }); }
 
       }); });
 
@@ -5205,7 +5210,7 @@ html, body, #main-app-container {
 
           }
 
-          if(state.isAdmin) { sendData({ type: 'init-state', channels: state.channels, assignments: state.userAssignments, tallyAssignments: state.tallyAssignments, registered: state.registeredUsers, ioBridge: state.ioBridge }); if(state.activeVideoSender === state.myUserId) { const sourceText = $('main-monitor-source-text')?.textContent.replace('[ VIDEO SWITCHING NOW ]', '').replace('[ NO VIDEO ]', 'CAMERA').trim() || 'OFF'; sendData({ type: 'update-video-sender', senderId: state.myUserId, sourceText: sourceText }); } }
+          if(state.isAdmin) { sendData({ type: 'init-state', channels: state.channels, assignments: state.userAssignments, tallyAssignments: state.tallyAssignments, registered: state.registeredUsers, ioBridge: state.ioBridge, monitorTitle: state.monitorTitle, videoQuality: state.videoQuality, layout: state.layout }); sendData({ type: 'update-monitor-title', title: state.monitorTitle }); if(state.activeVideoSender === state.myUserId) { const sourceText = $('main-monitor-source-text')?.textContent.replace('[ VIDEO SWITCHING NOW ]', '').replace('[ NO VIDEO ]', 'CAMERA').trim() || 'OFF'; sendData({ type: 'update-video-sender', senderId: state.myUserId, sourceText: sourceText }); } }
 
         }
 
@@ -5234,6 +5239,21 @@ html, body, #main-app-container {
             if(data.channels && Array.isArray(data.channels)) {
 
                 if (data.ioBridge) { state.ioBridge.inAssign4wL = data.ioBridge.inAssign4wL || ''; state.ioBridge.inAssign4wR = data.ioBridge.inAssign4wR || ''; state.ioBridge.outAssign4wL = data.ioBridge.outAssign4wL || ''; state.ioBridge.outAssign4wR = data.ioBridge.outAssign4wR || ''; state.ioBridge.inAssignPgmL = data.ioBridge.inAssignPgmL || ''; state.ioBridge.inAssignPgmR = data.ioBridge.inAssignPgmR || ''; state.ioBridge.inGain4wL = data.ioBridge.inGain4wL ?? 1.0; state.ioBridge.inGain4wR = data.ioBridge.inGain4wR ?? 1.0; state.ioBridge.outGain4wL = data.ioBridge.outGain4wL ?? 1.0; state.ioBridge.outGain4wR = data.ioBridge.outGain4wR ?? 1.0; state.ioBridge.inGainPgmL = data.ioBridge.inGainPgmL ?? 1.0; state.ioBridge.inGainPgmR = data.ioBridge.inGainPgmR ?? 1.0; }
+
+                /* v29: A late-joining client must receive the current monitor metadata,
+                   not only changes that happen after it joins. */
+                if (data.monitorTitle !== undefined) {
+                    state.monitorTitle = data.monitorTitle || '';
+                    const mt = $('main-monitor-title');
+                    if (mt) { mt.textContent = state.monitorTitle; mt.style.display = state.monitorTitle.trim() ? 'block' : 'none'; }
+                    const emt = $('edit-monitor-title');
+                    if (state.isAdmin && emt) emt.value = state.monitorTitle;
+                }
+                if (data.videoQuality !== undefined) state.videoQuality = data.videoQuality;
+                if (data.layout && ['normal','monitor','hybrid'].includes(data.layout)) {
+                    state.layout = data.layout;
+                    applyLayout(state.layout);
+                }
 
                 resetAndApplyChannels(data.channels, data.assignments, data.tallyAssignments, data.registered); saveRoomState(); if(state.isAdmin) { buildAdminMatrix(); buildTallyAssignmentUI(); } 
 
