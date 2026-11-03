@@ -13,7 +13,7 @@
 
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
-  <title>YY-Talk PRO - Broadcast Intercom v30</title>
+  <title>YY-Talk PRO v31</title>
   <meta name="theme-color" content="#0a0b0d">
   <meta name="color-scheme" content="dark">
 
@@ -2324,7 +2324,7 @@ html, body, #main-app-container {
 
           </div>
 
-          <div class="login-version">YY-Talk PRO &nbsp; v30</div>
+          <div class="login-version">YY-Talk PRO &nbsp; v31</div>
 
         </div>
 
@@ -2647,7 +2647,8 @@ html, body, #main-app-container {
 
               buildSec('4W INTERFACE (OUT)', 'OUTPUT DEVICE (SPK)', 'select-4w-out-device', [{label:'PL ➔ OUT 1(L)', id:'4w-out-l'}, {label:'PL ➔ OUT 2(R)', id:'4w-out-r'}]) +
 
-              buildSec('PGM INTERFACE (IN ONLY)', 'PGM INPUT DEVICE (MIC)', 'select-pgm-in-device', [{label:'PGM 1(L) ➔ PL', id:'pgm-in-l'}, {label:'PGM 2(R) ➔ PL', id:'pgm-in-r'}]);
+              buildSec('PGM INTERFACE (IN ONLY)', 'PGM INPUT DEVICE (MIC)', 'select-pgm-in-device', [{label:'PGM 1(L) ➔ PL', id:'pgm-in-l'}, {label:'PGM 2(R) ➔ PL', id:'pgm-in-r'}]) +
+              `<div class="io-interface-section"><h4 class="interface-title">I/O LINK DIAGNOSTICS</h4><div class="io-card" style="font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.7;color:var(--text-sub);"><div id="io-rx-diag-4w">4W RX: waiting...</div><div id="io-rx-diag-pgm">PGM RX: waiting...</div><div style="margin-top:5px;font-size:10px;opacity:.75;">JIT=jitter / LOSS=packet loss / CONC=concealment events</div></div></div>`;
 
         }
 
@@ -4413,6 +4414,7 @@ html, body, #main-app-container {
 
             if (state.mediaCalls[peerId].chGains) { Object.values(state.mediaCalls[peerId].chGains).forEach(nodes => { try { nodes.gain.disconnect(); nodes.panner.disconnect(); } catch(e){} }); }
             if (state.mediaCalls[peerId].ioLegGains) { Object.values(state.mediaCalls[peerId].ioLegGains).forEach(nodes => { try { nodes.L.disconnect(); nodes.R.disconnect(); } catch(e){} }); }
+            try { state.mediaCalls[peerId].ioTrimGainL?.disconnect?.(); state.mediaCalls[peerId].ioTrimGainR?.disconnect?.(); } catch(e) {}
             try { state.mediaCalls[peerId].splitter?.disconnect?.(); } catch(e) {}
             try { state.mediaCalls[peerId].source?.disconnect?.(); } catch(e) {}
             try { state.mediaCalls[peerId].ioAnalyserL?.disconnect?.(); state.mediaCalls[peerId].ioAnalyserR?.disconnect?.(); } catch(e) {}
@@ -4479,6 +4481,7 @@ html, body, #main-app-container {
           state.terminalAnalyser.connect(state.audioCtx.destination);
 
           startMeterDraw();
+          startIoRxStatsMonitor();
           state.channels?.forEach(ch => setupChannelAudio(ch.id));
       }
       if (state.audioCtx.state === 'suspended') state.audioCtx.resume().catch(() => {});
@@ -4608,16 +4611,25 @@ html, body, #main-app-container {
         const source = state.audioCtx.createMediaStreamSource(callData.stream);
         const splitter = state.audioCtx.createChannelSplitter(2);
         source.connect(splitter);
+
+        /* v31: apply I/O trim before both the analyser and party fan-out so the
+           receive-side meter follows the actual audible post-fader level. */
+        const trimL = state.audioCtx.createGain(); trimL.gain.value = 1;
+        const trimR = state.audioCtx.createGain(); trimR.gain.value = 1;
+        splitter.connect(trimL, 0); splitter.connect(trimR, 1);
+
         const analyserL = state.audioCtx.createAnalyser(); analyserL.fftSize = 256;
         const analyserR = state.audioCtx.createAnalyser(); analyserR.fftSize = 256;
-        splitter.connect(analyserL, 0); splitter.connect(analyserR, 1);
+        trimL.connect(analyserL); trimR.connect(analyserR);
+
         callData.source = source; callData.splitter = splitter;
+        callData.ioTrimGainL = trimL; callData.ioTrimGainR = trimR;
         callData.ioAnalyserL = analyserL; callData.ioAnalyserR = analyserR;
         callData.ioLegGains = {};
         state.channels?.forEach(ch => {
             const gL = state.audioCtx.createGain(); gL.gain.value = 0;
             const gR = state.audioCtx.createGain(); gR.gain.value = 0;
-            splitter.connect(gL, 0); splitter.connect(gR, 1);
+            trimL.connect(gL); trimR.connect(gR);
             if (state.channelNodes[ch.id]) {
                 gL.connect(state.channelNodes[ch.id].analyser);
                 gR.connect(state.channelNodes[ch.id].analyser);
@@ -4654,6 +4666,40 @@ html, body, #main-app-container {
     }
 
 
+
+    let ioRxStatsTimer = null;
+    function startIoRxStatsMonitor() {
+        if (ioRxStatsTimer) return;
+        ioRxStatsTimer = setInterval(async () => {
+            const rows = { 'io_4w_stereo': [], 'io_pgm_stereo': [] };
+            for (const callData of Object.values(state.mediaCalls || {})) {
+                if (!callData?.isIOStereoTrack || !callData.livekitTrack) continue;
+                try {
+                    let s = null;
+                    if (typeof callData.livekitTrack.getReceiverStats === 'function') s = await callData.livekitTrack.getReceiverStats();
+                    if (!s && typeof callData.livekitTrack.getRTCStatsReport === 'function') {
+                        const report = await callData.livekitTrack.getRTCStatsReport();
+                        report?.forEach?.(v => { if (!s && v.type === 'inbound-rtp' && (v.kind === 'audio' || v.mediaType === 'audio')) s = v; });
+                    }
+                    if (!s) continue;
+                    const prev = callData.rxPrevStats;
+                    const recv = Number(s.packetsReceived || 0), lost = Number(s.packetsLost || 0), conc = Number(s.concealmentEvents || 0);
+                    const dRecv = prev ? Math.max(0, recv - Number(prev.packetsReceived || 0)) : 0;
+                    const dLost = prev ? Math.max(0, lost - Number(prev.packetsLost || 0)) : 0;
+                    const dConc = prev ? Math.max(0, conc - Number(prev.concealmentEvents || 0)) : 0;
+                    const denom = dRecv + dLost;
+                    const lossPct = denom > 0 ? (dLost / denom) * 100 : 0;
+                    const jitterMs = Number(s.jitter || 0) * 1000;
+                    let jbMs = 0;
+                    if (Number(s.jitterBufferEmittedCount || 0) > 0 && Number(s.jitterBufferDelay || 0) >= 0) jbMs = (Number(s.jitterBufferDelay) / Number(s.jitterBufferEmittedCount)) * 1000;
+                    callData.rxPrevStats = { packetsReceived:recv, packetsLost:lost, concealmentEvents:conc };
+                    rows[callData.trackName]?.push(`JIT ${jitterMs.toFixed(1)}ms / LOSS ${lossPct.toFixed(2)}% / CONC +${dConc}${jbMs ? ` / JB ${jbMs.toFixed(0)}ms` : ''}`);
+                } catch(e) {}
+            }
+            const el4 = $('io-rx-diag-4w'); if (el4) el4.textContent = '4W RX: ' + (rows.io_4w_stereo.length ? rows.io_4w_stereo.join(' | ') : 'no remote track');
+            const elP = $('io-rx-diag-pgm'); if (elP) elP.textContent = 'PGM RX: ' + (rows.io_pgm_stereo.length ? rows.io_pgm_stereo.join(' | ') : 'no remote track');
+        }, 2000);
+    }
 
     function startMeterDraw() {
 
@@ -4877,15 +4923,16 @@ html, body, #main-app-container {
           if (callData.isIOStereoTrack) {
               const targets = ioStereoTargets(callData.trackName);
               const isSelf = callKey.startsWith(state.myUserId + '_');
+              const inGainL = callData.trackName === 'io_4w_stereo' ? (state.ioBridge.inGain4wL ?? 1) : (state.ioBridge.inGainPgmL ?? 1);
+              const inGainR = callData.trackName === 'io_4w_stereo' ? (state.ioBridge.inGain4wR ?? 1) : (state.ioBridge.inGainPgmR ?? 1);
+
+              if (callData.ioTrimGainL?.gain) callData.ioTrimGainL.gain.setTargetAtTime(inGainL, state.audioCtx.currentTime, 0.02);
+              if (callData.ioTrimGainR?.gain) callData.ioTrimGainR.gain.setTargetAtTime(inGainR, state.audioCtx.currentTime, 0.02);
+
               state.channels?.forEach(ch => {
                   const legs = callData.ioLegGains?.[ch.id]; if (!legs) return;
-                  /* v30: I/O input trim is applied after decode. Publishing the raw hardware
-                     track avoids a Web Audio -> MediaStreamDestination -> Opus boundary on the
-                     sender while preserving the same user-visible L/R gain controls. */
-                  const inGainL = callData.trackName === 'io_4w_stereo' ? (state.ioBridge.inGain4wL ?? 1) : (state.ioBridge.inGainPgmL ?? 1);
-                  const inGainR = callData.trackName === 'io_4w_stereo' ? (state.ioBridge.inGain4wR ?? 1) : (state.ioBridge.inGainPgmR ?? 1);
-                  const l = (!isSelf && targets.L && ch.id === targets.L) ? inGainL : 0;
-                  const r = (!isSelf && targets.R && ch.id === targets.R) ? inGainR : 0;
+                  const l = (!isSelf && targets.L && ch.id === targets.L) ? 1 : 0;
+                  const r = (!isSelf && targets.R && ch.id === targets.R) ? 1 : 0;
                   legs.L.gain.setTargetAtTime(l, state.audioCtx.currentTime, 0.02);
                   legs.R.gain.setTargetAtTime(r, state.audioCtx.currentTime, 0.02);
               });
@@ -5782,9 +5829,17 @@ html, body, #main-app-container {
 
               const callKey = isIOTrack ? participant.identity + '_' + trackName : participant.identity;
 
-              const callData = { stream, audioEl, isIOTrack, isIOStereoTrack, trackName }; 
+              const callData = { stream, audioEl, isIOTrack, isIOStereoTrack, trackName, livekitTrack: track, rxPrevStats: null }; 
 
               state.mediaCalls[callKey] = callData; 
+
+              if (isIOStereoTrack) {
+                  /* v31: deeper playout buffer only for I/O. 4W remains lower latency,
+                     while PGM gets more margin against network jitter. */
+                  const playoutDelay = trackName === 'io_pgm_stereo' ? 0.16 : 0.10;
+                  callData.playoutDelay = playoutDelay;
+                  try { if (typeof track.setPlayoutDelay === 'function') track.setPlayoutDelay(playoutDelay); } catch(e) {}
+              }
 
               if (state.audioCtx) {
                   if (isIOStereoTrack) setupIoStereoMixer(callData);
