@@ -181,7 +181,7 @@
 
 
 
-  <script src="https://cdn.jsdelivr.net/npm/livekit-client@2.5.9/dist/livekit-client.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/livekit-client@2.23.0/dist/livekit-client.umd.min.js"></script>
 
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
@@ -2324,7 +2324,7 @@ html, body, #main-app-container {
 
           </div>
 
-          <div class="login-version">YY-Talk PRO &nbsp; v28</div>
+          <div class="login-version">YY-Talk PRO &nbsp; v30</div>
 
         </div>
 
@@ -3560,19 +3560,14 @@ html, body, #main-app-container {
             const analyserL = ctx.createAnalyser(); analyserL.fftSize = 256;
             const analyserR = ctx.createAnalyser(); analyserR.fftSize = 256;
 
-            /* v28: publish one stereo WebRTC track per physical I/O device instead of
-               two independent mono RTP streams. L/R are split only on the receiver.
-               This halves Opus encoders/decoders and jitter buffers and is much less
-               prone to robotic/paka-paka playback when video is active. */
-            const merger = ctx.createChannelMerger(2);
-            const dest = ctx.createMediaStreamDestination();
-            try { dest.channelCount = 2; dest.channelCountMode = 'explicit'; dest.channelInterpretation = 'discrete'; } catch(e) {}
+            /* v30: keep Web Audio only for local metering/gain preview. The WebRTC encoder
+               now receives the physical capture track directly. MediaStreamDestination was
+               an unnecessary render/capture boundary and could underrun even while the
+               pre-destination analyser looked perfectly smooth. */
+            splitter.connect(gainL, 0); gainL.connect(analyserL);
+            splitter.connect(gainR, 1); gainR.connect(analyserR);
 
-            splitter.connect(gainL, 0); gainL.connect(analyserL); gainL.connect(merger, 0, 0);
-            splitter.connect(gainR, 1); gainR.connect(analyserR); gainR.connect(merger, 0, 1);
-            merger.connect(dest);
-
-            state.ioGraphs[kind] = { ctx, source, splitter, gainL, gainR, analyserL, analyserR, merger, dest };
+            state.ioGraphs[kind] = { ctx, source, splitter, gainL, gainR, analyserL, analyserR };
             if (is4w) {
                 state.ioNodes.gain4wL = gainL; state.ioNodes.gain4wR = gainR;
                 state.ioNodes.analyser4wL = analyserL; state.ioNodes.analyser4wR = analyserR;
@@ -3581,18 +3576,24 @@ html, body, #main-app-container {
                 state.ioNodes.analyserPgmL = analyserL; state.ioNodes.analyserPgmR = analyserR;
             }
 
-            const raw = dest.stream.getAudioTracks()[0];
-            try { raw.contentHint = 'music'; } catch(_) {}
-            const localTrack = new LivekitClient.LocalAudioTrack(raw);
+            const inputRaw = stream.getAudioTracks()[0];
+            if (!inputRaw) throw new Error(`${kind} input has no audio track`);
+            try { inputRaw.contentHint = 'music'; } catch(_) {}
+            /* Publish a raw clone so unpublishing cannot unexpectedly stop the USB/DeEMB
+               capture stream that is also feeding the local I/O meters. */
+            const publishRaw = inputRaw.clone();
+            try { publishRaw.contentHint = 'music'; } catch(_) {}
+            const localTrack = new LivekitClient.LocalAudioTrack(publishRaw);
             const name = is4w ? 'io_4w_stereo' : 'io_pgm_stereo';
-            const hifiStereo = LivekitClient.AudioPresets?.musicHighQualityStereo || { maxBitrate: 128000 };
+            /* v30: prioritize line audio over video under congestion. DTX is disabled for
+               continuous program/intercom audio; RED is enabled to conceal packet loss. */
+            const linePreset = { maxBitrate: 128000, priority: 'high' };
             const pub = await state.room.localParticipant.publishTrack(localTrack, {
                 name,
-                source: LivekitClient.Track.Source.Unknown,
-                audioPreset: hifiStereo,
+                source: LivekitClient.Track.Source.Microphone,
+                audioPreset: linePreset,
                 dtx: false,
-                /* LiveKit's hi-fi recommendation disables RED for continuous music/line audio. */
-                red: false,
+                red: true,
                 forceStereo: true
             });
             if (is4w) state.ioTrack4wStereo = pub;
@@ -3653,7 +3654,26 @@ html, body, #main-app-container {
 
             const setIoGainUI = () => { $('gain-4w-in-l').value = (state.ioBridge.inGain4wL ?? 1.0) * 100; $('fill-gain-4w-in-l').style.width = ($('gain-4w-in-l').value / 2) + '%'; $('gain-4w-in-r').value = (state.ioBridge.inGain4wR ?? 1.0) * 100; $('fill-gain-4w-in-r').style.width = ($('gain-4w-in-r').value / 2) + '%'; $('gain-4w-out-l').value = (state.ioBridge.outGain4wL ?? 1.0) * 100; $('fill-gain-4w-out-l').style.width = ($('gain-4w-out-l').value / 2) + '%'; $('gain-4w-out-r').value = (state.ioBridge.outGain4wR ?? 1.0) * 100; $('fill-gain-4w-out-r').style.width = ($('gain-4w-out-r').value / 2) + '%'; $('gain-pgm-in-l').value = (state.ioBridge.inGainPgmL ?? 1.0) * 100; $('fill-gain-pgm-in-l').style.width = ($('gain-pgm-in-l').value / 2) + '%'; $('gain-pgm-in-r').value = (state.ioBridge.inGainPgmR ?? 1.0) * 100; $('fill-gain-pgm-in-r').style.width = ($('gain-pgm-in-r').value / 2) + '%'; }; setIoGainUI();
 
-            const updateGain = (key, val, nodeKey, fillId) => { state.ioBridge[key] = val / 100; if (state.ioNodes[nodeKey]) state.ioNodes[nodeKey].gain.setTargetAtTime(state.ioBridge[key], state.audioCtx.currentTime, 0.05); const fillEl = $(fillId); if(fillEl) fillEl.style.width = (val / 2) + '%'; sendIoUpdate(); };
+            let ioGainSyncTimer = null;
+            const updateGain = (key, val, nodeKey, fillId) => {
+                const numeric = Math.max(0, Math.min(200, Number(val) || 0));
+                state.ioBridge[key] = numeric / 100;
+                const node = state.ioNodes[nodeKey];
+                if (node?.gain) {
+                    /* v30: input gains live on the dedicated I/O AudioContext, not audioCtx.
+                       Use the GainNode's own context clock and update immediately. */
+                    const now = node.context?.currentTime ?? 0;
+                    try { node.gain.cancelScheduledValues(now); } catch(e) {}
+                    try { node.gain.setValueAtTime(state.ioBridge[key], now); }
+                    catch(e) { node.gain.value = state.ioBridge[key]; }
+                }
+                const fillEl = $(fillId); if(fillEl) fillEl.style.width = (numeric / 2) + '%';
+                /* Routing changes locally immediately; network state is lightly debounced so
+                   dragging a slider does not flood the data channel. */
+                updateAudioRouting(); saveRoomState();
+                clearTimeout(ioGainSyncTimer);
+                ioGainSyncTimer = setTimeout(() => sendData({ type: 'update-io-bridge', ioBridge: state.ioBridge }), 80);
+            };
 
             $('gain-4w-in-l').oninput = (e) => updateGain('inGain4wL', e.target.value, 'gain4wL', 'fill-gain-4w-in-l'); $('gain-4w-in-r').oninput = (e) => updateGain('inGain4wR', e.target.value, 'gain4wR', 'fill-gain-4w-in-r'); $('gain-4w-out-l').oninput = (e) => updateGain('outGain4wL', e.target.value, 'gainOutL', 'fill-gain-4w-out-l'); $('gain-4w-out-r').oninput = (e) => updateGain('outGain4wR', e.target.value, 'gainOutR', 'fill-gain-4w-out-r'); $('gain-pgm-in-l').oninput = (e) => updateGain('inGainPgmL', e.target.value, 'gainPgmL', 'fill-gain-pgm-in-l'); $('gain-pgm-in-r').oninput = (e) => updateGain('inGainPgmR', e.target.value, 'gainPgmR', 'fill-gain-pgm-in-r');
 
@@ -4859,8 +4879,13 @@ html, body, #main-app-container {
               const isSelf = callKey.startsWith(state.myUserId + '_');
               state.channels?.forEach(ch => {
                   const legs = callData.ioLegGains?.[ch.id]; if (!legs) return;
-                  const l = (!isSelf && targets.L && ch.id === targets.L) ? 1 : 0;
-                  const r = (!isSelf && targets.R && ch.id === targets.R) ? 1 : 0;
+                  /* v30: I/O input trim is applied after decode. Publishing the raw hardware
+                     track avoids a Web Audio -> MediaStreamDestination -> Opus boundary on the
+                     sender while preserving the same user-visible L/R gain controls. */
+                  const inGainL = callData.trackName === 'io_4w_stereo' ? (state.ioBridge.inGain4wL ?? 1) : (state.ioBridge.inGainPgmL ?? 1);
+                  const inGainR = callData.trackName === 'io_4w_stereo' ? (state.ioBridge.inGain4wR ?? 1) : (state.ioBridge.inGainPgmR ?? 1);
+                  const l = (!isSelf && targets.L && ch.id === targets.L) ? inGainL : 0;
+                  const r = (!isSelf && targets.R && ch.id === targets.R) ? inGainR : 0;
                   legs.L.gain.setTargetAtTime(l, state.audioCtx.currentTime, 0.02);
                   legs.R.gain.setTargetAtTime(r, state.audioCtx.currentTime, 0.02);
               });
