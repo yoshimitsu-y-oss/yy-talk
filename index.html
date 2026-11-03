@@ -11,7 +11,7 @@
 
   <meta name="apple-mobile-web-app-capable" content="yes">
 
-  <title>YY-Talk PRO - Broadcast Intercom</title>
+  <title>YY-Talk PRO - Broadcast Intercom v15</title>
   <meta name="theme-color" content="#0a0b0d">
   <meta name="color-scheme" content="dark">
 
@@ -1765,35 +1765,29 @@ html, body, #main-app-container {
 </style>
 
 
-<style id="v14-audio-drag-fixes">
-  /* Normal hover does not move the card. Dragging alone gets the original soft lift. */
-  .channel-card {
-    transition: transform 200ms cubic-bezier(.22,1,.36,1), box-shadow 200ms ease, opacity 160ms ease !important;
-    transform-origin: center center;
-  }
+<style id="v15-stability-fixes">
+  /* v15: keep normal hover flat; lift only while actually reordering. */
+  .channel-card { transition: transform 220ms cubic-bezier(.22,1,.36,1), box-shadow 180ms ease, opacity 160ms ease !important; }
   .channel-card:hover { transform: none !important; }
-  .sortable-chosen {
-    transform: translateY(-3px) scale(1.012) !important;
-    box-shadow: 0 12px 28px rgba(0,0,0,.55) !important;
-    z-index: 8000 !important;
+  .sortable-chosen, .channel-card.is-reordering {
+    box-shadow: 0 14px 34px rgba(0,0,0,.58) !important;
+    border-color: rgba(96,165,250,.58) !important;
+    z-index: 9998 !important;
   }
-  .sortable-drag {
-    transform: translateY(-5px) scale(1.018) !important;
-    box-shadow: 0 20px 40px rgba(0,0,0,.8) !important;
-    background-color: var(--card-bg-expanded) !important;
-    border: 1px solid var(--border-color) !important;
-    opacity: 1 !important;
-    cursor: grabbing !important;
-    z-index: 9999 !important;
+  /* Sortable's fallback clone gets an inline translate transform on iOS.
+     Use the independent CSS scale property so the lift does not overwrite movement. */
+  .sortable-fallback {
+    scale: 1.035 !important;
+    opacity: .98 !important;
+    box-shadow: 0 22px 48px rgba(0,0,0,.72) !important;
+    border-color: rgba(96,165,250,.72) !important;
+    background: var(--card-bg-expanded) !important;
+    z-index: 10000 !important;
+    pointer-events: none !important;
   }
-  .sortable-ghost {
-    opacity: .20 !important;
-    background-color: #000 !important;
-    transform: scale(.992) !important;
-    box-shadow: none !important;
-  }
-  .channel-card.is-reordering { cursor: grabbing !important; }
-  .sortable-chosen .btn-expand, .sortable-drag .btn-expand { cursor: grabbing !important; }
+  .sortable-ghost { opacity: .14 !important; background: #0a0b0d !important; }
+  .sortable-drag { box-shadow: 0 22px 48px rgba(0,0,0,.72) !important; z-index: 10000 !important; }
+  .sortable-chosen .btn-expand, .sortable-drag .btn-expand, .sortable-fallback .btn-expand { cursor: grabbing !important; }
 </style>
 
 </head>
@@ -2328,10 +2322,9 @@ html, body, #main-app-container {
 
       ioNodes: { gain4wL: null, gain4wR: null, gainPgmL: null, gainPgmR: null, gainOutL: null, gainOutR: null, analyser4wL: null, analyser4wR: null, analyserPgmL: null, analyserPgmR: null, analyserOutL: null, analyserOutR: null },
 
-      ioTrack4wL: null, ioTrack4wR: null, ioTrackPgmL: null, ioTrackPgmR: null,
-      terminalAudioEl: null, masterAudioEl: null, terminalStreamDest: null, masterStreamDest: null, ioMasterAnalyser: null, hasSuccessfullyConnected: false,
+      ioTrack4wL: null, ioTrack4wR: null, ioTrackPgmL: null, ioTrackPgmR: null, masterAudioEl: null, hasSuccessfullyConnected: false,
 
-      audioCtx: null, masterAnalyser: null, localMicAnalyser: null, localMicSource: null, currentLocalVideoTrack: null,
+      audioCtx: null, masterAnalyser: null, terminalAnalyser: null, localMicAnalyser: null, localMicSource: null, currentLocalVideoTrack: null, monitorAttachedVideoTrack: null, monitorVideoEl: null, ioInput4wStream: null, ioInputPgmStream: null,
 
       mqttClient: null
 
@@ -2509,22 +2502,34 @@ html, body, #main-app-container {
 
 
 
-        // v14: original-style card reorder. Tap opens volume; drag softly lifts/moves the card.
+        // v15: desktop uses native drag; iPhone/iPad uses Sortable fallback touch drag.
         const cWrap = $('channel-list-wrap');
         if (typeof Sortable !== 'undefined' && cWrap && !cWrap._yySortable) {
+            const ua = navigator.userAgent || '';
+            const isIOSWebKit = /iP(hone|ad|od)/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
             cWrap._yySortable = new Sortable(cWrap, {
-                animation: 200,
+                animation: 220,
                 easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
                 handle: '.btn-expand',
-                delay: 150,
+                delay: isIOSWebKit ? 120 : 0,
                 delayOnTouchOnly: true,
-                touchStartThreshold: 5,
+                touchStartThreshold: 3,
+                fallbackTolerance: 3,
+                forceFallback: isIOSWebKit,
+                fallbackOnBody: isIOSWebKit,
+                fallbackClass: 'sortable-fallback',
                 ghostClass: 'sortable-ghost',
                 dragClass: 'sortable-drag',
                 chosenClass: 'sortable-chosen',
-                onStart: function(evt) { evt.item?.classList.add('is-reordering'); },
+                onStart: function(evt) {
+                    evt.item?.classList.add('is-reordering');
+                    evt.item.dataset.yyDragging = '1';
+                },
                 onEnd: function(evt) {
                     evt.item?.classList.remove('is-reordering');
+                    const item = evt.item;
+                    /* Suppress the synthetic click emitted immediately after a touch drag. */
+                    setTimeout(() => { if (item) item.dataset.yyDragging = '0'; }, 220);
                     const newOrder = [];
                     cWrap.querySelectorAll('.channel-card').forEach(card => newOrder.push(card.id.replace('card-', '')));
                     safeStorage.set('yytalk-ch-order', JSON.stringify(newOrder));
@@ -2717,50 +2722,120 @@ html, body, #main-app-container {
     }
 
     async function updateAudioDevices() {
+        if (!state.room || !state.room.localParticipant || !state.audioCtx) return;
 
-        if (!state.room || !state.room.localParticipant) return;
-
-        const micConstraints = state.ioBridge.enabled ? { echoCancellation: false, noiseSuppression: false, autoGainControl: false } : { echoCancellation: true, noiseSuppression: true, autoGainControl: true };
-
-        try {
-
-            const existingPub = state.room.localParticipant.getTrackPublication(LivekitClient.Track.Source.Microphone);
-
-            if (existingPub && existingPub.track) { await state.room.localParticipant.unpublishTrack(existingPub.track); existingPub.track.stop(); }
-
-            if (state.localMicTrack) { if(typeof state.localMicTrack.stop === 'function') state.localMicTrack.stop(); state.localMicTrack = null; }
-
-            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: micConstraints });
-                if (state.localStream && state.localStream !== stream) {
-                    try { state.localStream.getTracks().forEach(t => t.stop()); } catch(e) {}
-                }
-                state.localStream = stream;
-                attachLocalMicAnalyser(stream);
-                publishLocalMic();
-
-            }
-
-        } catch(e) {}
-
-
-
-        const handleIOTracks = async () => {
-
-            if (!state.ioBridge.enabled) { ['ioTrack4wL', 'ioTrack4wR', 'ioTrackPgmL', 'ioTrackPgmR'].forEach(async key => { if (state[key]) { await state.room.localParticipant.unpublishTrack(state[key].track); state[key].track.stop(); state[key] = null; } }); return; }
-
-            if (state.ioBridge.inDevice4w) { try { let audioConst = { echoCancellation: false, noiseSuppression: false, autoGainControl: false }; if (state.ioBridge.inDevice4w !== 'default') audioConst.deviceId = { exact: state.ioBridge.inDevice4w }; const stream = await navigator.mediaDevices.getUserMedia({ audio: audioConst }); const source = state.audioCtx.createMediaStreamSource(stream); const splitter = state.audioCtx.createChannelSplitter(2); source.connect(splitter); const gainL = state.audioCtx.createGain(); gainL.gain.value = state.ioBridge.inGain4wL ?? 1.0; state.ioNodes.gain4wL = gainL; const analyserL = state.audioCtx.createAnalyser(); analyserL.fftSize = 256; state.ioNodes.analyser4wL = analyserL; const destL = state.audioCtx.createMediaStreamDestination(); splitter.connect(gainL, 0); gainL.connect(analyserL); gainL.connect(destL); const gainR = state.audioCtx.createGain(); gainR.gain.value = state.ioBridge.inGain4wR ?? 1.0; state.ioNodes.gain4wR = gainR; const analyserR = state.audioCtx.createAnalyser(); analyserR.fftSize = 256; state.ioNodes.analyser4wR = analyserR; const destR = state.audioCtx.createMediaStreamDestination(); splitter.connect(gainR, 1); gainR.connect(analyserR); gainR.connect(destR); const trackL = new LivekitClient.LocalAudioTrack(destL.stream.getAudioTracks()[0]); const trackR = new LivekitClient.LocalAudioTrack(destR.stream.getAudioTracks()[0]); if(state.ioTrack4wL) await state.room.localParticipant.unpublishTrack(state.ioTrack4wL.track); if(state.ioTrack4wR) await state.room.localParticipant.unpublishTrack(state.ioTrack4wR.track); state.ioTrack4wL = await state.room.localParticipant.publishTrack(trackL, { name: 'io_4w_l', source: LivekitClient.Track.Source.Unknown }); state.ioTrack4wR = await state.room.localParticipant.publishTrack(trackR, { name: 'io_4w_r', source: LivekitClient.Track.Source.Unknown }); } catch(e) { } }
-
-            if (state.ioBridge.inDevicePgm) { try { let audioConst = { echoCancellation: false, noiseSuppression: false, autoGainControl: false }; if (state.ioBridge.inDevicePgm !== 'default') audioConst.deviceId = { exact: state.ioBridge.inDevicePgm }; const stream = await navigator.mediaDevices.getUserMedia({ audio: audioConst }); const source = state.audioCtx.createMediaStreamSource(stream); const splitter = state.audioCtx.createChannelSplitter(2); source.connect(splitter); const gainL = state.audioCtx.createGain(); gainL.gain.value = state.ioBridge.inGainPgmL ?? 1.0; state.ioNodes.gainPgmL = gainL; const analyserL = state.audioCtx.createAnalyser(); analyserL.fftSize = 256; state.ioNodes.analyserPgmL = analyserL; const destL = state.audioCtx.createMediaStreamDestination(); splitter.connect(gainL, 0); gainL.connect(analyserL); gainL.connect(destL); const gainR = state.audioCtx.createGain(); gainR.gain.value = state.ioBridge.inGainPgmR ?? 1.0; state.ioNodes.gainPgmR = gainR; const analyserR = state.audioCtx.createAnalyser(); analyserR.fftSize = 256; state.ioNodes.analyserPgmR = analyserR; const destR = state.audioCtx.createMediaStreamDestination(); splitter.connect(gainR, 1); gainR.connect(analyserR); gainR.connect(destR); const trackL = new LivekitClient.LocalAudioTrack(destL.stream.getAudioTracks()[0]); const trackR = new LivekitClient.LocalAudioTrack(destR.stream.getAudioTracks()[0]); if(state.ioTrackPgmL) await state.room.localParticipant.unpublishTrack(state.ioTrackPgmL.track); if(state.ioTrackPgmR) await state.room.localParticipant.unpublishTrack(state.ioTrackPgmR.track); state.ioTrackPgmL = await state.room.localParticipant.publishTrack(trackL, { name: 'io_pgm_l', source: LivekitClient.Track.Source.Unknown }); state.ioTrackPgmR = await state.room.localParticipant.publishTrack(trackR, { name: 'io_pgm_r', source: LivekitClient.Track.Source.Unknown }); } catch(e) { } }
-
+        const stopStream = (stream) => {
+            if (!stream) return;
+            try { stream.getTracks().forEach(t => t.stop()); } catch(e) {}
+        };
+        const unpublishIo = async (key) => {
+            const pub = state[key];
+            if (!pub) return;
+            try { if (pub.track) await state.room.localParticipant.unpublishTrack(pub.track); } catch(e) {}
+            try { pub.track?.stop?.(); } catch(e) {}
+            state[key] = null;
         };
 
-        await handleIOTracks(); updateAudioRouting();
+        /* In bridge mode the normal browser microphone is not part of the intercom path.
+           Releasing it first avoids opening the same USB 4W interface twice. */
+        try {
+            const existingPub = state.room.localParticipant.getTrackPublication(LivekitClient.Track.Source.Microphone);
+            if (existingPub?.track) {
+                await state.room.localParticipant.unpublishTrack(existingPub.track);
+                existingPub.track.stop();
+            }
+            if (state.localMicTrack) { try { state.localMicTrack.stop?.(); } catch(e) {} state.localMicTrack = null; }
+        } catch(e) {}
 
+        if (!state.ioBridge.enabled) {
+            stopStream(state.ioInput4wStream); state.ioInput4wStream = null;
+            stopStream(state.ioInputPgmStream); state.ioInputPgmStream = null;
+            await Promise.all(['ioTrack4wL','ioTrack4wR','ioTrackPgmL','ioTrackPgmR'].map(unpublishIo));
+
+            try {
+                if (navigator.mediaDevices?.getUserMedia) {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+                    if (state.localStream && state.localStream !== stream) stopStream(state.localStream);
+                    state.localStream = stream;
+                    attachLocalMicAnalyser(stream);
+                    publishLocalMic();
+                }
+            } catch(e) { uiLog(`Mic open failed: ${e?.message || e}`, '#f97316'); }
+            applyOutputDevice();
+            updateAudioRouting();
+            return;
+        }
+
+        /* Bridge ON: release the JOIN microphone so the selected USB interface can open cleanly. */
+        if (state.localStream) { stopStream(state.localStream); state.localStream = null; }
+        try { state.localMicSource?.disconnect?.(); } catch(e) {}
+        try { state.localMicAnalyser?.disconnect?.(); } catch(e) {}
+        state.localMicSource = null; state.localMicAnalyser = null;
+
+        await Promise.all(['ioTrack4wL','ioTrack4wR','ioTrackPgmL','ioTrackPgmR'].map(unpublishIo));
+        stopStream(state.ioInput4wStream); state.ioInput4wStream = null;
+        stopStream(state.ioInputPgmStream); state.ioInputPgmStream = null;
+
+        const openStereoInput = async (deviceId, prefix) => {
+            if (!deviceId) return null;
+            const audio = { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: { ideal: 2 } };
+            if (deviceId !== 'default') audio.deviceId = { exact: deviceId };
+            try { return await navigator.mediaDevices.getUserMedia({ audio }); }
+            catch (e) {
+                uiLog(`${prefix} input open failed: ${e?.message || e}`, '#f97316');
+                return null;
+            }
+        };
+
+        const publishStereo = async (stream, kind) => {
+            if (!stream) return;
+            const source = state.audioCtx.createMediaStreamSource(stream);
+            const splitter = state.audioCtx.createChannelSplitter(2);
+            source.connect(splitter);
+            const is4w = kind === '4w';
+            const gainL = state.audioCtx.createGain();
+            const gainR = state.audioCtx.createGain();
+            gainL.gain.value = is4w ? (state.ioBridge.inGain4wL ?? 1.0) : (state.ioBridge.inGainPgmL ?? 1.0);
+            gainR.gain.value = is4w ? (state.ioBridge.inGain4wR ?? 1.0) : (state.ioBridge.inGainPgmR ?? 1.0);
+            const analyserL = state.audioCtx.createAnalyser(); analyserL.fftSize = 256;
+            const analyserR = state.audioCtx.createAnalyser(); analyserR.fftSize = 256;
+            const destL = state.audioCtx.createMediaStreamDestination();
+            const destR = state.audioCtx.createMediaStreamDestination();
+            splitter.connect(gainL, 0); gainL.connect(analyserL); gainL.connect(destL);
+            splitter.connect(gainR, 1); gainR.connect(analyserR); gainR.connect(destR);
+
+            if (is4w) {
+                state.ioNodes.gain4wL = gainL; state.ioNodes.gain4wR = gainR;
+                state.ioNodes.analyser4wL = analyserL; state.ioNodes.analyser4wR = analyserR;
+            } else {
+                state.ioNodes.gainPgmL = gainL; state.ioNodes.gainPgmR = gainR;
+                state.ioNodes.analyserPgmL = analyserL; state.ioNodes.analyserPgmR = analyserR;
+            }
+
+            const trackL = new LivekitClient.LocalAudioTrack(destL.stream.getAudioTracks()[0]);
+            const trackR = new LivekitClient.LocalAudioTrack(destR.stream.getAudioTracks()[0]);
+            const nameL = is4w ? 'io_4w_l' : 'io_pgm_l';
+            const nameR = is4w ? 'io_4w_r' : 'io_pgm_r';
+            const pubL = await state.room.localParticipant.publishTrack(trackL, { name: nameL, source: LivekitClient.Track.Source.Unknown });
+            const pubR = await state.room.localParticipant.publishTrack(trackR, { name: nameR, source: LivekitClient.Track.Source.Unknown });
+            if (is4w) { state.ioTrack4wL = pubL; state.ioTrack4wR = pubR; }
+            else { state.ioTrackPgmL = pubL; state.ioTrackPgmR = pubR; }
+        };
+
+        try {
+            state.ioInput4wStream = await openStereoInput(state.ioBridge.inDevice4w || 'default', '4W');
+            await publishStereo(state.ioInput4wStream, '4w');
+            if (state.ioBridge.inDevicePgm) {
+                state.ioInputPgmStream = await openStereoInput(state.ioBridge.inDevicePgm, 'PGM');
+                await publishStereo(state.ioInputPgmStream, 'pgm');
+            }
+        } catch(e) {
+            uiLog(`I/O publish failed: ${e?.message || e}`, '#ef4444');
+        }
+
+        await applyOutputDevice();
+        updateAudioRouting();
     }
-
-
 
     function buildIoUI() {
 
@@ -2942,7 +3017,7 @@ html, body, #main-app-container {
 
         const existingPubs = Array.from(state.room.localParticipant.videoTrackPublications.values()); for (const pub of existingPubs) { if (pub.track) { pub.track.stop(); await state.room.localParticipant.unpublishTrack(pub.track); } }
 
-        $('monitor-video-wrapper')?.querySelectorAll('video').forEach(v => v.remove()); await new Promise(resolve => setTimeout(resolve, 600));
+        await new Promise(resolve => setTimeout(resolve, 120));
 
         if (deviceId === 'off') { state.activeVideoSender = null; saveRoomState(); sendData({ type: 'update-video-sender', senderId: null, sourceText: 'OFF' }); if(mst) mst.textContent = '[ NO VIDEO ]'; editMonitorSrc.disabled = false; if(eq) eq.disabled = false; return; }
 
@@ -2964,9 +3039,46 @@ html, body, #main-app-container {
 
 
 
-    function attachVideoTrack(track) { const mw = $('monitor-video-wrapper'); if(!mw) return; mw.querySelectorAll('video').forEach(v => v.remove()); const videoEl = track.attach(); videoEl.style.width = '100%'; videoEl.style.height = '100%'; videoEl.style.objectFit = 'contain'; videoEl.style.background = '#000'; videoEl.style.position = 'absolute'; videoEl.style.inset = '0'; videoEl.style.zIndex = '5'; mw.appendChild(videoEl); const mst = $('main-monitor-source-text'); if(mst) mst.style.display = 'none'; }
+    function getMonitorVideoElement() {
+      const mw = $('monitor-video-wrapper'); if (!mw) return null;
+      let videoEl = state.monitorVideoEl;
+      if (!videoEl || !videoEl.isConnected) {
+        videoEl = document.createElement('video');
+        videoEl.id = 'yy-monitor-video';
+        videoEl.autoplay = true; videoEl.playsInline = true; videoEl.muted = true; videoEl.setAttribute('playsinline','');
+        videoEl.style.width = '100%'; videoEl.style.height = '100%'; videoEl.style.objectFit = 'contain';
+        videoEl.style.background = '#000'; videoEl.style.position = 'absolute'; videoEl.style.inset = '0'; videoEl.style.zIndex = '5';
+        mw.querySelectorAll('video').forEach(v => v.remove());
+        mw.appendChild(videoEl); state.monitorVideoEl = videoEl;
+        const retry = () => { if (videoEl.srcObject && videoEl.paused) videoEl.play().catch(()=>{}); };
+        videoEl.addEventListener('waiting', retry); videoEl.addEventListener('stalled', retry);
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) retry(); });
+      }
+      return videoEl;
+    }
 
-    function detachVideoTrack(track) { if (track) track.detach(); const mw = $('monitor-video-wrapper'); if(mw) mw.querySelectorAll('video').forEach(v => v.remove()); const mst = $('main-monitor-source-text'); if(mst) mst.style.display = 'block'; }
+    function attachVideoTrack(track) {
+      const videoEl = getMonitorVideoElement(); if (!videoEl || !track) return;
+      if (state.monitorAttachedVideoTrack && state.monitorAttachedVideoTrack !== track) {
+        try { state.monitorAttachedVideoTrack.detach(videoEl); } catch(e) {}
+      }
+      try { track.attach(videoEl); } catch(e) {
+        try { const fallback = track.attach(); if (fallback?.srcObject) videoEl.srcObject = fallback.srcObject; } catch(_) {}
+      }
+      state.monitorAttachedVideoTrack = track;
+      videoEl.play().catch(()=>{});
+      const mst = $('main-monitor-source-text'); if(mst) mst.style.display = 'none';
+    }
+
+    function detachVideoTrack(track) {
+      const videoEl = state.monitorVideoEl;
+      if (track && videoEl) { try { track.detach(videoEl); } catch(e) { try { track.detach(); } catch(_) {} } }
+      if (!track || state.monitorAttachedVideoTrack === track) {
+        state.monitorAttachedVideoTrack = null;
+        if (videoEl) { try { videoEl.pause(); } catch(e) {} videoEl.srcObject = null; }
+        const mst = $('main-monitor-source-text'); if(mst) mst.style.display = 'block';
+      }
+    }
 
 
 
@@ -2990,7 +3102,7 @@ html, body, #main-app-container {
 
     function resetAndApplyChannels(newChannels, newAssignments, newTallyAssignments, newRegistered) {
 
-        if (state.audioCtx) { Object.values(state.channelNodes || {}).forEach(node => { try { node?.masterGain?.disconnect(); } catch(e){} try { node?.ioGain?.disconnect(); } catch(e){} try { node?.ioPanner?.disconnect(); } catch(e){} try { node?.analyser?.disconnect(); } catch(e){} }); Object.values(state.mediaCalls || {}).forEach(call => { Object.values(call?.chGains || {}).forEach(g => { try { g.gain?.disconnect(); } catch(e){} try { g.panner?.disconnect(); } catch(e){} }); if(call) call.chGains = {}; }); }
+        if (state.audioCtx) { Object.values(state.channelNodes || {}).forEach(node => { try { node?.masterGain?.disconnect(); } catch(e){} try { node?.listenGain?.disconnect(); } catch(e){} try { node?.ioGain?.disconnect(); } catch(e){} try { node?.ioPanner?.disconnect(); } catch(e){} }); Object.values(state.mediaCalls || {}).forEach(call => { Object.values(call?.chGains || {}).forEach(g => { try { g.gain?.disconnect(); } catch(e){} }); if(call) call.chGains = {}; }); }
 
         state.channelNodes = {}; state.channels = newChannels || [];
 
@@ -3100,6 +3212,7 @@ html, body, #main-app-container {
 
       if(expandBtn) {
         const toggleExpanded = () => {
+          if (card.dataset.yyDragging === '1') return;
           const expanded = card.classList.toggle('expanded');
           expandBtn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
         };
@@ -3167,7 +3280,7 @@ html, body, #main-app-container {
 
       state.channels = state.channels.filter(c => c?.id !== chId); const card = $(`card-${chId}`); if(card) card.remove(); delete state.listenStates[chId]; delete state.talkStates[chId];
 
-      if (state.channelNodes[chId] && state.audioCtx) { const n = state.channelNodes[chId]; try { n.masterGain?.disconnect(); } catch(e){} try { n.ioGain?.disconnect(); } catch(e){} try { n.ioPanner?.disconnect(); } catch(e){} try { n.analyser?.disconnect(); } catch(e){} delete state.channelNodes[chId]; }
+      if (state.channelNodes[chId] && state.audioCtx) { const n = state.channelNodes[chId]; try { n.masterGain?.disconnect(); } catch(e){} try { n.listenGain?.disconnect(); } catch(e){} try { n.ioGain?.disconnect(); } catch(e){} try { n.ioPanner?.disconnect(); } catch(e){} try { n.analyser?.disconnect(); } catch(e){} delete state.channelNodes[chId]; }
 
       Object.keys(state.userAssignments || {}).forEach(uid => { state.userAssignments[uid] = state.userAssignments[uid].filter(id => id !== chId); });
 
@@ -3197,116 +3310,56 @@ html, body, #main-app-container {
 
 
 
-    async function ensureAudioElementPlaying(el, label) {
-        if (!el) return false;
-        try {
-            el.muted = false;
-            const p = el.play();
-            if (p && typeof p.then === 'function') await p;
-            return true;
-        } catch (e) {
-            uiLog(`${label} playback failed: ${e?.message || e}`, '#f97316');
-            return false;
-        }
-    }
-
     async function applyOutputDevice() {
-        /* v14: LISTEN and I/O OUT are separate buses.
-           LISTEN always stays on the terminal/default speaker. */
-        if (state.terminalAudioEl) {
-            /* Do not await sink selection here: keeping play() inside the JOIN gesture is
-               important on iPhone/Safari. The terminal bus always uses system default. */
-            await ensureAudioElementPlaying(state.terminalAudioEl, 'Terminal LISTEN');
-        }
-
         if (!state.masterAudioEl) return;
         if (!state.ioBridge.enabled) {
             state.masterAudioEl.muted = true;
             try { state.masterAudioEl.pause(); } catch(e) {}
             return;
         }
-
-        const requestedDevice = state.ioBridge.outDevice4w || 'default';
+        const requested = state.ioBridge.outDevice4w || 'default';
         try {
-            if (requestedDevice !== 'default' && typeof state.masterAudioEl.setSinkId === 'function') {
-                await state.masterAudioEl.setSinkId(requestedDevice);
-            } else if (typeof state.masterAudioEl.setSinkId === 'function') {
-                await state.masterAudioEl.setSinkId('');
+            if (typeof state.masterAudioEl.setSinkId === 'function') {
+                await state.masterAudioEl.setSinkId(requested === 'default' ? '' : requested);
+            } else if (requested !== 'default') {
+                uiLog('This browser cannot select the 4W output device (setSinkId unsupported).', '#f97316');
             }
-        } catch (e) {
-            uiLog(`I/O output route failed: ${e?.message || e}`, '#f97316');
-        }
-        await ensureAudioElementPlaying(state.masterAudioEl, 'I/O OUT');
-    }
-
-    function makeHiddenStreamAudio(stream, id) {
-        let el = document.getElementById(id);
-        if (!el) {
-            el = document.createElement('audio');
-            el.id = id;
-            el.autoplay = true;
-            el.playsInline = true;
-            el.setAttribute('playsinline', '');
-            /* Keep it in the render tree. Some mobile browsers are less reliable with
-               MediaStream playback on display:none audio elements. */
-            el.style.position = 'fixed';
-            el.style.left = '-9999px';
-            el.style.top = '0';
-            el.style.width = '1px';
-            el.style.height = '1px';
-            el.style.opacity = '0';
-            el.style.pointerEvents = 'none';
-            document.body.appendChild(el);
-        }
-        el.srcObject = stream;
-        return el;
+        } catch(e) { uiLog(`4W output route failed: ${e?.message || e}`, '#ef4444'); }
+        state.masterAudioEl.muted = false;
+        try { await state.masterAudioEl.play(); }
+        catch(e) { uiLog(`4W output playback failed: ${e?.message || e}`, '#ef4444'); }
     }
 
     function initAudioContext() {
       if (!state.audioCtx) {
           state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-          /* LISTEN BUS: channel listen gains -> masterAnalyser -> terminal audio element. */
-          state.masterAnalyser = state.audioCtx.createAnalyser();
-          state.masterAnalyser.fftSize = 256;
-          const terminalDest = state.audioCtx.createMediaStreamDestination();
-          state.masterAnalyser.connect(terminalDest);
-          state.terminalStreamDest = terminalDest;
-          state.terminalAudioEl = makeHiddenStreamAudio(terminalDest.stream, 'yy-terminal-listen-audio');
-
-          /* I/O OUT BUS: independent of LISTEN, so 4W routing never steals the phone speaker. */
-          state.ioMasterAnalyser = state.audioCtx.createAnalyser();
-          state.ioMasterAnalyser.fftSize = 256;
-          const masterSplitter = state.audioCtx.createChannelSplitter(2);
-          state.ioMasterAnalyser.connect(masterSplitter);
-
-          state.ioNodes.gainOutL = state.audioCtx.createGain();
-          state.ioNodes.gainOutL.gain.value = state.ioBridge.outGain4wL ?? 1.0;
-          state.ioNodes.analyserOutL = state.audioCtx.createAnalyser();
-          state.ioNodes.analyserOutL.fftSize = 256;
-          state.ioNodes.gainOutR = state.audioCtx.createGain();
-          state.ioNodes.gainOutR.gain.value = state.ioBridge.outGain4wR ?? 1.0;
-          state.ioNodes.analyserOutR = state.audioCtx.createAnalyser();
-          state.ioNodes.analyserOutR.fftSize = 256;
-
-          masterSplitter.connect(state.ioNodes.gainOutL, 0);
-          state.ioNodes.gainOutL.connect(state.ioNodes.analyserOutL);
-          masterSplitter.connect(state.ioNodes.gainOutR, 1);
-          state.ioNodes.gainOutR.connect(state.ioNodes.analyserOutR);
-
+          /* 4W OUT bus. Keep this path independent from the terminal LISTEN bus. */
+          state.masterAnalyser = state.audioCtx.createAnalyser(); state.masterAnalyser.fftSize = 256;
+          const masterSplitter = state.audioCtx.createChannelSplitter(2); state.masterAnalyser.connect(masterSplitter);
+          state.ioNodes.gainOutL = state.audioCtx.createGain(); state.ioNodes.gainOutL.gain.value = state.ioBridge.outGain4wL ?? 1.0;
+          state.ioNodes.analyserOutL = state.audioCtx.createAnalyser(); state.ioNodes.analyserOutL.fftSize = 256;
+          state.ioNodes.gainOutR = state.audioCtx.createGain(); state.ioNodes.gainOutR.gain.value = state.ioBridge.outGain4wR ?? 1.0;
+          state.ioNodes.analyserOutR = state.audioCtx.createAnalyser(); state.ioNodes.analyserOutR.fftSize = 256;
+          masterSplitter.connect(state.ioNodes.gainOutL, 0); state.ioNodes.gainOutL.connect(state.ioNodes.analyserOutL);
+          masterSplitter.connect(state.ioNodes.gainOutR, 1); state.ioNodes.gainOutR.connect(state.ioNodes.analyserOutR);
           const masterMerger = state.audioCtx.createChannelMerger(2);
-          state.ioNodes.analyserOutL.connect(masterMerger, 0, 0);
-          state.ioNodes.analyserOutR.connect(masterMerger, 0, 1);
-          const ioDest = state.audioCtx.createMediaStreamDestination();
-          masterMerger.connect(ioDest);
-          state.masterStreamDest = ioDest;
-          state.masterAudioEl = makeHiddenStreamAudio(ioDest.stream, 'yy-io-output-audio');
-          state.masterAudioEl.muted = !state.ioBridge.enabled;
+          state.ioNodes.analyserOutL.connect(masterMerger, 0, 0); state.ioNodes.analyserOutR.connect(masterMerger, 0, 1);
+          const masterDest = state.audioCtx.createMediaStreamDestination(); masterMerger.connect(masterDest);
+          state.masterAudioEl = document.createElement('audio');
+          state.masterAudioEl.autoplay = true; state.masterAudioEl.playsInline = true; state.masterAudioEl.setAttribute('playsinline','');
+          state.masterAudioEl.style.position = 'fixed'; state.masterAudioEl.style.left = '-9999px'; state.masterAudioEl.style.width = '1px'; state.masterAudioEl.style.height = '1px'; state.masterAudioEl.style.opacity = '0';
+          state.masterAudioEl.srcObject = masterDest.stream; state.masterAudioEl.muted = !state.ioBridge.enabled;
+          document.body.appendChild(state.masterAudioEl);
+
+          /* Terminal LISTEN bus. Direct Web Audio output is reliable on iPhone/Safari and
+             does not depend on MediaStream playback or setSinkId. */
+          state.terminalAnalyser = state.audioCtx.createAnalyser(); state.terminalAnalyser.fftSize = 256;
+          state.terminalAnalyser.connect(state.audioCtx.destination);
 
           startMeterDraw();
           state.channels?.forEach(ch => setupChannelAudio(ch.id));
       }
-
       if (state.audioCtx.state === 'suspended') state.audioCtx.resume().catch(() => {});
       applyOutputDevice();
       Object.values(state.mediaCalls || {}).forEach(callData => { if (!callData?.source) setupPeerMixer(callData); });
@@ -3346,22 +3399,16 @@ html, body, #main-app-container {
 
     function setupChannelAudio(chId) {
         if (!state.audioCtx || state.channelNodes[chId]) return;
-        const analyser = state.audioCtx.createAnalyser();
-        analyser.fftSize = 256;
+        const analyser = state.audioCtx.createAnalyser(); analyser.fftSize = 256;
 
-        const masterGain = state.audioCtx.createGain();
-        masterGain.gain.value = 0;
-        analyser.connect(masterGain);
-        masterGain.connect(state.masterAnalyser);
+        const listenGain = state.audioCtx.createGain(); listenGain.gain.value = 0;
+        analyser.connect(listenGain); listenGain.connect(state.terminalAnalyser);
 
         const ioPanner = state.audioCtx.createStereoPanner();
-        const ioGain = state.audioCtx.createGain();
-        ioGain.gain.value = 0;
-        analyser.connect(ioPanner);
-        ioPanner.connect(ioGain);
-        if (state.ioMasterAnalyser) ioGain.connect(state.ioMasterAnalyser);
+        const ioGain = state.audioCtx.createGain(); ioGain.gain.value = 0;
+        analyser.connect(ioPanner); ioPanner.connect(ioGain); ioGain.connect(state.masterAnalyser);
 
-        state.channelNodes[chId] = { analyser, masterGain, ioGain, ioPanner };
+        state.channelNodes[chId] = { analyser, listenGain, ioGain, ioPanner };
     }
 
     
@@ -3404,13 +3451,19 @@ html, body, #main-app-container {
 
     }
 
+    let meterFrameToken = 0;
+    const analyserFrameCache = new WeakMap();
     function analyserPercent(analyser) {
         if (!analyser) return 0;
         try {
-            const data = new Uint8Array(analyser.frequencyBinCount);
+            const cached = analyserFrameCache.get(analyser);
+            if (cached && cached.token === meterFrameToken) return cached.value;
+            const data = cached?.data && cached.data.length === analyser.frequencyBinCount ? cached.data : new Uint8Array(analyser.frequencyBinCount);
             analyser.getByteFrequencyData(data);
             const peak = getPeak(data);
-            return Math.min((peak / 255) * 100 * 1.2, 100);
+            const value = Math.min((peak / 255) * 100 * 1.2, 100);
+            analyserFrameCache.set(analyser, { token: meterFrameToken, value, data });
+            return value;
         } catch (e) { return 0; }
     }
 
@@ -3445,7 +3498,9 @@ html, body, #main-app-container {
 
     function startMeterDraw() {
 
-      const masterData = new Uint8Array(state.masterAnalyser.frequencyBinCount); 
+      const meterMaster = state.terminalAnalyser || state.masterAnalyser;
+      const masterData = new Uint8Array(meterMaster.frequencyBinCount);
+      const meterInterval = (navigator.maxTouchPoints > 0 || /iP(hone|ad|od)|Android/i.test(navigator.userAgent || '')) ? 50 : 33; 
 
       let localData = null;
 
@@ -3453,7 +3508,7 @@ html, body, #main-app-container {
 
       function draw(timestamp) {
 
-        requestAnimationFrame(draw); if (timestamp - lastDrawTime < 30) return; lastDrawTime = timestamp;
+        requestAnimationFrame(draw); if (timestamp - lastDrawTime < meterInterval) return; lastDrawTime = timestamp; meterFrameToken++;
 
         
 
@@ -3465,7 +3520,7 @@ html, body, #main-app-container {
 
         
 
-        state.masterAnalyser.getByteFrequencyData(masterData); 
+        meterMaster.getByteFrequencyData(masterData); 
 
         let mPeak = getPeak(masterData);
 
@@ -3631,28 +3686,28 @@ html, body, #main-app-container {
     function updateAudioRouting() {
       if (!state.audioCtx) return;
 
-      /* Output selection happens at the channel bus, not at the peer input.
-         This keeps meters alive and prevents I/O OUT from hijacking LISTEN. */
+      /* One party bus feeds two independent outputs:
+         LISTEN -> terminal speaker, I/O -> selected 4W output. */
       state.channels?.forEach(ch => {
           const node = state.channelNodes[ch.id];
           if (!node) return;
           const partyVol = state.channelVolumes[ch.id] !== undefined ? state.channelVolumes[ch.id] : 1.5;
-
           const listenVol = (state.listenStates[ch.id] && !state.isMasterSpkMuted) ? partyVol : 0;
-          node.masterGain.gain.setTargetAtTime(listenVol, state.audioCtx.currentTime, 0.03);
+          node.listenGain?.gain.setTargetAtTime(listenVol, state.audioCtx.currentTime, 0.04);
 
           const outL = state.ioBridge.enabled && ch.id === state.ioBridge.outAssign4wL;
           const outR = state.ioBridge.enabled && ch.id === state.ioBridge.outAssign4wR;
-          const ioVol = (outL || outR) ? partyVol : 0;
-          if (node.ioGain) node.ioGain.gain.setTargetAtTime(ioVol, state.audioCtx.currentTime, 0.03);
+          node.ioGain?.gain.setTargetAtTime((outL || outR) ? partyVol : 0, state.audioCtx.currentTime, 0.04);
           if (node.ioPanner) {
               let pan = 0;
               if (outL && !outR) pan = -1;
               else if (outR && !outL) pan = 1;
-              node.ioPanner.pan.setTargetAtTime(pan, state.audioCtx.currentTime, 0.03);
+              node.ioPanner.pan.setTargetAtTime(pan, state.audioCtx.currentTime, 0.04);
           }
       });
 
+      /* Feed party analysers independently of output selection. This preserves the 4W
+         bridge while allowing terminal LISTEN to be switched locally. */
       for (const callKey in state.mediaCalls) {
           const callData = state.mediaCalls[callKey];
           if (!callData?.chGains) continue;
@@ -3661,28 +3716,23 @@ html, body, #main-app-container {
               const targetCh = ioTrackTargetChannel(callData.trackName);
               const isSelf = callKey.startsWith(state.myUserId + '_');
               state.channels?.forEach(ch => {
-                  const g = callData.chGains[ch.id];
-                  if (!g) return;
+                  const g = callData.chGains[ch.id]; if (!g) return;
                   const vol = (!isSelf && targetCh && ch.id === targetCh) ? 1 : 0;
-                  g.gain.gain.setTargetAtTime(vol, state.audioCtx.currentTime, 0.03);
-                  g.panner.pan.setTargetAtTime(0, state.audioCtx.currentTime, 0.03);
+                  g.gain.gain.setTargetAtTime(vol, state.audioCtx.currentTime, 0.04);
+                  g.panner.pan.setTargetAtTime(0, state.audioCtx.currentTime, 0.04);
               });
               continue;
           }
 
           const remoteTalk = state.remoteTalkStates[callKey] || {};
           state.channels?.forEach(ch => {
-              const g = callData.chGains[ch.id];
-              if (!g) return;
-              const vol = remoteTalk[ch.id] === true ? 1 : 0;
-              g.gain.gain.setTargetAtTime(vol, state.audioCtx.currentTime, 0.03);
-              g.panner.pan.setTargetAtTime(0, state.audioCtx.currentTime, 0.03);
+              const g = callData.chGains[ch.id]; if (!g) return;
+              g.gain.gain.setTargetAtTime(remoteTalk[ch.id] === true ? 1 : 0, state.audioCtx.currentTime, 0.04);
+              g.panner.pan.setTargetAtTime(0, state.audioCtx.currentTime, 0.04);
           });
       }
 
-      /* Retry media-element playback after user interaction/state changes. */
-      if (state.terminalAudioEl?.paused && state.audioEnabled) ensureAudioElementPlaying(state.terminalAudioEl, 'Terminal LISTEN');
-      if (state.ioBridge.enabled && state.masterAudioEl?.paused && state.audioEnabled) ensureAudioElementPlaying(state.masterAudioEl, 'I/O OUT');
+      if (state.ioBridge.enabled && state.masterAudioEl?.paused && state.audioEnabled) applyOutputDevice();
     }
 
     function syncTalkStates() { 
@@ -4493,7 +4543,7 @@ html, body, #main-app-container {
 
 
 
-          const room = new LivekitClient.Room({ adaptiveStream: false, dynacast: false }); state.room = room;
+          const room = new LivekitClient.Room({ adaptiveStream: true, dynacast: true }); state.room = room;
 
 
 
@@ -4521,8 +4571,13 @@ html, body, #main-app-container {
 
               const stream = new MediaStream([track.mediaStreamTrack]); 
 
-              /* Keep the subscribed track alive; audible playback is handled by LISTEN/I/O buses. */
-              const audioEl = new Audio(); audioEl.srcObject = stream; audioEl.muted = true; audioEl.playsInline = true; audioEl.play().catch(()=>{});
+              const audioEl = new Audio(); audioEl.srcObject = stream; audioEl.muted = true; audioEl.play().catch(()=>{});
+
+              if(state.ioBridge.outDevice4w && state.ioBridge.outDevice4w !== 'default' && typeof audioEl.setSinkId === 'function') {
+
+                  audioEl.setSinkId(state.ioBridge.outDevice4w).catch(err => uiLog(`Output route failed: ${err?.message || err}`, '#f97316'));
+
+              }
 
               const isIOTrack = (publication.trackName || '').startsWith('io_');
 
