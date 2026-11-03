@@ -1790,6 +1790,22 @@ html, body, #main-app-container {
   .sortable-chosen .btn-expand, .sortable-drag .btn-expand, .sortable-fallback .btn-expand { cursor: grabbing !important; }
 </style>
 
+
+<style id="v16-ios-drag-and-watchdog">
+  .channel-card.yy-ios-dragging {
+    transform:scale(1.035) !important;
+    box-shadow:0 24px 56px rgba(0,0,0,.78) !important;
+    border-color:rgba(96,165,250,.8) !important;
+    background:var(--card-bg-expanded) !important;
+    opacity:.99 !important;
+    will-change:left,top,transform !important;
+  }
+  .yy-drag-placeholder { pointer-events:none !important; }
+  @media (pointer:coarse) {
+    .btn-expand { -webkit-touch-callout:none !important; -webkit-user-select:none !important; user-select:none !important; touch-action:none !important; }
+  }
+</style>
+
 </head>
 
 <body onload="if(window.forceResize) window.forceResize()">
@@ -2502,39 +2518,107 @@ html, body, #main-app-container {
 
 
 
-        // v15: desktop uses native drag; iPhone/iPad uses Sortable fallback touch drag.
+        // v16: desktop keeps Sortable. iPhone/iPad uses a native pointer long-press drag,
+        // because Sortable fallback is unreliable inside Safari's CSS Grid/touch event model.
         const cWrap = $('channel-list-wrap');
-        if (typeof Sortable !== 'undefined' && cWrap && !cWrap._yySortable) {
-            const ua = navigator.userAgent || '';
-            const isIOSWebKit = /iP(hone|ad|od)/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-            cWrap._yySortable = new Sortable(cWrap, {
-                animation: 220,
-                easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
-                handle: '.btn-expand',
-                delay: isIOSWebKit ? 120 : 0,
-                delayOnTouchOnly: true,
-                touchStartThreshold: 3,
-                fallbackTolerance: 3,
-                forceFallback: isIOSWebKit,
-                fallbackOnBody: isIOSWebKit,
-                fallbackClass: 'sortable-fallback',
-                ghostClass: 'sortable-ghost',
-                dragClass: 'sortable-drag',
-                chosenClass: 'sortable-chosen',
-                onStart: function(evt) {
-                    evt.item?.classList.add('is-reordering');
-                    evt.item.dataset.yyDragging = '1';
-                },
-                onEnd: function(evt) {
-                    evt.item?.classList.remove('is-reordering');
-                    const item = evt.item;
-                    /* Suppress the synthetic click emitted immediately after a touch drag. */
-                    setTimeout(() => { if (item) item.dataset.yyDragging = '0'; }, 220);
-                    const newOrder = [];
-                    cWrap.querySelectorAll('.channel-card').forEach(card => newOrder.push(card.id.replace('card-', '')));
-                    safeStorage.set('yytalk-ch-order', JSON.stringify(newOrder));
-                }
+        const ua = navigator.userAgent || '';
+        const isIOSWebKit = /iP(hone|ad|od)/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+        const saveCardOrder = () => {
+          const newOrder=[];
+          cWrap?.querySelectorAll('.channel-card:not(.yy-drag-placeholder)').forEach(card => newOrder.push(card.id.replace('card-','')));
+          safeStorage.set('yytalk-ch-order', JSON.stringify(newOrder));
+        };
+
+        function initIOSCardDrag(container) {
+          if (!container || container._yyIOSDrag) return;
+          container._yyIOSDrag = true;
+          let pressTimer=null, drag=null;
+
+          const rectMap = () => {
+            const m=new Map();
+            container.querySelectorAll('.channel-card:not(.yy-drag-placeholder)').forEach(el => { if(el!==drag?.card) m.set(el,el.getBoundingClientRect()); });
+            return m;
+          };
+          const animateShift = (before) => {
+            container.querySelectorAll('.channel-card:not(.yy-drag-placeholder)').forEach(el => {
+              if (el===drag?.card) return;
+              const b=before.get(el); if(!b) return;
+              const a=el.getBoundingClientRect(); const dx=b.left-a.left, dy=b.top-a.top;
+              if(Math.abs(dx)<1 && Math.abs(dy)<1) return;
+              el.style.transition='none'; el.style.setProperty('transform',`translate3d(${dx}px,${dy}px,0)`,'important');
+              el.getBoundingClientRect();
+              requestAnimationFrame(()=>{ el.style.transition='transform 220ms cubic-bezier(.22,1,.36,1)'; el.style.setProperty('transform','translate3d(0,0,0)','important'); setTimeout(()=>el.style.removeProperty('transform'),240); });
             });
+          };
+          const begin = (ev, handle, card) => {
+            if (!card?.isConnected) return;
+            const r=card.getBoundingClientRect();
+            const ph=document.createElement('div'); ph.className='channel-card yy-drag-placeholder';
+            ph.style.height=r.height+'px'; ph.style.minHeight=r.height+'px'; ph.style.visibility='hidden';
+            card.after(ph);
+            drag={ card, handle, placeholder:ph, pointerId:ev.pointerId, startX:ev.clientX, startY:ev.clientY, baseLeft:r.left, baseTop:r.top, lastTarget:null };
+            card.dataset.yyDragging='1'; card.classList.add('yy-ios-dragging','is-reordering');
+            card.style.position='fixed'; card.style.left=r.left+'px'; card.style.top=r.top+'px'; card.style.width=r.width+'px'; card.style.height=r.height+'px';
+            card.style.margin='0'; card.style.zIndex='10050'; card.style.pointerEvents='none'; card.style.setProperty('transform','scale(1.035)','important');
+            try { handle.setPointerCapture(ev.pointerId); } catch(e) {}
+          };
+          const finish = (cancel=false) => {
+            clearTimeout(pressTimer); pressTimer=null;
+            if(!drag) return;
+            const {card,placeholder}=drag; const floating=card.getBoundingClientRect();
+            placeholder.replaceWith(card);
+            card.style.position=''; card.style.left=''; card.style.top=''; card.style.width=''; card.style.height=''; card.style.margin=''; card.style.zIndex=''; card.style.pointerEvents='';
+            const final=card.getBoundingClientRect();
+            card.classList.remove('yy-ios-dragging','is-reordering');
+            card.style.transition='none'; card.style.setProperty('transform',`translate3d(${floating.left-final.left}px,${floating.top-final.top}px,0) scale(1.035)`,'important');
+            card.getBoundingClientRect();
+            requestAnimationFrame(()=>{ card.style.transition='transform 240ms cubic-bezier(.22,1,.36,1), box-shadow 180ms ease'; card.style.setProperty('transform','translate3d(0,0,0) scale(1)','important'); });
+            saveCardOrder();
+            setTimeout(()=>{ card.dataset.yyDragging='0'; card.style.transition=''; card.style.removeProperty('transform'); },330);
+            drag=null;
+          };
+
+          container.addEventListener('pointerdown', ev => {
+            if(ev.pointerType==='mouse') return;
+            const handle=ev.target.closest('.btn-expand'); const card=handle?.closest('.channel-card');
+            if(!handle || !card) return;
+            clearTimeout(pressTimer);
+            pressTimer=setTimeout(()=>begin(ev,handle,card),180);
+          }, {passive:true});
+          container.addEventListener('pointermove', ev => {
+            if(!drag || ev.pointerId!==drag.pointerId) return;
+            ev.preventDefault();
+            const dx=ev.clientX-drag.startX, dy=ev.clientY-drag.startY;
+            drag.card.style.left=(drag.baseLeft+dx)+'px'; drag.card.style.top=(drag.baseTop+dy)+'px';
+            const hit=document.elementFromPoint(ev.clientX,ev.clientY);
+            const target=hit?.closest?.('.channel-card');
+            if(!target || target===drag.card || target===drag.placeholder || target===drag.lastTarget) return;
+            drag.lastTarget=target;
+            const tr=target.getBoundingClientRect();
+            const sameRow=Math.abs(ev.clientY-(tr.top+tr.height/2)) < tr.height*0.45;
+            const before = sameRow ? ev.clientX < tr.left+tr.width/2 : ev.clientY < tr.top+tr.height/2;
+            const beforeRects=rectMap();
+            if(before) target.before(drag.placeholder); else target.after(drag.placeholder);
+            animateShift(beforeRects);
+          }, {passive:false});
+          container.addEventListener('pointerup', ev => {
+            clearTimeout(pressTimer); pressTimer=null;
+            if(drag && ev.pointerId===drag.pointerId) { ev.preventDefault(); finish(false); }
+          }, {passive:false});
+          container.addEventListener('pointercancel', ev => { clearTimeout(pressTimer); pressTimer=null; if(drag) finish(true); }, {passive:false});
+        }
+
+        if (isIOSWebKit) {
+          try { if (cWrap?._yySortable) { cWrap._yySortable.destroy(); cWrap._yySortable=null; } } catch(e) {}
+          initIOSCardDrag(cWrap);
+        } else if (typeof Sortable !== 'undefined' && cWrap && !cWrap._yySortable) {
+          cWrap._yySortable = new Sortable(cWrap, {
+            animation:220, easing:'cubic-bezier(0.22,1,0.36,1)', handle:'.btn-expand', delay:0,
+            ghostClass:'sortable-ghost', dragClass:'sortable-drag', chosenClass:'sortable-chosen',
+            onStart(evt){ evt.item?.classList.add('is-reordering'); evt.item.dataset.yyDragging='1'; },
+            onEnd(evt){ evt.item?.classList.remove('is-reordering'); const item=evt.item; setTimeout(()=>{if(item)item.dataset.yyDragging='0';},220); saveCardOrder(); }
+          });
         }
 
         const bAdd = $('btn-add-ch');
@@ -2721,8 +2805,11 @@ html, body, #main-app-container {
         });
     }
 
-    async function updateAudioDevices() {
+    async function updateAudioDevices({ recovery = false } = {}) {
         if (!state.room || !state.room.localParticipant || !state.audioCtx) return;
+        if (state.ioRecoveryRunning) return;
+        if (recovery) state.ioRecoveryRunning = true;
+        if (!recovery) state.ioAutoRetryCount = 0;
 
         const stopStream = (stream) => {
             if (!stream) return;
@@ -2763,6 +2850,7 @@ html, body, #main-app-container {
             } catch(e) { uiLog(`Mic open failed: ${e?.message || e}`, '#f97316'); }
             applyOutputDevice();
             updateAudioRouting();
+            if (recovery) state.ioRecoveryRunning = false;
             return;
         }
 
@@ -2778,13 +2866,31 @@ html, body, #main-app-container {
 
         const openStereoInput = async (deviceId, prefix) => {
             if (!deviceId) return null;
-            const audio = { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: { ideal: 2 } };
+            const audio = {
+                echoCancellation: false, noiseSuppression: false, autoGainControl: false,
+                channelCount: { ideal: 2 }, sampleRate: { ideal: 48000 }, sampleSize: { ideal: 16 },
+                latency: { ideal: 0.02 }
+            };
             if (deviceId !== 'default') audio.deviceId = { exact: deviceId };
             try { return await navigator.mediaDevices.getUserMedia({ audio }); }
             catch (e) {
-                uiLog(`${prefix} input open failed: ${e?.message || e}`, '#f97316');
-                return null;
+                /* Some capture interfaces reject advanced constraints. Retry with the minimum set. */
+                try {
+                    const fallback = { echoCancellation:false, noiseSuppression:false, autoGainControl:false, channelCount:{ideal:2} };
+                    if (deviceId !== 'default') fallback.deviceId = { exact: deviceId };
+                    return await navigator.mediaDevices.getUserMedia({ audio: fallback });
+                } catch (e2) {
+                    uiLog(`${prefix} input open failed: ${e2?.message || e2}`, '#f97316');
+                    return null;
+                }
             }
+        };
+
+        const cloneSharedPgmStream = () => {
+            const shared = state.videoCaptureStream;
+            const a = shared?.getAudioTracks?.()[0];
+            if (!a || a.readyState !== 'live') return null;
+            try { return new MediaStream([a.clone()]); } catch(e) { return null; }
         };
 
         const publishStereo = async (stream, kind) => {
@@ -2826,11 +2932,18 @@ html, body, #main-app-container {
             state.ioInput4wStream = await openStereoInput(state.ioBridge.inDevice4w || 'default', '4W');
             await publishStereo(state.ioInput4wStream, '4w');
             if (state.ioBridge.inDevicePgm) {
-                state.ioInputPgmStream = await openStereoInput(state.ioBridge.inDevicePgm, 'PGM');
+                /* If the active camera capture already includes the selected DeEMB audio,
+                   clone that track instead of opening the USB capture device a second time. */
+                state.ioInputPgmStream = cloneSharedPgmStream() || await openStereoInput(state.ioBridge.inDevicePgm, 'PGM');
                 await publishStereo(state.ioInputPgmStream, 'pgm');
             }
+            state.ioOpenedAt = Date.now();
+            state.ioSignalSeen = false;
+            attachIoTrackHealthHandlers();
         } catch(e) {
             uiLog(`I/O publish failed: ${e?.message || e}`, '#ef4444');
+        } finally {
+            if (recovery) state.ioRecoveryRunning = false;
         }
 
         await applyOutputDevice();
@@ -3001,43 +3114,161 @@ html, body, #main-app-container {
 
     const editMonitorSrc = $('edit-monitor-source');
 
-    if(editMonitorSrc) { editMonitorSrc.addEventListener('change', async (e) => {
-
-      if (!state.room || !state.room.localParticipant) return;
-
-      const deviceId = e.target.value; const eq = $('edit-video-quality'); const mst = $('main-monitor-source-text');
-
-      editMonitorSrc.disabled = true; if(eq) eq.disabled = true; if(mst) { mst.textContent = '[ VIDEO SWITCHING NOW ]'; mst.style.display = 'block'; }
-
+    async function stopCurrentVideoCapture() {
+      if (state.currentLocalVideoTrack) { try { detachVideoTrack(state.currentLocalVideoTrack); } catch(e) {} state.currentLocalVideoTrack = null; }
+      try { await state.room?.localParticipant?.setScreenShareEnabled(false); } catch(e) {}
+      try { await state.room?.localParticipant?.setCameraEnabled(false); } catch(e) {}
       try {
+        const pubs = Array.from(state.room?.localParticipant?.videoTrackPublications?.values?.() || []);
+        for (const pub of pubs) {
+          if (pub.track) { try { await state.room.localParticipant.unpublishTrack(pub.track); } catch(e) {} try { pub.track.stop(); } catch(e) {} }
+        }
+      } catch(e) {}
+      if (state.videoCaptureStream) {
+        try { state.videoCaptureStream.getTracks().forEach(t => t.stop()); } catch(e) {}
+        state.videoCaptureStream = null;
+      }
+    }
 
-        if (state.currentLocalVideoTrack) { detachVideoTrack(state.currentLocalVideoTrack); state.currentLocalVideoTrack = null; }
+    async function openSelectedVideoSource(deviceId, { watchdog = false } = {}) {
+      if (!state.room || !state.room.localParticipant) return false;
+      const eq = $('edit-video-quality'); const mst = $('main-monitor-source-text');
+      if (editMonitorSrc) editMonitorSrc.disabled = true; if(eq) eq.disabled = true;
+      if(mst) { mst.textContent = watchdog ? '[ VIDEO RECOVERING ]' : '[ VIDEO SWITCHING NOW ]'; mst.style.display = 'block'; }
+      try {
+        await stopCurrentVideoCapture();
+        await new Promise(resolve => setTimeout(resolve, watchdog ? 220 : 120));
 
-        await state.room.localParticipant.setScreenShareEnabled(false); await state.room.localParticipant.setCameraEnabled(false);
+        if (deviceId === 'off') {
+          state.currentVideoSourceId = 'off'; state.activeVideoSender = null;
+          saveRoomState(); sendData({ type:'update-video-sender', senderId:null, sourceText:'OFF' });
+          if(mst) mst.textContent='[ NO VIDEO ]'; return true;
+        }
 
-        const existingPubs = Array.from(state.room.localParticipant.videoTrackPublications.values()); for (const pub of existingPubs) { if (pub.track) { pub.track.stop(); await state.room.localParticipant.unpublishTrack(pub.track); } }
+        state.activeVideoSender = state.myUserId;
+        state.currentVideoSourceId = deviceId;
+        const sourceText = deviceId === 'screen' ? 'SCREEN SHARE' : 'CAMERA';
+        const targetBitrate = parseInt(state.videoQuality) || 512000;
+        const enc = state.videoQuality === 'auto' ? undefined : { maxBitrate: targetBitrate };
+        const sim = state.videoQuality === 'auto';
 
-        await new Promise(resolve => setTimeout(resolve, 120));
+        if (deviceId === 'screen') {
+          await state.room.localParticipant.setScreenShareEnabled(true);
+          const activePub = state.room.localParticipant.getTrackPublication(LivekitClient.Track.Source.ScreenShare);
+          if (!activePub?.track) throw new Error('Screen share track was not created');
+          state.currentLocalVideoTrack = activePub.track;
+          attachVideoTrack(state.currentLocalVideoTrack);
+        } else {
+          const video = { deviceId:{ exact:deviceId }, width:{ ideal:1920 }, height:{ ideal:1080 }, frameRate:{ ideal:30, max:60 } };
+          let audio = false;
+          if (state.ioBridge?.enabled && state.ioBridge.inDevicePgm) {
+            audio = { deviceId:{ exact:state.ioBridge.inDevicePgm }, echoCancellation:false, noiseSuppression:false, autoGainControl:false, channelCount:{ideal:2}, sampleRate:{ideal:48000}, latency:{ideal:0.02} };
+          }
+          let stream;
+          try { stream = await navigator.mediaDevices.getUserMedia({ video, audio }); }
+          catch (exactErr) {
+            const vf = { deviceId:{ ideal:deviceId }, width:{ideal:1920}, height:{ideal:1080}, frameRate:{ideal:30} };
+            const af = audio ? { deviceId:{ideal:state.ioBridge.inDevicePgm}, echoCancellation:false, noiseSuppression:false, autoGainControl:false, channelCount:{ideal:2} } : false;
+            stream = await navigator.mediaDevices.getUserMedia({ video:vf, audio:af });
+          }
+          state.videoCaptureStream = stream;
+          const rawTrack = stream.getVideoTracks()[0];
+          if (!rawTrack) throw new Error('Camera video track was not created');
+          rawTrack.addEventListener('ended', () => scheduleLocalVideoRecovery('capture ended'));
+          rawTrack.addEventListener('mute', () => setTimeout(() => { if (rawTrack.muted) scheduleLocalVideoRecovery('capture muted'); }, 1200));
+          const localVideoTrack = new LivekitClient.LocalVideoTrack(rawTrack);
+          await state.room.localParticipant.publishTrack(localVideoTrack, { name:'camera', source:LivekitClient.Track.Source.Camera, simulcast:sim, videoEncoding:enc });
+          state.currentLocalVideoTrack = localVideoTrack;
+          attachVideoTrack(localVideoTrack);
 
-        if (deviceId === 'off') { state.activeVideoSender = null; saveRoomState(); sendData({ type: 'update-video-sender', senderId: null, sourceText: 'OFF' }); if(mst) mst.textContent = '[ NO VIDEO ]'; editMonitorSrc.disabled = false; if(eq) eq.disabled = false; return; }
+          /* Rebuild PGM from the same capture stream so DeEMB audio and video do not compete for the USB device. */
+          if (state.ioBridge?.enabled && state.ioBridge.inDevicePgm) {
+            await updateAudioDevices({ recovery:true });
+          }
+        }
+        state.lastVideoFrameAt = Date.now();
+        saveRoomState(); sendData({ type:'update-video-sender', senderId:state.myUserId, sourceText });
+        return true;
+      } catch(err) {
+        uiLog(`Video source failed: ${err?.message || err}`, '#ef4444');
+        if (!watchdog) {
+          if(editMonitorSrc) editMonitorSrc.value='off'; state.activeVideoSender=null;
+          sendData({ type:'update-video-sender', senderId:null, sourceText:'OFF' }); if(mst) mst.textContent='[ NO VIDEO ]';
+        }
+        return false;
+      } finally {
+        if(editMonitorSrc) editMonitorSrc.disabled=false; if(eq) eq.disabled=false;
+      }
+    }
 
-        state.activeVideoSender = state.myUserId; const sourceText = deviceId === 'screen' ? 'SCREEN SHARE' : 'CAMERA'; 
-
-        let targetBitrate = parseInt(state.videoQuality) || 512000;
-
-        let enc = state.videoQuality === 'auto' ? undefined : { maxBitrate: targetBitrate };
-
-        let sim = state.videoQuality === 'auto';
-
-        if (deviceId === 'screen') { await state.room.localParticipant.setScreenShareEnabled(true); const activePub = state.room.localParticipant.getTrackPublication(LivekitClient.Track.Source.ScreenShare); if (activePub && activePub.track) { state.currentLocalVideoTrack = activePub.track; attachVideoTrack(state.currentLocalVideoTrack); } else { if(mst) mst.textContent = '[ NO VIDEO ]'; } } else { let stream; try { stream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: deviceId } } }); } catch (exactErr) { stream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: { ideal: deviceId } } }); } const rawTrack = stream.getVideoTracks()[0]; const localVideoTrack = new LivekitClient.LocalVideoTrack(rawTrack); await state.room.localParticipant.publishTrack(localVideoTrack, { name: 'camera', source: LivekitClient.Track.Source.Camera, simulcast: sim, videoEncoding: enc }); state.currentLocalVideoTrack = localVideoTrack; attachVideoTrack(state.currentLocalVideoTrack); }
-
-        saveRoomState(); sendData({ type: 'update-video-sender', senderId: state.myUserId, sourceText: sourceText });
-
-      } catch (err) { editMonitorSrc.value = 'off'; state.activeVideoSender = null; sendData({ type: 'update-video-sender', senderId: null, sourceText: 'OFF' }); if(mst) mst.textContent = '[ NO VIDEO ]'; } finally { editMonitorSrc.disabled = false; if(eq) eq.disabled = false; }
-
-    }); }
+    if(editMonitorSrc) editMonitorSrc.addEventListener('change', async (e) => {
+      await openSelectedVideoSource(e.target.value, { watchdog:false });
+    });
 
 
+    function scheduleLocalVideoRecovery(reason) {
+      if (!state.isAdmin || state.activeVideoSender !== state.myUserId) return;
+      if (!state.currentVideoSourceId || ['off','screen'].includes(state.currentVideoSourceId)) return;
+      if (state.videoRecoveryTimer || state.videoRecoveryRunning) return;
+      state.videoRecoveryTimer = setTimeout(async () => {
+        state.videoRecoveryTimer = null;
+        if (document.hidden || state.room?.state !== 'connected') return;
+        state.videoRecoveryRunning = true;
+        uiLog(`Video watchdog: ${reason}. Reopening capture...`, '#f97316');
+        try { await openSelectedVideoSource(state.currentVideoSourceId, { watchdog:true }); }
+        finally { setTimeout(() => { state.videoRecoveryRunning = false; }, 1200); }
+      }, 650);
+    }
+
+    function ioAnalyserHasSignal(analyser) {
+      if (!analyser) return false;
+      try {
+        const d = new Uint8Array(analyser.fftSize || 256);
+        analyser.getByteTimeDomainData(d);
+        let max = 0;
+        for (let i=0;i<d.length;i++) { const v=Math.abs(d[i]-128); if(v>max) max=v; }
+        return max >= 2;
+      } catch(e) { return false; }
+    }
+
+    function scheduleIoBridgeRecovery(reason) {
+      if (!state.ioBridge?.enabled || state.ioRecoveryRunning || state.ioRecoveryTimer) return;
+      if ((state.ioAutoRetryCount || 0) >= 3) return;
+      state.ioRecoveryTimer = setTimeout(async () => {
+        state.ioRecoveryTimer = null;
+        if (!state.ioBridge?.enabled || state.room?.state !== 'connected') return;
+        state.ioAutoRetryCount = (state.ioAutoRetryCount || 0) + 1;
+        uiLog(`I/O watchdog ${state.ioAutoRetryCount}/3: ${reason}. Reopening I/O...`, '#f97316');
+        try { await state.audioCtx?.resume?.(); } catch(e) {}
+        await updateAudioDevices({ recovery:true });
+      }, 500 + (state.ioAutoRetryCount || 0) * 700);
+    }
+
+    function attachIoTrackHealthHandlers() {
+      const streams = [state.ioInput4wStream, state.ioInputPgmStream].filter(Boolean);
+      streams.forEach(stream => stream.getAudioTracks().forEach(track => {
+        if (track._yyHealthBound) return;
+        track._yyHealthBound = true;
+        track.addEventListener('ended', () => scheduleIoBridgeRecovery('input track ended'));
+        track.addEventListener('mute', () => setTimeout(() => { if (track.muted) scheduleIoBridgeRecovery('input track muted'); }, 1000));
+      }));
+    }
+
+    /* Startup I/O + local-video watchdog. Silence at startup gets a bounded retry (max 3),
+       while normal later silence does not keep reopening the interface. */
+    setInterval(() => {
+      if (state.ioBridge?.enabled && state.room?.state === 'connected' && state.ioOpenedAt) {
+        const has = [state.ioNodes.analyser4wL, state.ioNodes.analyser4wR, state.ioNodes.analyserPgmL, state.ioNodes.analyserPgmR].some(ioAnalyserHasSignal);
+        if (has) state.ioSignalSeen = true;
+        const age = Date.now() - state.ioOpenedAt;
+        if (!state.ioSignalSeen && age > 4500 && age < 18000) scheduleIoBridgeRecovery('no input signal after opening');
+      }
+      if (state.isAdmin && state.activeVideoSender === state.myUserId && state.currentLocalVideoTrack && state.currentVideoSourceId && !['off','screen'].includes(state.currentVideoSourceId) && !document.hidden) {
+        const mt = state.currentLocalVideoTrack.mediaStreamTrack;
+        if (!mt || mt.readyState !== 'live' || mt.muted) scheduleLocalVideoRecovery('local video track unhealthy');
+        else if (state.lastVideoFrameAt && Date.now() - state.lastVideoFrameAt > 4500) scheduleLocalVideoRecovery('no new video frames');
+      }
+    }, 1500);
 
     function getMonitorVideoElement() {
       const mw = $('monitor-video-wrapper'); if (!mw) return null;
@@ -3052,7 +3283,16 @@ html, body, #main-app-container {
         mw.appendChild(videoEl); state.monitorVideoEl = videoEl;
         const retry = () => { if (videoEl.srcObject && videoEl.paused) videoEl.play().catch(()=>{}); };
         videoEl.addEventListener('waiting', retry); videoEl.addEventListener('stalled', retry);
-        document.addEventListener('visibilitychange', () => { if (!document.hidden) retry(); });
+        videoEl.addEventListener('playing', () => { state.lastVideoFrameAt = Date.now(); });
+        if (typeof videoEl.requestVideoFrameCallback === 'function') {
+          const frameBeat = () => {
+            if (!videoEl.isConnected) return;
+            if (!videoEl.paused && videoEl.readyState >= 2) state.lastVideoFrameAt = Date.now();
+            videoEl.requestVideoFrameCallback(frameBeat);
+          };
+          videoEl.requestVideoFrameCallback(frameBeat);
+        }
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) { state.lastVideoFrameAt = Date.now(); retry(); } });
       }
       return videoEl;
     }
@@ -3332,7 +3572,9 @@ html, body, #main-app-container {
 
     function initAudioContext() {
       if (!state.audioCtx) {
-          state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          const AC = (window.AudioContext || window.webkitAudioContext);
+          try { state.audioCtx = new AC({ latencyHint: 'interactive', sampleRate: 48000 }); }
+          catch(e) { try { state.audioCtx = new AC({ latencyHint: 'interactive' }); } catch(_) { state.audioCtx = new AC(); } }
 
           /* 4W OUT bus. Keep this path independent from the terminal LISTEN bus. */
           state.masterAnalyser = state.audioCtx.createAnalyser(); state.masterAnalyser.fftSize = 256;
