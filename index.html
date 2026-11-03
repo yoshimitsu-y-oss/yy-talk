@@ -13,7 +13,7 @@
 
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
-  <title>YY-Talk PRO v33</title>
+  <title>YY-Talk PRO v34</title>
   <meta name="theme-color" content="#0a0b0d">
   <meta name="color-scheme" content="dark">
 
@@ -2263,8 +2263,8 @@ html, body, #main-app-container {
 </style>
 
 
-<style id="v33-tally-safe-frame-lowlatency">
-  /* v33: Always reserve exactly 3px around the 16:9 picture.
+<style id="v34-tally-safe-frame-lowlatency">
+  /* v34: Always reserve exactly 3px around the 16:9 picture.
      Tally paints into that reserved strip, so it can never be clipped by the viewport. */
   #monitor-section .video-container {
     box-sizing:border-box !important;
@@ -2347,7 +2347,7 @@ html, body, #main-app-container {
 
           </div>
 
-          <div class="login-version">YY-Talk PRO &nbsp; v33</div>
+          <div class="login-version">YY-Talk PRO &nbsp; v34</div>
 
         </div>
 
@@ -2671,7 +2671,7 @@ html, body, #main-app-container {
               buildSec('4W INTERFACE (OUT)', 'OUTPUT DEVICE (SPK)', 'select-4w-out-device', [{label:'PL ➔ OUT 1(L)', id:'4w-out-l'}, {label:'PL ➔ OUT 2(R)', id:'4w-out-r'}]) +
 
               buildSec('PGM INTERFACE (IN ONLY)', 'PGM INPUT DEVICE (MIC)', 'select-pgm-in-device', [{label:'PGM 1(L) ➔ PL', id:'pgm-in-l'}, {label:'PGM 2(R) ➔ PL', id:'pgm-in-r'}]) +
-              `<div class="io-interface-section"><h4 class="interface-title">I/O LINK DIAGNOSTICS</h4><div class="io-card" style="font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.7;color:var(--text-sub);"><div id="io-rx-diag-4w">4W RX: waiting...</div><div id="io-rx-diag-pgm">PGM RX: waiting...</div><div style="margin-top:5px;font-size:10px;opacity:.75;">JIT=jitter / LOSS=loss / CONC=conceal / JB=actual buffer / JT=target / JM=minimum / INS-REM=time stretch / BUF=requested</div><button id="btn-refresh-io-devices" class="btn-global" type="button" style="margin-top:10px;width:100%;justify-content:center;"><i class="fa-solid fa-rotate"></i>&nbsp; AUDIO DEVICE RESCAN</button></div></div>`;
+              `<div class="io-interface-section"><h4 class="interface-title">I/O LINK DIAGNOSTICS</h4><div class="io-card" style="font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.7;color:var(--text-sub);"><div id="io-rx-diag-4w">4W RX: waiting...</div><div id="io-rx-diag-pgm">PGM RX: waiting...</div><div style="margin-top:5px;font-size:10px;opacity:.75;">JIT=jitter / LOSS=loss / CONC=conceal / PPS=packets/s / RX=received kbps / JB=actual buffer / JT=target / JM=minimum / INS-REM=time stretch / BUF=requested</div><button id="btn-refresh-io-devices" class="btn-global" type="button" style="margin-top:10px;width:100%;justify-content:center;"><i class="fa-solid fa-rotate"></i>&nbsp; AUDIO DEVICE RESCAN</button></div></div>`;
 
         }
 
@@ -4749,9 +4749,13 @@ html, body, #main-app-container {
                     }
                     if (!s) continue;
                     const prev = callData.rxPrevStats;
-                    const recv = Number(s.packetsReceived || 0), lost = Number(s.packetsLost || 0), conc = Number(s.concealmentEvents || 0);
+                    const recv = Number(s.packetsReceived || 0), lost = Number(s.packetsLost || 0), conc = Number(s.concealmentEvents || 0), bytes = Number(s.bytesReceived || 0), nowMs = Date.now();
                     const ins = Number(s.insertedSamplesForDeceleration || 0), rem = Number(s.removedSamplesForAcceleration || 0);
                     const dRecv = prev ? Math.max(0, recv - Number(prev.packetsReceived || 0)) : 0;
+                    const dBytes = prev ? Math.max(0, bytes - Number(prev.bytesReceived || 0)) : 0;
+                    const dtMs = prev ? Math.max(250, nowMs - Number(prev.ts || nowMs)) : 2000;
+                    const pps = dRecv * 1000 / dtMs;
+                    const rxKbps = dBytes * 8 / dtMs;
                     const dLost = prev ? Math.max(0, lost - Number(prev.packetsLost || 0)) : 0;
                     const dConc = prev ? Math.max(0, conc - Number(prev.concealmentEvents || 0)) : 0;
                     const dIns = prev ? Math.max(0, ins - Number(prev.insertedSamplesForDeceleration || 0)) : 0;
@@ -4764,16 +4768,16 @@ html, body, #main-app-container {
                     if (emitted > 0 && Number(s.jitterBufferDelay || 0) >= 0) jbMs = (Number(s.jitterBufferDelay) / emitted) * 1000;
                     if (emitted > 0 && Number(s.jitterBufferTargetDelay || 0) >= 0) jtMs = (Number(s.jitterBufferTargetDelay) / emitted) * 1000;
                     if (emitted > 0 && Number(s.jitterBufferMinimumDelay || 0) >= 0) jmMs = (Number(s.jitterBufferMinimumDelay) / emitted) * 1000;
-                    const baseDelay = callData.playoutDelayBase || (callData.trackName === 'io_pgm_stereo' ? 0.08 : 0.06);
+                    const baseDelay = callData.playoutDelayBase || (callData.trackName === 'io_pgm_stereo' ? 0.12 : 0.10);
                     /* Keep latency bounded. Re-apply the low-latency hint if older state left a larger value. */
                     if (Math.abs(Number(callData.playoutDelay || 0) - baseDelay) >= 0.009) {
                         try { if(typeof callData.livekitTrack.setPlayoutDelay==='function') callData.livekitTrack.setPlayoutDelay(baseDelay); } catch(e) {}
                         callData.playoutDelay = baseDelay;
                     }
-                    callData.rxPrevStats = { packetsReceived:recv, packetsLost:lost, concealmentEvents:conc, insertedSamplesForDeceleration:ins, removedSamplesForAcceleration:rem };
+                    callData.rxPrevStats = { packetsReceived:recv, packetsLost:lost, concealmentEvents:conc, insertedSamplesForDeceleration:ins, removedSamplesForAcceleration:rem, bytesReceived:bytes, ts:nowMs };
                     const bufMs=Math.round(baseDelay*1000);
                     const timing = `${jbMs ? ` / JB ${jbMs.toFixed(0)}ms` : ''}${jtMs ? ` / JT ${jtMs.toFixed(0)}ms` : ''}${jmMs ? ` / JM ${jmMs.toFixed(0)}ms` : ''}`;
-                    rows[callData.trackName]?.push(`JIT ${jitterMs.toFixed(1)}ms / LOSS ${lossPct.toFixed(2)}% / CONC +${dConc}${timing} / INS +${dIns} / REM +${dRem} / BUF ${bufMs}ms`);
+                    rows[callData.trackName]?.push(`JIT ${jitterMs.toFixed(1)}ms / LOSS ${lossPct.toFixed(2)}% / CONC +${dConc}${timing} / PPS ${pps.toFixed(1)} / RX ${rxKbps.toFixed(0)}kbps / INS +${dIns} / REM +${dRem} / BUF ${bufMs}ms`);
                 } catch(e) {}
             }
             const el4 = $('io-rx-diag-4w'); if (el4) el4.textContent = '4W RX: ' + (rows.io_4w_stereo.length ? rows.io_4w_stereo.join(' | ') : 'no remote track');
@@ -5914,9 +5918,9 @@ html, body, #main-app-container {
               state.mediaCalls[callKey] = callData; 
 
               if (isIOStereoTrack) {
-                  /* v33: low-latency I/O. Do not hide timing problems behind a 300-550 ms
-                     adaptive buffer. 4W is talkback-first; PGM gets only a little extra margin. */
-                  const playoutDelay = trackName === 'io_pgm_stereo' ? 0.08 : 0.06;
+                  /* v34: low-latency but with enough headroom for measured mobile jitter.
+                     4W stays near-real-time; PGM gets a little more margin. */
+                  const playoutDelay = trackName === 'io_pgm_stereo' ? 0.12 : 0.10;
                   callData.playoutDelayBase = playoutDelay;
                   callData.playoutDelay = playoutDelay;
                   callData.playoutStableTicks = 0;
