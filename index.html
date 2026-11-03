@@ -13,7 +13,7 @@
 
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
-  <title>YY-Talk PRO - Broadcast Intercom v27</title>
+  <title>YY-Talk PRO - Broadcast Intercom v28</title>
   <meta name="theme-color" content="#0a0b0d">
   <meta name="color-scheme" content="dark">
 
@@ -2324,7 +2324,7 @@ html, body, #main-app-container {
 
           </div>
 
-          <div class="login-version">YY-Talk PRO &nbsp; v27</div>
+          <div class="login-version">YY-Talk PRO &nbsp; v28</div>
 
         </div>
 
@@ -2799,7 +2799,7 @@ html, body, #main-app-container {
 
       ioNodes: { gain4wL: null, gain4wR: null, gainPgmL: null, gainPgmR: null, gainOutL: null, gainOutR: null, analyser4wL: null, analyser4wR: null, analyserPgmL: null, analyserPgmR: null, analyserOutL: null, analyserOutR: null },
 
-      ioTrack4wL: null, ioTrack4wR: null, ioTrackPgmL: null, ioTrackPgmR: null, masterAudioEl: null, hasSuccessfullyConnected: false, ioStartupPrimeTimer: null, ioStartupPrimeBusy: false,
+      ioTrack4wStereo: null, ioTrackPgmStereo: null, ioTrack4wL: null, ioTrack4wR: null, ioTrackPgmL: null, ioTrackPgmR: null, masterAudioEl: null, hasSuccessfullyConnected: false, ioStartupPrimeTimer: null, ioStartupPrimeBusy: false,
 
       audioCtx: null, pgmAudioCtx: null, ioGraphs: {}, masterAnalyser: null, terminalAnalyser: null, localMicAnalyser: null, localMicSource: null, currentLocalVideoTrack: null, monitorAttachedVideoTrack: null, monitorVideoEl: null, ioInput4wStream: null, ioInputPgmStream: null,
 
@@ -3429,7 +3429,7 @@ html, body, #main-app-container {
         if (!state.ioBridge.enabled) {
             stopStream(state.ioInput4wStream); state.ioInput4wStream = null;
             stopStream(state.ioInputPgmStream); state.ioInputPgmStream = null;
-            await Promise.all(['ioTrack4wL','ioTrack4wR','ioTrackPgmL','ioTrackPgmR'].map(unpublishIo));
+            await Promise.all(['ioTrack4wStereo','ioTrackPgmStereo','ioTrack4wL','ioTrack4wR','ioTrackPgmL','ioTrackPgmR'].map(unpublishIo));
 
             try {
                 if (navigator.mediaDevices?.getUserMedia) {
@@ -3452,7 +3452,7 @@ html, body, #main-app-container {
         try { state.localMicAnalyser?.disconnect?.(); } catch(e) {}
         state.localMicSource = null; state.localMicAnalyser = null;
 
-        await Promise.all(['ioTrack4wL','ioTrack4wR','ioTrackPgmL','ioTrackPgmR'].map(unpublishIo));
+        await Promise.all(['ioTrack4wStereo','ioTrackPgmStereo','ioTrack4wL','ioTrack4wR','ioTrackPgmL','ioTrackPgmR'].map(unpublishIo));
         try { state.ioGraphs?.['4w']?.source?.disconnect?.(); } catch(e) {}
         try { state.ioGraphs?.['pgm']?.source?.disconnect?.(); } catch(e) {}
         state.ioGraphs = {};
@@ -3519,14 +3519,14 @@ html, body, #main-app-container {
         const disconnectIoGraph = (kind) => {
             const g = state.ioGraphs?.[kind];
             if (!g) return;
-            ['source','splitter','gainL','gainR','analyserL','analyserR','destL','destR'].forEach(k => {
+            ['source','splitter','gainL','gainR','analyserL','analyserR','merger','dest','destL','destR'].forEach(k => {
                 try { g[k]?.disconnect?.(); } catch(e) {}
             });
             delete state.ioGraphs[kind];
         };
 
         const getIoLineAudioContext = async () => {
-            /* v27: ALL I/O inputs use a dedicated 48 kHz balanced-latency render graph.
+            /* v28: ALL I/O inputs use a dedicated 48 kHz balanced-latency render graph.
                Keeping 4W/PGM off the interactive UI/listen AudioContext prevents UI/video
                work from starving the line-input render quantum and causing robotic dropouts. */
             const AC = (window.AudioContext || window.webkitAudioContext);
@@ -3559,19 +3559,20 @@ html, body, #main-app-container {
             gainR.gain.value = is4w ? (state.ioBridge.inGain4wR ?? 1.0) : (state.ioBridge.inGainPgmR ?? 1.0);
             const analyserL = ctx.createAnalyser(); analyserL.fftSize = 256;
             const analyserR = ctx.createAnalyser(); analyserR.fftSize = 256;
-            const makeMonoDestination = () => {
-                const d = ctx.createMediaStreamDestination();
-                /* createMediaStreamDestination() defaults to 2ch. Force each I/O leg to a
-                   true mono graph so L/R do not get needlessly upmixed and re-encoded. */
-                try { d.channelCount = 1; d.channelCountMode = 'explicit'; d.channelInterpretation = 'discrete'; } catch(e) {}
-                return d;
-            };
-            const destL = makeMonoDestination();
-            const destR = makeMonoDestination();
-            splitter.connect(gainL, 0); gainL.connect(analyserL); gainL.connect(destL);
-            splitter.connect(gainR, 1); gainR.connect(analyserR); gainR.connect(destR);
 
-            state.ioGraphs[kind] = { ctx, source, splitter, gainL, gainR, analyserL, analyserR, destL, destR };
+            /* v28: publish one stereo WebRTC track per physical I/O device instead of
+               two independent mono RTP streams. L/R are split only on the receiver.
+               This halves Opus encoders/decoders and jitter buffers and is much less
+               prone to robotic/paka-paka playback when video is active. */
+            const merger = ctx.createChannelMerger(2);
+            const dest = ctx.createMediaStreamDestination();
+            try { dest.channelCount = 2; dest.channelCountMode = 'explicit'; dest.channelInterpretation = 'discrete'; } catch(e) {}
+
+            splitter.connect(gainL, 0); gainL.connect(analyserL); gainL.connect(merger, 0, 0);
+            splitter.connect(gainR, 1); gainR.connect(analyserR); gainR.connect(merger, 0, 1);
+            merger.connect(dest);
+
+            state.ioGraphs[kind] = { ctx, source, splitter, gainL, gainR, analyserL, analyserR, merger, dest };
             if (is4w) {
                 state.ioNodes.gain4wL = gainL; state.ioNodes.gain4wR = gainR;
                 state.ioNodes.analyser4wL = analyserL; state.ioNodes.analyser4wR = analyserR;
@@ -3580,29 +3581,22 @@ html, body, #main-app-container {
                 state.ioNodes.analyserPgmL = analyserL; state.ioNodes.analyserPgmR = analyserR;
             }
 
-            const rawL = destL.stream.getAudioTracks()[0];
-            const rawR = destR.stream.getAudioTracks()[0];
-            try { rawL.contentHint = 'music'; rawR.contentHint = 'music'; } catch(_) {}
-            const trackL = new LivekitClient.LocalAudioTrack(rawL);
-            const trackR = new LivekitClient.LocalAudioTrack(rawR);
-            const nameL = is4w ? 'io_4w_l' : 'io_pgm_l';
-            const nameR = is4w ? 'io_4w_r' : 'io_pgm_r';
-            /* v27: one Opus encoder per mono leg, but keep it genuinely mono and moderate
-               the bitrate. Four 128 kbps high-quality encoders plus video can create bursty
-               congestion/CPU pressure; 64 kbps mono Opus is ample for intercom/line audio. */
-            const ioLinePreset = { maxBitrate: 64000 };
-            const ioPublishOptions = (name) => ({
+            const raw = dest.stream.getAudioTracks()[0];
+            try { raw.contentHint = 'music'; } catch(_) {}
+            const localTrack = new LivekitClient.LocalAudioTrack(raw);
+            const name = is4w ? 'io_4w_stereo' : 'io_pgm_stereo';
+            const hifiStereo = LivekitClient.AudioPresets?.musicHighQualityStereo || { maxBitrate: 128000 };
+            const pub = await state.room.localParticipant.publishTrack(localTrack, {
                 name,
                 source: LivekitClient.Track.Source.Unknown,
-                audioPreset: ioLinePreset,
+                audioPreset: hifiStereo,
                 dtx: false,
-                red: true,
-                forceStereo: false
+                /* LiveKit's hi-fi recommendation disables RED for continuous music/line audio. */
+                red: false,
+                forceStereo: true
             });
-            const pubL = await state.room.localParticipant.publishTrack(trackL, ioPublishOptions(nameL));
-            const pubR = await state.room.localParticipant.publishTrack(trackR, ioPublishOptions(nameR));
-            if (is4w) { state.ioTrack4wL = pubL; state.ioTrack4wR = pubR; }
-            else { state.ioTrackPgmL = pubL; state.ioTrackPgmR = pubR; }
+            if (is4w) state.ioTrack4wStereo = pub;
+            else state.ioTrackPgmStereo = pub;
         };
 
         try {
@@ -4031,7 +4025,7 @@ html, body, #main-app-container {
       if (state.ioBridge?.enabled && state.room?.state === 'connected' && state.ioOpenedAt) {
         const has = [state.ioNodes.analyser4wL, state.ioNodes.analyser4wR, state.ioNodes.analyserPgmL, state.ioNodes.analyserPgmR].some(ioAnalyserHasSignal);
         if (has) state.ioSignalSeen = true;
-        /* v27: do NOT reopen an otherwise-live USB input based on audio level. A quiet
+        /* v28: do NOT reopen an otherwise-live USB input based on audio level. A quiet
            line or low reference level was previously mistaken for a failed device, causing
            periodic "paka-paka" cuts while the bridge was torn down and rebuilt. */
       }
@@ -4398,6 +4392,10 @@ html, body, #main-app-container {
             if (state.mediaCalls[peerId].audioEl) { state.mediaCalls[peerId].audioEl.pause(); state.mediaCalls[peerId].audioEl.removeAttribute('src'); state.mediaCalls[peerId].audioEl.load(); }
 
             if (state.mediaCalls[peerId].chGains) { Object.values(state.mediaCalls[peerId].chGains).forEach(nodes => { try { nodes.gain.disconnect(); nodes.panner.disconnect(); } catch(e){} }); }
+            if (state.mediaCalls[peerId].ioLegGains) { Object.values(state.mediaCalls[peerId].ioLegGains).forEach(nodes => { try { nodes.L.disconnect(); nodes.R.disconnect(); } catch(e){} }); }
+            try { state.mediaCalls[peerId].splitter?.disconnect?.(); } catch(e) {}
+            try { state.mediaCalls[peerId].source?.disconnect?.(); } catch(e) {}
+            try { state.mediaCalls[peerId].ioAnalyserL?.disconnect?.(); state.mediaCalls[peerId].ioAnalyserR?.disconnect?.(); } catch(e) {}
 
             delete state.mediaCalls[peerId];
 
@@ -4465,7 +4463,7 @@ html, body, #main-app-container {
       }
       if (state.audioCtx.state === 'suspended') state.audioCtx.resume().catch(() => {});
       applyOutputDevice();
-      Object.values(state.mediaCalls || {}).forEach(callData => { if (!callData?.source) setupPeerMixer(callData); });
+      Object.values(state.mediaCalls || {}).forEach(callData => { if (!callData?.source) { if (callData.isIOStereoTrack) setupIoStereoMixer(callData); else setupPeerMixer(callData); } });
     }
 
     function publishLocalMic() {
@@ -4518,7 +4516,7 @@ html, body, #main-app-container {
 
     function setupPeerMixer(callData) { 
 
-        if(!state.audioCtx || !callData?.stream) return; 
+        if(!state.audioCtx || !callData?.stream || callData.isIOStereoTrack) return; 
 
         const source = state.audioCtx.createMediaStreamSource(callData.stream); callData.source = source; 
 
@@ -4578,6 +4576,37 @@ html, body, #main-app-container {
         return '';
     }
 
+
+    function ioStereoTargets(trackName) {
+        if (trackName === 'io_4w_stereo') return { L: state.ioBridge.inAssign4wL || '', R: state.ioBridge.inAssign4wR || '' };
+        if (trackName === 'io_pgm_stereo') return { L: state.ioBridge.inAssignPgmL || '', R: state.ioBridge.inAssignPgmR || '' };
+        return { L:'', R:'' };
+    }
+
+    function setupIoStereoMixer(callData) {
+        if (!state.audioCtx || !callData?.stream) return;
+        const source = state.audioCtx.createMediaStreamSource(callData.stream);
+        const splitter = state.audioCtx.createChannelSplitter(2);
+        source.connect(splitter);
+        const analyserL = state.audioCtx.createAnalyser(); analyserL.fftSize = 256;
+        const analyserR = state.audioCtx.createAnalyser(); analyserR.fftSize = 256;
+        splitter.connect(analyserL, 0); splitter.connect(analyserR, 1);
+        callData.source = source; callData.splitter = splitter;
+        callData.ioAnalyserL = analyserL; callData.ioAnalyserR = analyserR;
+        callData.ioLegGains = {};
+        state.channels?.forEach(ch => {
+            const gL = state.audioCtx.createGain(); gL.gain.value = 0;
+            const gR = state.audioCtx.createGain(); gR.gain.value = 0;
+            splitter.connect(gL, 0); splitter.connect(gR, 1);
+            if (state.channelNodes[ch.id]) {
+                gL.connect(state.channelNodes[ch.id].analyser);
+                gR.connect(state.channelNodes[ch.id].analyser);
+            }
+            callData.ioLegGains[ch.id] = { L:gL, R:gR };
+        });
+        updateAudioRouting();
+    }
+
     function getIoPercentForParty(chId) {
         let percent = 0;
         const localIo = [
@@ -4590,7 +4619,14 @@ html, body, #main-app-container {
             if (target && target === chId && analyser) percent = Math.max(percent, analyserPercent(analyser));
         });
         Object.values(state.mediaCalls || {}).forEach(callData => {
-            if (!callData?.isIOTrack || !callData.analyser) return;
+            if (!callData?.isIOTrack) return;
+            if (callData.isIOStereoTrack) {
+                const targets = ioStereoTargets(callData.trackName);
+                if (targets.L === chId) percent = Math.max(percent, analyserPercent(callData.ioAnalyserL));
+                if (targets.R === chId) percent = Math.max(percent, analyserPercent(callData.ioAnalyserR));
+                return;
+            }
+            if (!callData.analyser) return;
             if (ioTrackTargetChannel(callData.trackName) !== chId) return;
             percent = Math.max(percent, analyserPercent(callData.analyser));
         });
@@ -4814,6 +4850,19 @@ html, body, #main-app-container {
       for (const callKey in state.mediaCalls) {
           const callData = state.mediaCalls[callKey];
           if (!callData?.chGains) continue;
+
+          if (callData.isIOStereoTrack) {
+              const targets = ioStereoTargets(callData.trackName);
+              const isSelf = callKey.startsWith(state.myUserId + '_');
+              state.channels?.forEach(ch => {
+                  const legs = callData.ioLegGains?.[ch.id]; if (!legs) return;
+                  const l = (!isSelf && targets.L && ch.id === targets.L) ? 1 : 0;
+                  const r = (!isSelf && targets.R && ch.id === targets.R) ? 1 : 0;
+                  legs.L.gain.setTargetAtTime(l, state.audioCtx.currentTime, 0.04);
+                  legs.R.gain.setTargetAtTime(r, state.audioCtx.currentTime, 0.04);
+              });
+              continue;
+          }
 
           if (callData.isIOTrack) {
               const targetCh = ioTrackTargetChannel(callData.trackName);
@@ -5682,15 +5731,20 @@ html, body, #main-app-container {
 
               }
 
-              const isIOTrack = (publication.trackName || '').startsWith('io_');
+              const trackName = publication.trackName || '';
+              const isIOTrack = trackName.startsWith('io_');
+              const isIOStereoTrack = trackName === 'io_4w_stereo' || trackName === 'io_pgm_stereo';
 
-              const callKey = isIOTrack ? participant.identity + '_' + publication.trackName : participant.identity;
+              const callKey = isIOTrack ? participant.identity + '_' + trackName : participant.identity;
 
-              const callData = { stream, audioEl, isIOTrack, trackName: publication.trackName }; 
+              const callData = { stream, audioEl, isIOTrack, isIOStereoTrack, trackName }; 
 
               state.mediaCalls[callKey] = callData; 
 
-              if (state.audioCtx) setupPeerMixer(callData); 
+              if (state.audioCtx) {
+                  if (isIOStereoTrack) setupIoStereoMixer(callData);
+                  else setupPeerMixer(callData);
+              }
 
               updateUserCount();
 
@@ -5720,8 +5774,8 @@ html, body, #main-app-container {
 
               removePeer(participant.identity); 
 
+              removePeer(participant.identity + '_io_4w_stereo'); removePeer(participant.identity + '_io_pgm_stereo');
               removePeer(participant.identity + '_io_4w_l'); removePeer(participant.identity + '_io_4w_r');
-
               removePeer(participant.identity + '_io_pgm_l'); removePeer(participant.identity + '_io_pgm_r');
 
               updateOnlineStatus(participant.identity, false);
