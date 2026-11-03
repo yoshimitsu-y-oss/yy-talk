@@ -13,7 +13,7 @@
 
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
-  <title>YY-Talk PRO - Broadcast Intercom v25</title>
+  <title>YY-Talk PRO - Broadcast Intercom v27</title>
   <meta name="theme-color" content="#0a0b0d">
   <meta name="color-scheme" content="dark">
 
@@ -2324,7 +2324,7 @@ html, body, #main-app-container {
 
           </div>
 
-          <div class="login-version">YY-Talk PRO &nbsp; v25</div>
+          <div class="login-version">YY-Talk PRO &nbsp; v27</div>
 
         </div>
 
@@ -3525,27 +3525,24 @@ html, body, #main-app-container {
             delete state.ioGraphs[kind];
         };
 
-        const getPgmAudioContext = async (stream) => {
-            /* v25: DeEMB/PGM is a continuous programme feed, not a talk microphone.
-               Give it its own balanced-latency graph so UI/video work cannot force the
-               low-latency intercom graph into USB-buffer underruns. Match the capture's
-               actual sample clock where the browser exposes it to avoid extra resampling. */
+        const getIoLineAudioContext = async () => {
+            /* v27: ALL I/O inputs use a dedicated 48 kHz balanced-latency render graph.
+               Keeping 4W/PGM off the interactive UI/listen AudioContext prevents UI/video
+               work from starving the line-input render quantum and causing robotic dropouts. */
             const AC = (window.AudioContext || window.webkitAudioContext);
-            const st = stream?.getAudioTracks?.()[0]?.getSettings?.() || {};
-            const sampleRate = Number(st.sampleRate) || 48000;
-            if (!state.pgmAudioCtx || state.pgmAudioCtx.state === 'closed') {
-                try { state.pgmAudioCtx = new AC({ latencyHint:'balanced', sampleRate }); }
-                catch(e) { try { state.pgmAudioCtx = new AC({ latencyHint:'balanced' }); } catch(_) { state.pgmAudioCtx = new AC(); } }
+            if (!state.ioLineAudioCtx || state.ioLineAudioCtx.state === 'closed') {
+                try { state.ioLineAudioCtx = new AC({ latencyHint:'balanced', sampleRate:48000 }); }
+                catch(e) { try { state.ioLineAudioCtx = new AC({ latencyHint:'balanced' }); } catch(_) { state.ioLineAudioCtx = new AC(); } }
             }
-            try { if (state.pgmAudioCtx.state === 'suspended') await state.pgmAudioCtx.resume(); } catch(e) {}
-            return state.pgmAudioCtx;
+            try { if (state.ioLineAudioCtx.state === 'suspended') await state.ioLineAudioCtx.resume(); } catch(e) {}
+            return state.ioLineAudioCtx;
         };
 
         const publishStereo = async (stream, kind) => {
             if (!stream) return;
             const is4w = kind === '4w';
             disconnectIoGraph(kind);
-            const ctx = is4w ? state.audioCtx : await getPgmAudioContext(stream);
+            const ctx = await getIoLineAudioContext();
             if (!ctx) throw new Error(`${kind} audio context unavailable`);
             try { if (ctx.state === 'suspended') await ctx.resume(); } catch(e) {}
 
@@ -3562,8 +3559,15 @@ html, body, #main-app-container {
             gainR.gain.value = is4w ? (state.ioBridge.inGain4wR ?? 1.0) : (state.ioBridge.inGainPgmR ?? 1.0);
             const analyserL = ctx.createAnalyser(); analyserL.fftSize = 256;
             const analyserR = ctx.createAnalyser(); analyserR.fftSize = 256;
-            const destL = ctx.createMediaStreamDestination();
-            const destR = ctx.createMediaStreamDestination();
+            const makeMonoDestination = () => {
+                const d = ctx.createMediaStreamDestination();
+                /* createMediaStreamDestination() defaults to 2ch. Force each I/O leg to a
+                   true mono graph so L/R do not get needlessly upmixed and re-encoded. */
+                try { d.channelCount = 1; d.channelCountMode = 'explicit'; d.channelInterpretation = 'discrete'; } catch(e) {}
+                return d;
+            };
+            const destL = makeMonoDestination();
+            const destR = makeMonoDestination();
             splitter.connect(gainL, 0); gainL.connect(analyserL); gainL.connect(destL);
             splitter.connect(gainR, 1); gainR.connect(analyserR); gainR.connect(destR);
 
@@ -3583,12 +3587,14 @@ html, body, #main-app-container {
             const trackR = new LivekitClient.LocalAudioTrack(rawR);
             const nameL = is4w ? 'io_4w_l' : 'io_pgm_l';
             const nameR = is4w ? 'io_4w_r' : 'io_pgm_r';
-            /* Continuous line feeds: no DTX/gating; use a generous music bitrate and RED. */
-            const hqPreset = LivekitClient.AudioPresets?.musicHighQuality || { maxBitrate: 128000 };
+            /* v27: one Opus encoder per mono leg, but keep it genuinely mono and moderate
+               the bitrate. Four 128 kbps high-quality encoders plus video can create bursty
+               congestion/CPU pressure; 64 kbps mono Opus is ample for intercom/line audio. */
+            const ioLinePreset = { maxBitrate: 64000 };
             const ioPublishOptions = (name) => ({
                 name,
                 source: LivekitClient.Track.Source.Unknown,
-                audioPreset: hqPreset,
+                audioPreset: ioLinePreset,
                 dtx: false,
                 red: true,
                 forceStereo: false
@@ -4013,7 +4019,9 @@ html, body, #main-app-container {
         if (track._yyHealthBound) return;
         track._yyHealthBound = true;
         track.addEventListener('ended', () => scheduleIoBridgeRecovery('input track ended'));
-        track.addEventListener('mute', () => setTimeout(() => { if (track.muted) scheduleIoBridgeRecovery('input track muted'); }, 1000));
+        /* USB interfaces can momentarily report muted while their clock settles. Do not tear
+           the whole bridge down for a short mute; only recover if it stays muted for 5s. */
+        track.addEventListener('mute', () => setTimeout(() => { if (track.muted) scheduleIoBridgeRecovery('input track muted >5s'); }, 5000));
       }));
     }
 
@@ -4023,8 +4031,9 @@ html, body, #main-app-container {
       if (state.ioBridge?.enabled && state.room?.state === 'connected' && state.ioOpenedAt) {
         const has = [state.ioNodes.analyser4wL, state.ioNodes.analyser4wR, state.ioNodes.analyserPgmL, state.ioNodes.analyserPgmR].some(ioAnalyserHasSignal);
         if (has) state.ioSignalSeen = true;
-        const age = Date.now() - state.ioOpenedAt;
-        if (!state.ioSignalSeen && age > 4500 && age < 18000) scheduleIoBridgeRecovery('no input signal after opening');
+        /* v27: do NOT reopen an otherwise-live USB input based on audio level. A quiet
+           line or low reference level was previously mistaken for a failed device, causing
+           periodic "paka-paka" cuts while the bridge was torn down and rebuilt. */
       }
       if (state.isAdmin && state.activeVideoSender === state.myUserId && state.currentLocalVideoTrack && state.currentVideoSourceId && !['off','screen'].includes(state.currentVideoSourceId) && !document.hidden) {
         const mt = state.currentLocalVideoTrack.mediaStreamTrack;
