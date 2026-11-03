@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 
 <html lang="ja">
-<!-- YY-Talk PRO Brush-up v24 -->
+<!-- YY-Talk PRO Brush-up v25 -->
 
 <head>
 
@@ -13,7 +13,7 @@
 
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
-  <title>YY-Talk PRO - Broadcast Intercom v24</title>
+  <title>YY-Talk PRO - Broadcast Intercom v25</title>
   <meta name="theme-color" content="#0a0b0d">
   <meta name="color-scheme" content="dark">
 
@@ -2161,6 +2161,107 @@ html, body, #main-app-container {
     }
   }
 </style>
+
+<style id="v25-pgm-frame-island-fix">
+  /* v25: the monitor frame itself is exactly the 16:9 picture. Older responsive
+     rules left 3-10px of monitor padding that looked like a second black frame. */
+  #monitor-section {
+    padding:0 !important;
+    border:0 !important;
+    background:transparent !important;
+    overflow:visible !important;
+  }
+  #monitor-section .video-container {
+    padding:0 !important;
+    margin:0 !important;
+    border:0 !important;
+    background:transparent !important;
+    overflow:visible !important;
+  }
+  #monitor-video-wrapper.video-wrapper {
+    margin:0 auto !important;
+    border:0 !important;
+    background:#000 !important;
+    box-sizing:border-box !important;
+  }
+  #monitor-video-wrapper.video-wrapper video {
+    display:block !important;
+    margin:0 !important;
+    padding:0 !important;
+    border:0 !important;
+  }
+  /* Keep tally visible just outside the true picture without creating a permanent frame. */
+  #monitor-video-wrapper.video-wrapper.tally-on {
+    outline:3px solid var(--alert) !important;
+    outline-offset:2px !important;
+  }
+
+  /* iPhone Home-Screen mode: leave a small solid-black clearance below the system
+     safe area. Dynamic-Island/status blur then samples only black, never the header. */
+  @media (display-mode: standalone) and (orientation:portrait) {
+    :root { --yy-island-clearance:10px; }
+    body::before {
+      height:calc(var(--yy-safe-top-stable, env(safe-area-inset-top, 0px)) + var(--yy-island-clearance)) !important;
+      background:#000 !important;
+    }
+    #main-app-container {
+      top:calc(var(--yy-safe-top-stable, env(safe-area-inset-top, 0px)) + var(--yy-island-clearance)) !important;
+    }
+    .overlay-base,
+    #login-overlay,
+    #disconnect-overlay,
+    #audio-overlay {
+      top:calc(var(--yy-safe-top-stable, env(safe-area-inset-top, 0px)) + var(--yy-island-clearance)) !important;
+    }
+  }
+  @media (display-mode: standalone) and (orientation:landscape) {
+    :root { --yy-island-clearance:3px; }
+    body::before {
+      height:calc(var(--yy-safe-top-stable, env(safe-area-inset-top, 0px)) + var(--yy-island-clearance)) !important;
+      background:#000 !important;
+    }
+    #main-app-container {
+      top:calc(var(--yy-safe-top-stable, env(safe-area-inset-top, 0px)) + var(--yy-island-clearance)) !important;
+    }
+  }
+</style>
+
+
+<style id="v26-portrait-hybrid-monitor-tight">
+  /* v26: On phone portrait + hybrid, the monitor must occupy only the real 16:9
+     picture height. Keep the small permanent tally/frame allowance, but do not
+     reserve half the viewport below the picture. */
+  @media (orientation:portrait) and (max-width:600px) {
+    #main-app-container.layout-hybrid > #monitor-section {
+      flex:0 0 auto !important;
+      width:100% !important;
+      height:auto !important;
+      min-height:0 !important;
+      max-height:none !important;
+      overflow:visible !important;
+    }
+    #main-app-container.layout-hybrid > #monitor-section > .video-container {
+      flex:0 0 auto !important;
+      width:100% !important;
+      height:auto !important;
+      min-height:0 !important;
+      max-height:none !important;
+      aspect-ratio:16 / 9 !important;
+      overflow:visible !important;
+    }
+    #main-app-container.layout-hybrid #monitor-video-wrapper.video-wrapper {
+      width:100% !important;
+      height:100% !important;
+      max-width:100% !important;
+      max-height:none !important;
+      margin:0 !important;
+    }
+    #main-app-container.layout-hybrid > .global-controls {
+      margin-top:0 !important;
+    }
+  }
+</style>
+
 </head>
 
 <body onload="if(window.forceResize) window.forceResize()">
@@ -2223,7 +2324,7 @@ html, body, #main-app-container {
 
           </div>
 
-          <div class="login-version">YY-Talk PRO &nbsp; v24</div>
+          <div class="login-version">YY-Talk PRO &nbsp; v25</div>
 
         </div>
 
@@ -2700,7 +2801,7 @@ html, body, #main-app-container {
 
       ioTrack4wL: null, ioTrack4wR: null, ioTrackPgmL: null, ioTrackPgmR: null, masterAudioEl: null, hasSuccessfullyConnected: false, ioStartupPrimeTimer: null, ioStartupPrimeBusy: false,
 
-      audioCtx: null, masterAnalyser: null, terminalAnalyser: null, localMicAnalyser: null, localMicSource: null, currentLocalVideoTrack: null, monitorAttachedVideoTrack: null, monitorVideoEl: null, ioInput4wStream: null, ioInputPgmStream: null,
+      audioCtx: null, pgmAudioCtx: null, ioGraphs: {}, masterAnalyser: null, terminalAnalyser: null, localMicAnalyser: null, localMicSource: null, currentLocalVideoTrack: null, monitorAttachedVideoTrack: null, monitorVideoEl: null, ioInput4wStream: null, ioInputPgmStream: null,
 
       mqttClient: null
 
@@ -3352,6 +3453,9 @@ html, body, #main-app-container {
         state.localMicSource = null; state.localMicAnalyser = null;
 
         await Promise.all(['ioTrack4wL','ioTrack4wR','ioTrackPgmL','ioTrackPgmR'].map(unpublishIo));
+        try { state.ioGraphs?.['4w']?.source?.disconnect?.(); } catch(e) {}
+        try { state.ioGraphs?.['pgm']?.source?.disconnect?.(); } catch(e) {}
+        state.ioGraphs = {};
         stopStream(state.ioInput4wStream); state.ioInput4wStream = null;
         stopStream(state.ioInputPgmStream); state.ioInputPgmStream = null;
 
@@ -3362,7 +3466,7 @@ html, body, #main-app-container {
                several USB interfaces become unstable/robotic when the browser tries to honor it. */
             const audio = {
                 echoCancellation: false, noiseSuppression: false, autoGainControl: false,
-                channelCount: { ideal: 2 }, sampleRate: { ideal: 48000 }, sampleSize: { ideal: 16 }
+                channelCount: { ideal: 2 }
             };
             if (deviceId !== 'default') audio.deviceId = { exact: deviceId };
             try {
@@ -3412,23 +3516,58 @@ html, body, #main-app-container {
             try { return new MediaStream([a.clone()]); } catch(e) { return null; }
         };
 
+        const disconnectIoGraph = (kind) => {
+            const g = state.ioGraphs?.[kind];
+            if (!g) return;
+            ['source','splitter','gainL','gainR','analyserL','analyserR','destL','destR'].forEach(k => {
+                try { g[k]?.disconnect?.(); } catch(e) {}
+            });
+            delete state.ioGraphs[kind];
+        };
+
+        const getPgmAudioContext = async (stream) => {
+            /* v25: DeEMB/PGM is a continuous programme feed, not a talk microphone.
+               Give it its own balanced-latency graph so UI/video work cannot force the
+               low-latency intercom graph into USB-buffer underruns. Match the capture's
+               actual sample clock where the browser exposes it to avoid extra resampling. */
+            const AC = (window.AudioContext || window.webkitAudioContext);
+            const st = stream?.getAudioTracks?.()[0]?.getSettings?.() || {};
+            const sampleRate = Number(st.sampleRate) || 48000;
+            if (!state.pgmAudioCtx || state.pgmAudioCtx.state === 'closed') {
+                try { state.pgmAudioCtx = new AC({ latencyHint:'balanced', sampleRate }); }
+                catch(e) { try { state.pgmAudioCtx = new AC({ latencyHint:'balanced' }); } catch(_) { state.pgmAudioCtx = new AC(); } }
+            }
+            try { if (state.pgmAudioCtx.state === 'suspended') await state.pgmAudioCtx.resume(); } catch(e) {}
+            return state.pgmAudioCtx;
+        };
+
         const publishStereo = async (stream, kind) => {
             if (!stream) return;
-            const source = state.audioCtx.createMediaStreamSource(stream);
-            const splitter = state.audioCtx.createChannelSplitter(2);
-            source.connect(splitter);
             const is4w = kind === '4w';
-            const gainL = state.audioCtx.createGain();
-            const gainR = state.audioCtx.createGain();
+            disconnectIoGraph(kind);
+            const ctx = is4w ? state.audioCtx : await getPgmAudioContext(stream);
+            if (!ctx) throw new Error(`${kind} audio context unavailable`);
+            try { if (ctx.state === 'suspended') await ctx.resume(); } catch(e) {}
+
+            const inputTrack = stream.getAudioTracks?.()[0];
+            const inputSettings = inputTrack?.getSettings?.() || {};
+            uiLog(`${kind.toUpperCase()} graph @ ${ctx.sampleRate || '?'}Hz / input ${inputSettings.sampleRate || '?'}Hz / ${inputSettings.channelCount || '?'}ch`, '#60a5fa');
+
+            const source = ctx.createMediaStreamSource(stream);
+            const splitter = ctx.createChannelSplitter(2);
+            source.connect(splitter);
+            const gainL = ctx.createGain();
+            const gainR = ctx.createGain();
             gainL.gain.value = is4w ? (state.ioBridge.inGain4wL ?? 1.0) : (state.ioBridge.inGainPgmL ?? 1.0);
             gainR.gain.value = is4w ? (state.ioBridge.inGain4wR ?? 1.0) : (state.ioBridge.inGainPgmR ?? 1.0);
-            const analyserL = state.audioCtx.createAnalyser(); analyserL.fftSize = 256;
-            const analyserR = state.audioCtx.createAnalyser(); analyserR.fftSize = 256;
-            const destL = state.audioCtx.createMediaStreamDestination();
-            const destR = state.audioCtx.createMediaStreamDestination();
+            const analyserL = ctx.createAnalyser(); analyserL.fftSize = 256;
+            const analyserR = ctx.createAnalyser(); analyserR.fftSize = 256;
+            const destL = ctx.createMediaStreamDestination();
+            const destR = ctx.createMediaStreamDestination();
             splitter.connect(gainL, 0); gainL.connect(analyserL); gainL.connect(destL);
             splitter.connect(gainR, 1); gainR.connect(analyserR); gainR.connect(destR);
 
+            state.ioGraphs[kind] = { ctx, source, splitter, gainL, gainR, analyserL, analyserR, destL, destR };
             if (is4w) {
                 state.ioNodes.gain4wL = gainL; state.ioNodes.gain4wR = gainR;
                 state.ioNodes.analyser4wL = analyserL; state.ioNodes.analyser4wR = analyserR;
@@ -3444,9 +3583,8 @@ html, body, #main-app-container {
             const trackR = new LivekitClient.LocalAudioTrack(rawR);
             const nameL = is4w ? 'io_4w_l' : 'io_pgm_l';
             const nameR = is4w ? 'io_4w_r' : 'io_pgm_r';
-            /* v23: each bridge leg is published as a high-quality mono line feed.
-               DTX OFF prevents gating/robotic syllables; RED adds packet-loss resilience. */
-            const hqPreset = LivekitClient.AudioPresets?.musicHighQuality || { maxBitrate: 96000 };
+            /* Continuous line feeds: no DTX/gating; use a generous music bitrate and RED. */
+            const hqPreset = LivekitClient.AudioPresets?.musicHighQuality || { maxBitrate: 128000 };
             const ioPublishOptions = (name) => ({
                 name,
                 source: LivekitClient.Track.Source.Unknown,
@@ -3784,7 +3922,7 @@ html, body, #main-app-container {
           const video = { deviceId:{ exact:deviceId }, width:{ ideal:profile.width }, height:{ ideal:profile.height }, frameRate:{ ideal:profile.fps, max:profile.maxFps } };
           let audio = false;
           if (state.ioBridge?.enabled && state.ioBridge.inDevicePgm) {
-            audio = { deviceId:{ exact:state.ioBridge.inDevicePgm }, echoCancellation:false, noiseSuppression:false, autoGainControl:false, channelCount:{ideal:2}, sampleRate:{ideal:48000}, latency:{ideal:0.02} };
+            audio = { deviceId:{ exact:state.ioBridge.inDevicePgm }, echoCancellation:false, noiseSuppression:false, autoGainControl:false, channelCount:{ideal:2} };
           }
           let stream;
           try { stream = await navigator.mediaDevices.getUserMedia({ video, audio }); }
@@ -3919,10 +4057,33 @@ html, body, #main-app-container {
     function fitMonitor16x9() {
       const container = document.querySelector('#monitor-section .video-container');
       const wrapper = $('monitor-video-wrapper');
-      if (!container || !wrapper) return;
+      const monitor = $('monitor-section');
+      const app = $('main-app-container');
+      if (!container || !wrapper || !monitor || !app) return;
+      const ratio = 16 / 9;
+      const portraitHybrid = app.classList.contains('layout-hybrid') &&
+        window.matchMedia('(orientation: portrait)').matches &&
+        window.innerWidth <= 600;
+
+      /* In phone portrait hybrid, size the monitor from WIDTH only.
+         The old 50%-height allocation created a large empty block under 16:9 video. */
+      if (portraitHybrid) {
+        const cw = container.clientWidth || monitor.clientWidth;
+        if (!cw) return;
+        const w = Math.max(0, Math.floor(cw));
+        const h = Math.max(0, Math.round(w / ratio));
+        container.style.height = h + 'px';
+        monitor.style.height = h + 'px';
+        wrapper.style.width = w + 'px';
+        wrapper.style.height = h + 'px';
+        return;
+      }
+
+      /* Clear portrait-hybrid inline sizing immediately when the device/layout changes. */
+      container.style.height = '';
+      monitor.style.height = '';
       const cw = container.clientWidth, ch = container.clientHeight;
       if (!cw || !ch) return;
-      const ratio = 16 / 9;
       let w = cw, h = w / ratio;
       if (h > ch) { h = ch; w = h * ratio; }
       wrapper.style.width = Math.max(0, Math.floor(w)) + 'px';
