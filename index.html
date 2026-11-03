@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 
 <html lang="ja">
-<!-- YY-Talk PRO Brush-up v23 -->
+<!-- YY-Talk PRO Brush-up v24 -->
 
 <head>
 
@@ -13,7 +13,7 @@
 
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
-  <title>YY-Talk PRO - Broadcast Intercom v23</title>
+  <title>YY-Talk PRO - Broadcast Intercom v24</title>
   <meta name="theme-color" content="#0a0b0d">
   <meta name="color-scheme" content="dark">
 
@@ -46,14 +46,56 @@
     window.onerror = function(msg, src, line, col, err) { uiLog(`ERROR: ${msg} (${line}:${col})`, '#ef4444'); return false; };
 
     window.onunhandledrejection = function(e) { uiLog(`PROMISE ERR: ${e.reason}`, '#ef4444'); };
+    /* v24 iOS standalone viewport stabilization.
+       iOS can transiently report safe-area-inset-top=0 while rotating back to portrait.
+       Cache the last valid portrait inset so the header never jumps under Dynamic Island. */
+    let yyPortraitSafeTop = 0;
+    let yySafeProbe = null;
+    function yyIsStandalone() {
+      return !!(window.matchMedia?.('(display-mode: standalone)').matches || navigator.standalone === true);
+    }
+    function yyReadSafeInsetTop() {
+      if (!document.body) return 0;
+      if (!yySafeProbe) {
+        yySafeProbe = document.createElement('div');
+        yySafeProbe.id = 'yy-safe-area-probe';
+        yySafeProbe.setAttribute('aria-hidden', 'true');
+        yySafeProbe.style.cssText = 'position:fixed;left:-9999px;top:0;width:1px;height:env(safe-area-inset-top,0px);visibility:hidden;pointer-events:none;';
+        document.body.appendChild(yySafeProbe);
+      }
+      const h = yySafeProbe.getBoundingClientRect().height || parseFloat(getComputedStyle(yySafeProbe).height) || 0;
+      return Number.isFinite(h) ? Math.max(0, h) : 0;
+    }
+    function yyCommitStableSafeArea() {
+      if (!yyIsStandalone()) {
+        document.documentElement.style.setProperty('--yy-safe-top-stable', '0px');
+        return 0;
+      }
+      const measured = yyReadSafeInsetTop();
+      const portrait = window.innerHeight >= window.innerWidth;
+      if (portrait && measured > 0) yyPortraitSafeTop = Math.max(yyPortraitSafeTop, measured);
+      const stable = portrait ? Math.max(measured, yyPortraitSafeTop) : measured;
+      document.documentElement.style.setProperty('--yy-safe-top-stable', `${Math.round(stable)}px`);
+      return stable;
+    }
+    function yyResetViewportOrigin() {
+      try { window.scrollTo(0, 0); } catch(e) {}
+      try { document.documentElement.scrollTop = 0; } catch(e) {}
+      try { if (document.body) document.body.scrollTop = 0; } catch(e) {}
+    }
+
     let resizeRaf = 0, resizeFollowRaf = 0;
     function yyCommitViewportSize() {
       const vv = window.visualViewport;
-      const standalone = !!(window.matchMedia?.('(display-mode: standalone)').matches || navigator.standalone === true);
-      /* iOS Home Screen apps have no browser chrome. Using innerHeight there avoids
-         visualViewport occasionally reporting a height that clips the top safe area. */
-      const h = Math.max(1, Math.round((standalone ? window.innerHeight : vv?.height) || window.innerHeight || document.documentElement.clientHeight || 1));
-      const w = Math.max(1, Math.round((standalone ? window.innerWidth : vv?.width) || window.innerWidth || document.documentElement.clientWidth || 1));
+      const standalone = yyIsStandalone();
+      if (standalone) {
+        yyResetViewportOrigin();
+        yyCommitStableSafeArea();
+      }
+      /* In standalone mode the app is pinned with CSS top/bottom insets. Use the
+         layout viewport dimensions and let CSS subtract the stable safe-area strip. */
+      const h = Math.max(1, Math.round((standalone ? document.documentElement.clientHeight : vv?.height) || window.innerHeight || document.documentElement.clientHeight || 1));
+      const w = Math.max(1, Math.round((standalone ? document.documentElement.clientWidth : vv?.width) || window.innerWidth || document.documentElement.clientWidth || 1));
       document.documentElement.style.setProperty('--app-height', h + 'px');
       document.documentElement.style.setProperty('--app-width', w + 'px');
       const c = document.getElementById('main-app-container');
@@ -74,13 +116,37 @@
       });
     };
     const yyFastViewportRefresh = () => window.forceResize();
+    let yyOrientationSettleTimer = 0;
+    const yyOrientationRefresh = () => {
+      yyResetViewportOrigin();
+      window.forceResize();
+      /* Safari updates its standalone viewport in stages. These follow-up passes are
+         corrective only; the first layout update still happens immediately. */
+      clearTimeout(yyOrientationSettleTimer);
+      yyOrientationSettleTimer = setTimeout(() => {
+        yyResetViewportOrigin();
+        window.forceResize();
+      }, 90);
+      setTimeout(() => {
+        yyResetViewportOrigin();
+        window.forceResize();
+      }, 280);
+    };
     window.addEventListener('resize', yyFastViewportRefresh, { passive: true });
-    window.addEventListener('orientationchange', yyFastViewportRefresh, { passive: true });
-    try { screen.orientation?.addEventListener?.('change', yyFastViewportRefresh, { passive: true }); } catch(e) {}
+    window.addEventListener('orientationchange', yyOrientationRefresh, { passive: true });
+    try { screen.orientation?.addEventListener?.('change', yyOrientationRefresh, { passive: true }); } catch(e) {}
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', yyFastViewportRefresh, { passive: true });
-      window.visualViewport.addEventListener('scroll', yyFastViewportRefresh, { passive: true });
+      window.visualViewport.addEventListener('scroll', () => {
+        if (yyIsStandalone()) yyResetViewportOrigin();
+        else yyFastViewportRefresh();
+      }, { passive: true });
     }
+    document.addEventListener('DOMContentLoaded', () => {
+      yyCommitStableSafeArea();
+      yyResetViewportOrigin();
+      window.forceResize();
+    }, { once: true });
 
 
 
@@ -2023,6 +2089,78 @@ html, body, #main-app-container {
   }
 </style>
 
+
+<style id="v24-standalone-dynamic-island-lock">
+  :root { --yy-safe-top-stable: env(safe-area-inset-top, 0px); }
+
+  /* iOS Home Screen only: keep app content physically below the system status area.
+     A solid black cap behind Dynamic Island prevents video/header blur from bleeding in. */
+  @media (display-mode: standalone) {
+    html, body {
+      position:fixed !important;
+      inset:0 !important;
+      width:100% !important;
+      height:100% !important;
+      min-height:0 !important;
+      margin:0 !important;
+      padding:0 !important;
+      overflow:hidden !important;
+      overscroll-behavior:none !important;
+      background:#0a0b0d !important;
+    }
+
+    body::before {
+      content:"";
+      position:fixed;
+      z-index:2147483000;
+      top:0;
+      left:0;
+      right:0;
+      height:var(--yy-safe-top-stable, env(safe-area-inset-top, 0px));
+      background:#0a0b0d;
+      pointer-events:none;
+    }
+
+    #main-app-container {
+      position:fixed !important;
+      top:var(--yy-safe-top-stable, env(safe-area-inset-top, 0px)) !important;
+      right:env(safe-area-inset-right, 0px) !important;
+      bottom:env(safe-area-inset-bottom, 0px) !important;
+      left:env(safe-area-inset-left, 0px) !important;
+      width:auto !important;
+      height:auto !important;
+      min-height:0 !important;
+      max-height:none !important;
+      padding:0 !important;
+      margin:0 !important;
+      overflow:hidden !important;
+    }
+
+    /* The header itself is opaque in standalone mode so no glass/blur can visually
+       merge into the Dynamic Island region. */
+    #main-app-container > .header {
+      position:relative !important;
+      top:0 !important;
+      flex:0 0 auto !important;
+      background:#0a0b0d !important;
+      -webkit-backdrop-filter:none !important;
+      backdrop-filter:none !important;
+    }
+
+    .overlay-base,
+    #login-overlay,
+    #disconnect-overlay,
+    #audio-overlay {
+      top:var(--yy-safe-top-stable, env(safe-area-inset-top, 0px)) !important;
+      right:env(safe-area-inset-right, 0px) !important;
+      bottom:env(safe-area-inset-bottom, 0px) !important;
+      left:env(safe-area-inset-left, 0px) !important;
+      width:auto !important;
+      height:auto !important;
+      padding-top:0 !important;
+    }
+  }
+</style>
 </head>
 
 <body onload="if(window.forceResize) window.forceResize()">
@@ -2085,7 +2223,7 @@ html, body, #main-app-container {
 
           </div>
 
-          <div class="login-version">YY-Talk PRO &nbsp; v23</div>
+          <div class="login-version">YY-Talk PRO &nbsp; v24</div>
 
         </div>
 
