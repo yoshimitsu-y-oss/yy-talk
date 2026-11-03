@@ -1806,6 +1806,45 @@ html, body, #main-app-container {
   }
 </style>
 
+
+<style id="v17-video-layout-and-ios-footprint">
+  /* iOS drag: the floating card moves; a stationary footprint remains in the grid slot. */
+  .yy-drag-placeholder {
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: none !important;
+    background: rgba(5,8,13,.42) !important;
+    border: 1px dashed rgba(148,163,184,.32) !important;
+    box-shadow: inset 0 10px 28px rgba(0,0,0,.48) !important;
+    overflow: hidden !important;
+  }
+  .yy-drag-placeholder .yy-drag-footprint {
+    width: 100%; height: 100%; border-radius: inherit;
+    background: linear-gradient(180deg, rgba(255,255,255,.025), rgba(0,0,0,.13));
+  }
+  .channel-card.yy-ios-dragging {
+    box-shadow: 0 24px 56px rgba(0,0,0,.72) !important;
+  }
+
+  /* The monitor keeps an exact 16:9 box and is centered inside whatever space the layout gives it. */
+  #monitor-section, #monitor-section .video-container {
+    min-width:0 !important; min-height:0 !important; overflow:hidden !important;
+  }
+  #monitor-section .video-container {
+    display:flex !important; align-items:center !important; justify-content:center !important;
+    position:relative !important;
+  }
+  #monitor-video-wrapper.video-wrapper {
+    position:relative !important; inset:auto !important; margin:auto !important;
+    flex:0 0 auto !important; aspect-ratio:16 / 9 !important;
+    max-width:100% !important; max-height:100% !important;
+    overflow:hidden !important;
+  }
+  #monitor-video-wrapper.video-wrapper video {
+    width:100% !important; height:100% !important; object-fit:contain !important;
+  }
+</style>
+
 </head>
 
 <body onload="if(window.forceResize) window.forceResize()">
@@ -2555,7 +2594,8 @@ html, body, #main-app-container {
             if (!card?.isConnected) return;
             const r=card.getBoundingClientRect();
             const ph=document.createElement('div'); ph.className='channel-card yy-drag-placeholder';
-            ph.style.height=r.height+'px'; ph.style.minHeight=r.height+'px'; ph.style.visibility='hidden';
+            ph.style.height=r.height+'px'; ph.style.minHeight=r.height+'px';
+            ph.innerHTML='<div class="yy-drag-footprint"></div>';
             card.after(ph);
             drag={ card, handle, placeholder:ph, pointerId:ev.pointerId, startX:ev.clientX, startY:ev.clientY, baseLeft:r.left, baseTop:r.top, lastTarget:null };
             card.dataset.yyDragging='1'; card.classList.add('yy-ios-dragging','is-reordering');
@@ -3102,7 +3142,24 @@ html, body, #main-app-container {
 
         const select = $('edit-monitor-source'); if(!select) return; const currentValue = select.value;
 
-        try { try { const tempStream = await navigator.mediaDevices.getUserMedia({ video: true }); tempStream.getTracks().forEach(track => track.stop()); } catch (e) {} const devices = await navigator.mediaDevices.enumerateDevices(); const videoInputs = devices.filter(device => device.kind === 'videoinput'); select.innerHTML = '<option value="off">OFF</option><option value="screen">画面共有</option>'; videoInputs.forEach((device, index) => { const option = document.createElement('option'); option.value = device.deviceId; option.text = device.label || `Camera ${index + 1}`; select.appendChild(option); }); if (Array.from(select.options).some(opt => opt.value === currentValue)) select.value = currentValue; else select.value = 'off'; } catch (e) {} 
+        try {
+          let devices = await navigator.mediaDevices.enumerateDevices();
+          let videoInputs = devices.filter(device => device.kind === 'videoinput');
+          const localVideoIsLive = state.activeVideoSender === state.myUserId && state.currentVideoSourceId && !['off','screen'].includes(state.currentVideoSourceId) && state.videoCaptureStream?.getVideoTracks?.().some(t => t.readyState === 'live');
+          // Do not call getUserMedia(video:true) while a capture is already live.
+          // Many USB/HDMI capture devices allow only one client and the temporary open can stall the program feed.
+          if (!localVideoIsLive && videoInputs.some(device => !device.label)) {
+            try {
+              const tempStream = await navigator.mediaDevices.getUserMedia({ video:true, audio:false });
+              tempStream.getTracks().forEach(track => track.stop());
+              devices = await navigator.mediaDevices.enumerateDevices();
+              videoInputs = devices.filter(device => device.kind === 'videoinput');
+            } catch (e) {}
+          }
+          select.innerHTML = '<option value="off">OFF</option><option value="screen">画面共有</option>';
+          videoInputs.forEach((device, index) => { const option = document.createElement('option'); option.value = device.deviceId; option.text = device.label || `Camera ${index + 1}`; select.appendChild(option); });
+          if (Array.from(select.options).some(opt => opt.value === currentValue)) select.value = currentValue; else select.value = 'off';
+        } catch (e) {} 
 
         const eq = $('edit-video-quality'); if(eq) eq.value = state.videoQuality || '512000';
 
@@ -3130,6 +3187,16 @@ html, body, #main-app-container {
       }
     }
 
+    function getVideoCaptureProfile() {
+      const q = state.videoQuality || '512000';
+      if (q === 'auto') return { width:1280, height:720, fps:30, maxFps:60 };
+      const b = parseInt(q) || 512000;
+      if (b <= 256000) return { width:640, height:360, fps:30, maxFps:30 };
+      if (b <= 512000) return { width:854, height:480, fps:30, maxFps:30 };
+      if (b <= 1000000) return { width:1280, height:720, fps:30, maxFps:30 };
+      return { width:1920, height:1080, fps:60, maxFps:60 };
+    }
+
     async function openSelectedVideoSource(deviceId, { watchdog = false } = {}) {
       if (!state.room || !state.room.localParticipant) return false;
       const eq = $('edit-video-quality'); const mst = $('main-monitor-source-text');
@@ -3149,7 +3216,8 @@ html, body, #main-app-container {
         state.currentVideoSourceId = deviceId;
         const sourceText = deviceId === 'screen' ? 'SCREEN SHARE' : 'CAMERA';
         const targetBitrate = parseInt(state.videoQuality) || 512000;
-        const enc = state.videoQuality === 'auto' ? undefined : { maxBitrate: targetBitrate };
+        const profile = getVideoCaptureProfile();
+        const enc = state.videoQuality === 'auto' ? undefined : { maxBitrate: targetBitrate, maxFramerate: profile.maxFps };
         const sim = state.videoQuality === 'auto';
 
         if (deviceId === 'screen') {
@@ -3159,7 +3227,7 @@ html, body, #main-app-container {
           state.currentLocalVideoTrack = activePub.track;
           attachVideoTrack(state.currentLocalVideoTrack);
         } else {
-          const video = { deviceId:{ exact:deviceId }, width:{ ideal:1920 }, height:{ ideal:1080 }, frameRate:{ ideal:30, max:60 } };
+          const video = { deviceId:{ exact:deviceId }, width:{ ideal:profile.width }, height:{ ideal:profile.height }, frameRate:{ ideal:profile.fps, max:profile.maxFps } };
           let audio = false;
           if (state.ioBridge?.enabled && state.ioBridge.inDevicePgm) {
             audio = { deviceId:{ exact:state.ioBridge.inDevicePgm }, echoCancellation:false, noiseSuppression:false, autoGainControl:false, channelCount:{ideal:2}, sampleRate:{ideal:48000}, latency:{ideal:0.02} };
@@ -3167,13 +3235,14 @@ html, body, #main-app-container {
           let stream;
           try { stream = await navigator.mediaDevices.getUserMedia({ video, audio }); }
           catch (exactErr) {
-            const vf = { deviceId:{ ideal:deviceId }, width:{ideal:1920}, height:{ideal:1080}, frameRate:{ideal:30} };
+            const vf = { deviceId:{ ideal:deviceId }, width:{ideal:profile.width}, height:{ideal:profile.height}, frameRate:{ideal:profile.fps, max:profile.maxFps} };
             const af = audio ? { deviceId:{ideal:state.ioBridge.inDevicePgm}, echoCancellation:false, noiseSuppression:false, autoGainControl:false, channelCount:{ideal:2} } : false;
             stream = await navigator.mediaDevices.getUserMedia({ video:vf, audio:af });
           }
           state.videoCaptureStream = stream;
           const rawTrack = stream.getVideoTracks()[0];
           if (!rawTrack) throw new Error('Camera video track was not created');
+          try { rawTrack.contentHint = 'motion'; } catch(e) {}
           rawTrack.addEventListener('ended', () => scheduleLocalVideoRecovery('capture ended'));
           rawTrack.addEventListener('mute', () => setTimeout(() => { if (rawTrack.muted) scheduleLocalVideoRecovery('capture muted'); }, 1200));
           const localVideoTrack = new LivekitClient.LocalVideoTrack(rawTrack);
@@ -3266,9 +3335,30 @@ html, body, #main-app-container {
       if (state.isAdmin && state.activeVideoSender === state.myUserId && state.currentLocalVideoTrack && state.currentVideoSourceId && !['off','screen'].includes(state.currentVideoSourceId) && !document.hidden) {
         const mt = state.currentLocalVideoTrack.mediaStreamTrack;
         if (!mt || mt.readyState !== 'live' || mt.muted) scheduleLocalVideoRecovery('local video track unhealthy');
-        else if (state.lastVideoFrameAt && Date.now() - state.lastVideoFrameAt > 4500) scheduleLocalVideoRecovery('no new video frames');
       }
     }, 1500);
+
+    function fitMonitor16x9() {
+      const container = document.querySelector('#monitor-section .video-container');
+      const wrapper = $('monitor-video-wrapper');
+      if (!container || !wrapper) return;
+      const cw = container.clientWidth, ch = container.clientHeight;
+      if (!cw || !ch) return;
+      const ratio = 16 / 9;
+      let w = cw, h = w / ratio;
+      if (h > ch) { h = ch; w = h * ratio; }
+      wrapper.style.width = Math.max(0, Math.floor(w)) + 'px';
+      wrapper.style.height = Math.max(0, Math.floor(h)) + 'px';
+    }
+    window.fitMonitor16x9 = fitMonitor16x9;
+    window.addEventListener('resize', () => requestAnimationFrame(fitMonitor16x9), {passive:true});
+    window.addEventListener('orientationchange', () => setTimeout(fitMonitor16x9, 120), {passive:true});
+    if (window.ResizeObserver) {
+      const yyMonitorRO = new ResizeObserver(() => requestAnimationFrame(fitMonitor16x9));
+      const yyMonitorContainer = document.querySelector('#monitor-section .video-container');
+      if (yyMonitorContainer) yyMonitorRO.observe(yyMonitorContainer);
+    }
+    setTimeout(fitMonitor16x9, 0);
 
     function getMonitorVideoElement() {
       const mw = $('monitor-video-wrapper'); if (!mw) return null;
