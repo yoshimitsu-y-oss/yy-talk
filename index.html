@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 
 <html lang="ja">
-<!-- YY-Talk PRO Brush-up v20 -->
+<!-- YY-Talk PRO Brush-up v21 -->
 
 <head>
 
@@ -11,7 +11,9 @@
 
   <meta name="apple-mobile-web-app-capable" content="yes">
 
-  <title>YY-Talk PRO - Broadcast Intercom v20</title>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <title>YY-Talk PRO - Broadcast Intercom v21</title>
   <meta name="theme-color" content="#0a0b0d">
   <meta name="color-scheme" content="dark">
 
@@ -47,8 +49,11 @@
     let resizeRaf = 0, resizeFollowRaf = 0;
     function yyCommitViewportSize() {
       const vv = window.visualViewport;
-      const h = Math.max(1, Math.round(vv?.height || window.innerHeight || document.documentElement.clientHeight || 1));
-      const w = Math.max(1, Math.round(vv?.width || window.innerWidth || document.documentElement.clientWidth || 1));
+      const standalone = !!(window.matchMedia?.('(display-mode: standalone)').matches || navigator.standalone === true);
+      /* iOS Home Screen apps have no browser chrome. Using innerHeight there avoids
+         visualViewport occasionally reporting a height that clips the top safe area. */
+      const h = Math.max(1, Math.round((standalone ? window.innerHeight : vv?.height) || window.innerHeight || document.documentElement.clientHeight || 1));
+      const w = Math.max(1, Math.round((standalone ? window.innerWidth : vv?.width) || window.innerWidth || document.documentElement.clientWidth || 1));
       document.documentElement.style.setProperty('--app-height', h + 'px');
       document.documentElement.style.setProperty('--app-width', w + 'px');
       const c = document.getElementById('main-app-container');
@@ -1952,6 +1957,56 @@ html, body, #main-app-container {
     #main-app-container.layout-hybrid > .monitor-section { padding-top:2px !important; }
   }
 </style>
+
+<style id="v21-safearea-monitor-tally">
+  /* Home-screen iOS: reserve the status/Dynamic-Island safe area explicitly. */
+  @media (display-mode: standalone) and (orientation: portrait) {
+    html, body { background: var(--bg-dark, #0a0b0d) !important; }
+    #main-app-container {
+      height:100dvh !important;
+      padding-top:max(env(safe-area-inset-top, 0px), 14px) !important;
+      padding-left:env(safe-area-inset-left, 0px) !important;
+      padding-right:env(safe-area-inset-right, 0px) !important;
+      padding-bottom:env(safe-area-inset-bottom, 0px) !important;
+    }
+    #main-app-container > .header { flex:0 0 auto !important; }
+    #login-overlay { padding-top:max(env(safe-area-inset-top, 0px), 14px) !important; }
+  }
+
+  /* The only black rectangle is the actual 16:9 picture. Spare monitor space blends
+     into the app, so it no longer looks like a second oversized video frame. */
+  #monitor-section { background:var(--bg-dark, #0a0b0d) !important; }
+  #monitor-section .video-container { background:transparent !important; overflow:visible !important; }
+  #monitor-video-wrapper.video-wrapper {
+    background:#000 !important;
+    border:0 !important;
+    box-shadow:none !important;
+    overflow:visible !important;
+  }
+  #monitor-video-wrapper.video-wrapper video {
+    display:block !important;
+    border:0 !important;
+    outline:0 !important;
+    background:#000 !important;
+    overflow:hidden !important;
+  }
+  /* Tally sits just outside the picture instead of consuming pixels inside 16:9. */
+  #monitor-video-wrapper.video-wrapper.tally-on {
+    border:0 !important;
+    outline:3px solid var(--alert) !important;
+    outline-offset:2px !important;
+    box-shadow:0 0 18px rgba(239,68,68,.72) !important;
+  }
+
+  /* The drag footprint is the same card design, only translucent. */
+  #channel-list-wrap > .channel-card.yy-drag-placeholder {
+    opacity:.22 !important;
+    filter:saturate(.7) brightness(.82) !important;
+    box-shadow:0 2px 12px rgba(0,0,0,.28) !important;
+    transition:transform 220ms cubic-bezier(.22,1,.36,1), opacity 120ms ease !important;
+  }
+</style>
+
 </head>
 
 <body onload="if(window.forceResize) window.forceResize()">
@@ -2014,7 +2069,7 @@ html, body, #main-app-container {
 
           </div>
 
-          <div class="login-version">YY-Talk PRO &nbsp; v20</div>
+          <div class="login-version">YY-Talk PRO &nbsp; v21</div>
 
         </div>
 
@@ -2594,7 +2649,11 @@ html, body, #main-app-container {
 
         
 
-        const tVid = $('tab-video'); if(tVid) tVid.onclick = () => switchTab($('tab-video'), $('admin-video-section'));
+        const tVid = $('tab-video'); if(tVid) tVid.onclick = () => {
+            switchTab($('tab-video'), $('admin-video-section'));
+            const localLive = state.activeVideoSender === state.myUserId && state.videoCaptureStream?.getVideoTracks?.().some(t => t.readyState === 'live');
+            if (!localLive) updateVideoSources({ forceProbe:false });
+        };
 
         const tPat = $('tab-patch'); if(tPat) tPat.onclick = () => switchTab($('tab-patch'), $('admin-patch-section'));
 
@@ -2626,7 +2685,8 @@ html, body, #main-app-container {
 
                 buildTallyAssignmentUI(); 
 
-                updateVideoSources({ forceProbe:false }); 
+                /* v21: opening the menu must never touch the active capture device.
+                   VIDEO SOURCE is refreshed by devicechange/manual refresh or when no capture is live. */
 
             }
 
@@ -2799,13 +2859,27 @@ html, body, #main-app-container {
 
             const inside = ev.clientX>=b.left && ev.clientX<=b.right && ev.clientY>=b.top && ev.clientY<=b.bottom;
             if (!inside) { drag.lastTarget=null; return; }
-            const hit=document.elementFromPoint(ev.clientX,ev.clientY);
-            const target=hit?.closest?.('.channel-card:not(.yy-drag-placeholder)');
-            if(!target || target===drag.card || !container.contains(target) || target===drag.lastTarget) return;
-            drag.lastTarget=target;
-            const tr=target.getBoundingClientRect();
-            const sameRow=Math.abs(ev.clientY-(tr.top+tr.height/2)) < tr.height*0.45;
-            const before = sameRow ? ev.clientX < tr.left+tr.width/2 : ev.clientY < tr.top+tr.height/2;
+
+            /* v21: move the shadow slot itself as the floating card crosses another card.
+               Use the floating card centre instead of the finger hit target, which is much
+               more stable on iPhone Safari and makes the surrounding cards visibly swap. */
+            const fx = nextLeft + drag.width / 2;
+            const fy = nextTop + drag.height / 2;
+            const candidates = Array.from(container.querySelectorAll('.channel-card:not(.yy-drag-placeholder):not(.yy-ios-dragging)'));
+            let target=null, tr=null, best=Infinity;
+            for (const el of candidates) {
+              if (el===drag.card) continue;
+              const r=el.getBoundingClientRect();
+              const cx=r.left+r.width/2, cy=r.top+r.height/2;
+              const d=Math.hypot((fx-cx)*0.8, fy-cy);
+              if (d<best) { best=d; target=el; tr=r; }
+            }
+            if(!target || !tr) return;
+            const sameRow = Math.abs(fy-(tr.top+tr.height/2)) < Math.max(22, tr.height*0.48);
+            const before = sameRow ? fx < tr.left+tr.width/2 : fy < tr.top+tr.height/2;
+            const targetKey = `${target.id}:${before?'before':'after'}`;
+            if (targetKey === drag.lastTarget) return;
+            drag.lastTarget = targetKey;
             const beforeRects=rectMap();
             if(before) target.before(drag.placeholder); else target.after(drag.placeholder);
             animateShift(beforeRects);
@@ -3377,6 +3451,19 @@ html, body, #main-app-container {
 
         const select = $('edit-monitor-source'); if(!select || !navigator.mediaDevices?.enumerateDevices) return;
         const rememberedValue = select.value || state.currentVideoSourceId || 'off';
+        const liveTrack = state.videoCaptureStream?.getVideoTracks?.().find(t => t.readyState === 'live');
+        const localVideoAlreadyLive = state.activeVideoSender === state.myUserId && state.currentVideoSourceId && !['off','screen'].includes(state.currentVideoSourceId) && !!liveTrack;
+
+        /* v21: never enumerate/probe the capture hardware just because a menu opened.
+           Some USB capture drivers become unstable even on a harmless device scan. */
+        if (localVideoAlreadyLive && !forceProbe) {
+          const eq = $('edit-video-quality'); if(eq) eq.value = state.videoQuality || '512000';
+          if (!Array.from(select.options).some(opt => opt.value === state.currentVideoSourceId)) {
+            const option = document.createElement('option'); option.value = state.currentVideoSourceId; option.text = liveTrack.label || '現在使用中の映像入力'; select.appendChild(option);
+          }
+          select.value = state.currentVideoSourceId;
+          return;
+        }
 
         try {
           let devices = await navigator.mediaDevices.enumerateDevices();
@@ -3619,15 +3706,21 @@ html, body, #main-app-container {
           /* A number of HDMI/USB capture devices freeze while the MediaStreamTrack remains "live".
              Detect that by the actual preview frame heartbeat. Avoid false recovery while a menu
              overlays the monitor or the monitor itself is intentionally hidden. */
-          const overlay=$('admin-overlay');
-          const menuOpen = overlay && getComputedStyle(overlay).display !== 'none';
           const mon=$('monitor-section');
           const monitorVisible = mon && getComputedStyle(mon).display !== 'none' && mon.getBoundingClientRect().width>2 && mon.getBoundingClientRect().height>2;
           const frameAge = Date.now() - (state.lastVideoFrameAt || Date.now());
-          if (!menuOpen && monitorVisible && frameAge > 6500) {
+          if (monitorVisible && frameAge > 6500) {
+            state.videoStallChecks = (state.videoStallChecks || 0) + 1;
             const v=state.monitorVideoEl;
             if (v?.paused) v.play().catch(()=>{});
-            scheduleLocalVideoRecovery(`local frames stalled ${Math.round(frameAge/1000)}s`);
+            /* Two consecutive failed checks avoids recovering for a single busy UI frame,
+               but still recovers a real freeze even while the admin menu is open. */
+            if (state.videoStallChecks >= 2) {
+              state.videoStallChecks = 0;
+              scheduleLocalVideoRecovery(`local frames stalled ${Math.round(frameAge/1000)}s`);
+            }
+          } else {
+            state.videoStallChecks = 0;
           }
         }
       }
