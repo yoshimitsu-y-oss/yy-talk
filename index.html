@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 
 <html lang="ja">
-<!-- YY-Talk PRO Brush-up v7: original intercom-card visuals + reorder + patch-panel fit -->
+<!-- YY-Talk PRO Brush-up v20 -->
 
 <head>
 
@@ -11,7 +11,7 @@
 
   <meta name="apple-mobile-web-app-capable" content="yes">
 
-  <title>YY-Talk PRO - Broadcast Intercom v19</title>
+  <title>YY-Talk PRO - Broadcast Intercom v20</title>
   <meta name="theme-color" content="#0a0b0d">
   <meta name="color-scheme" content="dark">
 
@@ -158,6 +158,12 @@
     .login-modal .btn-close-login { position: absolute; top: 10px; right: 10px; background: transparent; border: none; color: #9ca3af; font-size: 24px; cursor: pointer; padding: 15px; display: none; align-items: center; justify-content: center; z-index: 2010; font-weight: normal; }
 
     .login-modal .btn-close-login:hover { color: #ffffff; }
+
+    .login-version { margin-top: 2px; font-family:'JetBrains Mono', monospace; font-size:10px; letter-spacing:1.4px; color:#6b7280; text-align:center; user-select:none; }
+    .video-source-row { display:flex; gap:6px; align-items:center; width:100%; }
+    .video-source-row select { flex:1 1 auto; min-width:0; }
+    .btn-refresh-video-source { flex:0 0 34px; width:34px; height:34px; border:1px solid var(--border-color); border-radius:7px; background:#16181d; color:var(--text-sub); cursor:pointer; display:flex; align-items:center; justify-content:center; }
+    .btn-refresh-video-source:active { transform:scale(.96); }
 
     
 
@@ -2008,6 +2014,8 @@ html, body, #main-app-container {
 
           </div>
 
+          <div class="login-version">YY-Talk PRO &nbsp; v20</div>
+
         </div>
 
         <div id="host-id-input-container" style="width: 100%; margin-bottom: 8px;">
@@ -2118,7 +2126,7 @@ html, body, #main-app-container {
 
                 <div class="setting-group"><label>MONITOR NAME</label><input type="text" id="edit-monitor-title" value="MONITOR"></div>
 
-                <div class="setting-group"><label>VIDEO SOURCE</label><select id="edit-monitor-source"><option value="off">OFF</option><option value="screen">画面共有</option></select></div>
+                <div class="setting-group"><label>VIDEO SOURCE</label><div class="video-source-row"><select id="edit-monitor-source"><option value="off">OFF</option><option value="screen">画面共有</option></select><button type="button" id="btn-refresh-video-sources" class="btn-refresh-video-source" title="映像入力を再検索" aria-label="映像入力を再検索"><i class="fa-solid fa-rotate"></i></button></div></div>
 
                 <div class="setting-group"><label>VIDEO QUALITY</label>
 
@@ -2416,6 +2424,7 @@ html, body, #main-app-container {
 
     if (navigator.mediaDevices?.addEventListener) {
       navigator.mediaDevices.addEventListener('devicechange', async () => {
+        try { await updateVideoSources({ forceProbe:false }); } catch(e) {}
         if (!state.ioBridge || !state.ioBridge.enabled) return;
         try {
           const devices = await navigator.mediaDevices.enumerateDevices();
@@ -2617,7 +2626,7 @@ html, body, #main-app-container {
 
                 buildTallyAssignmentUI(); 
 
-                updateVideoSources(); 
+                updateVideoSources({ forceProbe:false }); 
 
             }
 
@@ -3362,30 +3371,58 @@ html, body, #main-app-container {
 
 
 
-    async function updateVideoSources() {
+    async function updateVideoSources({ forceProbe = false } = {}) {
 
       if (!state.activeVideoSender || state.activeVideoSender === state.myUserId) {
 
-        const select = $('edit-monitor-source'); if(!select) return; const currentValue = select.value;
+        const select = $('edit-monitor-source'); if(!select || !navigator.mediaDevices?.enumerateDevices) return;
+        const rememberedValue = select.value || state.currentVideoSourceId || 'off';
 
         try {
           let devices = await navigator.mediaDevices.enumerateDevices();
           let videoInputs = devices.filter(device => device.kind === 'videoinput');
           const localVideoIsLive = state.activeVideoSender === state.myUserId && state.currentVideoSourceId && !['off','screen'].includes(state.currentVideoSourceId) && state.videoCaptureStream?.getVideoTracks?.().some(t => t.readyState === 'live');
-          // Do not call getUserMedia(video:true) while a capture is already live.
-          // Many USB/HDMI capture devices allow only one client and the temporary open can stall the program feed.
-          if (!localVideoIsLive && videoInputs.some(device => !device.label)) {
+          const needsPermissionProbe = videoInputs.length === 0 || videoInputs.every(device => !device.label);
+
+          /* v20: When no local capture is running, safely obtain video permission once so USB
+             capture devices become visible/labeled. Never probe while the program capture is live,
+             because many HDMI/USB devices are single-client and a second open can stall them. */
+          if (!localVideoIsLive && (forceProbe || needsPermissionProbe)) {
             try {
               const tempStream = await navigator.mediaDevices.getUserMedia({ video:true, audio:false });
               tempStream.getTracks().forEach(track => track.stop());
+              await new Promise(resolve => setTimeout(resolve, 80));
               devices = await navigator.mediaDevices.enumerateDevices();
               videoInputs = devices.filter(device => device.kind === 'videoinput');
-            } catch (e) {}
+            } catch (e) {
+              uiLog(`Video device permission/refresh: ${e?.message || e}`, '#f97316');
+            }
           }
+
           select.innerHTML = '<option value="off">OFF</option><option value="screen">画面共有</option>';
-          videoInputs.forEach((device, index) => { const option = document.createElement('option'); option.value = device.deviceId; option.text = device.label || `Camera ${index + 1}`; select.appendChild(option); });
-          if (Array.from(select.options).some(opt => opt.value === currentValue)) select.value = currentValue; else select.value = 'off';
-        } catch (e) {} 
+          videoInputs.forEach((device, index) => {
+            const option = document.createElement('option');
+            option.value = device.deviceId;
+            option.text = device.label || `映像入力 ${index + 1}`;
+            select.appendChild(option);
+          });
+
+          const preferred = state.currentVideoSourceId && state.currentVideoSourceId !== 'off' ? state.currentVideoSourceId : rememberedValue;
+          if (Array.from(select.options).some(opt => opt.value === preferred)) {
+            select.value = preferred;
+          } else if (localVideoIsLive && preferred && !['off','screen'].includes(preferred)) {
+            /* Keep the currently-live capture represented even if enumerateDevices briefly misses it. */
+            const option = document.createElement('option');
+            option.value = preferred;
+            option.text = '現在使用中の映像入力';
+            select.appendChild(option);
+            select.value = preferred;
+          } else {
+            select.value = 'off';
+          }
+        } catch (e) {
+          uiLog(`Video device scan failed: ${e?.message || e}`, '#f97316');
+        }
 
         const eq = $('edit-video-quality'); if(eq) eq.value = state.videoQuality || '512000';
 
@@ -3396,6 +3433,12 @@ html, body, #main-app-container {
 
 
     const editMonitorSrc = $('edit-monitor-source');
+
+    const refreshVideoSourcesBtn = $('btn-refresh-video-sources');
+    if (refreshVideoSourcesBtn) refreshVideoSourcesBtn.addEventListener('click', async () => {
+      refreshVideoSourcesBtn.disabled = true;
+      try { await updateVideoSources({ forceProbe:true }); } finally { refreshVideoSourcesBtn.disabled = false; }
+    });
 
     async function stopCurrentVideoCapture() {
       if (state.currentLocalVideoTrack) { try { detachVideoTrack(state.currentLocalVideoTrack); } catch(e) {} state.currentLocalVideoTrack = null; }
