@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 
 <html lang="ja">
-<!-- YY-Talk PRO Brush-up v21 -->
+<!-- YY-Talk PRO Brush-up v23 -->
 
 <head>
 
@@ -11,9 +11,9 @@
 
   <meta name="apple-mobile-web-app-capable" content="yes">
 
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
-  <title>YY-Talk PRO - Broadcast Intercom v21</title>
+  <title>YY-Talk PRO - Broadcast Intercom v23</title>
   <meta name="theme-color" content="#0a0b0d">
   <meta name="color-scheme" content="dark">
 
@@ -108,15 +108,8 @@
 
 
 
-    if (typeof RTCPeerConnection !== 'undefined' && RTCPeerConnection.prototype?.setLocalDescription) {
-      const origSetLocalDescription = RTCPeerConnection.prototype.setLocalDescription;
-      RTCPeerConnection.prototype.setLocalDescription = function(desc) {
-        if (desc && (desc.type === 'offer' || desc.type === 'answer') && typeof desc.sdp === 'string') {
-          desc.sdp = desc.sdp.replace(/(a=fmtp:111.*)/g, '$1;usedtx=1');
-        }
-        return origSetLocalDescription.apply(this, arguments);
-      };
-    }
+    /* v23: Do not rewrite Opus SDP globally. DTX is controlled per published track.
+       The previous forced DTX SDP rewrite made 4W/PGM line audio gate and sound robotic. */
 
   </script>
 
@@ -1958,19 +1951,42 @@ html, body, #main-app-container {
   }
 </style>
 
-<style id="v21-safearea-monitor-tally">
-  /* Home-screen iOS: reserve the status/Dynamic-Island safe area explicitly. */
-  @media (display-mode: standalone) and (orientation: portrait) {
-    html, body { background: var(--bg-dark, #0a0b0d) !important; }
+<style id="v22-safearea-monitor-tally">
+  /* v22 iOS Home Screen: the status bar is no longer translucent, so iOS reserves
+     the Dynamic-Island/status-bar strip outside the web-app viewport.  Keep only
+     the real safe-area insets here; do not add a guessed top offset that can double
+     the spacing on devices where iOS already shortened the viewport. */
+  @media (display-mode: standalone) {
+    html, body {
+      background:var(--bg-dark, #0a0b0d) !important;
+      margin:0 !important;
+      padding:0 !important;
+      width:100% !important;
+      height:100% !important;
+      overflow:hidden !important;
+    }
     #main-app-container {
       height:100dvh !important;
-      padding-top:max(env(safe-area-inset-top, 0px), 14px) !important;
+      min-height:0 !important;
+      box-sizing:border-box !important;
+      padding-top:env(safe-area-inset-top, 0px) !important;
       padding-left:env(safe-area-inset-left, 0px) !important;
       padding-right:env(safe-area-inset-right, 0px) !important;
       padding-bottom:env(safe-area-inset-bottom, 0px) !important;
     }
-    #main-app-container > .header { flex:0 0 auto !important; }
-    #login-overlay { padding-top:max(env(safe-area-inset-top, 0px), 14px) !important; }
+    #main-app-container > .header {
+      flex:0 0 auto !important;
+      position:relative !important;
+      top:auto !important;
+      z-index:6000 !important;
+    }
+    #login-overlay {
+      box-sizing:border-box !important;
+      padding-top:env(safe-area-inset-top, 0px) !important;
+      padding-left:env(safe-area-inset-left, 0px) !important;
+      padding-right:env(safe-area-inset-right, 0px) !important;
+      padding-bottom:env(safe-area-inset-bottom, 0px) !important;
+    }
   }
 
   /* The only black rectangle is the actual 16:9 picture. Spare monitor space blends
@@ -2069,7 +2085,7 @@ html, body, #main-app-container {
 
           </div>
 
-          <div class="login-version">YY-Talk PRO &nbsp; v21</div>
+          <div class="login-version">YY-Talk PRO &nbsp; v23</div>
 
         </div>
 
@@ -2469,7 +2485,6 @@ html, body, #main-app-container {
             }
 
             saveRoomState(); sendData({ type: 'update-io-bridge', ioBridge: state.ioBridge }); await updateAudioDevices(); applyOutputDevice();
-            if (newState) scheduleIoStartupPrime('bridge enabled', 650);
 
         }
 
@@ -2493,7 +2508,7 @@ html, body, #main-app-container {
               saveRoomState();
             }
           }
-          scheduleIoStartupPrime('device change', 300);
+          scheduleIoStartupPrime('device change', 900);
         } catch (err) {
           uiLog(`Device refresh failed: ${err?.message || err}`, '#f97316');
         }
@@ -2540,6 +2555,7 @@ html, body, #main-app-container {
 
       audioEnabled: false, isMasterSpkMuted: false, isMasterMicMuted: false, monitorTitle: 'MONITOR', activeVideoSender: null, videoQuality: '512000', layout: 'normal',
 
+      /* v23 I/O: raw 48k line capture + explicit HQ Opus, DTX off */
       ioBridge: { enabled: false, inDevice4w: 'default', inDevice4wLabel: '', outDevice4w: 'default', inAssign4wL: '', inAssign4wR: '', outAssign4wL: '', outAssign4wR: '', inDevicePgm: '', inDevicePgmLabel: '', inAssignPgmL: '', inAssignPgmR: '', inGain4wL: 1.0, inGain4wR: 1.0, outGain4wL: 1.0, outGain4wR: 1.0, inGainPgmL: 1.0, inGainPgmR: 1.0 },
 
       ioNodes: { gain4wL: null, gain4wR: null, gainPgmL: null, gainPgmR: null, gainOutL: null, gainOutR: null, analyser4wL: null, analyser4wR: null, analyserPgmL: null, analyserPgmR: null, analyserOutL: null, analyserOutR: null },
@@ -2719,7 +2735,7 @@ html, body, #main-app-container {
             if (ok) {
                 const ao = $('audio-overlay'); if (ao) ao.style.display = 'none';
                 if (state.room?.state === 'connected') {
-                    if (state.ioBridge.enabled) { await updateAudioDevices(); scheduleIoStartupPrime('audio retry', 650); }
+                    if (state.ioBridge.enabled) { await updateAudioDevices(); }
                     else publishLocalMic();
                 }
             }
@@ -3117,7 +3133,7 @@ html, body, #main-app-container {
       } catch(e) {}
     }
 
-    function scheduleIoStartupPrime(reason = 'startup', delay = 750) {
+    function scheduleIoStartupPrime(reason = 'startup', delay = 1200) {
       if (!state.ioBridge?.enabled) return;
       clearTimeout(state.ioStartupPrimeTimer);
       state.ioStartupPrimeTimer = setTimeout(async () => {
@@ -3201,32 +3217,54 @@ html, body, #main-app-container {
         stopStream(state.ioInput4wStream); state.ioInput4wStream = null;
         stopStream(state.ioInputPgmStream); state.ioInputPgmStream = null;
 
+        const waitMs = (ms) => new Promise(resolve => setTimeout(resolve, ms));
         const openStereoInput = async (deviceId, prefix) => {
             if (!deviceId) return null;
+            /* v23: line inputs are captured raw. Do not request an ultra-small capture latency;
+               several USB interfaces become unstable/robotic when the browser tries to honor it. */
             const audio = {
                 echoCancellation: false, noiseSuppression: false, autoGainControl: false,
-                channelCount: { ideal: 2 }, sampleRate: { ideal: 48000 }, sampleSize: { ideal: 16 },
-                latency: { ideal: 0.02 }
+                channelCount: { ideal: 2 }, sampleRate: { ideal: 48000 }, sampleSize: { ideal: 16 }
             };
             if (deviceId !== 'default') audio.deviceId = { exact: deviceId };
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio });
-                stream.getAudioTracks().forEach(t => { t.enabled = true; });
+                stream.getAudioTracks().forEach(t => { t.enabled = true; try { t.contentHint = 'music'; } catch(_) {} });
                 return stream;
             }
             catch (e) {
-                /* Some capture interfaces reject advanced constraints. Retry with the minimum set. */
+                /* Some capture interfaces reject advanced constraints. Retry with the minimum raw set. */
                 try {
                     const fallback = { echoCancellation:false, noiseSuppression:false, autoGainControl:false, channelCount:{ideal:2} };
                     if (deviceId !== 'default') fallback.deviceId = { exact: deviceId };
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: fallback });
-                    stream.getAudioTracks().forEach(t => { t.enabled = true; });
+                    stream.getAudioTracks().forEach(t => { t.enabled = true; try { t.contentHint = 'music'; } catch(_) {} });
                     return stream;
                 } catch (e2) {
                     uiLog(`${prefix} input open failed: ${e2?.message || e2}`, '#f97316');
                     return null;
                 }
             }
+        };
+
+        const openSettledStereoInput = async (deviceId, prefix) => {
+            /* Some USB 4W interfaces expose a live track on the first open but do not clock audio
+               correctly until the device is opened again. This deliberately performs the same
+               re-arm that previously required manually re-selecting the device. */
+            let warm = await openStereoInput(deviceId, prefix);
+            if (!warm) return null;
+            await waitMs(320);
+            stopStream(warm);
+            await waitMs(140);
+            const stable = await openStereoInput(deviceId, prefix);
+            if (stable) {
+                /* Let the USB clock/buffer settle before Web Audio and WebRTC attach. */
+                await waitMs(180);
+                const t = stable.getAudioTracks()[0];
+                const st = t?.getSettings?.() || {};
+                uiLog(`${prefix} input armed${st.sampleRate ? ` @ ${st.sampleRate}Hz` : ''}${st.channelCount ? ` / ${st.channelCount}ch` : ''}`, '#60a5fa');
+            }
+            return stable;
         };
 
         const cloneSharedPgmStream = () => {
@@ -3261,23 +3299,37 @@ html, body, #main-app-container {
                 state.ioNodes.analyserPgmL = analyserL; state.ioNodes.analyserPgmR = analyserR;
             }
 
-            const trackL = new LivekitClient.LocalAudioTrack(destL.stream.getAudioTracks()[0]);
-            const trackR = new LivekitClient.LocalAudioTrack(destR.stream.getAudioTracks()[0]);
+            const rawL = destL.stream.getAudioTracks()[0];
+            const rawR = destR.stream.getAudioTracks()[0];
+            try { rawL.contentHint = 'music'; rawR.contentHint = 'music'; } catch(_) {}
+            const trackL = new LivekitClient.LocalAudioTrack(rawL);
+            const trackR = new LivekitClient.LocalAudioTrack(rawR);
             const nameL = is4w ? 'io_4w_l' : 'io_pgm_l';
             const nameR = is4w ? 'io_4w_r' : 'io_pgm_r';
-            const pubL = await state.room.localParticipant.publishTrack(trackL, { name: nameL, source: LivekitClient.Track.Source.Unknown });
-            const pubR = await state.room.localParticipant.publishTrack(trackR, { name: nameR, source: LivekitClient.Track.Source.Unknown });
+            /* v23: each bridge leg is published as a high-quality mono line feed.
+               DTX OFF prevents gating/robotic syllables; RED adds packet-loss resilience. */
+            const hqPreset = LivekitClient.AudioPresets?.musicHighQuality || { maxBitrate: 96000 };
+            const ioPublishOptions = (name) => ({
+                name,
+                source: LivekitClient.Track.Source.Unknown,
+                audioPreset: hqPreset,
+                dtx: false,
+                red: true,
+                forceStereo: false
+            });
+            const pubL = await state.room.localParticipant.publishTrack(trackL, ioPublishOptions(nameL));
+            const pubR = await state.room.localParticipant.publishTrack(trackR, ioPublishOptions(nameR));
             if (is4w) { state.ioTrack4wL = pubL; state.ioTrack4wR = pubR; }
             else { state.ioTrackPgmL = pubL; state.ioTrackPgmR = pubR; }
         };
 
         try {
-            state.ioInput4wStream = await openStereoInput(state.ioBridge.inDevice4w || 'default', '4W');
+            state.ioInput4wStream = await openSettledStereoInput(state.ioBridge.inDevice4w || 'default', '4W');
             await publishStereo(state.ioInput4wStream, '4w');
             if (state.ioBridge.inDevicePgm) {
                 /* If the active camera capture already includes the selected DeEMB audio,
                    clone that track instead of opening the USB capture device a second time. */
-                state.ioInputPgmStream = cloneSharedPgmStream() || await openStereoInput(state.ioBridge.inDevicePgm, 'PGM');
+                state.ioInputPgmStream = cloneSharedPgmStream() || await openSettledStereoInput(state.ioBridge.inDevicePgm, 'PGM');
                 await publishStereo(state.ioInputPgmStream, 'pgm');
             }
             state.ioOpenedAt = Date.now();
@@ -3662,7 +3714,7 @@ html, body, #main-app-container {
         analyser.getByteTimeDomainData(d);
         let max = 0;
         for (let i=0;i<d.length;i++) { const v=Math.abs(d[i]-128); if(v>max) max=v; }
-        return max >= 2;
+        return max >= 5;
       } catch(e) { return false; }
     }
 
@@ -5438,7 +5490,7 @@ html, body, #main-app-container {
               try {
                   const audioReady = joinAudioPromise ? await joinAudioPromise : state.audioEnabled;
                   if (audioReady) {
-                      if (state.ioBridge.enabled) { await updateAudioDevices(); scheduleIoStartupPrime('post-connect', 700); }
+                      if (state.ioBridge.enabled) { await updateAudioDevices(); }
                       else publishLocalMic();
                   }
               } catch (audioErr) {
@@ -5556,7 +5608,7 @@ html, body, #main-app-container {
   }
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden && state?.ioBridge?.enabled && state?.room?.state === 'connected') {
-      window.scheduleIoStartupPrime?.('app resumed', 350);
+      window.scheduleIoStartupPrime?.('app resumed', 900);
     }
   });
 })();
