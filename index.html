@@ -13,7 +13,7 @@
 
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
-  <title>YY-Talk PRO v36</title>
+  <title>YY-Talk PRO v37</title>
   <meta name="theme-color" content="#0a0b0d">
   <meta name="color-scheme" content="dark">
 
@@ -191,7 +191,7 @@
 
   <style>
 
-    :root { --bg-dark:#0a0b0d; --card-bg:#1c1d21; --card-bg-expanded:#24262b; --text-main:#ffffff; --text-sub:#7a7e85; --green:#4ade80; --red:#dc2626; --alert:#ef4444; --orange:#f97316; --blue:#60a5fa; --border-color:#3a3c42; }
+    :root { --bg-dark:#0a0b0d; --card-bg:#1c1d21; --card-bg-expanded:#24262b; --text-main:#ffffff; --text-sub:#7a7e85; --green:#4ade80; --red:#dc2626; --alert:#ef4444; --orange:#f97316; --blue:#60a5fa; --border-color:#3a3c42; --yy-accent-gradient: linear-gradient(90deg, #3b82f6 0%, #38bdf8 45%, #22d3ee 75%, #14b8a6 100%); }
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
 
@@ -499,7 +499,9 @@
 
     
 
-    .global-controls { display: flex; gap: 10px; padding: 5px 15px 10px; background: var(--bg-dark); border-bottom: 2px solid var(--green); flex-shrink: 0; z-index: 10;}
+    .global-controls { display: flex; gap: 10px; padding: 5px 15px 12px; background: var(--bg-dark); border-bottom: none; flex-shrink: 0; z-index: 10; position: relative;}
+
+    .global-controls::after { content:""; position:absolute; left:15px; right:15px; bottom:0; height:2px; border-radius:999px; background: var(--yy-accent-gradient); box-shadow: 0 0 10px rgba(56, 189, 248, 0.25); }
 
     .btn-global { flex: 1; padding: 8px 10px; border: none; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; font-family: 'JetBrains Mono', monospace; }
 
@@ -2286,7 +2288,7 @@ html, body, #main-app-container {
   }
 </style>
 
-<style id="v36-video-continuity">
+<style id="v37-video-continuity">
   #monitor-video-wrapper.video-wrapper { position:relative !important; }
   #yy-video-hold-frame {
     position:absolute !important; inset:0 !important; width:100% !important; height:100% !important;
@@ -2355,7 +2357,7 @@ html, body, #main-app-container {
 
           </div>
 
-          <div class="login-version">YY-Talk PRO &nbsp; v36</div>
+          <div class="login-version">YY-Talk PRO &nbsp; v37</div>
 
         </div>
 
@@ -3554,7 +3556,7 @@ html, body, #main-app-container {
             if (deviceId !== 'default') audio.deviceId = { exact: deviceId };
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio });
-                stream.getAudioTracks().forEach(t => { t.enabled = true; try { t.contentHint = 'music'; } catch(_) {} });
+                stream.getAudioTracks().forEach(t => { t.enabled = true; try { t.contentHint = 'speech'; } catch(_) {} });
                 return stream;
             }
             catch (e) {
@@ -3563,7 +3565,7 @@ html, body, #main-app-container {
                     const fallback = { echoCancellation:false, noiseSuppression:false, autoGainControl:false, channelCount:{ideal:2} };
                     if (deviceId !== 'default') fallback.deviceId = { exact: deviceId };
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: fallback });
-                    stream.getAudioTracks().forEach(t => { t.enabled = true; try { t.contentHint = 'music'; } catch(_) {} });
+                    stream.getAudioTracks().forEach(t => { t.enabled = true; try { t.contentHint = 'speech'; } catch(_) {} });
                     return stream;
                 } catch (e2) {
                     uiLog(`${prefix} input open failed: ${e2?.message || e2}`, '#f97316');
@@ -3668,18 +3670,21 @@ html, body, #main-app-container {
                from the exact track whose local meter is known to be smooth. */
             const localTrack = new LivekitClient.LocalAudioTrack(inputRaw);
             const name = is4w ? 'io_4w_stereo' : 'io_pgm_stereo';
-            const linePreset = LivekitClient.AudioPresets?.musicHighQualityStereo || { maxBitrate: 128000, priority: 'high' };
+            /* Continuity-first I/O profile:
+               lower bitrate than before, keep stereo for L/R routing,
+               and re-enable RED because current diagnostics show real packet loss on cellular links. */
+            const continuityPreset = { maxBitrate: is4w ? 40000 : 48000, priority: 'high' };
             const pub = await state.room.localParticipant.publishTrack(localTrack, {
                 name,
                 source: LivekitClient.Track.Source.Microphone,
-                audioPreset: { ...linePreset, priority: 'high' },
+                audioPreset: continuityPreset,
                 dtx: false,
-                red: false,
+                red: true,
                 forceStereo: true
             });
             if (pub?.track) {
                 pub.track.__yyDiagPrevTx = null;
-                try { pub.track.mediaStreamTrack.contentHint = 'music'; } catch(_) {}
+                try { pub.track.mediaStreamTrack.contentHint = 'speech'; } catch(_) {}
             }
             if (is4w) state.ioTrack4wStereo = pub;
             else state.ioTrackPgmStereo = pub;
@@ -4134,7 +4139,7 @@ html, body, #main-app-container {
         if (!mt || mt.readyState !== 'live' || mt.muted) {
           scheduleLocalVideoRecovery('local video track unhealthy');
         } else {
-          /* v36: do not use DOM/video-paint cadence as a capture watchdog. Browsers may
+          /* v37: do not use DOM/video-paint cadence as a capture watchdog. Browsers may
              throttle requestVideoFrameCallback while menus/overlays cover the monitor.
              The RTP sender-stats watchdog below detects real encoder stalls instead. */
           state.videoStallChecks = 0;
@@ -4194,7 +4199,7 @@ html, body, #main-app-container {
     }
     setTimeout(fitMonitor16x9, 0);
 
-    /* ===== v36 VIDEO CONTINUITY =====
+    /* ===== v37 VIDEO CONTINUITY =====
        Keep the last known-good frame visible through short WebRTC/capture interruptions.
        This avoids the operator seeing a black flash while a track is reattached/recovered. */
     function getVideoHoldCanvas() {
@@ -6046,7 +6051,7 @@ html, body, #main-app-container {
 
 
 
-          /* v36: keep the program monitor continuously subscribed/published.
+          /* v37: keep the program monitor continuously subscribed/published.
              adaptiveStream can pause/resize subscriptions when an overlay covers the video,
              which is undesirable for a broadcast monitor. */
           const room = new LivekitClient.Room({ adaptiveStream: false, dynacast: false }); state.room = room;
@@ -6098,7 +6103,7 @@ html, body, #main-app-container {
               if (isIOStereoTrack) {
                   /* v35: low-latency baseline while raw RTP/JB diagnostics measure the real buffer.
                      4W stays near-real-time; PGM gets a little more margin. */
-                  const playoutDelay = trackName === 'io_pgm_stereo' ? 0.12 : 0.10;
+                  const playoutDelay = trackName === 'io_pgm_stereo' ? 0.18 : 0.14;
                   callData.playoutDelayBase = playoutDelay;
                   callData.playoutDelay = playoutDelay;
                   callData.playoutStableTicks = 0;
