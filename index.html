@@ -13,7 +13,7 @@
 
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
-  <title>YY-Talk PRO v34</title>
+  <title>YY-Talk PRO v36</title>
   <meta name="theme-color" content="#0a0b0d">
   <meta name="color-scheme" content="dark">
 
@@ -2285,6 +2285,14 @@ html, body, #main-app-container {
     box-shadow:0 0 12px rgba(239,68,68,.55) !important;
   }
 </style>
+
+<style id="v36-video-continuity">
+  #monitor-video-wrapper.video-wrapper { position:relative !important; }
+  #yy-video-hold-frame {
+    position:absolute !important; inset:0 !important; width:100% !important; height:100% !important;
+    z-index:7 !important; background:#000 !important; pointer-events:none !important;
+  }
+</style>
 </head>
 
 <body onload="if(window.forceResize) window.forceResize()">
@@ -2347,7 +2355,7 @@ html, body, #main-app-container {
 
           </div>
 
-          <div class="login-version">YY-Talk PRO &nbsp; v34</div>
+          <div class="login-version">YY-Talk PRO &nbsp; v36</div>
 
         </div>
 
@@ -2671,7 +2679,7 @@ html, body, #main-app-container {
               buildSec('4W INTERFACE (OUT)', 'OUTPUT DEVICE (SPK)', 'select-4w-out-device', [{label:'PL ➔ OUT 1(L)', id:'4w-out-l'}, {label:'PL ➔ OUT 2(R)', id:'4w-out-r'}]) +
 
               buildSec('PGM INTERFACE (IN ONLY)', 'PGM INPUT DEVICE (MIC)', 'select-pgm-in-device', [{label:'PGM 1(L) ➔ PL', id:'pgm-in-l'}, {label:'PGM 2(R) ➔ PL', id:'pgm-in-r'}]) +
-              `<div class="io-interface-section"><h4 class="interface-title">I/O LINK DIAGNOSTICS</h4><div class="io-card" style="font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.7;color:var(--text-sub);"><div id="io-rx-diag-4w">4W RX: waiting...</div><div id="io-rx-diag-pgm">PGM RX: waiting...</div><div style="margin-top:5px;font-size:10px;opacity:.75;">JIT=jitter / LOSS=loss / CONC=conceal / PPS=packets/s / RX=received kbps / JB=actual buffer / JT=target / JM=minimum / INS-REM=time stretch / BUF=requested</div><button id="btn-refresh-io-devices" class="btn-global" type="button" style="margin-top:10px;width:100%;justify-content:center;"><i class="fa-solid fa-rotate"></i>&nbsp; AUDIO DEVICE RESCAN</button></div></div>`;
+              `<div class="io-interface-section"><h4 class="interface-title">I/O LINK DIAGNOSTICS</h4><div class="io-card" style="font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.7;color:var(--text-sub);"><div id="io-tx-diag-4w">4W TX: waiting...</div><div id="io-tx-diag-pgm">PGM TX: waiting...</div><div id="io-rx-diag-4w">4W RX: waiting...</div><div id="io-rx-diag-pgm">PGM RX: waiting...</div><div style="margin-top:5px;font-size:10px;opacity:.75;">TX/RX PPS=packets/s / kbps=bitrate / JIT=jitter / LOSS=loss / CONC=conceal events / CMS=concealed audio ms / JB=recent jitter-buffer ms / PD=requested playout delay</div><button id="btn-refresh-io-devices" class="btn-global" type="button" style="margin-top:10px;width:100%;justify-content:center;"><i class="fa-solid fa-rotate"></i>&nbsp; AUDIO DEVICE RESCAN</button></div></div>`;
 
         }
 
@@ -3654,23 +3662,25 @@ html, body, #main-app-container {
             const inputRaw = stream.getAudioTracks()[0];
             if (!inputRaw) throw new Error(`${kind} input has no audio track`);
             try { inputRaw.contentHint = 'music'; } catch(_) {}
-            /* Publish a raw clone so unpublishing cannot unexpectedly stop the USB/DeEMB
-               capture stream that is also feeding the local I/O meters. */
-            const publishRaw = inputRaw.clone();
-            try { publishRaw.contentHint = 'music'; } catch(_) {}
-            const localTrack = new LivekitClient.LocalAudioTrack(publishRaw);
+            /* v35: publish the physical capture track itself. The local analyser can consume
+               the same MediaStreamTrack concurrently, so cloning is unnecessary. Removing the
+               clone eliminates one browser media-source layer and lets us compare TX timestamps
+               from the exact track whose local meter is known to be smooth. */
+            const localTrack = new LivekitClient.LocalAudioTrack(inputRaw);
             const name = is4w ? 'io_4w_stereo' : 'io_pgm_stereo';
-            /* v30: prioritize line audio over video under congestion. DTX is disabled for
-               continuous program/intercom audio; RED is enabled to conceal packet loss. */
-            const linePreset = { maxBitrate: 96000, priority: 'high' };
+            const linePreset = LivekitClient.AudioPresets?.musicHighQualityStereo || { maxBitrate: 128000, priority: 'high' };
             const pub = await state.room.localParticipant.publishTrack(localTrack, {
                 name,
                 source: LivekitClient.Track.Source.Microphone,
-                audioPreset: linePreset,
+                audioPreset: { ...linePreset, priority: 'high' },
                 dtx: false,
                 red: false,
                 forceStereo: true
             });
+            if (pub?.track) {
+                pub.track.__yyDiagPrevTx = null;
+                try { pub.track.mediaStreamTrack.contentHint = 'music'; } catch(_) {}
+            }
             if (is4w) state.ioTrack4wStereo = pub;
             else state.ioTrackPgmStereo = pub;
         };
@@ -3941,8 +3951,9 @@ html, body, #main-app-container {
       try { await updateVideoSources({ forceProbe:true }); } finally { refreshVideoSourcesBtn.disabled = false; }
     });
 
-    async function stopCurrentVideoCapture() {
-      if (state.currentLocalVideoTrack) { try { detachVideoTrack(state.currentLocalVideoTrack); } catch(e) {} state.currentLocalVideoTrack = null; }
+    async function stopCurrentVideoCapture({ preserveFrame = false } = {}) {
+      if (preserveFrame) { try { captureVideoHoldFrame(state.monitorVideoEl); showVideoHoldFrame(); } catch(e) {} }
+      if (state.currentLocalVideoTrack) { try { detachVideoTrack(state.currentLocalVideoTrack, { clear: !preserveFrame }); } catch(e) {} state.currentLocalVideoTrack = null; }
       try { await state.room?.localParticipant?.setScreenShareEnabled(false); } catch(e) {}
       try { await state.room?.localParticipant?.setCameraEnabled(false); } catch(e) {}
       try {
@@ -3960,6 +3971,7 @@ html, body, #main-app-container {
         const v=state.monitorVideoEl;
         if (v) { try { v.pause(); } catch(e) {} try { v.srcObject=null; } catch(e) {} }
         state.monitorAttachedVideoTrack=null;
+        if (!preserveFrame) clearVideoHoldFrame();
       }
     }
 
@@ -3981,13 +3993,15 @@ html, body, #main-app-container {
       if (editMonitorSrc) editMonitorSrc.disabled = true; if(eq) eq.disabled = true;
       if(mst) { mst.textContent = watchdog ? '[ VIDEO RECOVERING ]' : '[ VIDEO SWITCHING NOW ]'; mst.style.display = 'block'; }
       try {
-        await stopCurrentVideoCapture();
-        await new Promise(resolve => setTimeout(resolve, watchdog ? 220 : 120));
+        const preserveFrame = deviceId !== 'off';
+        if (preserveFrame) { try { captureVideoHoldFrame(state.monitorVideoEl); showVideoHoldFrame(); } catch(e) {} }
+        await stopCurrentVideoCapture({ preserveFrame });
+        await new Promise(resolve => setTimeout(resolve, watchdog ? 180 : 90));
 
         if (deviceId === 'off') {
           state.currentVideoSourceId = 'off'; state.activeVideoSender = null;
           saveRoomState(); sendData({ type:'update-video-sender', senderId:null, sourceText:'OFF' });
-          if(mst) mst.textContent='[ NO VIDEO ]'; return true;
+          if(mst) mst.textContent='[ NO VIDEO ]'; clearVideoHoldFrame(); return true;
         }
 
         state.activeVideoSender = state.myUserId;
@@ -4022,7 +4036,7 @@ html, body, #main-app-container {
           if (!rawTrack) throw new Error('Camera video track was not created');
           try { rawTrack.contentHint = 'motion'; } catch(e) {}
           rawTrack.addEventListener('ended', () => scheduleLocalVideoRecovery('capture ended'));
-          rawTrack.addEventListener('mute', () => setTimeout(() => { if (rawTrack.muted) scheduleLocalVideoRecovery('capture muted'); }, 1200));
+          rawTrack.addEventListener('mute', () => setTimeout(() => { if (rawTrack.muted) scheduleLocalVideoRecovery('capture muted >3s'); }, 3000));
           const localVideoTrack = new LivekitClient.LocalVideoTrack(rawTrack);
           await state.room.localParticipant.publishTrack(localVideoTrack, { name:'camera', source:LivekitClient.Track.Source.Camera, simulcast:sim, videoEncoding:enc });
           state.currentLocalVideoTrack = localVideoTrack;
@@ -4120,25 +4134,10 @@ html, body, #main-app-container {
         if (!mt || mt.readyState !== 'live' || mt.muted) {
           scheduleLocalVideoRecovery('local video track unhealthy');
         } else {
-          /* A number of HDMI/USB capture devices freeze while the MediaStreamTrack remains "live".
-             Detect that by the actual preview frame heartbeat. Avoid false recovery while a menu
-             overlays the monitor or the monitor itself is intentionally hidden. */
-          const mon=$('monitor-section');
-          const monitorVisible = mon && getComputedStyle(mon).display !== 'none' && mon.getBoundingClientRect().width>2 && mon.getBoundingClientRect().height>2;
-          const frameAge = Date.now() - (state.lastVideoFrameAt || Date.now());
-          if (monitorVisible && frameAge > 6500) {
-            state.videoStallChecks = (state.videoStallChecks || 0) + 1;
-            const v=state.monitorVideoEl;
-            if (v?.paused) v.play().catch(()=>{});
-            /* Two consecutive failed checks avoids recovering for a single busy UI frame,
-               but still recovers a real freeze even while the admin menu is open. */
-            if (state.videoStallChecks >= 2) {
-              state.videoStallChecks = 0;
-              scheduleLocalVideoRecovery(`local frames stalled ${Math.round(frameAge/1000)}s`);
-            }
-          } else {
-            state.videoStallChecks = 0;
-          }
+          /* v36: do not use DOM/video-paint cadence as a capture watchdog. Browsers may
+             throttle requestVideoFrameCallback while menus/overlays cover the monitor.
+             The RTP sender-stats watchdog below detects real encoder stalls instead. */
+          state.videoStallChecks = 0;
         }
       }
     }, 1500);
@@ -4195,6 +4194,104 @@ html, body, #main-app-container {
     }
     setTimeout(fitMonitor16x9, 0);
 
+    /* ===== v36 VIDEO CONTINUITY =====
+       Keep the last known-good frame visible through short WebRTC/capture interruptions.
+       This avoids the operator seeing a black flash while a track is reattached/recovered. */
+    function getVideoHoldCanvas() {
+      const mw = $('monitor-video-wrapper'); if (!mw) return null;
+      let c = $('yy-video-hold-frame');
+      if (!c) {
+        c = document.createElement('canvas');
+        c.id = 'yy-video-hold-frame';
+        c.width = 640; c.height = 360;
+        c.setAttribute('aria-hidden','true');
+        Object.assign(c.style, {
+          position:'absolute', inset:'0', width:'100%', height:'100%',
+          objectFit:'contain', zIndex:'7', pointerEvents:'none', opacity:'0',
+          background:'#000', transition:'opacity 70ms linear'
+        });
+        mw.appendChild(c);
+      }
+      return c;
+    }
+
+    function captureVideoHoldFrame(videoEl) {
+      if (!videoEl || videoEl.readyState < 2 || !videoEl.videoWidth || !videoEl.videoHeight) return false;
+      const c = getVideoHoldCanvas(); if (!c) return false;
+      try {
+        const ratio = videoEl.videoWidth / videoEl.videoHeight || (16/9);
+        const w = Math.min(960, Math.max(320, videoEl.videoWidth));
+        const h = Math.max(180, Math.round(w / ratio));
+        if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
+        const ctx = c.getContext('2d', { alpha:false });
+        ctx.drawImage(videoEl, 0, 0, c.width, c.height);
+        state.videoHoldHasFrame = true;
+        state.videoHoldCapturedAt = Date.now();
+        return true;
+      } catch(e) { return false; }
+    }
+
+    function showVideoHoldFrame() {
+      const c = getVideoHoldCanvas();
+      if (c && state.videoHoldHasFrame) { c.style.opacity='1'; state.videoHoldVisible=true; }
+    }
+
+    function hideVideoHoldFrame() {
+      const c = $('yy-video-hold-frame');
+      if (c) c.style.opacity='0';
+      state.videoHoldVisible=false;
+    }
+
+    function clearVideoHoldFrame() {
+      const c = $('yy-video-hold-frame');
+      if (c) { c.style.opacity='0'; const ctx=c.getContext('2d'); try { ctx.clearRect(0,0,c.width,c.height); } catch(e){} }
+      state.videoHoldHasFrame=false; state.videoHoldVisible=false;
+    }
+
+    /* Monitor the actual outbound RTP sender, not the local <video> paint loop.
+       UI overlays can throttle rendering without interrupting capture/encode. */
+    async function pollLocalVideoSenderHealth() {
+      if (state.videoTxStatsBusy) return;
+      if (!state.isAdmin || state.activeVideoSender !== state.myUserId || !state.currentLocalVideoTrack ||
+          !state.currentVideoSourceId || ['off','screen'].includes(state.currentVideoSourceId) ||
+          state.room?.state !== 'connected' || document.hidden) return;
+      if (typeof state.currentLocalVideoTrack.getRTCStatsReport !== 'function') return;
+      state.videoTxStatsBusy = true;
+      try {
+        const report = await state.currentLocalVideoTrack.getRTCStatsReport();
+        if (!report) return;
+        let frames = 0, packets = 0, bytes = 0, found = false;
+        report.forEach(stat => {
+          if (stat.type === 'outbound-rtp' && (stat.kind === 'video' || stat.mediaType === 'video')) {
+            found = true;
+            frames += Number(stat.framesEncoded ?? stat.framesSent ?? 0) || 0;
+            packets += Number(stat.packetsSent ?? 0) || 0;
+            bytes += Number(stat.bytesSent ?? 0) || 0;
+          }
+        });
+        if (!found) return;
+        const now = Date.now();
+        const prev = state.videoTxPrevStats;
+        if (prev) {
+          const progressed = frames > prev.frames || packets > prev.packets || bytes > prev.bytes;
+          if (progressed) {
+            state.videoTxStallTicks = 0;
+          } else if ((now - prev.at) >= 1400) {
+            state.videoTxStallTicks = (state.videoTxStallTicks || 0) + 1;
+            if (state.videoTxStallTicks >= 3) {
+              state.videoTxStallTicks = 0;
+              captureVideoHoldFrame(state.monitorVideoEl); showVideoHoldFrame();
+              scheduleLocalVideoRecovery('outbound RTP video stopped');
+            }
+          }
+        }
+        state.videoTxPrevStats = { frames, packets, bytes, at:now };
+      } catch(e) {
+        /* Stats are diagnostic; never restart solely because stats collection failed. */
+      } finally { state.videoTxStatsBusy = false; }
+    }
+    setInterval(pollLocalVideoSenderHealth, 1800);
+
     function getMonitorVideoElement() {
       const mw = $('monitor-video-wrapper'); if (!mw) return null;
       let videoEl = state.monitorVideoEl;
@@ -4207,15 +4304,28 @@ html, body, #main-app-container {
         mw.querySelectorAll('video').forEach(v => v.remove());
         mw.appendChild(videoEl); state.monitorVideoEl = videoEl;
         const retry = () => { if (videoEl.srcObject && videoEl.paused) videoEl.play().catch(()=>{}); };
-        videoEl.addEventListener('waiting', retry); videoEl.addEventListener('stalled', retry);
+        const holdAndRetry = () => { captureVideoHoldFrame(videoEl); showVideoHoldFrame(); retry(); };
+        videoEl.addEventListener('waiting', holdAndRetry);
+        videoEl.addEventListener('stalled', holdAndRetry);
+        videoEl.addEventListener('emptied', () => showVideoHoldFrame());
         videoEl.addEventListener('playing', () => { state.lastVideoFrameAt = Date.now(); });
         if (typeof videoEl.requestVideoFrameCallback === 'function') {
           const frameBeat = () => {
             if (!videoEl.isConnected) return;
-            if (!videoEl.paused && videoEl.readyState >= 2) state.lastVideoFrameAt = Date.now();
+            if (!videoEl.paused && videoEl.readyState >= 2) {
+              const now=Date.now(); state.lastVideoFrameAt=now;
+              if (!state.videoHoldCapturedAt || now-state.videoHoldCapturedAt > 650) captureVideoHoldFrame(videoEl);
+              if (state.videoHoldVisible) hideVideoHoldFrame();
+            }
             videoEl.requestVideoFrameCallback(frameBeat);
           };
           videoEl.requestVideoFrameCallback(frameBeat);
+        } else {
+          videoEl.addEventListener('timeupdate', () => {
+            const now=Date.now(); state.lastVideoFrameAt=now;
+            if (!state.videoHoldCapturedAt || now-state.videoHoldCapturedAt > 650) captureVideoHoldFrame(videoEl);
+            if (state.videoHoldVisible) hideVideoHoldFrame();
+          });
         }
         document.addEventListener('visibilitychange', () => { if (!document.hidden) { state.lastVideoFrameAt = Date.now(); retry(); } });
       }
@@ -4231,6 +4341,7 @@ html, body, #main-app-container {
         state.monitorAttachedVideoTrack = null;
       }
       try {
+        captureVideoHoldFrame(videoEl); showVideoHoldFrame();
         videoEl.srcObject = new MediaStream([raw]);
         videoEl.muted = true; videoEl.playsInline = true;
         state.lastVideoFrameAt = Date.now();
@@ -4241,6 +4352,7 @@ html, body, #main-app-container {
 
     function attachVideoTrack(track) {
       const videoEl = getMonitorVideoElement(); if (!videoEl || !track) return;
+      captureVideoHoldFrame(videoEl); showVideoHoldFrame();
       if (state.monitorAttachedVideoTrack && state.monitorAttachedVideoTrack !== track) {
         try { state.monitorAttachedVideoTrack.detach(videoEl); } catch(e) {}
       }
@@ -4252,16 +4364,22 @@ html, body, #main-app-container {
       const mst = $('main-monitor-source-text'); if(mst) mst.style.display = 'none';
     }
 
-    function detachVideoTrack(track) {
+    function detachVideoTrack(track, { clear = false } = {}) {
       const videoEl = state.monitorVideoEl;
+      if (videoEl) { captureVideoHoldFrame(videoEl); if (!clear) showVideoHoldFrame(); }
       if (track && videoEl) { try { track.detach(videoEl); } catch(e) { try { track.detach(); } catch(_) {} } }
       if (!track || state.monitorAttachedVideoTrack === track) {
         state.monitorAttachedVideoTrack = null;
-        if (videoEl) { try { videoEl.pause(); } catch(e) {} videoEl.srcObject = null; }
-        const mst = $('main-monitor-source-text'); if(mst) mst.style.display = 'block';
+        if (clear) {
+          if (videoEl) { try { videoEl.pause(); } catch(e) {} try { videoEl.srcObject = null; } catch(e) {} }
+          clearVideoHoldFrame();
+          const mst = $('main-monitor-source-text'); if(mst) mst.style.display = 'block';
+        } else {
+          /* Temporary unsubscribe/reconnect: keep the last good picture instead of black. */
+          const mst = $('main-monitor-source-text'); if(mst) mst.style.display = 'none';
+        }
       }
     }
-
 
 
     function updateChannelIcons() { const bs = $('btn-master-spk'); const bm = $('btn-master-mic'); if(bs) bs.classList.toggle('active', state.isMasterSpkMuted); if(bm) bm.classList.toggle('active', state.isMasterMicMuted); state.channels?.forEach(ch => { const lBtn = $(`listen-${ch.id}`); const tBtn = $(`talk-${ch.id}`); if (lBtn) { lBtn.innerHTML = state.isMasterSpkMuted ? iconSpeakerOff : iconSpeaker; lBtn.classList.toggle('muted-slash', state.isMasterSpkMuted); } if (tBtn) { tBtn.innerHTML = state.isMasterMicMuted ? iconMicOff : iconMic; tBtn.classList.toggle('muted-slash', state.isMasterMicMuted); } }); }
@@ -4734,54 +4852,110 @@ html, body, #main-app-container {
 
 
     let ioRxStatsTimer = null;
+
+    function getRawInboundAudioStat(report) {
+        let inbound = null;
+        report?.forEach?.(v => {
+            if (inbound) return;
+            if (v?.type === 'inbound-rtp' && (v.kind === 'audio' || v.mediaType === 'audio') && !v.isRemote) inbound = v;
+        });
+        return inbound;
+    }
+
+    function fmtDeltaLoss(recvNow, lostNow, prev) {
+        if (!prev) return 0;
+        const dr = Math.max(0, recvNow - Number(prev.packetsReceived || 0));
+        const dl = Math.max(0, lostNow - Number(prev.packetsLost || 0));
+        return (dr + dl) > 0 ? (dl / (dr + dl)) * 100 : 0;
+    }
+
+    async function readIoRxDiag(callData) {
+        const report = await callData.livekitTrack.getRTCStatsReport?.();
+        const s = getRawInboundAudioStat(report);
+        if (!s) return null;
+
+        const nowTs = Number(s.timestamp || performance.now());
+        const recv = Number(s.packetsReceived || 0);
+        const lost = Number(s.packetsLost || 0);
+        const bytes = Number(s.bytesReceived || 0);
+        const concEv = Number(s.concealmentEvents || 0);
+        const concSamples = Number(s.concealedSamples || 0);
+        const prev = callData.rxPrevStatsRaw;
+        const dtMs = prev ? Math.max(1, nowTs - Number(prev.timestamp || nowTs)) : 0;
+        const dRecv = prev ? Math.max(0, recv - Number(prev.packetsReceived || 0)) : 0;
+        const dBytes = prev ? Math.max(0, bytes - Number(prev.bytesReceived || 0)) : 0;
+        const dConcEv = prev ? Math.max(0, concEv - Number(prev.concealmentEvents || 0)) : 0;
+        const dConcSamples = prev ? Math.max(0, concSamples - Number(prev.concealedSamples || 0)) : 0;
+        const pps = dtMs > 0 ? dRecv * 1000 / dtMs : 0;
+        const kbps = dtMs > 0 ? dBytes * 8 / dtMs : 0;
+        const lossPct = fmtDeltaLoss(recv, lost, prev);
+        const jitterMs = Number(s.jitter || 0) * 1000;
+
+        let jbMs = 0;
+        const jbDelay = Number(s.jitterBufferDelay || 0);
+        const jbEmit = Number(s.jitterBufferEmittedCount || 0);
+        if (prev) {
+            const dDelay = Math.max(0, jbDelay - Number(prev.jitterBufferDelay || 0));
+            const dEmit = Math.max(0, jbEmit - Number(prev.jitterBufferEmittedCount || 0));
+            if (dEmit > 0) jbMs = dDelay * 1000 / dEmit;
+        }
+
+        const concealedMs = dConcSamples / 48;
+        let requestedMs = 0;
+        try { requestedMs = Math.round(Number(callData.livekitTrack.getPlayoutDelay?.() || callData.playoutDelay || 0) * 1000); } catch(_) {}
+
+        callData.rxPrevStatsRaw = {
+            timestamp: nowTs, packetsReceived: recv, packetsLost: lost, bytesReceived: bytes,
+            concealmentEvents: concEv, concealedSamples: concSamples,
+            jitterBufferDelay: jbDelay, jitterBufferEmittedCount: jbEmit,
+        };
+        return { pps, kbps, lossPct, jitterMs, dConcEv, concealedMs, jbMs, requestedMs };
+    }
+
+    async function readIoTxDiag(pub) {
+        const track = pub?.track;
+        if (!track) return null;
+        let st = null;
+        try { st = await track.getSenderStats?.(); } catch(_) {}
+        if (!st) return null;
+        const nowTs = Number(st.timestamp || performance.now());
+        const sent = Number(st.packetsSent || 0), bytes = Number(st.bytesSent || 0);
+        const prev = track.__yyDiagPrevTx;
+        const dtMs = prev ? Math.max(1, nowTs - Number(prev.timestamp || nowTs)) : 0;
+        const dSent = prev ? Math.max(0, sent - Number(prev.packetsSent || 0)) : 0;
+        const dBytes = prev ? Math.max(0, bytes - Number(prev.bytesSent || 0)) : 0;
+        const pps = dtMs > 0 ? dSent * 1000 / dtMs : 0;
+        const kbps = dtMs > 0 ? dBytes * 8 / dtMs : 0;
+        const jitterMs = Number(st.jitter || 0) * 1000;
+        const loss = Number(st.packetsLost || 0);
+        const rttMs = Number(st.roundTripTime || 0) * 1000;
+        track.__yyDiagPrevTx = { timestamp: nowTs, packetsSent: sent, bytesSent: bytes };
+        return { pps, kbps, jitterMs, loss, rttMs };
+    }
+
     function startIoRxStatsMonitor() {
         if (ioRxStatsTimer) return;
         ioRxStatsTimer = setInterval(async () => {
-            const rows = { 'io_4w_stereo': [], 'io_pgm_stereo': [] };
+            const rxRows = { 'io_4w_stereo': [], 'io_pgm_stereo': [] };
             for (const callData of Object.values(state.mediaCalls || {})) {
                 if (!callData?.isIOStereoTrack || !callData.livekitTrack) continue;
                 try {
-                    let s = null;
-                    if (typeof callData.livekitTrack.getReceiverStats === 'function') s = await callData.livekitTrack.getReceiverStats();
-                    if (!s && typeof callData.livekitTrack.getRTCStatsReport === 'function') {
-                        const report = await callData.livekitTrack.getRTCStatsReport();
-                        report?.forEach?.(v => { if (!s && v.type === 'inbound-rtp' && (v.kind === 'audio' || v.mediaType === 'audio')) s = v; });
-                    }
-                    if (!s) continue;
-                    const prev = callData.rxPrevStats;
-                    const recv = Number(s.packetsReceived || 0), lost = Number(s.packetsLost || 0), conc = Number(s.concealmentEvents || 0), bytes = Number(s.bytesReceived || 0), nowMs = Date.now();
-                    const ins = Number(s.insertedSamplesForDeceleration || 0), rem = Number(s.removedSamplesForAcceleration || 0);
-                    const dRecv = prev ? Math.max(0, recv - Number(prev.packetsReceived || 0)) : 0;
-                    const dBytes = prev ? Math.max(0, bytes - Number(prev.bytesReceived || 0)) : 0;
-                    const dtMs = prev ? Math.max(250, nowMs - Number(prev.ts || nowMs)) : 2000;
-                    const pps = dRecv * 1000 / dtMs;
-                    const rxKbps = dBytes * 8 / dtMs;
-                    const dLost = prev ? Math.max(0, lost - Number(prev.packetsLost || 0)) : 0;
-                    const dConc = prev ? Math.max(0, conc - Number(prev.concealmentEvents || 0)) : 0;
-                    const dIns = prev ? Math.max(0, ins - Number(prev.insertedSamplesForDeceleration || 0)) : 0;
-                    const dRem = prev ? Math.max(0, rem - Number(prev.removedSamplesForAcceleration || 0)) : 0;
-                    const denom = dRecv + dLost;
-                    const lossPct = denom > 0 ? (dLost / denom) * 100 : 0;
-                    const jitterMs = Number(s.jitter || 0) * 1000;
-                    let jbMs = 0, jtMs = 0, jmMs = 0;
-                    const emitted = Number(s.jitterBufferEmittedCount || 0);
-                    if (emitted > 0 && Number(s.jitterBufferDelay || 0) >= 0) jbMs = (Number(s.jitterBufferDelay) / emitted) * 1000;
-                    if (emitted > 0 && Number(s.jitterBufferTargetDelay || 0) >= 0) jtMs = (Number(s.jitterBufferTargetDelay) / emitted) * 1000;
-                    if (emitted > 0 && Number(s.jitterBufferMinimumDelay || 0) >= 0) jmMs = (Number(s.jitterBufferMinimumDelay) / emitted) * 1000;
-                    const baseDelay = callData.playoutDelayBase || (callData.trackName === 'io_pgm_stereo' ? 0.12 : 0.10);
-                    /* Keep latency bounded. Re-apply the low-latency hint if older state left a larger value. */
-                    if (Math.abs(Number(callData.playoutDelay || 0) - baseDelay) >= 0.009) {
-                        try { if(typeof callData.livekitTrack.setPlayoutDelay==='function') callData.livekitTrack.setPlayoutDelay(baseDelay); } catch(e) {}
-                        callData.playoutDelay = baseDelay;
-                    }
-                    callData.rxPrevStats = { packetsReceived:recv, packetsLost:lost, concealmentEvents:conc, insertedSamplesForDeceleration:ins, removedSamplesForAcceleration:rem, bytesReceived:bytes, ts:nowMs };
-                    const bufMs=Math.round(baseDelay*1000);
-                    const timing = `${jbMs ? ` / JB ${jbMs.toFixed(0)}ms` : ''}${jtMs ? ` / JT ${jtMs.toFixed(0)}ms` : ''}${jmMs ? ` / JM ${jmMs.toFixed(0)}ms` : ''}`;
-                    rows[callData.trackName]?.push(`JIT ${jitterMs.toFixed(1)}ms / LOSS ${lossPct.toFixed(2)}% / CONC +${dConc}${timing} / PPS ${pps.toFixed(1)} / RX ${rxKbps.toFixed(0)}kbps / INS +${dIns} / REM +${dRem} / BUF ${bufMs}ms`);
+                    const x = await readIoRxDiag(callData);
+                    if (!x) continue;
+                    rxRows[callData.trackName]?.push(
+                        `JIT ${x.jitterMs.toFixed(1)}ms / LOSS ${x.lossPct.toFixed(2)}% / CONC +${x.dConcEv} / CMS ${x.concealedMs.toFixed(1)}ms / PPS ${x.pps.toFixed(1)} / RX ${x.kbps.toFixed(0)}kbps / JB ${x.jbMs.toFixed(0)}ms / PD ${x.requestedMs}ms`
+                    );
                 } catch(e) {}
             }
-            const el4 = $('io-rx-diag-4w'); if (el4) el4.textContent = '4W RX: ' + (rows.io_4w_stereo.length ? rows.io_4w_stereo.join(' | ') : 'no remote track');
-            const elP = $('io-rx-diag-pgm'); if (elP) elP.textContent = 'PGM RX: ' + (rows.io_pgm_stereo.length ? rows.io_pgm_stereo.join(' | ') : 'no remote track');
+
+            const tx4 = await readIoTxDiag(state.ioTrack4wStereo);
+            const txP = await readIoTxDiag(state.ioTrackPgmStereo);
+            const txText = (x) => x ? `PPS ${x.pps.toFixed(1)} / TX ${x.kbps.toFixed(0)}kbps / REM-JIT ${x.jitterMs.toFixed(1)}ms / REM-LOSS ${x.loss} / RTT ${x.rttMs.toFixed(0)}ms` : 'no local track';
+
+            const t4 = $('io-tx-diag-4w'); if (t4) t4.textContent = '4W TX: ' + txText(tx4);
+            const tP = $('io-tx-diag-pgm'); if (tP) tP.textContent = 'PGM TX: ' + txText(txP);
+            const r4 = $('io-rx-diag-4w'); if (r4) r4.textContent = '4W RX: ' + (rxRows.io_4w_stereo.length ? rxRows.io_4w_stereo.join(' | ') : 'no remote track');
+            const rP = $('io-rx-diag-pgm'); if (rP) rP.textContent = 'PGM RX: ' + (rxRows.io_pgm_stereo.length ? rxRows.io_pgm_stereo.join(' | ') : 'no remote track');
         }, 2000);
     }
 
@@ -5509,6 +5683,7 @@ html, body, #main-app-container {
 
           } else if (!data.senderId) {
 
+            detachVideoTrack(state.monitorAttachedVideoTrack, { clear:true });
             if(mst) mst.textContent = '[ NO VIDEO ]';
 
             if (state.isAdmin && es) { es.disabled = false; if (es.options[0].value === 'locked') { es.remove(0); } es.value = 'off'; }
@@ -5871,7 +6046,10 @@ html, body, #main-app-container {
 
 
 
-          const room = new LivekitClient.Room({ adaptiveStream: true, dynacast: true }); state.room = room;
+          /* v36: keep the program monitor continuously subscribed/published.
+             adaptiveStream can pause/resize subscriptions when an overlay covers the video,
+             which is undesirable for a broadcast monitor. */
+          const room = new LivekitClient.Room({ adaptiveStream: false, dynacast: false }); state.room = room;
 
 
 
@@ -5918,7 +6096,7 @@ html, body, #main-app-container {
               state.mediaCalls[callKey] = callData; 
 
               if (isIOStereoTrack) {
-                  /* v34: low-latency but with enough headroom for measured mobile jitter.
+                  /* v35: low-latency baseline while raw RTP/JB diagnostics measure the real buffer.
                      4W stays near-real-time; PGM gets a little more margin. */
                   const playoutDelay = trackName === 'io_pgm_stereo' ? 0.12 : 0.10;
                   callData.playoutDelayBase = playoutDelay;
