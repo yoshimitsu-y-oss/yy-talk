@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 
 <html lang="ja">
-<!-- YY-Talk PRO Brush-up v42 -->
+<!-- YY-Talk PRO Brush-up v45 -->
 
 <head>
 
@@ -13,7 +13,7 @@
 
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
-  <title>YY-Talk PRO v42</title>
+  <title>YY-Talk PRO v45</title>
   <meta name="theme-color" content="#0a0b0d">
   <meta name="color-scheme" content="dark">
 
@@ -2288,7 +2288,7 @@ html, body, #main-app-container {
   }
 </style>
 
-<style id="v42-video-continuity">
+<style id="v45-video-continuity">
   #monitor-video-wrapper.video-wrapper { position:relative !important; }
   #yy-video-hold-frame {
     position:absolute !important; inset:0 !important; width:100% !important; height:100% !important;
@@ -2296,7 +2296,7 @@ html, body, #main-app-container {
   }
 </style>
 
-<style id="v42-ios-island-clearance">
+<style id="v45-ios-island-clearance">
 @media (display-mode: standalone) and (orientation:portrait) {
   :root { --yy-island-clearance:20px !important; }
   #main-app-container > .header {
@@ -2307,10 +2307,36 @@ html, body, #main-app-container {
 }
 </style>
 
-  <style id="v42-zoom-lock-css">
+  <style id="v45-zoom-lock-css">
     html, body, .app-container { touch-action: manipulation; }
   </style>
 
+
+<style id="v45-mobile-header-status-fix">
+/* v45: participant count remains visible on portrait phones; RTT is secondary. */
+@media (max-width: 600px) and (orientation: portrait) {
+  .header-right > div:first-child {
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:flex-end !important;
+    justify-content:center !important;
+    margin-right:2px !important;
+    min-width:22px !important;
+  }
+  #header-active-count {
+    display:block !important;
+    font-size:10px !important;
+    line-height:1 !important;
+    white-space:nowrap !important;
+    color:#38bdf8 !important;
+  }
+  #status-rtt { display:none !important; }
+}
+@media (max-width: 360px) and (orientation: portrait) {
+  #header-active-count { font-size:9px !important; }
+  .header-right { gap:2px !important; }
+}
+</style>
 </head>
 
 <body onload="if(window.forceResize) window.forceResize()">
@@ -2373,7 +2399,7 @@ html, body, #main-app-container {
 
           </div>
 
-          <div class="login-version">YY-Talk PRO &nbsp; v42</div>
+          <div class="login-version">YY-Talk PRO &nbsp; v45</div>
 
         </div>
 
@@ -2678,7 +2704,7 @@ html, body, #main-app-container {
 
             items.forEach(item => {
 
-                h += `<div class="setting-group" style="flex:1; align-items: stretch;"><label>${item.label}</label><select id="select-${item.id}" class="io-select"></select><div class="io-gain-slider-wrap">${volL}<div class="vol-slider-wrap"><div class="vol-slider-track-bg"></div><div class="vol-slider-fill" id="fill-gain-${item.id}" style="width: 50%;"></div><input type="range" id="gain-${item.id}" min="0" max="200" value="100"></div>${volR}</div><div class="io-meter-horizontal-bg"><div id="meter-${item.id}" class="io-meter-horizontal-fill"></div></div></div>`;
+                h += `<div class="setting-group" style="flex:1; align-items: stretch;"><label>${item.label}</label><select id="select-${item.id}" class="io-select"></select><div class="io-gain-slider-wrap">${volL}<div class="vol-slider-wrap" title="Gain 0.0〜2.0をリニアに調整（1.0=Unity / 2.0=+6dB）"><div class="vol-slider-track-bg"></div><div class="vol-slider-fill" id="fill-gain-${item.id}" style="width: 100%;"></div><input type="range" id="gain-${item.id}" min="0" max="200" value="100"></div>${volR}</div><div class="io-meter-horizontal-bg"><div id="meter-${item.id}" class="io-meter-horizontal-fill"></div></div></div>`;
 
             });
 
@@ -3578,7 +3604,7 @@ html, body, #main-app-container {
             if (deviceId !== 'default') audio.deviceId = { exact: deviceId };
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio });
-                stream.getAudioTracks().forEach(t => { t.enabled = true; try { t.contentHint = 'speech'; } catch(_) {} });
+                stream.getAudioTracks().forEach(t => { t.enabled = true; try { t.contentHint = 'music'; } catch(_) {} });
                 return stream;
             }
             catch (e) {
@@ -3587,7 +3613,7 @@ html, body, #main-app-container {
                     const fallback = { echoCancellation:false, noiseSuppression:false, autoGainControl:false, channelCount:{ideal:2} };
                     if (deviceId !== 'default') fallback.deviceId = { exact: deviceId };
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: fallback });
-                    stream.getAudioTracks().forEach(t => { t.enabled = true; try { t.contentHint = 'speech'; } catch(_) {} });
+                    stream.getAudioTracks().forEach(t => { t.enabled = true; try { t.contentHint = 'music'; } catch(_) {} });
                     return stream;
                 } catch (e2) {
                     uiLog(`${prefix} input open failed: ${e2?.message || e2}`, '#f97316');
@@ -3693,7 +3719,7 @@ html, body, #main-app-container {
             const localTrack = new LivekitClient.LocalAudioTrack(inputRaw);
             const name = is4w ? 'io_4w_stereo' : 'io_pgm_stereo';
             /* Continuity-first I/O profile:
-               26kbps fixed bitrate, keep stereo for L/R routing,
+               26kbps fixed bitrate, keep stereo for L/R routing and broadband/environment audio,
                and re-enable RED because current diagnostics show real packet loss on cellular links. */
             const continuityPreset = { maxBitrate: 26000, priority: 'high' };
             const pub = await state.room.localParticipant.publishTrack(localTrack, {
@@ -3706,7 +3732,7 @@ html, body, #main-app-container {
             });
             if (pub?.track) {
                 pub.track.__yyDiagPrevTx = null;
-                try { pub.track.mediaStreamTrack.contentHint = 'speech'; } catch(_) {}
+                try { pub.track.mediaStreamTrack.contentHint = 'music'; } catch(_) {}
             }
             if (is4w) state.ioTrack4wStereo = pub;
             else state.ioTrackPgmStereo = pub;
@@ -3752,12 +3778,29 @@ html, body, #main-app-container {
 
         if ($('gain-4w-in-l')) {
 
-            const setIoGainUI = () => { $('gain-4w-in-l').value = (state.ioBridge.inGain4wL ?? 1.0) * 100; $('fill-gain-4w-in-l').style.width = ($('gain-4w-in-l').value / 2) + '%'; $('gain-4w-in-r').value = (state.ioBridge.inGain4wR ?? 1.0) * 100; $('fill-gain-4w-in-r').style.width = ($('gain-4w-in-r').value / 2) + '%'; $('gain-4w-out-l').value = (state.ioBridge.outGain4wL ?? 1.0) * 100; $('fill-gain-4w-out-l').style.width = ($('gain-4w-out-l').value / 2) + '%'; $('gain-4w-out-r').value = (state.ioBridge.outGain4wR ?? 1.0) * 100; $('fill-gain-4w-out-r').style.width = ($('gain-4w-out-r').value / 2) + '%'; $('gain-pgm-in-l').value = (state.ioBridge.inGainPgmL ?? 1.0) * 100; $('fill-gain-pgm-in-l').style.width = ($('gain-pgm-in-l').value / 2) + '%'; $('gain-pgm-in-r').value = (state.ioBridge.inGainPgmR ?? 1.0) * 100; $('fill-gain-pgm-in-r').style.width = ($('gain-pgm-in-r').value / 2) + '%'; }; setIoGainUI();
+            const setIoGainUI = () => {
+                const pairs = [
+                    ['gain-4w-in-l','fill-gain-4w-in-l','inGain4wL'],
+                    ['gain-4w-in-r','fill-gain-4w-in-r','inGain4wR'],
+                    ['gain-4w-out-l','fill-gain-4w-out-l','outGain4wL'],
+                    ['gain-4w-out-r','fill-gain-4w-out-r','outGain4wR'],
+                    ['gain-pgm-in-l','fill-gain-pgm-in-l','inGainPgmL'],
+                    ['gain-pgm-in-r','fill-gain-pgm-in-r','inGainPgmR']
+                ];
+                pairs.forEach(([sliderId, fillId, key]) => {
+                    const gain = Math.max(0, Math.min(2, Number(state.ioBridge[key] ?? 1.0)));
+                    state.ioBridge[key] = gain;
+                    const sliderValue = gain * 100;          // 0..200 maps linearly to Gain 0.0..2.0
+                    const fillPct = (gain / 2) * 100;       // visual fill spans the full slider width
+                    const sliderEl = $(sliderId); if (sliderEl) sliderEl.value = sliderValue;
+                    const fillEl = $(fillId); if (fillEl) fillEl.style.width = fillPct + '%';
+                });
+            }; setIoGainUI();
 
             let ioGainSyncTimer = null;
             const updateGain = (key, val, nodeKey, fillId) => {
                 const numeric = Math.max(0, Math.min(200, Number(val) || 0));
-                state.ioBridge[key] = numeric / 100;
+                state.ioBridge[key] = numeric / 100;       // linear: slider 0..200 => Gain 0.0..2.0
                 const node = state.ioNodes[nodeKey];
                 if (node?.gain) {
                     /* v30: input gains live on the dedicated I/O AudioContext, not audioCtx.
@@ -4109,7 +4152,7 @@ html, body, #main-app-container {
         state.activeVideoSender = state.myUserId;
         state.currentVideoSourceId = deviceId;
         const sourceText = deviceId === 'screen' ? 'SCREEN SHARE' : 'CAMERA';
-        /* v42: sender-selected quality is the ceiling.  Publish three simulcast levels when
+        /* v45: sender-selected quality is the ceiling.  Publish three simulcast levels when
            possible so each receiver can automatically move between 128 kbps and that ceiling. */
         const targetBitrate = Math.max(128000, parseInt(state.videoQuality) || 512000);
         const profile = getVideoCaptureProfile();
@@ -4248,7 +4291,7 @@ html, body, #main-app-container {
         if (!mt || mt.readyState !== 'live' || mt.muted) {
           scheduleLocalVideoRecovery('local video track unhealthy');
         } else {
-          /* v42: do not use DOM/video-paint cadence as a capture watchdog. Browsers may
+          /* v45: do not use DOM/video-paint cadence as a capture watchdog. Browsers may
              throttle requestVideoFrameCallback while menus/overlays cover the monitor.
              The RTP sender-stats watchdog below detects real encoder stalls instead. */
           state.videoStallChecks = 0;
@@ -4308,7 +4351,7 @@ html, body, #main-app-container {
     }
     setTimeout(fitMonitor16x9, 0);
 
-    /* ===== v42 VIDEO CONTINUITY =====
+    /* ===== v45 VIDEO CONTINUITY =====
        Keep the last known-good frame visible through short WebRTC/capture interruptions.
        This avoids the operator seeing a black flash while a track is reattached/recovered. */
     function getVideoHoldCanvas() {
@@ -4954,7 +4997,7 @@ html, body, #main-app-container {
     }
 
 
-    /* v42: Rebuild only the party fan-out for already-subscribed stereo I/O tracks.
+    /* v45: Rebuild only the party fan-out for already-subscribed stereo I/O tracks.
        Channel/user state sync can recreate channelNodes without re-subscribing the
        LiveKit track. Previously ioLegGains remained wired to the old analysers, so
        the I/O meters still moved while the audible party bus went silent. */
@@ -5147,7 +5190,7 @@ html, body, #main-app-container {
             }
 
             if (ioRxTrackCount > 0) {
-                /* v42 audio-first balance.  Audio remains fixed at 30 kbps; only video moves.
+                /* v45 audio-first balance.  Audio remains fixed at 30 kbps; only video moves.
                    Drop video quickly when loss/concealment appears, recover slowly to avoid flapping. */
                 if (worstLoss >= 5 || concealmentGrowing || worstJitter >= 35) {
                     state.ioAudioPriorityStableTicks = 0;
@@ -5917,22 +5960,23 @@ html, body, #main-app-container {
           if (state.isAdmin) {
 
               const u = state.ioBridge;
+              ['inGain4wL','inGain4wR','outGain4wL','outGain4wR','inGainPgmL','inGainPgmR'].forEach(k => { u[k] = Math.max(0, Math.min(2, Number(u[k] ?? 1))); });
 
               if ($('select-4w-in-l')) {
 
                   $('select-4w-in-l').value = u.inAssign4wL; $('select-4w-in-r').value = u.inAssign4wR; $('select-4w-out-l').value = u.outAssign4wL; $('select-4w-out-r').value = u.outAssign4wR; $('select-pgm-in-l').value = u.inAssignPgmL; $('select-pgm-in-r').value = u.inAssignPgmR;
 
-                  $('gain-4w-in-l').value = u.inGain4wL * 100; $('fill-gain-4w-in-l').style.width = ($('gain-4w-in-l').value / 2) + '%';
+                  $('gain-4w-in-l').value = Math.max(0, Math.min(200, (u.inGain4wL ?? 1) * 100)); $('fill-gain-4w-in-l').style.width = (Number($('gain-4w-in-l').value) / 2) + '%';
 
-                  $('gain-4w-in-r').value = u.inGain4wR * 100; $('fill-gain-4w-in-r').style.width = ($('gain-4w-in-r').value / 2) + '%';
+                  $('gain-4w-in-r').value = Math.max(0, Math.min(200, (u.inGain4wR ?? 1) * 100)); $('fill-gain-4w-in-r').style.width = (Number($('gain-4w-in-r').value) / 2) + '%';
 
-                  $('gain-4w-out-l').value = u.outGain4wL * 100; $('fill-gain-4w-out-l').style.width = ($('gain-4w-out-l').value / 2) + '%';
+                  $('gain-4w-out-l').value = Math.max(0, Math.min(200, (u.outGain4wL ?? 1) * 100)); $('fill-gain-4w-out-l').style.width = (Number($('gain-4w-out-l').value) / 2) + '%';
 
-                  $('gain-4w-out-r').value = u.outGain4wR * 100; $('fill-gain-4w-out-r').style.width = ($('gain-4w-out-r').value / 2) + '%';
+                  $('gain-4w-out-r').value = Math.max(0, Math.min(200, (u.outGain4wR ?? 1) * 100)); $('fill-gain-4w-out-r').style.width = (Number($('gain-4w-out-r').value) / 2) + '%';
 
-                  $('gain-pgm-in-l').value = u.inGainPgmL * 100; $('fill-gain-pgm-in-l').style.width = ($('gain-pgm-in-l').value / 2) + '%';
+                  $('gain-pgm-in-l').value = Math.max(0, Math.min(200, (u.inGainPgmL ?? 1) * 100)); $('fill-gain-pgm-in-l').style.width = (Number($('gain-pgm-in-l').value) / 2) + '%';
 
-                  $('gain-pgm-in-r').value = u.inGainPgmR * 100; $('fill-gain-pgm-in-r').style.width = ($('gain-pgm-in-r').value / 2) + '%';
+                  $('gain-pgm-in-r').value = Math.max(0, Math.min(200, (u.inGainPgmR ?? 1) * 100)); $('fill-gain-pgm-in-r').style.width = (Number($('gain-pgm-in-r').value) / 2) + '%';
 
               }
 
@@ -6112,6 +6156,13 @@ html, body, #main-app-container {
 
       loadRoomState(state.roomId);
 
+      /* v45: I/O device discovery must not depend on opening the I/O BRIDGE tab.
+         The tab used to be the first place buildIoUI()/refreshIoAudioDeviceSelectors() ran,
+         so USB interfaces could appear only after the user visited that tab. */
+      if (isAdmin) {
+          try { buildIoUI(); } catch(e) {}
+      }
+
       if (!state.registeredUsers.includes(state.myUserId)) {
 
           state.registeredUsers.push(state.myUserId);
@@ -6262,7 +6313,7 @@ html, body, #main-app-container {
 
 
 
-          /* v42: keep the program monitor continuously subscribed/published.
+          /* v45: keep the program monitor continuously subscribed/published.
              adaptiveStream can pause/resize subscriptions when an overlay covers the video,
              which is undesirable for a broadcast monitor. */
           const room = new LivekitClient.Room({ adaptiveStream: false, dynacast: true }); state.room = room;
@@ -6313,7 +6364,7 @@ html, body, #main-app-container {
 
               if (isIOStereoTrack) {
                   /* v35: low-latency baseline while raw RTP/JB diagnostics measure the real buffer.
-                     v42: I/O playout delay fixed at 200ms for both 4W and PGM. */
+                     v45: I/O playout delay fixed at 200ms for both 4W and PGM. */
                   const playoutDelay = 0.20;
                   callData.playoutDelayBase = playoutDelay;
                   callData.playoutDelay = playoutDelay;
@@ -6441,7 +6492,26 @@ html, body, #main-app-container {
               try {
                   const audioReady = joinAudioPromise ? await joinAudioPromise : state.audioEnabled;
                   if (audioReady) {
-                      if (state.ioBridge.enabled) { await updateAudioDevices(); }
+                      if (state.ioBridge.enabled) {
+                          /* v45: use the same strong reconciliation that previously happened only
+                             when opening the I/O BRIDGE tab. This resolves changed USB deviceIds
+                             by groupId/label before the 4W stream is opened. */
+                          try {
+                              await refreshIoAudioDeviceSelectors({ probeIfNeeded:false, reopenIfChanged:false });
+                          } catch(e) {}
+                          await updateAudioDevices();
+                          /* Some browsers expose the final USB device list a moment after permission.
+                             Re-check without touching the already-open stream; if the saved device
+                             identity changes, the normal recovery path will re-arm once. */
+                          setTimeout(async () => {
+                              try {
+                                  const changed = await refreshIoAudioDeviceSelectors({ probeIfNeeded:false, reopenIfChanged:false });
+                                  if (changed && state.ioBridge.enabled && state.room?.state === 'connected') {
+                                      scheduleIoStartupPrime('post-login device reconcile', 120);
+                                  }
+                              } catch(e) {}
+                          }, 450);
+                      }
                       else publishLocalMic();
                   }
               } catch (audioErr) {
@@ -6509,7 +6579,7 @@ html, body, #main-app-container {
 
                 if (!found && state.room.state === 'connected') { rttEl.style.display = 'block'; rttEl.textContent = `< 50 ms`; rttEl.style.color = 'var(--green)'; }
 
-            } else if (state.room.state === 'connected') { rttEl.style.display = 'block'; rttEl.textContent = `Connected`; rttEl.style.color = 'var(--green)'; }
+            } else if (state.room.state === 'connected') { rttEl.style.display = 'none'; rttEl.textContent = ''; }
 
         } catch(e) {}
 
@@ -6566,7 +6636,7 @@ html, body, #main-app-container {
 </script>
 
 
-  <script id="v42-zoom-lock">
+  <script id="v45-zoom-lock">
   (() => {
     // YY-Talk is an operational control surface; prevent accidental pinch/double-tap zoom on touch devices.
     const stopGesture = (e) => { if (e.cancelable) e.preventDefault(); };
