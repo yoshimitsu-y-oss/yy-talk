@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 
 <html lang="ja">
-<!-- YY-Talk PRO Brush-up v25 -->
+<!-- YY-Talk PRO Brush-up v39 -->
 
 <head>
 
@@ -13,7 +13,7 @@
 
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
-  <title>YY-Talk PRO v38</title>
+  <title>YY-Talk PRO v39</title>
   <meta name="theme-color" content="#0a0b0d">
   <meta name="color-scheme" content="dark">
 
@@ -2201,7 +2201,7 @@ html, body, #main-app-container {
   /* iPhone Home-Screen mode: leave a small solid-black clearance below the system
      safe area. Dynamic-Island/status blur then samples only black, never the header. */
   @media (display-mode: standalone) and (orientation:portrait) {
-    :root { --yy-island-clearance:10px; }
+    :root { --yy-island-clearance:20px; }
     body::before {
       height:calc(var(--yy-safe-top-stable, env(safe-area-inset-top, 0px)) + var(--yy-island-clearance)) !important;
       background:#000 !important;
@@ -2288,12 +2288,23 @@ html, body, #main-app-container {
   }
 </style>
 
-<style id="v38-video-continuity">
+<style id="v39-video-continuity">
   #monitor-video-wrapper.video-wrapper { position:relative !important; }
   #yy-video-hold-frame {
     position:absolute !important; inset:0 !important; width:100% !important; height:100% !important;
     z-index:7 !important; background:#000 !important; pointer-events:none !important;
   }
+</style>
+
+<style id="v39-ios-island-clearance">
+@media (display-mode: standalone) and (orientation:portrait) {
+  :root { --yy-island-clearance:20px !important; }
+  #main-app-container > .header {
+    backdrop-filter:none !important;
+    -webkit-backdrop-filter:none !important;
+    background:#0a0b0d !important;
+  }
+}
 </style>
 </head>
 
@@ -2357,7 +2368,7 @@ html, body, #main-app-container {
 
           </div>
 
-          <div class="login-version">YY-Talk PRO &nbsp; v38</div>
+          <div class="login-version">YY-Talk PRO &nbsp; v39</div>
 
         </div>
 
@@ -2813,10 +2824,10 @@ html, body, #main-app-container {
       talkStates: {}, listenStates: {}, channelVolumes: {}, remoteTalkStates: {}, remoteListenStates: {}, channelNodes: {}, 
 
       audioEnabled: false, isMasterSpkMuted: false, isMasterMicMuted: false, monitorTitle: 'MONITOR', activeVideoSender: null, videoQuality: '512000', layout: 'normal',
-      ioAudioPriorityActive: false, ioAudioPriorityStableTicks: 0,
+      ioAudioPriorityActive: false, ioAudioPriorityMode: 'normal', ioAudioPriorityStableTicks: 0,
 
       /* v23 I/O: raw 48k line capture + explicit HQ Opus, DTX off */
-      ioBridge: { enabled: false, inDevice4w: 'default', inDevice4wLabel: '', outDevice4w: 'default', inAssign4wL: '', inAssign4wR: '', outAssign4wL: '', outAssign4wR: '', inDevicePgm: '', inDevicePgmLabel: '', inAssignPgmL: '', inAssignPgmR: '', inGain4wL: 1.0, inGain4wR: 1.0, outGain4wL: 1.0, outGain4wR: 1.0, inGainPgmL: 1.0, inGainPgmR: 1.0 },
+      ioBridge: { enabled: false, inDevice4w: 'default', inDevice4wLabel: '', inDevice4wGroupId: '', outDevice4w: 'default', inAssign4wL: '', inAssign4wR: '', outAssign4wL: '', outAssign4wR: '', inDevicePgm: '', inDevicePgmLabel: '', inDevicePgmGroupId: '', inAssignPgmL: '', inAssignPgmR: '', inGain4wL: 1.0, inGain4wR: 1.0, outGain4wL: 1.0, outGain4wR: 1.0, inGainPgmL: 1.0, inGainPgmR: 1.0 },
 
       ioNodes: { gain4wL: null, gain4wR: null, gainPgmL: null, gainPgmR: null, gainOutL: null, gainOutR: null, analyser4wL: null, analyser4wR: null, analyserPgmL: null, analyserPgmR: null, analyserOutL: null, analyserOutR: null },
 
@@ -3412,29 +3423,33 @@ html, body, #main-app-container {
         }
         const outputs = devices.filter(d => d.kind === 'audiooutput');
         const norm = v => String(v || '').trim().toLowerCase();
-        const resolveStored = (idKey, labelKey) => {
+        const resolveStored = (idKey, labelKey, groupKey) => {
           const oldId = state.ioBridge[idKey] || '';
           if (!oldId || oldId === 'default' || inputs.some(d => d.deviceId === oldId)) return;
+          const savedGroup = state.ioBridge[groupKey] || '';
           const saved = norm(state.ioBridge[labelKey]);
-          if (!saved) return;
-          const exact = inputs.find(d => norm(d.label) === saved);
-          const fuzzy = exact || inputs.find(d => norm(d.label) && (norm(d.label).includes(saved) || saved.includes(norm(d.label))));
-          if (fuzzy) {
-            state.ioBridge[idKey] = fuzzy.deviceId;
-            state.ioBridge[labelKey] = fuzzy.label || state.ioBridge[labelKey];
+          let match = savedGroup ? inputs.find(d => d.groupId && d.groupId === savedGroup) : null;
+          if (!match && saved) {
+            const exact = inputs.find(d => norm(d.label) === saved);
+            match = exact || inputs.find(d => norm(d.label) && (norm(d.label).includes(saved) || saved.includes(norm(d.label))));
+          }
+          if (match) {
+            state.ioBridge[idKey] = match.deviceId;
+            state.ioBridge[labelKey] = match.label || state.ioBridge[labelKey];
+            state.ioBridge[groupKey] = match.groupId || state.ioBridge[groupKey] || '';
             changed = true;
-            uiLog(`I/O input restored: ${fuzzy.label || saved}`, '#60a5fa');
+            uiLog(`I/O input restored: ${match.label || saved || 'USB audio'}`, '#60a5fa');
           }
         };
-        resolveStored('inDevice4w','inDevice4wLabel');
-        resolveStored('inDevicePgm','inDevicePgmLabel');
+        resolveStored('inDevice4w','inDevice4wLabel','inDevice4wGroupId');
+        resolveStored('inDevicePgm','inDevicePgmLabel','inDevicePgmGroupId');
 
         const fill = (id, list, includeDefault, includeNone, selected, savedLabel='') => {
           const sel=$(id); if(!sel) return;
           sel.innerHTML='';
           if(includeDefault){const o=document.createElement('option');o.value='default';o.textContent='System Default';sel.appendChild(o);}
           if(includeNone){const o=document.createElement('option');o.value='';o.textContent='(None)';sel.appendChild(o);}
-          list.forEach(d=>{if(d.deviceId==='default')return;const o=document.createElement('option');o.value=d.deviceId;o.textContent=d.label||`${d.kind} ${d.deviceId.slice(0,8)}`;sel.appendChild(o);});
+          list.forEach(d=>{if(d.deviceId==='default')return;const o=document.createElement('option');o.value=d.deviceId;o.textContent=d.label||`${d.kind} ${d.deviceId.slice(0,8)}`;o.dataset.groupId=d.groupId||'';sel.appendChild(o);});
           if(Array.from(sel.options).some(o=>o.value===selected)) sel.value=selected;
           else if(selected && selected!=='default' && savedLabel){const o=document.createElement('option');o.value=selected;o.textContent=`${savedLabel} (reconnecting…)`;sel.appendChild(o);sel.value=selected;}
           else if(includeDefault) sel.value='default'; else if(includeNone) sel.value='';
@@ -3443,8 +3458,8 @@ html, body, #main-app-container {
         fill('select-pgm-in-device',inputs,false,true,state.ioBridge.inDevicePgm||'',state.ioBridge.inDevicePgmLabel||'');
         fill('select-4w-out-device',outputs,true,false,state.ioBridge.outDevice4w||'default','');
 
-        const c4=inputs.find(d=>d.deviceId===state.ioBridge.inDevice4w); if(c4?.label) state.ioBridge.inDevice4wLabel=c4.label;
-        const cp=inputs.find(d=>d.deviceId===state.ioBridge.inDevicePgm); if(cp?.label) state.ioBridge.inDevicePgmLabel=cp.label;
+        const c4=inputs.find(d=>d.deviceId===state.ioBridge.inDevice4w); if(c4){ if(c4.label) state.ioBridge.inDevice4wLabel=c4.label; if(c4.groupId) state.ioBridge.inDevice4wGroupId=c4.groupId; }
+        const cp=inputs.find(d=>d.deviceId===state.ioBridge.inDevicePgm); if(cp){ if(cp.label) state.ioBridge.inDevicePgmLabel=cp.label; if(cp.groupId) state.ioBridge.inDevicePgmGroupId=cp.groupId; }
 
         if (state.ioBridge.outDevice4w && state.ioBridge.outDevice4w !== 'default' && !outputs.some(d=>d.deviceId===state.ioBridge.outDevice4w)) {
           state.ioBridge.outDevice4w='default'; changed=true; const out=$('select-4w-out-device'); if(out) out.value='default'; await applyOutputDevice();
@@ -3674,7 +3689,7 @@ html, body, #main-app-container {
             /* Continuity-first I/O profile:
                lower bitrate than before, keep stereo for L/R routing,
                and re-enable RED because current diagnostics show real packet loss on cellular links. */
-            const continuityPreset = { maxBitrate: is4w ? 24000 : 32000, priority: 'high' };
+            const continuityPreset = { maxBitrate: 48000, priority: 'high' };
             const pub = await state.room.localParticipant.publishTrack(localTrack, {
                 name,
                 source: LivekitClient.Track.Source.Microphone,
@@ -3759,8 +3774,8 @@ html, body, #main-app-container {
         }
 
         $('select-4w-out-device').onchange = (e) => { state.ioBridge.outDevice4w = e.target.value; sendIoUpdate(); applyOutputDevice(); };
-        $('select-4w-in-device').onchange = (e) => { state.ioBridge.inDevice4w = e.target.value; state.ioBridge.inDevice4wLabel = e.target.selectedOptions?.[0]?.textContent || ''; sendIoUpdate(); if(state.ioBridge.enabled) updateAudioDevices(); };
-        $('select-pgm-in-device').onchange = (e) => { state.ioBridge.inDevicePgm = e.target.value; state.ioBridge.inDevicePgmLabel = e.target.selectedOptions?.[0]?.textContent || ''; sendIoUpdate(); if(state.ioBridge.enabled) updateAudioDevices(); };
+        $('select-4w-in-device').onchange = (e) => { const opt=e.target.selectedOptions?.[0]; state.ioBridge.inDevice4w = e.target.value; state.ioBridge.inDevice4wLabel = opt?.textContent || ''; state.ioBridge.inDevice4wGroupId = opt?.dataset?.groupId || ''; sendIoUpdate(); if(state.ioBridge.enabled) updateAudioDevices(); };
+        $('select-pgm-in-device').onchange = (e) => { const opt=e.target.selectedOptions?.[0]; state.ioBridge.inDevicePgm = e.target.value; state.ioBridge.inDevicePgmLabel = opt?.textContent || ''; state.ioBridge.inDevicePgmGroupId = opt?.dataset?.groupId || ''; sendIoUpdate(); if(state.ioBridge.enabled) updateAudioDevices(); };
 
         ['select-4w-in-l', 'select-4w-in-r', 'select-4w-out-l', 'select-4w-out-r', 'select-pgm-in-l', 'select-pgm-in-r'].forEach(id => { const sel = $(id); sel.innerHTML = '<option value="">(None)</option>'; state.channels.forEach(ch => { if(ch.id !== 'ch-video') { const opt = document.createElement('option'); opt.value = ch.id; opt.textContent = ch.name; sel.appendChild(opt); } }); });
 
@@ -3769,13 +3784,88 @@ html, body, #main-app-container {
         $('select-4w-in-l').onchange = (e) => { state.ioBridge.inAssign4wL = e.target.value; sendIoUpdate(); }; $('select-4w-in-r').onchange = (e) => { state.ioBridge.inAssign4wR = e.target.value; sendIoUpdate(); }; $('select-4w-out-l').onchange = (e) => { state.ioBridge.outAssign4wL = e.target.value; sendIoUpdate(); }; $('select-4w-out-r').onchange = (e) => { state.ioBridge.outAssign4wR = e.target.value; sendIoUpdate(); }; $('select-pgm-in-l').onchange = (e) => { state.ioBridge.inAssignPgmL = e.target.value; sendIoUpdate(); }; $('select-pgm-in-r').onchange = (e) => { state.ioBridge.inAssignPgmR = e.target.value; sendIoUpdate(); };
 
         const refreshIoBtn = $('btn-refresh-io-devices');
-        if (refreshIoBtn) refreshIoBtn.onclick = async () => { refreshIoBtn.disabled = true; try { await refreshIoAudioDeviceSelectors({ probeIfNeeded:true, reopenIfChanged:true }); if (state.ioBridge.enabled && state.room?.state === 'connected') scheduleIoStartupPrime('manual audio rescan',250); } finally { setTimeout(()=>{refreshIoBtn.disabled=false;},500); } };
+        if (refreshIoBtn) refreshIoBtn.onclick = async () => { refreshIoBtn.disabled = true; try { await forceIoDeviceRescan(); } finally { setTimeout(()=>{refreshIoBtn.disabled=false;},500); } };
 
       }
 
     }
 
 
+
+    async function forceIoDeviceRescan() {
+      if (!navigator.mediaDevices?.enumerateDevices) return false;
+      uiLog('AUDIO DEVICE RESCAN: start', '#38bdf8');
+      try {
+        let devices = await navigator.mediaDevices.enumerateDevices();
+        let inputs = devices.filter(d => d.kind === 'audioinput');
+        const selectedPresent = !state.ioBridge.inDevice4w || state.ioBridge.inDevice4w === 'default' || inputs.some(d => d.deviceId === state.ioBridge.inDevice4w);
+        const labelsMissing = inputs.length === 0 || inputs.every(d => !d.label);
+        if (!selectedPresent && state.ioInput4wStream) {
+          try { state.ioInput4wStream.getTracks().forEach(t => t.stop()); } catch(e) {}
+          state.ioInput4wStream = null;
+        }
+        if (labelsMissing || !selectedPresent) {
+          try {
+            const probe = await navigator.mediaDevices.getUserMedia({ audio:{ echoCancellation:false, noiseSuppression:false, autoGainControl:false } });
+            probe.getTracks().forEach(t => t.stop());
+            await new Promise(r => setTimeout(r, 180));
+          } catch(e) { uiLog(`Audio rescan probe: ${e?.message || e}`, '#f97316'); }
+        }
+        await refreshIoAudioDeviceSelectors({ probeIfNeeded:false, reopenIfChanged:false });
+        devices = await navigator.mediaDevices.enumerateDevices();
+        inputs = devices.filter(d => d.kind === 'audioinput');
+        const physical = inputs.filter(d => d.deviceId !== 'default' && d.deviceId !== 'communications');
+        const missingNow = state.ioBridge.inDevice4w && state.ioBridge.inDevice4w !== 'default' && !inputs.some(d => d.deviceId === state.ioBridge.inDevice4w);
+        if (missingNow && physical.length === 1) {
+          state.ioBridge.inDevice4w = physical[0].deviceId;
+          state.ioBridge.inDevice4wLabel = physical[0].label || 'USB Audio Interface';
+          state.ioBridge.inDevice4wGroupId = physical[0].groupId || '';
+          saveRoomState();
+          await refreshIoAudioDeviceSelectors({ probeIfNeeded:false, reopenIfChanged:false });
+          uiLog(`4W interface recovered: ${state.ioBridge.inDevice4wLabel}`, '#60a5fa');
+        }
+        if (state.ioBridge.enabled && state.room?.state === 'connected') {
+          await new Promise(r => setTimeout(r, 120));
+          await updateAudioDevices({ recovery:true });
+        }
+        uiLog(`AUDIO DEVICE RESCAN: ${inputs.length} input(s)`, '#60a5fa');
+        return true;
+      } catch(e) {
+        uiLog(`AUDIO DEVICE RESCAN failed: ${e?.message || e}`, '#ef4444');
+        return false;
+      }
+    }
+    window.forceIoDeviceRescan = forceIoDeviceRescan;
+
+    async function forceVideoDeviceRescan() {
+      uiLog('VIDEO DEVICE RESCAN: start', '#38bdf8');
+      const previous = state.currentVideoSourceId || $('edit-monitor-source')?.value || 'off';
+      const wasLive = state.activeVideoSender === state.myUserId && previous && !['off','screen'].includes(previous) && state.videoCaptureStream?.getVideoTracks?.().some(t => t.readyState === 'live');
+      try {
+        if (wasLive) {
+          captureVideoHoldFrame(state.monitorVideoEl); showVideoHoldFrame();
+          await stopCurrentVideoCapture({ preserveFrame:true });
+          await new Promise(r => setTimeout(r, 180));
+        }
+        try {
+          const probe = await navigator.mediaDevices.getUserMedia({ video:true, audio:false });
+          probe.getTracks().forEach(t => t.stop());
+          await new Promise(r => setTimeout(r, 160));
+        } catch(e) { uiLog(`Video rescan probe: ${e?.message || e}`, '#f97316'); }
+        await updateVideoSources({ forceProbe:false });
+        if (wasLive && previous && !['off','screen'].includes(previous)) {
+          const sel=$('edit-monitor-source');
+          if (sel && Array.from(sel.options).some(o => o.value === previous)) sel.value=previous;
+          await openSelectedVideoSource(previous, { watchdog:true });
+        }
+        uiLog('VIDEO DEVICE RESCAN: complete', '#60a5fa');
+        return true;
+      } catch(e) {
+        uiLog(`VIDEO DEVICE RESCAN failed: ${e?.message || e}`, '#ef4444');
+        return false;
+      }
+    }
+    window.forceVideoDeviceRescan = forceVideoDeviceRescan;
 
     function buildTallyAssignmentUI() {
 
@@ -3954,7 +4044,7 @@ html, body, #main-app-container {
     const refreshVideoSourcesBtn = $('btn-refresh-video-sources');
     if (refreshVideoSourcesBtn) refreshVideoSourcesBtn.addEventListener('click', async () => {
       refreshVideoSourcesBtn.disabled = true;
-      try { await updateVideoSources({ forceProbe:true }); } finally { refreshVideoSourcesBtn.disabled = false; }
+      try { await forceVideoDeviceRescan(); } finally { refreshVideoSourcesBtn.disabled = false; }
     });
 
     async function stopCurrentVideoCapture({ preserveFrame = false } = {}) {
@@ -4140,7 +4230,7 @@ html, body, #main-app-container {
         if (!mt || mt.readyState !== 'live' || mt.muted) {
           scheduleLocalVideoRecovery('local video track unhealthy');
         } else {
-          /* v38: do not use DOM/video-paint cadence as a capture watchdog. Browsers may
+          /* v39: do not use DOM/video-paint cadence as a capture watchdog. Browsers may
              throttle requestVideoFrameCallback while menus/overlays cover the monitor.
              The RTP sender-stats watchdog below detects real encoder stalls instead. */
           state.videoStallChecks = 0;
@@ -4200,7 +4290,7 @@ html, body, #main-app-container {
     }
     setTimeout(fitMonitor16x9, 0);
 
-    /* ===== v38 VIDEO CONTINUITY =====
+    /* ===== v39 VIDEO CONTINUITY =====
        Keep the last known-good frame visible through short WebRTC/capture interruptions.
        This avoids the operator seeing a black flash while a track is reattached/recovered. */
     function getVideoHoldCanvas() {
@@ -4939,20 +5029,32 @@ html, body, #main-app-container {
         return { pps, kbps, jitterMs, loss, rttMs };
     }
 
-    function setIoAudioPriorityVideoMode(active) {
-        const next = !!active;
-        if (state.ioAudioPriorityActive === next) return;
-        state.ioAudioPriorityActive = next;
+    function setIoAudioPriorityVideoMode(mode) {
+        const nextMode = mode === 'hold' ? 'hold' : (mode === 'low' || mode === true ? 'low' : 'normal');
+        if (state.ioAudioPriorityMode === nextMode) return;
+        state.ioAudioPriorityMode = nextMode;
+        state.ioAudioPriorityActive = nextMode !== 'normal';
         try {
-            const q = next ? LivekitClient.VideoQuality.LOW : LivekitClient.VideoQuality.HIGH;
             state.room?.remoteParticipants?.forEach((p) => {
                 const pubs = p?.videoTrackPublications?.values ? Array.from(p.videoTrackPublications.values()) : [];
                 pubs.forEach((pub) => {
-                    try { if (typeof pub?.setVideoQuality === 'function') pub.setVideoQuality(q); } catch(_) {}
+                    try {
+                        if (nextMode === 'hold') {
+                            captureVideoHoldFrame(state.monitorVideoEl);
+                            showVideoHoldFrame();
+                            pub?.setSubscribed?.(false);
+                        } else {
+                            pub?.setSubscribed?.(true);
+                            const q = nextMode === 'low' ? LivekitClient.VideoQuality.LOW : LivekitClient.VideoQuality.HIGH;
+                            pub?.setVideoQuality?.(q);
+                        }
+                    } catch(_) {}
                 });
             });
         } catch(e) {}
-        uiLog(next ? 'I/O AUDIO PRIORITY: video reduced to protect audio' : 'I/O AUDIO PRIORITY: video quality restored', next ? '#38bdf8' : '#7a7e85');
+        uiLog(nextMode === 'hold' ? 'I/O AUDIO PRIORITY: VIDEO HOLD'
+             : nextMode === 'low' ? 'I/O AUDIO PRIORITY: VIDEO LOW'
+             : 'I/O AUDIO PRIORITY: VIDEO NORMAL', nextMode === 'normal' ? '#7a7e85' : '#38bdf8');
     }
 
     function startIoRxStatsMonitor() {
@@ -4977,12 +5079,17 @@ html, body, #main-app-container {
             }
 
             if (ioRxTrackCount > 0) {
-                if (worstLoss >= 5 || concealmentGrowing) {
+                /* Audio continuity always wins.  LOW first, then freeze/hold the last video
+                   frame and unsubscribe video on severe loss so the 48 kbps I/O streams survive. */
+                if (worstLoss >= 12 || (concealmentGrowing && worstLoss >= 6)) {
                     state.ioAudioPriorityStableTicks = 0;
-                    setIoAudioPriorityVideoMode(true);
-                } else if (worstLoss < 2 && !concealmentGrowing) {
+                    setIoAudioPriorityVideoMode('hold');
+                } else if (worstLoss >= 2 || concealmentGrowing) {
+                    state.ioAudioPriorityStableTicks = 0;
+                    setIoAudioPriorityVideoMode('low');
+                } else if (worstLoss < 1 && !concealmentGrowing) {
                     state.ioAudioPriorityStableTicks = (state.ioAudioPriorityStableTicks || 0) + 1;
-                    if (state.ioAudioPriorityStableTicks >= 5) setIoAudioPriorityVideoMode(false);
+                    if (state.ioAudioPriorityStableTicks >= 6) setIoAudioPriorityVideoMode('normal');
                 } else {
                     state.ioAudioPriorityStableTicks = 0;
                 }
@@ -4996,7 +5103,7 @@ html, body, #main-app-container {
             const tP = $('io-tx-diag-pgm'); if (tP) tP.textContent = 'PGM TX: ' + txText(txP);
             const r4 = $('io-rx-diag-4w'); if (r4) r4.textContent = '4W RX: ' + (rxRows.io_4w_stereo.length ? rxRows.io_4w_stereo.join(' | ') : 'no remote track');
             const rP = $('io-rx-diag-pgm'); if (rP) rP.textContent = 'PGM RX: ' + (rxRows.io_pgm_stereo.length ? rxRows.io_pgm_stereo.join(' | ') : 'no remote track');
-            const ap = $('io-audio-priority-state'); if (ap) ap.textContent = state.ioAudioPriorityActive ? 'AUDIO PRIORITY: ON / VIDEO LOW' : 'AUDIO PRIORITY: OFF';
+            const ap = $('io-audio-priority-state'); if (ap) ap.textContent = state.ioAudioPriorityMode === 'hold' ? 'AUDIO PRIORITY: CRITICAL / VIDEO HOLD' : (state.ioAudioPriorityMode === 'low' ? 'AUDIO PRIORITY: ON / VIDEO LOW' : 'AUDIO PRIORITY: OFF');
         }, 2000);
     }
 
@@ -6087,7 +6194,7 @@ html, body, #main-app-container {
 
 
 
-          /* v38: keep the program monitor continuously subscribed/published.
+          /* v39: keep the program monitor continuously subscribed/published.
              adaptiveStream can pause/resize subscriptions when an overlay covers the video,
              which is undesirable for a broadcast monitor. */
           const room = new LivekitClient.Room({ adaptiveStream: false, dynacast: true }); state.room = room;
@@ -6155,9 +6262,8 @@ html, body, #main-app-container {
 
             } else if (track.kind === LivekitClient.Track.Kind.Video) {
               attachVideoTrack(track);
-              if (state.ioAudioPriorityActive) {
-                try { publication.setVideoQuality?.(LivekitClient.VideoQuality.LOW); } catch(_) {}
-              }
+              if (state.ioAudioPriorityMode === 'hold') { try { publication.setSubscribed?.(false); } catch(_) {} }
+              else if (state.ioAudioPriorityMode === 'low') { try { publication.setVideoQuality?.(LivekitClient.VideoQuality.LOW); } catch(_) {} }
             }
 
           });
