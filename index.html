@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 
 <html lang="ja">
-<!-- YY-Talk PRO Brush-up v41 -->
+<!-- YY-Talk PRO Brush-up v42 -->
 
 <head>
 
@@ -13,7 +13,7 @@
 
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
-  <title>YY-Talk PRO v41</title>
+  <title>YY-Talk PRO v42</title>
   <meta name="theme-color" content="#0a0b0d">
   <meta name="color-scheme" content="dark">
 
@@ -2288,7 +2288,7 @@ html, body, #main-app-container {
   }
 </style>
 
-<style id="v41-video-continuity">
+<style id="v42-video-continuity">
   #monitor-video-wrapper.video-wrapper { position:relative !important; }
   #yy-video-hold-frame {
     position:absolute !important; inset:0 !important; width:100% !important; height:100% !important;
@@ -2296,7 +2296,7 @@ html, body, #main-app-container {
   }
 </style>
 
-<style id="v41-ios-island-clearance">
+<style id="v42-ios-island-clearance">
 @media (display-mode: standalone) and (orientation:portrait) {
   :root { --yy-island-clearance:20px !important; }
   #main-app-container > .header {
@@ -2307,7 +2307,7 @@ html, body, #main-app-container {
 }
 </style>
 
-  <style id="v41-zoom-lock-css">
+  <style id="v42-zoom-lock-css">
     html, body, .app-container { touch-action: manipulation; }
   </style>
 
@@ -2373,7 +2373,7 @@ html, body, #main-app-container {
 
           </div>
 
-          <div class="login-version">YY-Talk PRO &nbsp; v41</div>
+          <div class="login-version">YY-Talk PRO &nbsp; v42</div>
 
         </div>
 
@@ -3219,6 +3219,7 @@ html, body, #main-app-container {
                 sendData({ type: 'add-channel', ch: newCh, assignments: state.userAssignments, registered: state.registeredUsers });
 
                 Object.values(state.mediaCalls || {}).forEach(call => { if (call?.source && state.audioCtx && newCh && !call.isIOTrack) { const splitGain = state.audioCtx.createGain(); const panner = state.audioCtx.createStereoPanner(); splitGain.gain.value = 0; call.source.connect(panner); panner.connect(splitGain); if(state.channelNodes[newCh.id]) splitGain.connect(state.channelNodes[newCh.id].analyser); call.chGains[newCh.id] = { gain: splitGain, panner: panner }; } });
+                rebuildAllIoStereoPartyLegs();
 
                 saveRoomState(); buildAdminMatrix(); if (state.userAssignments && state.myUserId) { applyAssignments(state.userAssignments[state.myUserId] || state.channels.map(c=>c.id)); }
 
@@ -4108,7 +4109,7 @@ html, body, #main-app-container {
         state.activeVideoSender = state.myUserId;
         state.currentVideoSourceId = deviceId;
         const sourceText = deviceId === 'screen' ? 'SCREEN SHARE' : 'CAMERA';
-        /* v41: sender-selected quality is the ceiling.  Publish three simulcast levels when
+        /* v42: sender-selected quality is the ceiling.  Publish three simulcast levels when
            possible so each receiver can automatically move between 128 kbps and that ceiling. */
         const targetBitrate = Math.max(128000, parseInt(state.videoQuality) || 512000);
         const profile = getVideoCaptureProfile();
@@ -4247,7 +4248,7 @@ html, body, #main-app-container {
         if (!mt || mt.readyState !== 'live' || mt.muted) {
           scheduleLocalVideoRecovery('local video track unhealthy');
         } else {
-          /* v41: do not use DOM/video-paint cadence as a capture watchdog. Browsers may
+          /* v42: do not use DOM/video-paint cadence as a capture watchdog. Browsers may
              throttle requestVideoFrameCallback while menus/overlays cover the monitor.
              The RTP sender-stats watchdog below detects real encoder stalls instead. */
           state.videoStallChecks = 0;
@@ -4307,7 +4308,7 @@ html, body, #main-app-container {
     }
     setTimeout(fitMonitor16x9, 0);
 
-    /* ===== v41 VIDEO CONTINUITY =====
+    /* ===== v42 VIDEO CONTINUITY =====
        Keep the last known-good frame visible through short WebRTC/capture interruptions.
        This avoids the operator seeing a black flash while a track is reattached/recovered. */
     function getVideoHoldCanvas() {
@@ -4527,7 +4528,23 @@ html, body, #main-app-container {
 
         initChannelsDOM();
 
-        if (state.audioCtx) { state.channels.forEach(ch => setupChannelAudio(ch.id)); Object.values(state.mediaCalls || {}).forEach(call => { if (call?.source && !call.isIOTrack) { state.channels.forEach(ch => { const splitGain = state.audioCtx.createGain(); const panner = state.audioCtx.createStereoPanner(); splitGain.gain.value = 0; call.source.connect(panner); panner.connect(splitGain); if(state.channelNodes[ch.id]) splitGain.connect(state.channelNodes[ch.id].analyser); call.chGains[ch.id] = { gain: splitGain, panner: panner }; }); } }); }
+        if (state.audioCtx) {
+            state.channels.forEach(ch => setupChannelAudio(ch.id));
+            Object.values(state.mediaCalls || {}).forEach(call => {
+                if (call?.source && !call.isIOTrack) {
+                    state.channels.forEach(ch => {
+                        const splitGain = state.audioCtx.createGain();
+                        const panner = state.audioCtx.createStereoPanner();
+                        splitGain.gain.value = 0;
+                        call.source.connect(panner);
+                        panner.connect(splitGain);
+                        if(state.channelNodes[ch.id]) splitGain.connect(state.channelNodes[ch.id].analyser);
+                        call.chGains[ch.id] = { gain: splitGain, panner: panner };
+                    });
+                }
+            });
+            rebuildAllIoStereoPartyLegs();
+        }
 
         if (state.userAssignments && state.myUserId) { applyAssignments(state.userAssignments[state.myUserId] || state.channels.map(c=>c.id)); } else { applyAssignments(state.channels.map(c=>c.id)); }
 
@@ -4936,6 +4953,41 @@ html, body, #main-app-container {
         updateAudioRouting();
     }
 
+
+    /* v42: Rebuild only the party fan-out for already-subscribed stereo I/O tracks.
+       Channel/user state sync can recreate channelNodes without re-subscribing the
+       LiveKit track. Previously ioLegGains remained wired to the old analysers, so
+       the I/O meters still moved while the audible party bus went silent. */
+    function rebuildIoStereoPartyLegs(callData) {
+        if (!state.audioCtx || !callData?.isIOStereoTrack || !callData.ioTrimGainL || !callData.ioTrimGainR) return;
+
+        Object.values(callData.ioLegGains || {}).forEach(nodes => {
+            try { nodes?.L?.disconnect?.(); } catch(e) {}
+            try { nodes?.R?.disconnect?.(); } catch(e) {}
+        });
+        callData.ioLegGains = {};
+
+        state.channels?.forEach(ch => {
+            const targetNode = state.channelNodes?.[ch.id];
+            if (!targetNode?.analyser) return;
+
+            const gL = state.audioCtx.createGain(); gL.gain.value = 0;
+            const gR = state.audioCtx.createGain(); gR.gain.value = 0;
+            callData.ioTrimGainL.connect(gL);
+            callData.ioTrimGainR.connect(gR);
+            gL.connect(targetNode.analyser);
+            gR.connect(targetNode.analyser);
+            callData.ioLegGains[ch.id] = { L:gL, R:gR };
+        });
+    }
+
+    function rebuildAllIoStereoPartyLegs() {
+        Object.values(state.mediaCalls || {}).forEach(callData => {
+            if (callData?.isIOStereoTrack) rebuildIoStereoPartyLegs(callData);
+        });
+        updateAudioRouting();
+    }
+
     function getIoPercentForParty(chId) {
         let percent = 0;
         const localIo = [
@@ -5095,7 +5147,7 @@ html, body, #main-app-container {
             }
 
             if (ioRxTrackCount > 0) {
-                /* v41 audio-first balance.  Audio remains fixed at 30 kbps; only video moves.
+                /* v42 audio-first balance.  Audio remains fixed at 30 kbps; only video moves.
                    Drop video quickly when loss/concealment appears, recover slowly to avoid flapping. */
                 if (worstLoss >= 5 || concealmentGrowing || worstJitter >= 35) {
                     state.ioAudioPriorityStableTicks = 0;
@@ -5638,7 +5690,7 @@ html, body, #main-app-container {
 
           saveRoomState(); syncChannelInfo(); 
 
-          if (e.target.classList.contains('admin-edit-type')) { applyAssignments(state.userAssignments[state.myUserId]); buildAdminMatrix(); initChannelsDOM(); updateAudioRouting(); sendData({ type: 'init-state', channels: state.channels, assignments: state.userAssignments, tallyAssignments: state.tallyAssignments, registered: state.registeredUsers, ioBridge: state.ioBridge, monitorTitle: state.monitorTitle, videoQuality: state.videoQuality, layout: state.layout }); }
+          if (e.target.classList.contains('admin-edit-type')) { applyAssignments(state.userAssignments[state.myUserId]); buildAdminMatrix(); initChannelsDOM(); rebuildAllIoStereoPartyLegs(); updateAudioRouting(); sendData({ type: 'init-state', channels: state.channels, assignments: state.userAssignments, tallyAssignments: state.tallyAssignments, registered: state.registeredUsers, ioBridge: state.ioBridge, monitorTitle: state.monitorTitle, videoQuality: state.videoQuality, layout: state.layout }); }
 
       }); });
 
@@ -6210,7 +6262,7 @@ html, body, #main-app-container {
 
 
 
-          /* v41: keep the program monitor continuously subscribed/published.
+          /* v42: keep the program monitor continuously subscribed/published.
              adaptiveStream can pause/resize subscriptions when an overlay covers the video,
              which is undesirable for a broadcast monitor. */
           const room = new LivekitClient.Room({ adaptiveStream: false, dynacast: true }); state.room = room;
@@ -6261,7 +6313,7 @@ html, body, #main-app-container {
 
               if (isIOStereoTrack) {
                   /* v35: low-latency baseline while raw RTP/JB diagnostics measure the real buffer.
-                     v41: I/O playout delay fixed at 200ms for both 4W and PGM. */
+                     v42: I/O playout delay fixed at 200ms for both 4W and PGM. */
                   const playoutDelay = 0.20;
                   callData.playoutDelayBase = playoutDelay;
                   callData.playoutDelay = playoutDelay;
@@ -6514,7 +6566,7 @@ html, body, #main-app-container {
 </script>
 
 
-  <script id="v41-zoom-lock">
+  <script id="v42-zoom-lock">
   (() => {
     // YY-Talk is an operational control surface; prevent accidental pinch/double-tap zoom on touch devices.
     const stopGesture = (e) => { if (e.cancelable) e.preventDefault(); };
