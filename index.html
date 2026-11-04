@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 
 <html lang="ja">
-<!-- YY-Talk PRO Brush-up v40 -->
+<!-- YY-Talk PRO Brush-up v41 -->
 
 <head>
 
@@ -13,7 +13,7 @@
 
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
-  <title>YY-Talk PRO v40</title>
+  <title>YY-Talk PRO v41</title>
   <meta name="theme-color" content="#0a0b0d">
   <meta name="color-scheme" content="dark">
 
@@ -2288,7 +2288,7 @@ html, body, #main-app-container {
   }
 </style>
 
-<style id="v40-video-continuity">
+<style id="v41-video-continuity">
   #monitor-video-wrapper.video-wrapper { position:relative !important; }
   #yy-video-hold-frame {
     position:absolute !important; inset:0 !important; width:100% !important; height:100% !important;
@@ -2296,7 +2296,7 @@ html, body, #main-app-container {
   }
 </style>
 
-<style id="v40-ios-island-clearance">
+<style id="v41-ios-island-clearance">
 @media (display-mode: standalone) and (orientation:portrait) {
   :root { --yy-island-clearance:20px !important; }
   #main-app-container > .header {
@@ -2307,7 +2307,7 @@ html, body, #main-app-container {
 }
 </style>
 
-  <style id="v40-zoom-lock-css">
+  <style id="v41-zoom-lock-css">
     html, body, .app-container { touch-action: manipulation; }
   </style>
 
@@ -2373,7 +2373,7 @@ html, body, #main-app-container {
 
           </div>
 
-          <div class="login-version">YY-Talk PRO &nbsp; v40</div>
+          <div class="login-version">YY-Talk PRO &nbsp; v41</div>
 
         </div>
 
@@ -3692,9 +3692,9 @@ html, body, #main-app-container {
             const localTrack = new LivekitClient.LocalAudioTrack(inputRaw);
             const name = is4w ? 'io_4w_stereo' : 'io_pgm_stereo';
             /* Continuity-first I/O profile:
-               lower bitrate than before, keep stereo for L/R routing,
+               26kbps fixed bitrate, keep stereo for L/R routing,
                and re-enable RED because current diagnostics show real packet loss on cellular links. */
-            const continuityPreset = { maxBitrate: 30000, priority: 'high' };
+            const continuityPreset = { maxBitrate: 26000, priority: 'high' };
             const pub = await state.room.localParticipant.publishTrack(localTrack, {
                 name,
                 source: LivekitClient.Track.Source.Microphone,
@@ -4108,7 +4108,7 @@ html, body, #main-app-container {
         state.activeVideoSender = state.myUserId;
         state.currentVideoSourceId = deviceId;
         const sourceText = deviceId === 'screen' ? 'SCREEN SHARE' : 'CAMERA';
-        /* v40: sender-selected quality is the ceiling.  Publish three simulcast levels when
+        /* v41: sender-selected quality is the ceiling.  Publish three simulcast levels when
            possible so each receiver can automatically move between 128 kbps and that ceiling. */
         const targetBitrate = Math.max(128000, parseInt(state.videoQuality) || 512000);
         const profile = getVideoCaptureProfile();
@@ -4247,7 +4247,7 @@ html, body, #main-app-container {
         if (!mt || mt.readyState !== 'live' || mt.muted) {
           scheduleLocalVideoRecovery('local video track unhealthy');
         } else {
-          /* v40: do not use DOM/video-paint cadence as a capture watchdog. Browsers may
+          /* v41: do not use DOM/video-paint cadence as a capture watchdog. Browsers may
              throttle requestVideoFrameCallback while menus/overlays cover the monitor.
              The RTP sender-stats watchdog below detects real encoder stalls instead. */
           state.videoStallChecks = 0;
@@ -4307,7 +4307,7 @@ html, body, #main-app-container {
     }
     setTimeout(fitMonitor16x9, 0);
 
-    /* ===== v40 VIDEO CONTINUITY =====
+    /* ===== v41 VIDEO CONTINUITY =====
        Keep the last known-good frame visible through short WebRTC/capture interruptions.
        This avoids the operator seeing a black flash while a track is reattached/recovered. */
     function getVideoHoldCanvas() {
@@ -5095,7 +5095,7 @@ html, body, #main-app-container {
             }
 
             if (ioRxTrackCount > 0) {
-                /* v40 audio-first balance.  Audio remains fixed at 30 kbps; only video moves.
+                /* v41 audio-first balance.  Audio remains fixed at 30 kbps; only video moves.
                    Drop video quickly when loss/concealment appears, recover slowly to avoid flapping. */
                 if (worstLoss >= 5 || concealmentGrowing || worstJitter >= 35) {
                     state.ioAudioPriorityStableTicks = 0;
@@ -6210,7 +6210,7 @@ html, body, #main-app-container {
 
 
 
-          /* v40: keep the program monitor continuously subscribed/published.
+          /* v41: keep the program monitor continuously subscribed/published.
              adaptiveStream can pause/resize subscriptions when an overlay covers the video,
              which is undesirable for a broadcast monitor. */
           const room = new LivekitClient.Room({ adaptiveStream: false, dynacast: true }); state.room = room;
@@ -6261,8 +6261,8 @@ html, body, #main-app-container {
 
               if (isIOStereoTrack) {
                   /* v35: low-latency baseline while raw RTP/JB diagnostics measure the real buffer.
-                     4W stays near-real-time; PGM gets a little more margin. */
-                  const playoutDelay = trackName === 'io_pgm_stereo' ? 0.18 : 0.14;
+                     v41: I/O playout delay fixed at 200ms for both 4W and PGM. */
+                  const playoutDelay = 0.20;
                   callData.playoutDelayBase = playoutDelay;
                   callData.playoutDelay = playoutDelay;
                   callData.playoutStableTicks = 0;
@@ -6514,7 +6514,7 @@ html, body, #main-app-container {
 </script>
 
 
-  <script id="v40-zoom-lock">
+  <script id="v41-zoom-lock">
   (() => {
     // YY-Talk is an operational control surface; prevent accidental pinch/double-tap zoom on touch devices.
     const stopGesture = (e) => { if (e.cancelable) e.preventDefault(); };
