@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 
 <html lang="ja">
-<!-- YY-Talk Broadcast Intercom · v50, based on stable v47 -->
+<!-- YY-Talk Broadcast Intercom · v51, based on stable v47 / v50 improvements -->
 
 <head>
 
@@ -2361,6 +2361,65 @@ html, body, #main-app-container {
 #yy-video-link-diagnostics .yy-video-statline { font-family:'JetBrains Mono',monospace; font-size:11px; line-height:1.6; color:#9da9bc; overflow-wrap:anywhere; }
 #yy-video-link-events { max-height:92px; overflow:auto; white-space:pre-wrap; font-size:10px; font-family:'JetBrains Mono',monospace; color:#8291a5; padding-top:5px; }
 </style>
+
+<style id="v51-ui-adjustments">
+/* v51: 16:9 blank monitor is slightly darker charcoal than v50. */
+#monitor-video-wrapper.video-wrapper.yy-no-video { background:#1b1f24 !important; }
+
+/* v51: PATCH PANEL reorder arrows use precisely the same 28x19px footprint
+   as the batch-select and delete actions, retaining compact two-button groups. */
+#admin-overlay .admin-matrix .matrix-order-btn {
+  width:28px !important;
+  min-width:28px !important;
+  max-width:28px !important;
+  height:19px !important;
+  min-height:19px !important;
+  max-height:19px !important;
+  padding:0 !important;
+  margin:0 !important;
+  flex:0 0 19px;
+  border-radius:4px;
+  font-size:10px;
+  line-height:1;
+}
+#admin-overlay .matrix-order-buttons { gap:2px; }
+
+/* v51: MONITOR NAME / VIDEO SOURCE / VIDEO QUALITY are three equally-sized fields. */
+#admin-video-section .admin-settings-row .setting-group { box-sizing:border-box; min-width:0; }
+#admin-video-section .video-source-row { width:100%; min-width:0; max-width:100%; }
+#admin-video-section #edit-monitor-title,
+#admin-video-section #edit-monitor-source,
+#admin-video-section #edit-video-quality {
+  box-sizing:border-box;
+  width:100% !important;
+  min-width:0 !important;
+  max-width:100% !important;
+}
+/* Three 230px-wide fields in the spacious, horizontal admin layout. */
+@media (min-width:900px) {
+  #admin-video-section .admin-settings-row { flex-direction:row; align-items:flex-end; }
+  #admin-video-section .admin-settings-row .setting-group {
+    width:230px !important;
+    min-width:230px !important;
+    max-width:230px !important;
+    flex:0 0 230px;
+  }
+}
+/* Narrow/stacked layouts: each field fills its available row. */
+@media (max-width:899px) {
+  #admin-video-section .admin-settings-row {
+    flex-direction:column;
+    align-items:stretch;
+    gap:12px;
+  }
+  #admin-video-section .admin-settings-row .setting-group {
+    width:100% !important;
+    min-width:0 !important;
+    max-width:100% !important;
+    flex:0 0 auto;
+  }
+}
+</style>
 </head>
 
 <body onload="if(window.forceResize) window.forceResize()">
@@ -2415,15 +2474,15 @@ html, body, #main-app-container {
 
           </div>
 
-          <div style="display: flex; align-items: center; justify-content: space-between; width: 195px;">
+          <div style="display: flex; align-items: center; justify-content: center; gap: 10px; width: min(100%, 290px);">
 
-            <h2 style="margin: 0; font-size: 16px; font-family: 'JetBrains Mono', monospace; letter-spacing: 2px; color: var(--text-main); white-space: nowrap; line-height: 1;">CONNECT SYSTEM</h2>
+            <h2 style="margin: 0; font-size: 16px; font-family: 'JetBrains Mono', monospace; letter-spacing: 1px; color: var(--text-main); white-space: nowrap; line-height: 1;">Broadcast Intercom</h2>
 
             <i class="fa-solid fa-satellite-dish" style="font-size: 19px; color: var(--blue); line-height: 1; transform: translateY(-1px);"></i>
 
           </div>
 
-          <div class="login-version">YY-Talk Broadcast Intercom &nbsp; v50</div>
+          <div class="login-version">System version V51</div>
 
         </div>
 
