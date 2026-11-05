@@ -13,7 +13,7 @@
 
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
-  <title>YY-Talk PRO v47</title>
+  <title>YY-Talk PRO v47 AirPods Test</title>
   <meta name="theme-color" content="#0a0b0d">
   <meta name="color-scheme" content="dark">
 
@@ -2479,7 +2479,8 @@ html, body, #main-app-container {
 
         <button type="button" id="btn-settings" class="btn-header-icon admin-only" title="設定"><i class="fa-solid fa-gear"></i></button>
 
-        <button type="button" id="btn-show-login" class="btn-header-icon"><i class="fa-solid fa-satellite-dish"></i></button>
+        <button type="button" id="btn-airpods-ptt" class="btn-header-icon" style="display:none" aria-label="AirPods PTT テスト" title="AirPods PTT テスト"><i class="fa-solid fa-headphones"></i></button>
+          <button type="button" id="btn-show-login" class="btn-header-icon"><i class="fa-solid fa-satellite-dish"></i></button>
 
       </div>
 
@@ -6781,6 +6782,197 @@ html, body, #main-app-container {
     }, { passive:false });
   })();
   </script>
+
+
+<style id="yy-airpods-ptt-style">
+  #yy-headset-test-panel {display:none; position:fixed; inset:0; z-index:8500; background:rgba(0,0,0,.82); color:#f3f4f6; align-items:center; justify-content:center; padding:max(18px, env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom)); }
+  #yy-headset-test-panel.open {display:flex;}
+  .yy-headset-test-box {width:min(480px, 100%); max-height:86dvh; overflow:auto; background:#1c1d21; border:1px solid #3a3c42; border-radius:16px; padding:17px; box-shadow:0 15px 65px rgba(0,0,0,.65); font-size:13px; line-height:1.55; -webkit-user-select:text;user-select:text;}
+  .yy-headset-test-box h3 {margin:0 0 7px;color:#38bdf8;font-size:16px}
+  .yy-headset-test-box p {margin:6px 0 10px}
+  .yy-headset-test-box select, .yy-headset-test-box button {font-size:14px; max-width:100%;}
+  .yy-headset-test-box select {height:42px;width:100%;border:1px solid #4b5563;border-radius:8px;background:#111216;color:#fff;padding:8px}
+  .yy-headset-test-actions {display:flex;gap:8px;flex-wrap:wrap;margin:11px 0}
+  .yy-headset-test-actions button, #yy-hptt-close {background:#2b3341;color:#fff;border:1px solid #46617a;border-radius:8px;padding:9px 13px;cursor:pointer;flex:1}
+  .yy-headset-test-actions .armed {background:#0d644d;border-color:#34d399;}
+  #yy-hptt-status {padding:8px;background:#10171d;border:1px solid #26384a;border-radius:8px;white-space:pre-wrap;font:11px/1.55 monospace;overflow-wrap:anywhere;}
+  #yy-hptt-logs {margin-top:7px;padding:8px;min-height:96px;max-height:170px;overflow:auto;background:#101214;border-radius:8px;font:10px/1.5 monospace; white-space:pre-wrap;overflow-wrap:anywhere;color:#bdc7d4;}
+  #btn-airpods-ptt {border-color:#38bdf8;color:#38bdf8;}
+</style>
+<div id="yy-headset-test-panel" aria-hidden="true">
+  <div class="yy-headset-test-box" role="dialog" aria-label="AirPods PTT 検証">
+    <div style="display:flex;align-items:center;gap:8px"><h3 style="flex:1">AirPods PTT · 検証版</h3><button type="button" id="yy-hptt-close" style="flex:0 0 55px">閉じる</button></div>
+    <p>v47をベースに、iOSのマイクミュート操作がWebアプリへ届くか確認します。<strong>最初は監視のみ</strong>で送信状態を変えません。</p>
+    <div><label for="yy-hptt-party">PTT送信先パーティー</label><select id="yy-hptt-party"><option value="">接続してパーティーを選択してください</option></select></div>
+    <div class="yy-headset-test-actions">
+      <button type="button" id="yy-hptt-watch">監視を開始</button>
+      <button type="button" id="yy-hptt-arm">PTTを有効化</button>
+    </div>
+    <label style="display:block;padding:6px 0 10px;line-height:1.5;color:#f0ddbf;"><input id="yy-hptt-unmute-action" type="checkbox" style="margin-right:6px;transform:scale(1.1)">Trackのmute/unmuteでもPTT切替（危険性を理解して実験）</label>
+    <div class="yy-headset-test-actions"><button type="button" id="yy-hptt-test">画面でPTT動作確認</button><button type="button" id="yy-hptt-reset">ログ消去</button></div>
+    <div id="yy-hptt-status">状態: 未開始</div>
+    <div id="yy-hptt-logs" aria-live="polite">AirPodsを接続し、YY-TalkでJOIN後に監視を開始してください。</div>
+    <p style="font-size:11px;color:#e2b785">注意：PTT有効時、選択パーティーへ実際にマイク音声を送る可能性があります。必ずテスト用ROOMで試してください。マイクTrackのmute/unmuteは回線断やデバイス切替でも起こり得るため、診断ログで確認できた場合でもWebアプリによるAirPods制御の確実性は保証されません。</p>
+  </div>
+</div>
+<script id="yy-airpods-web-ptt-experimental">
+(() => {
+  // Separate experimental feature: no v48/v49 media-key or silent-audio workaround.
+  const $h = id => document.getElementById(id);
+  const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const entry = $h('btn-airpods-ptt');
+  if (entry && isiOS) entry.style.display = 'inline-flex';
+  const panel=$h('yy-headset-test-panel'), select=$h('yy-hptt-party');
+  const stat=$h('yy-hptt-status'), logArea=$h('yy-hptt-logs');
+  const guard = {watching:false,armed:false,talking:false,lastMicGesture:0,lastMutedSource:null,lastEventAt:0, micGestureCount:0,trackMuteCount:0,api:'未登録',tracks:new Map(),timer:null, handler:false, changedTalk:false};
+  const isReady=()=>typeof state==='object' && state.room?.state==='connected' && !state.ioBridge?.enabled;
+  function stamp(){return new Date().toLocaleTimeString('ja-JP',{hour12:false});}
+  function log(msg){
+    logArea.textContent = '['+stamp()+'] '+msg+'\n'+(logArea.textContent||'').slice(0,2200);
+    refreshStatus();
+  }
+  function channel(){return state?.channels?.find(c=>c.id===select.value && c.type!=='Listen');}
+  function refreshParties(){
+    const current=select.value;
+    const targets=(typeof state==='object' && Array.isArray(state.channels)) ? state.channels.filter(c=>c?.id!=='ch-video' && c.type!=='Listen') : [];
+    const sig=targets.map(c=>c.id+':'+c.name).join('|');
+    if (select.dataset.signature===sig) return;
+    select.dataset.signature=sig;
+    select.innerHTML='';
+    const empty=document.createElement('option');empty.value='';empty.textContent='送信先パーティーを選択';select.appendChild(empty);
+    targets.forEach(c=>{const option=document.createElement('option');option.value=c.id;option.textContent=c.name || c.id;select.appendChild(option)});
+    if (targets.some(c=>c.id===current)) select.value=current;
+  }
+  function refreshStatus(){
+    const raw=state?.localStream?.getAudioTracks?.()?.[0];
+    const sent=state?.localMicTrack?.mediaStreamTrack;
+    stat.textContent = '監視: '+(guard.watching?'ON':'OFF')+' / PTT: '+(guard.armed?(guard.talking?'TALK ON':'TALK OFF'):'無効')+'\n'
+      +'MediaSession togglemicrophone: '+guard.api+' / '+guard.micGestureCount+'回\n'
+      +'MediaStreamTrack mute/unmute: '+guard.trackMuteCount+'回\n'
+      +'JOIN: '+(isReady()?'OK':'未接続 / I/Oモード')+' / 選択: '+(channel()?.name||'なし')+'\n'
+      +'source track: '+(raw?.readyState||'なし')+' / muted='+(raw?.muted??'-')+' / enabled='+(raw?.enabled??'-')+'\n'
+      +'publish track: '+(sent?.readyState||'なし')+' / muted='+(sent?.muted??'-')+' / enabled='+(sent?.enabled??'-');
+    $h('yy-hptt-arm').classList.toggle('armed',guard.armed);
+    $h('yy-hptt-arm').textContent=guard.armed?'PTTを解除（送信OFF）':'PTTを有効化';
+  }
+  function updateMicFlag(talking){
+    try { navigator.mediaSession?.setMicrophoneActive?.(!!talking); } catch(_){}
+  }
+  function applyPTT(talking,origin){
+    if (!guard.armed) { log('受信したが未アーム: '+origin); return; }
+    if (!isReady() || !channel()) { log('PTT未実行（JOINまたは送信先なし）: '+origin); return; }
+    const chId=channel().id;
+    // Only one explicitly selected party; avoid transmitting to other parties.
+    (state.channels||[]).forEach(c=>{
+      if(c.id!==chId && state.talkStates[c.id] === true){state.talkStates[c.id]=false;const card=$h('card-'+c.id);card?.classList.remove('talk-on');}
+    });
+    state.talkStates[chId]=!!talking;
+    const card=$h('card-'+chId);card?.classList.toggle('talk-on',!!talking);
+    state.isMasterMicMuted=!talking;
+    guard.talking=!!talking;
+    if(typeof updateAudioRouting==='function') updateAudioRouting();
+    if(typeof updateChannelIcons==='function') updateChannelIcons();
+    if(typeof syncTalkStates==='function') syncTalkStates();
+    updateMicFlag(talking);
+    log(origin+': '+(talking?'TALK ON':'TALK OFF')+' ['+(channel().name||chId)+']');
+  }
+  function attachedTracks(){
+    const list=[];const a=state?.localStream?.getAudioTracks?.()[0];
+    const b=state?.localMicTrack?.mediaStreamTrack;
+    if(a?.kind==='audio')list.push(['source',a]);if(b?.kind==='audio' && b!==a)list.push(['publish',b]);return list;
+  }
+  function addTrackObservers(){
+    if(!guard.watching)return;
+    for(const [label,track] of attachedTracks()){
+      if(guard.tracks.has(track)) continue;
+      const onMute=()=>{
+        guard.trackMuteCount++;guard.lastMicGesture=Date.now();
+        log('Track '+label+' MUTE: muted='+track.muted+' (AirPods操作または音声断の可能性)');
+        if (label==='source' || !state?.localStream?.getAudioTracks?.()?.[0]) {
+          guard.lastMutedSource=track;
+          if(guard.armed) applyPTT(false,'track mute');
+        }
+      };
+      const onUnmute=()=>{
+        guard.trackMuteCount++;
+        log('Track '+label+' UNMUTE: muted='+track.muted+' (復旧による誤検出の可能性あり)');
+        // A device recovery can also fire unmute. Off by default; explicit opt-in only.
+        if ((label==='source' || !state?.localStream?.getAudioTracks?.()?.[0]) && guard.armed &&
+            $h('yy-hptt-unmute-action')?.checked && guard.lastMutedSource===track && !document.hidden) {
+          guard.lastMutedSource=null;
+          applyPTT(true,'track unmute (実験モード)');
+        }
+      };
+      track.addEventListener('mute',onMute);
+      track.addEventListener('unmute',onUnmute);
+      guard.tracks.set(track,{onMute,onUnmute,label});
+      log('Track '+label+' 監視開始 ('+track.readyState+')');
+    }
+  }
+  function registerMediaSession(){
+    const ms=navigator.mediaSession;
+    if (!ms?.setActionHandler){guard.api='API未対応';log('MediaSession APIがありません');return;}
+    try {
+      ms.setActionHandler('togglemicrophone',()=>{
+        guard.micGestureCount++;
+        log('MediaSession togglemicrophone を受信');
+        if(guard.armed)applyPTT(!guard.talking,'AirPods/OS togglemicrophone');
+      });
+      guard.api='登録成功（受信は未確認）';
+      // Do not hijack play/pause or start any looping silent media.
+      log('togglemicrophone を登録（play/pauseは使いません）');
+    }catch(e){guard.api='登録不可: '+(e?.name||e);log(guard.api);}
+  }
+  function stopWatching(){
+    guard.watching=false;
+    for(const [track,v] of guard.tracks){try{track.removeEventListener('mute',v.onMute);track.removeEventListener('unmute',v.onUnmute)}catch(_){}}
+    guard.tracks.clear();
+    try{navigator.mediaSession?.setActionHandler?.('togglemicrophone',null)}catch(_){}
+    clearInterval(guard.timer);guard.timer=null;guard.api='未登録';
+    refreshStatus();
+  }
+  function startWatching(){
+    if(!isReady()){log('先に接続してください（I/O BRIDGEでは使えません）');return;}
+    guard.watching=true;registerMediaSession();addTrackObservers();
+    if(!guard.timer)guard.timer=setInterval(()=>{if(!guard.watching)return;refreshParties();addTrackObservers();refreshStatus();},750);
+    log('監視開始。AirPodsのステムを押して変化を確認してください。');refreshStatus();
+  }
+  function disarm(){
+    if(guard.armed){applyPTT(false,'PTT解除');guard.armed=false;guard.talking=false;guard.lastMutedSource=null;}
+    refreshStatus();
+  }
+  entry?.addEventListener('click',()=>{panel.classList.add('open');panel.setAttribute('aria-hidden','false');refreshParties();refreshStatus()});
+  $h('yy-hptt-close')?.addEventListener('click',()=>{panel.classList.remove('open');panel.setAttribute('aria-hidden','true');});
+  $h('yy-hptt-watch')?.addEventListener('click',()=>{
+    if(guard.watching){disarm();stopWatching();log('監視を停止しました');$h('yy-hptt-watch').textContent='監視を開始';}
+    else{startWatching();if(guard.watching)$h('yy-hptt-watch').textContent='監視を停止';}
+  });
+  $h('yy-hptt-arm')?.addEventListener('click',()=>{
+    if(guard.armed){disarm();log('PTT解除');return;}
+    if(!guard.watching)startWatching();
+    if(!isReady() || !channel()){log('送信先を選び、JOINしてください。');return;}
+    guard.armed=true;
+    guard.lastMutedSource=null;
+    applyPTT(false,'PTT開始時の安全ミュート');
+    log('PTT実験を有効化。初期状態はTALK OFF。');refreshStatus();
+  });
+  $h('yy-hptt-test')?.addEventListener('click',()=>{
+    if(!guard.armed){log('先にPTTを有効化してください');return;}
+    applyPTT(!guard.talking,'画面テスト');
+  });
+  $h('yy-hptt-reset')?.addEventListener('click',()=>{logArea.textContent='';guard.trackMuteCount=0;guard.micGestureCount=0;refreshStatus()});
+  select?.addEventListener('change',()=>{if(guard.armed)applyPTT(false,'送信先切替');refreshStatus();});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden && guard.armed)applyPTT(false,'アプリ非表示時の安全ミュート')});
+  window.addEventListener('pagehide',()=>{if(guard.armed)applyPTT(false,'終了時の安全ミュート')});
+  // Core app changes mic state independently: keep status UI in sync; do not auto-open mic.
+  setInterval(()=>{
+    if(!guard.armed || !guard.watching)return;
+    if(!isReady()){disarm();log('接続断 / I/O BRIDGE移行のためPTT停止');return;}
+    const s=state.talkStates[select.value]===true && !state.isMasterMicMuted;
+    if(guard.talking!==s){guard.talking=s;refreshStatus();}
+  },1200);
+})();
+</script>
 
 </body>
 
