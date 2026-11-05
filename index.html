@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 
 <html lang="ja">
-<!-- YY-Talk PRO Brush-up v47 | AirPods OS Mute Test: separate diagnostic build, original v47 unchanged -->
+<!-- YY-Talk Broadcast Intercom · v50, based on stable v47 -->
 
 <head>
 
@@ -13,7 +13,9 @@
 
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
-  <title>YY-Talk PRO v47 | AirPods OS Mute 診断版</title>
+  <title>YY-Talk Broadcast Intercom</title>
+  <meta name="application-name" content="YY-Talk Broadcast Intercom">
+  <meta name="apple-mobile-web-app-title" content="YY-Talk Broadcast Intercom">
   <meta name="theme-color" content="#0a0b0d">
   <meta name="color-scheme" content="dark">
 
@@ -2339,6 +2341,26 @@ html, body, #main-app-container {
   .header-right { gap:2px !important; }
 }
 </style>
+<style id="v50-operator-improvements">
+/* Blank monitor must show muted charcoal, not an implied black picture. */
+#monitor-video-wrapper.video-wrapper.yy-no-video { background:#292d33 !important; }
+#monitor-video-wrapper.yy-no-video video,
+#monitor-video-wrapper.yy-no-video #yy-video-hold-frame { display:none !important; }
+#monitor-video-wrapper.yy-no-video .video-dummy-text { color:#89909d !important; }
+/* Reserve a usable device-name width even when the current value is OFF. */
+.video-source-row { width:max-content; max-width:100%; }
+#edit-monitor-source { box-sizing:border-box; width:320px; min-width:min(320px, calc(100vw - 82px)); max-width:min(320px, calc(100vw - 82px)); }
+.matrix-order-buttons { display:inline-flex; gap:2px; align-items:center; justify-content:center; flex-shrink:0; }
+.admin-matrix .matrix-order-btn { width:23px; height:23px; min-width:23px; padding:0; border:1px solid #4e719b; border-radius:5px; background:#273b55; color:#eef5ff !important; font-size:12px; font-weight:700; cursor:pointer; }
+.admin-matrix .matrix-order-btn:hover { background:#3b597c; color:#fff; }
+.admin-matrix .matrix-order-btn:disabled { opacity:.26; cursor:default; }
+.admin-matrix .matrix-order-btn:focus-visible { outline:2px solid #60a5fa; outline-offset:1px; }
+.matrix-user-header .matrix-order-buttons { margin-top:3px; }
+#admin-overlay .admin-matrix td.ch-cell, #admin-overlay .admin-matrix .diagonal-header { width:292px !important; min-width:292px !important; max-width:292px !important; }
+#yy-video-link-diagnostics { margin-top:12px; }
+#yy-video-link-diagnostics .yy-video-statline { font-family:'JetBrains Mono',monospace; font-size:11px; line-height:1.6; color:#9da9bc; overflow-wrap:anywhere; }
+#yy-video-link-events { max-height:92px; overflow:auto; white-space:pre-wrap; font-size:10px; font-family:'JetBrains Mono',monospace; color:#8291a5; padding-top:5px; }
+</style>
 </head>
 
 <body onload="if(window.forceResize) window.forceResize()">
@@ -2401,7 +2423,7 @@ html, body, #main-app-container {
 
           </div>
 
-          <div class="login-version">YY-Talk PRO &nbsp; v47</div>
+          <div class="login-version">YY-Talk Broadcast Intercom &nbsp; v50</div>
 
         </div>
 
@@ -2421,9 +2443,9 @@ html, body, #main-app-container {
 
         </div>
 
-        <button type="button" id="btn-join-member" class="btn-reload btn-join-member">接続 (Connect)</button>
+        <button type="button" id="btn-join-member" class="btn-reload btn-join-member">接続</button>
 
-        <button type="button" id="btn-join-admin" class="btn-reload btn-join-admin">管理者接続 (Admin)</button>
+        <button type="button" id="btn-join-admin" class="btn-reload btn-join-admin">管理者接続</button>
 
         <button type="button" id="btn-stop" class="btn-reload btn-stop">切断 (Disconnect)</button>
 
@@ -2513,7 +2535,7 @@ html, body, #main-app-container {
 
                 <div class="setting-group"><label>MONITOR NAME</label><input type="text" id="edit-monitor-title" value="MONITOR"></div>
 
-                <div class="setting-group"><label>VIDEO SOURCE</label><div class="video-source-row"><select id="edit-monitor-source"><option value="off">OFF</option><option value="screen">画面共有</option></select><button type="button" id="btn-refresh-video-sources" class="btn-refresh-video-source" title="映像入力を再検索" aria-label="映像入力を再検索"><i class="fa-solid fa-rotate"></i></button></div></div>
+                <div class="setting-group"><label>VIDEO SOURCE</label><div class="video-source-row"><select id="edit-monitor-source"><option value="off">OFF</option><option value="screen">画面共有</option></select></div></div>
 
                 <div class="setting-group"><label>VIDEO QUALITY</label>
 
@@ -2589,7 +2611,7 @@ html, body, #main-app-container {
 
       <div class="video-container">
 
-        <div class="video-wrapper" id="monitor-video-wrapper">
+        <div class="video-wrapper yy-no-video" id="monitor-video-wrapper">
 
           <div class="monitor-label" id="main-monitor-title">MONITOR</div>
 
@@ -2726,7 +2748,7 @@ html, body, #main-app-container {
               buildSec('4W INTERFACE (OUT)', 'OUTPUT DEVICE (SPK)', 'select-4w-out-device', [{label:'PL ➔ OUT 1(L)', id:'4w-out-l'}, {label:'PL ➔ OUT 2(R)', id:'4w-out-r'}]) +
 
               buildSec('PGM INTERFACE (IN ONLY)', 'PGM INPUT DEVICE (MIC)', 'select-pgm-in-device', [{label:'PGM 1(L) ➔ PL', id:'pgm-in-l'}, {label:'PGM 2(R) ➔ PL', id:'pgm-in-r'}]) +
-              `<div class="io-interface-section"><h4 class="interface-title">I/O LINK DIAGNOSTICS</h4><div class="io-card" style="font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.7;color:var(--text-sub);"><div id="io-tx-diag-4w">4W TX: waiting...</div><div id="io-tx-diag-pgm">PGM TX: waiting...</div><div id="io-rx-diag-4w">4W RX: waiting...</div><div id="io-rx-diag-pgm">PGM RX: waiting...</div><div id="io-audio-priority-state" style="margin-top:6px;color:#38bdf8;">AUDIO PRIORITY: OFF</div><div style="margin-top:5px;font-size:10px;opacity:.75;">TX/RX PPS=packets/s / kbps=bitrate / JIT=jitter / LOSS=loss / CONC=conceal events / CMS=concealed audio ms / JB=recent jitter-buffer ms / PD=requested playout delay</div><button id="btn-refresh-io-devices" class="btn-global" type="button" style="margin-top:10px;width:100%;justify-content:center;"><i class="fa-solid fa-rotate"></i>&nbsp; AUDIO DEVICE RESCAN</button></div></div>`;
+              `<div class="io-interface-section"><h4 class="interface-title">I/O LINK DIAGNOSTICS</h4><div class="io-card" style="font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.7;color:var(--text-sub);"><div id="io-tx-diag-4w">4W TX: waiting...</div><div id="io-tx-diag-pgm">PGM TX: waiting...</div><div id="io-rx-diag-4w">4W RX: waiting...</div><div id="io-rx-diag-pgm">PGM RX: waiting...</div><div id="io-audio-priority-state" style="margin-top:6px;color:#38bdf8;">AUDIO PRIORITY: OFF</div><div style="margin-top:5px;font-size:10px;opacity:.75;">TX/RX PPS=packets/s / kbps=bitrate / JIT=jitter / LOSS=loss / CONC=conceal events / CMS=concealed audio ms / JB=recent jitter-buffer ms / PD=requested playout delay</div></div></div>`;
 
         }
 
@@ -2785,7 +2807,7 @@ html, body, #main-app-container {
         
 
         async function toggleAction(newState) {
-
+            if (!state.isAdmin) return;
             state.ioBridge.enabled = newState; st.textContent = newState ? "ON" : "OFF"; tw.classList.toggle('active', newState);
 
             if (typeof updateIoElementsState === 'function') updateIoElementsState(); if (typeof updatePttButtonsState === 'function') updatePttButtonsState();
@@ -3301,7 +3323,16 @@ html, body, #main-app-container {
             }
             if(!target || !tr) return;
             const sameRow = Math.abs(fy-(tr.top+tr.height/2)) < Math.max(22, tr.height*0.48);
-            const before = sameRow ? fx < tr.left+tr.width/2 : fy < tr.top+tr.height/2;
+            const singleColumn = getComputedStyle(container).gridTemplateColumns.trim().split(/\s+/).length === 1;
+            const movingUp = ev.clientY < drag.startY - 5;
+            const movingDown = ev.clientY > drag.startY + 5;
+            /* Crossing just ~15% of the adjacent card is enough to exchange slots,
+               instead of dragging past the other card's midpoint. */
+            const before = singleColumn
+              ? (movingUp ? nextTop < tr.bottom - Math.min(18, tr.height * .15)
+                 : movingDown ? !(nextTop + drag.height > tr.top + Math.min(18, tr.height * .15))
+                 : fy < tr.top+tr.height/2)
+              : (sameRow ? fx < tr.left+tr.width/2 : fy < tr.top+tr.height/2);
             const targetKey = `${target.id}:${before?'before':'after'}`;
             if (targetKey === drag.lastTarget) return;
             drag.lastTarget = targetKey;
@@ -3615,7 +3646,7 @@ html, body, #main-app-container {
     }
 
     function scheduleIoStartupPrime(reason = 'startup', delay = 1200) {
-      if (!state.ioBridge?.enabled) return;
+      if (!state.isAdmin || !state.ioBridge?.enabled) return;
       clearTimeout(state.ioStartupPrimeTimer);
       state.ioStartupPrimeTimer = setTimeout(async () => {
         state.ioStartupPrimeTimer = null;
@@ -4255,11 +4286,12 @@ html, body, #main-app-container {
         if (deviceId === 'off') {
           state.currentVideoSourceId = 'off'; state.activeVideoSender = null;
           saveRoomState(); sendData({ type:'update-video-sender', senderId:null, sourceText:'OFF' });
-          if(mst) mst.textContent='[ NO VIDEO ]'; clearVideoHoldFrame(); return true;
+          if(mst) mst.textContent='[ NO VIDEO ]'; setMonitorNoVideo(true); clearVideoHoldFrame(); return true;
         }
 
         state.activeVideoSender = state.myUserId;
         state.currentVideoSourceId = deviceId;
+        state.videoTxPrevStats = null; state.videoTxStallTicks = 0; state.videoStallChecks = 0; yyVideoStatsPrev.tx = null;
         const sourceText = deviceId === 'screen' ? 'SCREEN SHARE' : 'CAMERA';
         /* v47: sender-selected quality is the ceiling.  Publish three simulcast levels when
            possible so each receiver can automatically move between 128 kbps and that ceiling. */
@@ -4302,7 +4334,7 @@ html, body, #main-app-container {
           if (!rawTrack) throw new Error('Camera video track was not created');
           try { rawTrack.contentHint = 'motion'; } catch(e) {}
           rawTrack.addEventListener('ended', () => scheduleLocalVideoRecovery('capture ended'));
-          rawTrack.addEventListener('mute', () => setTimeout(() => { if (rawTrack.muted) scheduleLocalVideoRecovery('capture muted >3s'); }, 3000));
+          rawTrack.addEventListener('mute', () => setTimeout(() => { if (rawTrack.muted && rawTrack.readyState === 'live') scheduleLocalVideoRecovery('capture muted >8s'); }, 8000));
           const localVideoTrack = new LivekitClient.LocalVideoTrack(rawTrack);
           await state.room.localParticipant.publishTrack(localVideoTrack, { name:'camera', source:LivekitClient.Track.Source.Camera, simulcast:sim, videoEncoding:enc, videoSimulcastLayers, degradationPreference:'maintain-framerate' });
           state.currentLocalVideoTrack = localVideoTrack;
@@ -4322,7 +4354,7 @@ html, body, #main-app-container {
         uiLog(`Video source failed: ${err?.message || err}`, '#ef4444');
         if (!watchdog) {
           if(editMonitorSrc) editMonitorSrc.value='off'; state.activeVideoSender=null;
-          sendData({ type:'update-video-sender', senderId:null, sourceText:'OFF' }); if(mst) mst.textContent='[ NO VIDEO ]';
+          sendData({ type:'update-video-sender', senderId:null, sourceText:'OFF' }); if(mst) mst.textContent='[ NO VIDEO ]'; setMonitorNoVideo(true);
         }
         return false;
       } finally {
@@ -4397,8 +4429,14 @@ html, body, #main-app-container {
       }
       if (state.isAdmin && state.activeVideoSender === state.myUserId && state.currentLocalVideoTrack && state.currentVideoSourceId && !['off','screen'].includes(state.currentVideoSourceId) && !document.hidden) {
         const mt = state.currentLocalVideoTrack.mediaStreamTrack;
-        if (!mt || mt.readyState !== 'live' || mt.muted) {
-          scheduleLocalVideoRecovery('local video track unhealthy');
+        if (!mt || mt.readyState !== 'live') {
+          scheduleLocalVideoRecovery('local video track ended');
+        } else if (mt.muted) {
+          /* Short capture-card mute edges are common. Give the existing 8s
+             track handler time before any reopen, rather than tearing down
+             capture immediately for a single muted stats sample. */
+          state.videoStallChecks = (state.videoStallChecks || 0) + 1;
+          if (state.videoStallChecks >= 6) scheduleLocalVideoRecovery('local video muted continuously');
         } else {
           /* v47: do not use DOM/video-paint cadence as a capture watchdog. Browsers may
              throttle requestVideoFrameCallback while menus/overlays cover the monitor.
@@ -4486,7 +4524,7 @@ html, body, #main-app-container {
       const c = getVideoHoldCanvas(); if (!c) return false;
       try {
         const ratio = videoEl.videoWidth / videoEl.videoHeight || (16/9);
-        const w = Math.min(960, Math.max(320, videoEl.videoWidth));
+        const w = Math.min(640, Math.max(320, videoEl.videoWidth));
         const h = Math.max(180, Math.round(w / ratio));
         if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
         const ctx = c.getContext('2d', { alpha:false });
@@ -4558,6 +4596,79 @@ html, body, #main-app-container {
     }
     setInterval(pollLocalVideoSenderHealth, 1800);
 
+    function setMonitorNoVideo(noVideo) {
+      const wrap = $('monitor-video-wrapper');
+      wrap?.classList.toggle('yy-no-video', !!noVideo);
+      if (noVideo) hideVideoHoldFrame();
+    }
+
+    /* v50: instrument genuine encoding/RTP/decoder issues so occasional video
+       interruptions can be traced to source, sender, network or decoder. */
+    const yyVideoIncidents = [];
+    function yyVideoNote(message) {
+      const line = new Date().toLocaleTimeString('ja-JP', {hour12:false}) + ' ' + message;
+      yyVideoIncidents.unshift(line); yyVideoIncidents.length = Math.min(yyVideoIncidents.length, 24);
+      const el=$('yy-video-link-events'); if (el) el.textContent=yyVideoIncidents.slice(0,10).join('\n');
+      uiLog('VIDEO: '+message,'#8ba7cc');
+    }
+    const yyVideoStatsPrev = { tx:null, rx:null, rxTrack:null };
+    async function yyReadVideoStats(track, direction) {
+      try {
+        const report = await track?.getRTCStatsReport?.();
+        if (!report) return null;
+        let main = null;
+        report.forEach(st=>{
+          if(st.type===direction+'-rtp' && (st.kind==='video'||st.mediaType==='video')) {
+            if (!main || Number(st.bytesReceived||st.bytesSent||0) > Number(main.bytesReceived||main.bytesSent||0)) main=st;
+          }
+        });
+        return main;
+      } catch(e) { return null; }
+    }
+    async function yySampleVideoHealth() {
+      if (!state.room || state.room.state!=='connected') return;
+      const tx = state.activeVideoSender===state.myUserId ? await yyReadVideoStats(state.currentLocalVideoTrack,'outbound') : null;
+      const rxTrack=state.monitorAttachedVideoTrack;
+      if (rxTrack !== yyVideoStatsPrev.rxTrack) { yyVideoStatsPrev.rx=null; yyVideoStatsPrev.rxTrack=rxTrack; }
+      const rx=rxTrack ? await yyReadVideoStats(rxTrack,'inbound') : null;
+      const rows=[];
+      const txLine=$('yy-video-link-tx'); const rxLine=$('yy-video-link-rx');
+      if(tx) {
+        const prev=yyVideoStatsPrev.tx;
+        const dt=prev?Math.max(.1,(Number(tx.timestamp)-Number(prev.timestamp))/1000):0;
+        const fd=prev?Number(tx.framesEncoded||0)-Number(prev.framesEncoded||0):0;
+        const kb=prev&&dt>0?Math.max(0,(Number(tx.bytesSent||0)-Number(prev.bytesSent||0))*8/dt/1000):0;
+        const fps=dt>0?Math.max(0,fd/dt):0;
+        if(txLine) txLine.textContent=`送信: ${fps.toFixed(1)}fps / ${kb.toFixed(0)}kbps / frames ${Number(tx.framesEncoded||0)} / NACK ${Number(tx.nackCount||0)}`;
+        if(prev && dt>0 && fd===0 && state.videoCaptureStream?.getVideoTracks?.().some(t=>t.readyState==='live'&&!t.muted)) yyVideoNote('送信側エンコード停止を検出（約'+dt.toFixed(1)+'秒）');
+        yyVideoStatsPrev.tx={timestamp:tx.timestamp,framesEncoded:tx.framesEncoded,bytesSent:tx.bytesSent};
+      } else if(txLine) txLine.textContent=state.activeVideoSender===state.myUserId?'送信: 診断値を取得できません':'送信: この端末は映像送信なし';
+      if(rx) {
+        const prev=yyVideoStatsPrev.rx;
+        const dt=prev?Math.max(.1,(Number(rx.timestamp)-Number(prev.timestamp))/1000):0;
+        const decoded=prev?Number(rx.framesDecoded||0)-Number(prev.framesDecoded||0):0;
+        const lost=prev?Math.max(0,Number(rx.packetsLost||0)-Number(prev.packetsLost||0)):0;
+        const received=prev?Math.max(0,Number(rx.packetsReceived||0)-Number(prev.packetsReceived||0)):0;
+        const pct=received+lost?lost*100/(received+lost):0;
+        const freezeCount=Number(rx.freezeCount||0);
+        if(rxLine) rxLine.textContent=`受信: ${dt>0?(Math.max(0,decoded/dt)).toFixed(1):'-'}fps / loss ${pct.toFixed(1)}% / jitter ${(Number(rx.jitter||0)*1000).toFixed(1)}ms / freeze ${freezeCount}`;
+        if(prev && freezeCount>Number(prev.freezeCount||0)) yyVideoNote(`受信デコーダ停止 +${freezeCount-Number(prev.freezeCount||0)} / loss ${pct.toFixed(1)}%`);
+        else if(prev && dt>0 && decoded===0 && state.activeVideoSender && (!state.yyLastRxFreezeNoteAt || Date.now()-state.yyLastRxFreezeNoteAt>10000)) { yyVideoNote(`映像デコード進行なし ${dt.toFixed(1)}秒 / loss ${pct.toFixed(1)}%`); state.yyLastRxFreezeNoteAt=Date.now(); }
+        yyVideoStatsPrev.rx={timestamp:rx.timestamp,framesDecoded:rx.framesDecoded,freezeCount:rx.freezeCount,packetsLost:rx.packetsLost,packetsReceived:rx.packetsReceived};
+      } else if(rxLine) rxLine.textContent=state.activeVideoSender===state.myUserId?'受信: 自局送信':'受信: 映像Trackなし／統計未取得';
+    }
+    setInterval(yySampleVideoHealth,3000);
+    (function setupVideoDiagnosticPanel(){
+      const host=$('admin-video-section'); if(!host) return;
+      const panel=document.createElement('div'); panel.id='yy-video-link-diagnostics'; panel.className='io-interface-section';
+      panel.innerHTML=`<h4 class="interface-title">VIDEO LINK DIAGNOSTICS</h4><div class="io-card"><div id="yy-video-link-tx" class="yy-video-statline">送信: 待機中</div><div id="yy-video-link-rx" class="yy-video-statline">受信: 待機中</div><div id="yy-video-link-events"></div><button type="button" id="yy-video-copy-diag" class="btn-global" style="margin-top:8px;">診断ログをコピー</button></div>`;
+      host.appendChild(panel);
+      $('yy-video-copy-diag').onclick=async()=>{
+        const log=['YY-Talk Broadcast Intercom video diagnostics', $('yy-video-link-tx')?.textContent||'', $('yy-video-link-rx')?.textContent||'', ...yyVideoIncidents].join('\n');
+        try{await navigator.clipboard.writeText(log);}catch(e){window.prompt('診断ログをコピー',log);}
+      };
+    })();
+
     function getMonitorVideoElement() {
       const mw = $('monitor-video-wrapper'); if (!mw) return null;
       let videoEl = state.monitorVideoEl;
@@ -4571,8 +4682,8 @@ html, body, #main-app-container {
         mw.appendChild(videoEl); state.monitorVideoEl = videoEl;
         const retry = () => { if (videoEl.srcObject && videoEl.paused) videoEl.play().catch(()=>{}); };
         const holdAndRetry = () => { captureVideoHoldFrame(videoEl); showVideoHoldFrame(); retry(); };
-        videoEl.addEventListener('waiting', holdAndRetry);
-        videoEl.addEventListener('stalled', holdAndRetry);
+        videoEl.addEventListener('waiting', () => {yyVideoNote('映像再生 waiting'); holdAndRetry();});
+        videoEl.addEventListener('stalled', () => {yyVideoNote('映像再生 stalled'); holdAndRetry();});
         videoEl.addEventListener('emptied', () => showVideoHoldFrame());
         videoEl.addEventListener('playing', () => { state.lastVideoFrameAt = Date.now(); });
         if (typeof videoEl.requestVideoFrameCallback === 'function') {
@@ -4580,7 +4691,7 @@ html, body, #main-app-container {
             if (!videoEl.isConnected) return;
             if (!videoEl.paused && videoEl.readyState >= 2) {
               const now=Date.now(); state.lastVideoFrameAt=now;
-              if (!state.videoHoldCapturedAt || now-state.videoHoldCapturedAt > 650) captureVideoHoldFrame(videoEl);
+              if (!state.videoHoldCapturedAt || now-state.videoHoldCapturedAt > 1800) captureVideoHoldFrame(videoEl);
               if (state.videoHoldVisible) hideVideoHoldFrame();
             }
             videoEl.requestVideoFrameCallback(frameBeat);
@@ -4589,7 +4700,7 @@ html, body, #main-app-container {
         } else {
           videoEl.addEventListener('timeupdate', () => {
             const now=Date.now(); state.lastVideoFrameAt=now;
-            if (!state.videoHoldCapturedAt || now-state.videoHoldCapturedAt > 650) captureVideoHoldFrame(videoEl);
+            if (!state.videoHoldCapturedAt || now-state.videoHoldCapturedAt > 1800) captureVideoHoldFrame(videoEl);
             if (state.videoHoldVisible) hideVideoHoldFrame();
           });
         }
@@ -4602,6 +4713,7 @@ html, body, #main-app-container {
       const videoEl = getMonitorVideoElement();
       const raw = stream?.getVideoTracks?.()[0];
       if (!videoEl || !raw) return;
+      setMonitorNoVideo(false);
       if (state.monitorAttachedVideoTrack) {
         try { state.monitorAttachedVideoTrack.detach(videoEl); } catch(e) {}
         state.monitorAttachedVideoTrack = null;
@@ -4618,6 +4730,7 @@ html, body, #main-app-container {
 
     function attachVideoTrack(track) {
       const videoEl = getMonitorVideoElement(); if (!videoEl || !track) return;
+      setMonitorNoVideo(false);
       captureVideoHoldFrame(videoEl); showVideoHoldFrame();
       if (state.monitorAttachedVideoTrack && state.monitorAttachedVideoTrack !== track) {
         try { state.monitorAttachedVideoTrack.detach(videoEl); } catch(e) {}
@@ -4631,12 +4744,19 @@ html, body, #main-app-container {
     }
 
     function detachVideoTrack(track, { clear = false } = {}) {
+      /* An old publication can unsubscribe after a newer one has already attached.
+         Detaching that stale track from the shared monitor element flashes black. */
+      if (track && state.monitorAttachedVideoTrack && track !== state.monitorAttachedVideoTrack) {
+        yyVideoNote('旧映像Trackの遅延解除を無視（表示中の映像を維持）');
+        return;
+      }
       const videoEl = state.monitorVideoEl;
       if (videoEl) { captureVideoHoldFrame(videoEl); if (!clear) showVideoHoldFrame(); }
       if (track && videoEl) { try { track.detach(videoEl); } catch(e) { try { track.detach(); } catch(_) {} } }
       if (!track || state.monitorAttachedVideoTrack === track) {
         state.monitorAttachedVideoTrack = null;
         if (clear) {
+          setMonitorNoVideo(true);
           if (videoEl) { try { videoEl.pause(); } catch(e) {} try { videoEl.srcObject = null; } catch(e) {} }
           clearVideoHoldFrame();
           const mst = $('main-monitor-source-text'); if(mst) mst.style.display = 'block';
@@ -4658,7 +4778,16 @@ html, body, #main-app-container {
 
         if(!state.roomId) return; 
 
-        const data = { channels: state.channels, userAssignments: state.userAssignments, tallyAssignments: state.tallyAssignments, registeredUsers: state.registeredUsers, monitorTitle: state.monitorTitle, videoQuality: state.videoQuality, ioBridge: state.ioBridge, layout: state.layout }; 
+        /* A member may save cards/layout, but must never persist an active I/O bridge
+           belonging to a previous administrator session as their own operation. */
+        let ioForStorage = state.ioBridge;
+        if (!state.isAdmin) {
+          try {
+            const older = JSON.parse(safeStorage.get('yytalk_room_' + state.roomId) || 'null');
+            ioForStorage = { ...state.ioBridge, enabled: older?.ioBridge?.enabled === true };
+          } catch(e) { ioForStorage = { ...state.ioBridge, enabled:false }; }
+        }
+        const data = { channels: state.channels, userAssignments: state.userAssignments, tallyAssignments: state.tallyAssignments, registeredUsers: state.registeredUsers, monitorTitle: state.monitorTitle, videoQuality: state.videoQuality, ioBridge: ioForStorage, layout: state.layout }; 
 
         safeStorage.set('yytalk_room_' + state.roomId, JSON.stringify(data)); 
 
@@ -4710,7 +4839,9 @@ html, body, #main-app-container {
 
       const saved = safeStorage.get('yytalk_room_' + roomId);
 
-      if (saved) { try { const parsed = JSON.parse(saved); if(parsed.monitorTitle !== undefined) { state.monitorTitle = parsed.monitorTitle; const mt = $('main-monitor-title'); if(mt) { mt.textContent = state.monitorTitle; mt.style.display = (!state.monitorTitle || state.monitorTitle.trim() === '') ? 'none' : 'block'; } const et = $('edit-monitor-title'); if(et) et.value = state.monitorTitle; } if(parsed.videoQuality) { state.videoQuality = parsed.videoQuality; const ev = $('edit-video-quality'); if(ev) ev.value = state.videoQuality; } if(parsed.ioBridge) state.ioBridge = parsed.ioBridge; if(parsed.layout) { state.layout = parsed.layout; applyLayout(state.layout); } if (parsed?.channels?.length > 0) { resetAndApplyChannels(parsed.channels, parsed.userAssignments, parsed.tallyAssignments, parsed.registeredUsers); return; } } catch(e){} }
+      if (saved) { try { const parsed = JSON.parse(saved); if(parsed.monitorTitle !== undefined) { state.monitorTitle = parsed.monitorTitle; const mt = $('main-monitor-title'); if(mt) { mt.textContent = state.monitorTitle; mt.style.display = (!state.monitorTitle || state.monitorTitle.trim() === '') ? 'none' : 'block'; } const et = $('edit-monitor-title'); if(et) et.value = state.monitorTitle; } if(parsed.videoQuality) { state.videoQuality = parsed.videoQuality; const ev = $('edit-video-quality'); if(ev) ev.value = state.videoQuality; } if(parsed.ioBridge) {
+          state.ioBridge = { ...state.ioBridge, ...parsed.ioBridge, enabled: state.isAdmin && parsed.ioBridge.enabled === true };
+        } if(parsed.layout) { state.layout = parsed.layout; applyLayout(state.layout); } if (parsed?.channels?.length > 0) { resetAndApplyChannels(parsed.channels, parsed.userAssignments, parsed.tallyAssignments, parsed.registeredUsers); return; } } catch(e){} }
 
       const defaultChannels = [ { id: 'ch-video', name: 'VIDEO', type: 'Listen', fixed: true }, { id: 'ch1', name: 'NEW', type: 'PL' } ];
 
@@ -5267,6 +5398,9 @@ html, body, #main-app-container {
     function setIoAudioPriorityVideoMode(mode) {
         const nextMode = mode === 'low' ? 'low' : (mode === 'medium' ? 'medium' : 'high');
         if (state.ioAudioPriorityMode === nextMode) return;
+        const now = Date.now();
+        if (state.ioAudioPriorityLastChange && now - state.ioAudioPriorityLastChange < 12000) return;
+        state.ioAudioPriorityLastChange = now;
         state.ioAudioPriorityMode = nextMode;
         state.ioAudioPriorityActive = nextMode !== 'high';
         try {
@@ -5282,7 +5416,7 @@ html, body, #main-app-container {
                     } catch(_) {}
                 });
             });
-            if (state.videoHoldVisible) hideVideoHoldFrame();
+            /* Leave the last valid frame visible during a video layer change. */
         } catch(e) {}
         uiLog(nextMode === 'low' ? 'I/O AUDIO PRIORITY: VIDEO LOW (>=128k)'
              : nextMode === 'medium' ? 'I/O AUDIO PRIORITY: VIDEO MEDIUM'
@@ -5317,14 +5451,18 @@ html, body, #main-app-container {
                    Drop video quickly when loss/concealment appears, recover slowly to avoid flapping. */
                 if (worstLoss >= 5 || concealmentGrowing || worstJitter >= 35) {
                     state.ioAudioPriorityStableTicks = 0;
-                    setIoAudioPriorityVideoMode('low');
-                } else if (worstLoss >= 1 || worstJitter >= 18) {
+                    state.ioAudioPriorityBadTicks = (state.ioAudioPriorityBadTicks || 0) + 1;
+                    if (state.ioAudioPriorityBadTicks >= 4) setIoAudioPriorityVideoMode('low');
+                } else if (worstLoss >= 2 || worstJitter >= 25) {
                     state.ioAudioPriorityStableTicks = 0;
-                    setIoAudioPriorityVideoMode('medium');
+                    state.ioAudioPriorityBadTicks = (state.ioAudioPriorityBadTicks || 0) + 1;
+                    if (state.ioAudioPriorityBadTicks >= 4) setIoAudioPriorityVideoMode('medium');
                 } else if (worstLoss < 0.5 && !concealmentGrowing && worstJitter < 12) {
+                    state.ioAudioPriorityBadTicks = 0;
                     state.ioAudioPriorityStableTicks = (state.ioAudioPriorityStableTicks || 0) + 1;
-                    if (state.ioAudioPriorityStableTicks >= 5) setIoAudioPriorityVideoMode('high');
+                    if (state.ioAudioPriorityStableTicks >= 8) setIoAudioPriorityVideoMode('high');
                 } else {
+                    state.ioAudioPriorityBadTicks = 0;
                     state.ioAudioPriorityStableTicks = 0;
                 }
             }
@@ -5688,11 +5826,11 @@ html, body, #main-app-container {
 
       let headerHtml = `<thead><tr><th class="diagonal-header" style="min-width:180px;"><span class="dh-member" style="color:var(--text-sub);">USER</span><span class="dh-party" style="color:var(--text-sub);">PARTY</span></th>`;
 
-      state.registeredUsers?.forEach(uid => {
+      state.registeredUsers?.forEach((uid, idx) => {
 
           const isOnline = uid === state.myUserId || (state.room && state.room.remoteParticipants && state.room.remoteParticipants.has(uid)); const statusColor = isOnline ? 'var(--green)' : 'var(--text-sub)';
 
-          headerHtml += `<th style="width:140px; min-width:140px; max-width:140px;"><div style="display:flex; align-items:center; justify-content:center; gap:8px; height: 50px;"><div class="matrix-user-header"><span class="status-dot" data-uid="${escapeHtml(uid)}" style="color:${statusColor}; font-size:10px; line-height:1;">●</span><span style="font-weight:bold; color:var(--text-main); font-family: 'JetBrains Mono', monospace; font-size:12px; line-height:1;">${escapeHtml(uid)}</span></div><div style="position:relative; width:8px; height:46px; background:#000; border-radius:4px; overflow:hidden; box-shadow:inset 0 0 2px rgba(0,0,0,0.8);"><div id="user-meter-${uid}" style="position:absolute; bottom:0; left:0; width:100%; height:100%; background:linear-gradient(to top, #22c55e, #eab308, #ef4444); transform-origin:bottom; transform:scaleY(0); transition:transform 0.05s ease-out;"></div></div><div class="matrix-action-stack"><button class="btn-batch-col" title="一括割り当て" onclick="toggleAllUserAssignments('${uid}')"><i class="fa-solid fa-check-double"></i></button><button class="btn-delete-col" title="ユーザー削除" data-uid="${uid}" onclick="event.stopPropagation();"><i class="fa-solid fa-trash-can"></i></button></div></div></th>`;
+          headerHtml += `<th style="width:140px; min-width:140px; max-width:140px;"><div style="display:flex; align-items:center; justify-content:center; gap:8px; height: 72px;"><div class="matrix-user-header"><span class="status-dot" data-uid="${escapeHtml(uid)}" style="color:${statusColor}; font-size:10px; line-height:1;">●</span><span style="font-weight:bold; color:var(--text-main); font-family: 'JetBrains Mono', monospace; font-size:12px; line-height:1;">${escapeHtml(uid)}</span><div class="matrix-order-buttons"><button type="button" class="matrix-order-btn yy-user-move" data-index="${idx}" data-dir="-1" title="ユーザーを左へ" aria-label="${escapeHtml(uid)}を左へ" ${idx===0?'disabled':''}>◀</button><button type="button" class="matrix-order-btn yy-user-move" data-index="${idx}" data-dir="1" title="ユーザーを右へ" aria-label="${escapeHtml(uid)}を右へ" ${idx===state.registeredUsers.length-1?'disabled':''}>▶</button></div></div><div style="position:relative; width:8px; height:46px; background:#000; border-radius:4px; overflow:hidden; box-shadow:inset 0 0 2px rgba(0,0,0,0.8);"><div id="user-meter-${uid}" style="position:absolute; bottom:0; left:0; width:100%; height:100%; background:linear-gradient(to top, #22c55e, #eab308, #ef4444); transform-origin:bottom; transform:scaleY(0); transition:transform 0.05s ease-out;"></div></div><div class="matrix-action-stack"><button class="btn-batch-col" title="一括割り当て" onclick="toggleAllUserAssignments('${uid}')"><i class="fa-solid fa-check-double"></i></button><button class="btn-delete-col" title="ユーザー削除" data-uid="${uid}" onclick="event.stopPropagation();"><i class="fa-solid fa-trash-can"></i></button></div></div></th>`;
 
       });
 
@@ -5702,13 +5840,12 @@ html, body, #main-app-container {
 
       
 
-      state.channels?.forEach(ch => {
-
-          if(!ch || ch.id === 'ch-video') return; 
+      const movableParties = state.channels?.filter(ch => ch && ch.id !== 'ch-video') || [];
+      movableParties.forEach((ch, rowIndex) => {
 
           const typeSelect = `<select class="admin-edit-type" data-id="${ch.id}"><option value="PL" ${ch.type==='PL'?'selected':''}>PL</option><option value="Local" ${ch.type==='Local'?'selected':''}>Local</option><option value="Listen" ${ch.type==='Listen'?'selected':''}>Listen</option></select>`;
 
-          html += `<tr><td class="ch-cell" style="vertical-align: middle;"><div style="display:flex; gap:6px; align-items:center; justify-content:space-between; width:100%; height:100%;"><div style="display:flex; gap:4px; flex:1; align-items:center;"><input type="text" class="admin-edit-name" data-id="${ch.id}" value="${escapeHtml(ch.name)}" style="width:80px; font-size:12px; font-family:'JetBrains Mono', monospace; text-transform:uppercase; text-align:center;" ${ch.fixed?'disabled':''}>${typeSelect}</div>${ch.fixed?'<div style="width:28px;"></div>':`<div class="matrix-action-stack"><button class="btn-batch-row" title="一括割り当て" data-id="${ch.id}"><i class="fa-solid fa-check-double"></i></button><button class="btn-delete-row" title="パーティー削除" data-id="${ch.id}"><i class="fa-solid fa-trash-can"></i></button></div>`}</div></td>`;
+          html += `<tr><td class="ch-cell" style="vertical-align: middle;"><div style="display:flex; gap:6px; align-items:center; justify-content:space-between; width:100%; height:100%;"><div style="display:flex; gap:4px; flex:1; align-items:center;"><div class="matrix-order-buttons"><button type="button" class="matrix-order-btn yy-party-move" data-id="${ch.id}" data-dir="-1" title="パーティーを上へ" aria-label="${escapeHtml(ch.name)}を上へ" ${rowIndex===0?'disabled':''}>▲</button><button type="button" class="matrix-order-btn yy-party-move" data-id="${ch.id}" data-dir="1" title="パーティーを下へ" aria-label="${escapeHtml(ch.name)}を下へ" ${rowIndex===movableParties.length-1?'disabled':''}>▼</button></div><input type="text" class="admin-edit-name" data-id="${ch.id}" value="${escapeHtml(ch.name)}" style="width:80px; font-size:12px; font-family:'JetBrains Mono', monospace; text-transform:uppercase; text-align:center;" ${ch.fixed?'disabled':''}>${typeSelect}</div>${ch.fixed?'<div style="width:28px;"></div>':`<div class="matrix-action-stack"><button class="btn-batch-row" title="一括割り当て" data-id="${ch.id}"><i class="fa-solid fa-check-double"></i></button><button class="btn-delete-row" title="パーティー削除" data-id="${ch.id}"><i class="fa-solid fa-trash-can"></i></button></div>`}</div></td>`;
 
           state.registeredUsers?.forEach(uid => { 
 
@@ -5743,6 +5880,30 @@ html, body, #main-app-container {
       if (newWrap) { newWrap.scrollLeft = sl; newWrap.scrollTop = st; }
 
 
+
+      /* PATCH PANEL order controls: stable on mouse and iPhone, no drag/scroll ambiguity.
+         Moving visual rows/columns never changes party IDs or live media routing. */
+      const publishPatchOrder = () => {
+        saveRoomState();
+        sendData({type:'reorder-patch', channelOrder:state.channels.map(ch=>ch.id), userOrder:[...state.registeredUsers]});
+        buildAdminMatrix(); buildTallyAssignmentUI();
+      };
+      container.querySelectorAll('.yy-user-move').forEach(btn => btn.addEventListener('click', e => {
+        e.preventDefault();
+        const idx=Number(btn.dataset.index), dst=idx+Number(btn.dataset.dir);
+        if (dst < 0 || dst >= state.registeredUsers.length) return;
+        [state.registeredUsers[idx],state.registeredUsers[dst]]=[state.registeredUsers[dst],state.registeredUsers[idx]];
+        publishPatchOrder();
+      }));
+      container.querySelectorAll('.yy-party-move').forEach(btn => btn.addEventListener('click', e => {
+        e.preventDefault();
+        const idx=state.channels.findIndex(ch=>ch.id===btn.dataset.id), dst=idx+Number(btn.dataset.dir);
+        if (idx<=0 || dst<=0 || dst>=state.channels.length) return; // ch-video is fixed at index 0
+        [state.channels[idx],state.channels[dst]]=[state.channels[dst],state.channels[idx]];
+        initChannelsDOM();
+        if(state.userAssignments?.[state.myUserId]) applyAssignments(state.userAssignments[state.myUserId]);
+        publishPatchOrder();
+      }));
 
       container.querySelectorAll('.matrix-toggle').forEach(btn => {
 
@@ -6015,6 +6176,21 @@ html, body, #main-app-container {
 
         }
 
+        else if (data.type === 'reorder-patch') {
+          if (Array.isArray(data.channelOrder)) {
+            const order = new Map(data.channelOrder.map((id,i)=>[id,i]));
+            state.channels.sort((a,b)=>(order.get(a.id)??Number.MAX_SAFE_INTEGER)-(order.get(b.id)??Number.MAX_SAFE_INTEGER));
+            initChannelsDOM();
+            if(state.userAssignments?.[state.myUserId]) applyAssignments(state.userAssignments[state.myUserId]);
+          }
+          if (Array.isArray(data.userOrder)) {
+            const rank = new Map(data.userOrder.map((uid,i)=>[uid,i]));
+            state.registeredUsers.sort((a,b)=>(rank.get(a)??Number.MAX_SAFE_INTEGER)-(rank.get(b)??Number.MAX_SAFE_INTEGER));
+          }
+          saveRoomState();
+          if(state.isAdmin) {buildAdminMatrix();buildTallyAssignmentUI();}
+        }
+
         else if (data.type === 'update-tally-assignments') { state.tallyAssignments = data.assignments || {}; saveRoomState(); if (state.isAdmin) buildTallyAssignmentUI(); if (state.myUserId) evaluateTallyGlow(); }
 
         else if (data.type === 'update-talk-states') { state.remoteTalkStates[senderId] = data.states || {}; updateAudioRouting(); if (state.isAdmin) { Object.keys(data.states).forEach(chid => { const micBtn = document.querySelector(`.remote-mic-btn[data-uid="${senderId}"][data-chid="${chid}"]`); if (micBtn) { if (data.states[chid]) micBtn.classList.add('active'); else micBtn.classList.remove('active'); } }); } }
@@ -6278,6 +6454,13 @@ html, body, #main-app-container {
       
 
       loadRoomState(state.roomId);
+      /* I/O BRIDGE is a role-scoped local hardware function, not a normal-user
+         room preference. Loading an admin's saved session must not enable it. */
+      if (!isAdmin) {
+          state.ioBridge.enabled = false;
+          state.ioAudioPriorityMode = 'high';
+          state.ioAudioPriorityActive = false;
+      }
 
       /* v47: I/O device discovery must not depend on opening the I/O BRIDGE tab.
          The tab used to be the first place buildIoUI()/refreshIoAudioDeviceSelectors() ran,
@@ -6453,9 +6636,9 @@ html, body, #main-app-container {
 
 
 
-          room.on(LivekitClient.RoomEvent.Reconnecting, () => { showDisconnect(); });
+          room.on(LivekitClient.RoomEvent.Reconnecting, () => { yyVideoNote('LiveKit 再接続中'); showDisconnect(); });
 
-          room.on(LivekitClient.RoomEvent.Reconnected, () => { hideDisconnect(); });
+          room.on(LivekitClient.RoomEvent.Reconnected, () => { yyVideoNote('LiveKit 再接続完了'); hideDisconnect(); });
 
           room.on(LivekitClient.RoomEvent.Disconnected, () => { showDisconnect('サーバーから切断されました。自動再接続を試行します…'); if (state.hasSuccessfullyConnected) triggerAutoReconnect(); });
 
@@ -6503,6 +6686,7 @@ html, body, #main-app-container {
               updateUserCount();
 
             } else if (track.kind === LivekitClient.Track.Kind.Video) {
+              yyVideoNote('映像Track受信開始: '+participant.identity);
               attachVideoTrack(track);
               try {
                 publication.setSubscribed?.(true);
@@ -6519,7 +6703,7 @@ html, body, #main-app-container {
 
           room.on(LivekitClient.RoomEvent.TrackUnsubscribed, (track, publication, participant) => { 
 
-            if (track.kind === LivekitClient.Track.Kind.Video) { detachVideoTrack(track); } 
+            if (track.kind === LivekitClient.Track.Kind.Video) { yyVideoNote('映像Track受信解除: '+participant.identity); detachVideoTrack(track); } 
 
             else { 
 
@@ -6781,166 +6965,6 @@ html, body, #main-app-container {
     }, { passive:false });
   })();
   </script>
-
-
-<!-- AirPods native mute passthrough diagnostic; does NOT attempt to intercept the AirPods click. -->
-<style id="yy-osmute-style">
-#yy-osmute-launch{position:fixed;right:12px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:19990;background:#0b2634;border:1px solid #38bdf8;color:#e5faff;padding:13px 16px;box-shadow:0 8px 30px #0009;border-radius:28px;font-size:13px;font-weight:800;cursor:pointer;min-height:48px}
-#yy-osmute-layer{display:none;position:fixed;inset:0;z-index:20000;background:#05070bb8;overflow:auto;padding:calc(18px + env(safe-area-inset-top)) 12px calc(28px + env(safe-area-inset-bottom));box-sizing:border-box}
-#yy-osmute-layer.yy-show{display:block}
-#yy-osmute-box{max-width:650px;margin:0 auto;border-radius:18px;background:#191c24;border:1px solid #48556c;color:#e6edf7;font-size:14px;padding:18px;line-height:1.65;box-shadow:0 18px 54px #0009}
-#yy-osmute-box *{box-sizing:border-box}
-#yy-osmute-box h2{color:#50c6ff;font-size:19px;margin:0 0 10px;line-height:1.4}
-#yy-osmute-box h3{font-size:14px;margin:14px 0 6px;color:#9adfff}
-#yy-osmute-box p{margin:6px 0 12px}
-#yy-osmute-box .yy-row{display:flex;gap:8px;flex-wrap:wrap;margin:9px 0}
-#yy-osmute-box button,#yy-osmute-box select{font:inherit;border:1px solid #56708e;border-radius:10px;min-height:43px;background:#283343;color:#edf6ff;padding:9px 12px;flex:1;cursor:pointer}
-#yy-osmute-box select{min-width:190px;width:100%}
-#yy-osmute-box button.yy-primary{background:#006f64;border-color:#15dfbc}
-#yy-osmute-box button.yy-danger{background:#63323b;border-color:#ff8f9a}
-#yy-osmute-box .yy-note{color:#ffce90;font-size:12px}
-#yy-osmute-box .yy-sub{color:#a9b8d0;font-size:12px}
-#yy-osmute-box pre{white-space:pre-wrap;word-break:break-word;margin:7px 0;padding:12px 10px;border-radius:10px;background:#0c1118;border:1px solid #294157;color:#c9e2fa;font-size:11.5px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;line-height:1.6}
-#yy-osmute-samples{max-height:180px;overflow:auto}
-#yy-osmute-box .yy-meter{height:10px;background:#080b11;border:1px solid #34465d;border-radius:8px;overflow:hidden;margin-top:3px}
-#yy-osmute-box .yy-meter span{display:block;width:0%;height:100%;background:linear-gradient(90deg,#2bbdce,#78e4a2);transition:width .17s ease}
-#yy-osmute-box .yy-meterlabel{display:flex;justify-content:space-between;font-size:12px;color:#b9d5ea;margin-top:7px}
-#yy-osmute-box [disabled]{opacity:.5;cursor:default}
-</style>
-<button type="button" id="yy-osmute-launch">🎧 OSミュート検証</button>
-<div id="yy-osmute-layer" role="dialog" aria-label="AirPods OSミュート診断" aria-modal="true">
-  <div id="yy-osmute-box">
-    <div class="yy-row" style="justify-content:space-between;align-items:center;margin:0 0 8px"><h2>AirPods OSミュート診断</h2><button type="button" id="yy-osmute-close" style="flex:0 0 74px">閉じる</button></div>
-    <p>v47の音声方式をそのまま使い、AirPodsのステムを押した際に<strong>送信中のマイク音声がOS側で消える／復帰するか</strong>を検証します。AirPods操作のイベントは横取りしません。</p>
-    <p class="yy-note">⚠️ 試験用ROOMのみ使用。PTT ON中は相手に声が届く可能性があります。別端末で実際の音を聞いて判定してください。</p>
-    <h3>① 準備：同じROOMで2端末JOIN</h3>
-    <p class="yy-sub">iPhone（送信）と別端末（受信）。両方でこの検証版を使用できます。受信側は対象パーティーをLISTEN ONにします。</p>
-    <label for="yy-osmute-party">送信先パーティー</label>
-    <select id="yy-osmute-party"><option value="">JOIN後に選択</option></select>
-    <div class="yy-row"><button type="button" id="yy-osmute-tx-on" class="yy-primary">送信テスト ON</button><button type="button" id="yy-osmute-tx-off" class="yy-danger">送信 OFF / 終了</button></div>
-    <p id="yy-osmute-tx-status" class="yy-sub">送信はOFF。自動でONにはしません。終了後はMASTER MICもMUTEします。</p>
-    <h3>② AirPodsを押して、声が消えるか確認</h3>
-    <p class="yy-sub">送信テストON → 受信端末で声が聞こえることを確認 → AirPodsを1回押す → 声が消えるか確認 → もう1回押す → 戻るか確認。操作回数をログに記録できます。</p>
-    <div class="yy-row"><button type="button" id="yy-osmute-mark-first">1回押した（記録）</button><button type="button" id="yy-osmute-mark-second">2回押した（記録）</button></div>
-    <div class="yy-row"><button type="button" id="yy-osmute-rx-silent">受信側：無音になった</button><button type="button" id="yy-osmute-rx-audible">受信側：聞こえる</button></div>
-    <div class="yy-meterlabel"><span>入力マイク（source）</span><strong id="yy-osmute-source-lv">--</strong></div><div class="yy-meter"><span id="yy-osmute-source-bar"></span></div>
-    <div class="yy-meterlabel"><span>送信Track（publish）</span><strong id="yy-osmute-pub-lv">--</strong></div><div class="yy-meter"><span id="yy-osmute-pub-bar"></span></div>
-    <div class="yy-meterlabel"><span>受信Track（この端末が受信している音声）</span><strong id="yy-osmute-rx-lv">--</strong></div><div class="yy-meter"><span id="yy-osmute-rx-bar"></span></div>
-    <p class="yy-sub">メーターは音声の目安です。受信Trackの表示には別の端末からの送信が必要です。OSによるミュートがメーターに現れない場合もあります。</p>
-    <h3>③ 診断状況</h3><pre id="yy-osmute-diag">起動中…</pre>
-    <h3>操作ログ</h3><pre id="yy-osmute-samples">ログなし</pre>
-    <div class="yy-row"><button type="button" id="yy-osmute-copy">診断結果をコピー</button><button type="button" id="yy-osmute-clear">ログ消去</button></div>
-    <p class="yy-note">「AirPodsでマイクをコントロールできません」と出た場合は、その事実もログに残してください。画面で受信側の音声結果を選択する必要があります。</p>
-  </div>
-</div>
-<script id="yy-osmute-diagnostic">
-(function(){
-'use strict';
-const el=(id)=>document.getElementById(id);
-const diag=el('yy-osmute-diag'),logBox=el('yy-osmute-samples');
-let active=false, attachedSource=null, attachedPublish=null;
-let sourceAnalyser=null, publishAnalyser=null, rxAnalyser=null, rxKey='';
-let srcNode=null,pubNode=null,rxNode=null;
-const messages=[],time=()=>new Date().toLocaleTimeString('ja-JP',{hour12:false});
-function log(msg){messages.unshift('['+time()+'] '+msg);if(messages.length>90)messages.length=90;logBox.textContent=messages.join('\n');}
-const connected=()=>typeof state!=='undefined' && !!state.room && state.room.state==='connected';
-const getSource=()=>state?.localStream?.getAudioTracks?.()[0]||null;
-const getPub=()=>state?.localMicTrack?.mediaStreamTrack||null;
-const trackDesc=t=>t?`${t.readyState} / muted=${t.muted} / enabled=${t.enabled}`:'なし';
-function attachEvents(t,type){if(!t||t=== (type==='source'?attachedSource:attachedPublish))return;
-  if(type==='source')attachedSource=t;else attachedPublish=t;
-  ['mute','unmute','ended'].forEach(ev=>t.addEventListener(ev,()=>log(type+' Track '+ev+' / '+trackDesc(t))));
-  log(type+' Track検出: '+trackDesc(t));
-}
-function newMeter(track,which){
-  const ctx=state?.audioCtx;
-  if(!ctx || !track || track.readyState!=='live')return null;
-  try{const src=ctx.createMediaStreamSource(new MediaStream([track]));const analyser=ctx.createAnalyser();analyser.fftSize=512;src.connect(analyser);return {src,analyser,track};}
-  catch(err){log(which+' メーター作成失敗: '+String(err));return null;}
-}
-function ensureMeter(old,track,which){if(old?.track===track && old?.src && old?.analyser)return old;
- try{old?.src?.disconnect?.();old?.analyser?.disconnect?.()}catch(_){ }
- return track?newMeter(track,which):null;
-}
-function level(a){if(!a)return null;try{const data=new Float32Array(a.fftSize);a.getFloatTimeDomainData(data);let v=0;for(const x of data)v+=x*x;const rms=Math.sqrt(v/data.length);return rms?Math.max(-90,20*Math.log10(rms)):-90;}catch(_){return null;}}
-function showMeter(prefix,value){const label=el('yy-osmute-'+prefix+'-lv'),bar=el('yy-osmute-'+prefix+'-bar');label.textContent=value===null?'--':(value<=-89?'-90 dBFS':value.toFixed(1)+' dBFS');bar.style.width=value===null?'0%':Math.max(0,Math.min(100, (value+65)*2))+'%';}
-function selectParties(){const sel=el('yy-osmute-party');if(!sel)return;const v=sel.value;const channels=state?.channels||[];const options=channels.filter(ch=>ch?.id && ch?.id!=='ch-video');
- const key=options.map(ch=>ch.id+'|'+(ch.name||ch.label||'')).join('\n');if(sel.dataset.key===key)return;sel.dataset.key=key;
- sel.replaceChildren();const fallback=new Option(options.length?'送信先を選択':'JOIN後に選択','');sel.appendChild(fallback);
- options.forEach(ch=>sel.appendChild(new Option(ch.name||ch.label||ch.id,ch.id)));
- if(options.some(ch=>ch.id===v))sel.value=v;else if(options.length===1)sel.value=options[0].id;
-}
-function updatePartyCard(chId){const btn=document.getElementById('talk-'+chId),card=document.getElementById('card-'+chId),on=!!state.talkStates[chId];
- btn?.classList.toggle('active',on);btn?.classList.toggle('latched',on);card?.classList.toggle('talk-on',on);
-}
-function forceOff(){
- const ids=new Set(Object.keys(state.talkStates||{}));
- ids.forEach(id=>{state.talkStates[id]=false;updatePartyCard(id)});
- state.isMasterMicMuted=true;
- updateAudioRouting();updateChannelIcons();syncTalkStates();
-}
-function start(){if(active){log('すでに送信試験中です');return;}
- if(!connected()){log('JOINしてから実施してください');alert('まずテスト専用ROOMにJOINしてください');return;}
- if(state.ioBridge?.enabled){log('I/O BRIDGEがONです。通常ユーザーで試してください');alert('I/O BRIDGEはOFFで試してください');return;}
- const target=el('yy-osmute-party').value;
- if(!target || !state.channels?.some(ch=>ch.id===target)){log('送信先が未選択です');alert('送信先パーティーを選んでください');return;}
- if(!getSource()||!getPub()){log('送信マイクがまだ初期化されていません');alert('マイクTrackを確認できません。JOIN後、少しして再度試してください');return;}
- for(const id of Object.keys(state.talkStates))state.talkStates[id]=false;
- state.talkStates[target]=true;state.isMasterMicMuted=false;
- state.channels.forEach(ch=>updatePartyCard(ch.id));
- updateAudioRouting();updateChannelIcons();syncTalkStates();
- active=true;log('送信テストON / '+target+'（元のTALK状態を記憶）');
-}
-function stop(){if(!active){log('送信試験OFF（未実施）');return;}
- forceOff();active=false;log('送信テストOFF / 全TALK OFF・MASTER MIC MUTE');
-}
-function pickRx(){let picked=null;
- try{for(const [key,call] of Object.entries(state?.mediaCalls||{})){if(!call?.stream || call.isIOTrack || key.startsWith(state.myUserId+'_')||key===state.myUserId)continue;
- const track=call.stream.getAudioTracks()[0];if(track?.readyState==='live'){picked={key,track};break;}}
- }catch(_){}return picked;
-}
-function refresh(){try{
- selectParties();const src=getSource(),pub=getPub();attachEvents(src,'source');attachEvents(pub,'publish');
- sourceAnalyser=ensureMeter(sourceAnalyser,src,'source');publishAnalyser=ensureMeter(publishAnalyser,pub,'publish');
- const rx=pickRx();rxAnalyser=ensureMeter(rxAnalyser,rx?.track||null,'rx');
- if(rx?.key!==rxKey){rxKey=rx?.key||'';if(rxKey)log('受信Track検出: '+rxKey);}
- const sl=level(sourceAnalyser?.analyser),pl=level(publishAnalyser?.analyser),rl=level(rxAnalyser?.analyser);
- showMeter('source',sl);showMeter('pub',pl);showMeter('rx',rl);
- const target=el('yy-osmute-party').value;
- const status=el('yy-osmute-tx-status');
- status.textContent=active?'送信テストON：'+target+' / AirPodsを1回押して受信側で聴き比べ':'送信テストOFF / 終了後はMASTER MIC MUTE';
- status.style.color=active?'#6cebb7':'#bcc8d9';
- const a=typeof navigator.audioSession!=='undefined'?navigator.audioSession:null;
- diag.textContent=[
-  'ROOM: '+(state.roomId||'未JOIN')+' / USER: '+(state.myUserId||'--')+' / 接続: '+(connected()?'OK':'未接続'),
-  '監視試験: '+(active?'送信ON':'送信OFF')+' / 選択パーティー: '+(target||'未選択'),
-  'TALK States: '+(state.channels||[]).filter(ch=>state.talkStates[ch.id]).map(ch=>ch.name||ch.id).join(', '),
-  'MASTER MIC MUTE: '+(state.isMasterMicMuted?'YES':'NO'),
-  'AudioSession: '+(a?.type??'APIなし')+' / '+(a?.state??'state不明'),
-  'SOURCE: '+trackDesc(src),
-  'PUBLISH: '+trackDesc(pub),
-  'SOURCE LEVEL: '+(sl===null?'--':sl.toFixed(1)+' dBFS'),
-  'PUBLISH LEVEL: '+(pl===null?'--':pl.toFixed(1)+' dBFS'),
-  'RX (別端末から受信): '+(rxKey||'なし')+' / '+(rl===null?'--':rl.toFixed(1)+' dBFS'),
-  '※ Web側がOSのミュートを検知できない場合があります。受信側で聴感確認が必須です。',
- ].join('\n');
- }catch(err){diag.textContent='診断エラー: '+String(err);}}
-el('yy-osmute-launch').addEventListener('click',()=>{el('yy-osmute-layer').classList.add('yy-show');refresh();log('診断画面を開きました。ボタン操作の横取りなし。');});
-el('yy-osmute-close').addEventListener('click',()=>{if(active)stop();el('yy-osmute-layer').classList.remove('yy-show')});
-el('yy-osmute-tx-on').addEventListener('click',start);
-el('yy-osmute-tx-off').addEventListener('click',stop);
-el('yy-osmute-mark-first').addEventListener('click',()=>log('AirPodsのステム1回押しを実施（手動記録）'));
-el('yy-osmute-mark-second').addEventListener('click',()=>log('AirPodsのステム2回目を押した（手動記録）'));
-el('yy-osmute-rx-silent').addEventListener('click',()=>log('受信側の観察：声が消えた／無音（手動記録）'));
-el('yy-osmute-rx-audible').addEventListener('click',()=>log('受信側の観察：声が聞こえる（手動記録）'));
-el('yy-osmute-clear').addEventListener('click',()=>{messages.length=0;logBox.textContent='ログなし';});
-el('yy-osmute-copy').addEventListener('click',async()=>{const str=diag.textContent+'\n\n'+messages.join('\n');try{await navigator.clipboard.writeText(str);log('診断をコピーしました')}catch(err){const t=document.createElement('textarea');t.value=str;document.body.appendChild(t);t.select();try{document.execCommand('copy');log('診断をコピーしました')}catch(_){log('コピーに失敗しました')}t.remove();}});
-window.addEventListener('pagehide',()=>{if(active)stop()});
-document.addEventListener('visibilitychange',()=>{if(document.hidden && active){stop();log('画面非表示により送信試験を自動停止')}});
-setInterval(()=>{if(active && !connected()){stop();log('接続切断により送信試験を自動停止')}if(el('yy-osmute-layer').classList.contains('yy-show'))refresh()},400);
-log('待機中：診断版はAirPodsの操作イベントをハンドリングしません');
-})();
-</script>
 
 </body>
 
