@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 
 <html lang="ja">
-<!-- YY-Talk Broadcast Intercom · v51, based on stable v47 / v50 improvements -->
+<!-- YY-Talk Broadcast Intercom · v52, based on v51 -->
 
 <head>
 
@@ -2420,6 +2420,50 @@ html, body, #main-app-container {
   }
 }
 </style>
+<style id="v52-patch-grip-select-and-hybrid-video">
+/* PATCH PANEL: handle only; one small stacked-lines grip, no directional arrows. */
+#admin-overlay .yy-patch-grip{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:28px;min-width:28px;max-width:28px;height:28px;flex:0 0 28px;
+  border:1px solid #50677e;border-radius:5px;background:#273b55;
+  color:#d8eafb;font-size:13px;line-height:1;cursor:grab;
+  touch-action:none;-webkit-user-select:none;user-select:none;
+}
+#admin-overlay .yy-patch-grip:active{cursor:grabbing;}
+#admin-overlay .yy-patch-grip .yy-grip-bars {pointer-events:none;display:block;line-height:1;font-size:17px;font-family:-apple-system,BlinkMacSystemFont,sans-serif;}
+#admin-overlay .yy-patch-placeholder{background-color:rgba(91,160,220,.14)!important;box-shadow:inset 0 0 0 1px #5ca4e0!important;}
+.yy-patch-floating-card{position:fixed;pointer-events:none;z-index:99999;
+  display:flex;align-items:center;gap:11px;min-width:120px;max-width:220px;
+  border:1px solid #60a5fa;border-radius:8px;padding:13px 17px;
+  background:#263244;box-shadow:0 16px 32px #000a;color:#f4f8ff;
+  font:600 13px -apple-system,BlinkMacSystemFont,sans-serif;white-space:nowrap;
+}
+.yy-patch-floating-card i{color:#8cc7ff;}
+body.yy-patch-drag-active, body.yy-patch-drag-active *{cursor:grabbing!important;}
+/* Compact native select arrows were protruding outside their background pill.
+   Use one small CSS-rendered arrow entirely INSIDE each native control. */
+select:not([multiple]):not([size]){
+  -webkit-appearance:none!important;appearance:none!important;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2395a4b7' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")!important;
+  background-repeat:no-repeat!important;
+  background-position:right 9px center!important;
+  background-size:10px 6px!important;
+  padding-right:25px!important;
+  background-clip:padding-box!important;
+}
+#admin-overlay .admin-matrix select.admin-edit-type{
+  background-position:right 5px center!important;
+  background-size:8px 5px!important;
+  padding-right:16px!important;padding-left:3px!important;
+}
+/* IMPORTANT: Tally still uses the v34 3px outline OUTSIDE the image; no change.
+   The hybrid sizing itself is handled by fitMonitor16x9 with inline !important
+   width+height, so a desktop CSS width:100% cannot stretch the frame. */
+#main-app-container.layout-hybrid #monitor-video-wrapper.video-wrapper{
+  aspect-ratio:16 / 9!important;flex:0 0 auto!important;
+  max-width:100%!important;max-height:100%!important;
+}
+</style>
 </head>
 
 <body onload="if(window.forceResize) window.forceResize()">
@@ -2482,7 +2526,7 @@ html, body, #main-app-container {
 
           </div>
 
-          <div class="login-version">System version V51</div>
+          <div class="login-version">System version V52</div>
 
         </div>
 
@@ -4524,22 +4568,22 @@ html, body, #main-app-container {
         if (!cw) return;
         const w = Math.max(0, Math.floor(cw - reserve2));
         const h = Math.max(0, Math.round(w / ratio));
-        container.style.height = (h + reserve2) + 'px';
-        monitor.style.height = (h + reserve2) + 'px';
-        wrapper.style.width = w + 'px';
-        wrapper.style.height = h + 'px';
+        container.style.setProperty('height', (h + reserve2) + 'px', 'important');
+        monitor.style.setProperty('height', (h + reserve2) + 'px', 'important');
+        wrapper.style.setProperty('width', w + 'px', 'important');
+        wrapper.style.setProperty('height', h + 'px', 'important');
         return;
       }
 
-      container.style.height = '';
-      monitor.style.height = '';
+      container.style.removeProperty('height');
+      monitor.style.removeProperty('height');
       const cw = Math.max(0, container.clientWidth - reserve2);
       const ch = Math.max(0, container.clientHeight - reserve2);
       if (!cw || !ch) return;
       let w = cw, h = w / ratio;
       if (h > ch) { h = ch; w = h * ratio; }
-      wrapper.style.width = Math.max(0, Math.floor(w)) + 'px';
-      wrapper.style.height = Math.max(0, Math.floor(h)) + 'px';
+      wrapper.style.setProperty('width', Math.max(0, Math.floor(w)) + 'px', 'important');
+      wrapper.style.setProperty('height', Math.max(0, Math.floor(h)) + 'px', 'important');
     }
     window.fitMonitor16x9 = fitMonitor16x9;
     const requestMonitorFit = () => {
@@ -5889,7 +5933,7 @@ html, body, #main-app-container {
 
           const isOnline = uid === state.myUserId || (state.room && state.room.remoteParticipants && state.room.remoteParticipants.has(uid)); const statusColor = isOnline ? 'var(--green)' : 'var(--text-sub)';
 
-          headerHtml += `<th style="width:140px; min-width:140px; max-width:140px;"><div style="display:flex; align-items:center; justify-content:center; gap:8px; height: 72px;"><div class="matrix-user-header"><span class="status-dot" data-uid="${escapeHtml(uid)}" style="color:${statusColor}; font-size:10px; line-height:1;">●</span><span style="font-weight:bold; color:var(--text-main); font-family: 'JetBrains Mono', monospace; font-size:12px; line-height:1;">${escapeHtml(uid)}</span><div class="matrix-order-buttons"><button type="button" class="matrix-order-btn yy-user-move" data-index="${idx}" data-dir="-1" title="ユーザーを左へ" aria-label="${escapeHtml(uid)}を左へ" ${idx===0?'disabled':''}>◀</button><button type="button" class="matrix-order-btn yy-user-move" data-index="${idx}" data-dir="1" title="ユーザーを右へ" aria-label="${escapeHtml(uid)}を右へ" ${idx===state.registeredUsers.length-1?'disabled':''}>▶</button></div></div><div style="position:relative; width:8px; height:46px; background:#000; border-radius:4px; overflow:hidden; box-shadow:inset 0 0 2px rgba(0,0,0,0.8);"><div id="user-meter-${uid}" style="position:absolute; bottom:0; left:0; width:100%; height:100%; background:linear-gradient(to top, #22c55e, #eab308, #ef4444); transform-origin:bottom; transform:scaleY(0); transition:transform 0.05s ease-out;"></div></div><div class="matrix-action-stack"><button class="btn-batch-col" title="一括割り当て" onclick="toggleAllUserAssignments('${uid}')"><i class="fa-solid fa-check-double"></i></button><button class="btn-delete-col" title="ユーザー削除" data-uid="${uid}" onclick="event.stopPropagation();"><i class="fa-solid fa-trash-can"></i></button></div></div></th>`;
+          headerHtml += `<th class="user-col" data-patch-uid="${escapeHtml(uid)}" style="width:140px; min-width:140px; max-width:140px;"><div style="display:flex; align-items:center; justify-content:center; gap:8px; height: 72px;"><div class="matrix-user-header"><span class="status-dot" data-uid="${escapeHtml(uid)}" style="color:${statusColor}; font-size:10px; line-height:1;">●</span><span style="font-weight:bold; color:var(--text-main); font-family: 'JetBrains Mono', monospace; font-size:12px; line-height:1;">${escapeHtml(uid)}</span><button type="button" class="yy-patch-grip yy-user-grip" data-uid="${escapeHtml(uid)}" title="長押ししてユーザーを左右に並べ替え" aria-label="${escapeHtml(uid)} の並び替え" aria-roledescription="ドラッグハンドル"><span class="yy-grip-bars" aria-hidden="true">☰</span></button></div><div style="position:relative; width:8px; height:46px; background:#000; border-radius:4px; overflow:hidden; box-shadow:inset 0 0 2px rgba(0,0,0,0.8);"><div id="user-meter-${uid}" style="position:absolute; bottom:0; left:0; width:100%; height:100%; background:linear-gradient(to top, #22c55e, #eab308, #ef4444); transform-origin:bottom; transform:scaleY(0); transition:transform 0.05s ease-out;"></div></div><div class="matrix-action-stack"><button class="btn-batch-col" title="一括割り当て" onclick="toggleAllUserAssignments('${uid}')"><i class="fa-solid fa-check-double"></i></button><button class="btn-delete-col" title="ユーザー削除" data-uid="${uid}" onclick="event.stopPropagation();"><i class="fa-solid fa-trash-can"></i></button></div></div></th>`;
 
       });
 
@@ -5904,7 +5948,7 @@ html, body, #main-app-container {
 
           const typeSelect = `<select class="admin-edit-type" data-id="${ch.id}"><option value="PL" ${ch.type==='PL'?'selected':''}>PL</option><option value="Local" ${ch.type==='Local'?'selected':''}>Local</option><option value="Listen" ${ch.type==='Listen'?'selected':''}>Listen</option></select>`;
 
-          html += `<tr><td class="ch-cell" style="vertical-align: middle;"><div style="display:flex; gap:6px; align-items:center; justify-content:space-between; width:100%; height:100%;"><div style="display:flex; gap:4px; flex:1; align-items:center;"><div class="matrix-order-buttons"><button type="button" class="matrix-order-btn yy-party-move" data-id="${ch.id}" data-dir="-1" title="パーティーを上へ" aria-label="${escapeHtml(ch.name)}を上へ" ${rowIndex===0?'disabled':''}>▲</button><button type="button" class="matrix-order-btn yy-party-move" data-id="${ch.id}" data-dir="1" title="パーティーを下へ" aria-label="${escapeHtml(ch.name)}を下へ" ${rowIndex===movableParties.length-1?'disabled':''}>▼</button></div><input type="text" class="admin-edit-name" data-id="${ch.id}" value="${escapeHtml(ch.name)}" style="width:80px; font-size:12px; font-family:'JetBrains Mono', monospace; text-transform:uppercase; text-align:center;" ${ch.fixed?'disabled':''}>${typeSelect}</div>${ch.fixed?'<div style="width:28px;"></div>':`<div class="matrix-action-stack"><button class="btn-batch-row" title="一括割り当て" data-id="${ch.id}"><i class="fa-solid fa-check-double"></i></button><button class="btn-delete-row" title="パーティー削除" data-id="${ch.id}"><i class="fa-solid fa-trash-can"></i></button></div>`}</div></td>`;
+          html += `<tr data-patch-party="${ch.id}"><td class="ch-cell" style="vertical-align: middle;"><div style="display:flex; gap:6px; align-items:center; justify-content:space-between; width:100%; height:100%;"><div style="display:flex; gap:4px; flex:1; align-items:center;"><button type="button" class="yy-patch-grip yy-party-grip" data-id="${ch.id}" title="長押ししてパーティーを上下に並べ替え" aria-label="${escapeHtml(ch.name)} の並び替え" aria-roledescription="ドラッグハンドル"><span class="yy-grip-bars" aria-hidden="true">☰</span></button><input type="text" class="admin-edit-name" data-id="${ch.id}" value="${escapeHtml(ch.name)}" style="width:80px; font-size:12px; font-family:'JetBrains Mono', monospace; text-transform:uppercase; text-align:center;" ${ch.fixed?'disabled':''}>${typeSelect}</div>${ch.fixed?'<div style="width:28px;"></div>':`<div class="matrix-action-stack"><button class="btn-batch-row" title="一括割り当て" data-id="${ch.id}"><i class="fa-solid fa-check-double"></i></button><button class="btn-delete-row" title="パーティー削除" data-id="${ch.id}"><i class="fa-solid fa-trash-can"></i></button></div>`}</div></td>`;
 
           state.registeredUsers?.forEach(uid => { 
 
@@ -5947,22 +5991,119 @@ html, body, #main-app-container {
         sendData({type:'reorder-patch', channelOrder:state.channels.map(ch=>ch.id), userOrder:[...state.registeredUsers]});
         buildAdminMatrix(); buildTallyAssignmentUI();
       };
-      container.querySelectorAll('.yy-user-move').forEach(btn => btn.addEventListener('click', e => {
-        e.preventDefault();
-        const idx=Number(btn.dataset.index), dst=idx+Number(btn.dataset.dir);
-        if (dst < 0 || dst >= state.registeredUsers.length) return;
-        [state.registeredUsers[idx],state.registeredUsers[dst]]=[state.registeredUsers[dst],state.registeredUsers[idx]];
-        publishPatchOrder();
-      }));
-      container.querySelectorAll('.yy-party-move').forEach(btn => btn.addEventListener('click', e => {
-        e.preventDefault();
-        const idx=state.channels.findIndex(ch=>ch.id===btn.dataset.id), dst=idx+Number(btn.dataset.dir);
-        if (idx<=0 || dst<=0 || dst>=state.channels.length) return; // ch-video is fixed at index 0
-        [state.channels[idx],state.channels[dst]]=[state.channels[dst],state.channels[idx]];
-        initChannelsDOM();
-        if(state.userAssignments?.[state.myUserId]) applyAssignments(state.userAssignments[state.myUserId]);
-        publishPatchOrder();
-      }));
+      /* v52 PATCH drag: the grip is the only drag activator; 170ms long press,
+         floating card-like helper, preview reorder of whole rows/columns. The
+         existing synchronized reorder-patch message is sent on release only. */
+      const bindPatchGrip = (grip, kind) => {
+        let pending = null, drag = null, timer = 0;
+        const getTable = () => container.querySelector('.admin-matrix');
+        const getNodes = () => kind === 'user'
+          ? Array.from(getTable()?.querySelectorAll('thead th.user-col') || [])
+          : Array.from(getTable()?.querySelectorAll('tbody tr[data-patch-party]') || []);
+        const position = (e, item) => kind === 'user'
+          ? e.clientX - item.getBoundingClientRect().left - item.getBoundingClientRect().width / 2
+          : e.clientY - item.getBoundingClientRect().top - item.getBoundingClientRect().height / 2;
+        const moveTableColumn = (from, to) => {
+          if (from === to) return;
+          const table=getTable(); if(!table) return;
+          for (const row of table.querySelectorAll('tr')) {
+            const cells=Array.from(row.children);
+            const element=cells[from+1]; if (!element) continue; // diagonal header is fixed
+            const reference=cells[to+1];
+            if (to < from) row.insertBefore(element,reference);
+            else row.insertBefore(element, reference?.nextSibling || null);
+          }
+        };
+        const moveTableRow = (from, to) => {
+          if(from===to)return;
+          const rows=getNodes(), el=rows[from], target=rows[to];if(!el||!target)return;
+          target.parentNode.insertBefore(el,from < to ? target.nextSibling : target);
+        };
+        const cancelPending=()=>{clearTimeout(timer);timer=0;pending=null};
+        const cleanup=()=>{
+          clearTimeout(timer);timer=0;
+          if(drag){ drag.origin?.classList.remove('yy-patch-placeholder');drag.ghost?.remove(); }
+          document.body.classList.remove('yy-patch-drag-active');
+          drag=null;pending=null;
+          window.removeEventListener('pointermove',onMove,true);
+          window.removeEventListener('pointerup',onEnd,true);
+          window.removeEventListener('pointercancel',onCancel,true);
+        };
+        const startDrag=()=>{
+          if(!pending)return;
+          const {ev, id}=pending;
+          const nodes=getNodes();
+          const origin=nodes.find(n=>n.dataset[kind === 'user'?'patchUid':'patchParty']===id);
+          if(!origin){cleanup();return;}
+          const label=kind==='user'?id:(state.channels?.find(c=>c.id===id)?.name||id);
+          const ghost=document.createElement('div');ghost.className='yy-patch-floating-card';
+          ghost.innerHTML='<span class="yy-grip-bars" aria-hidden="true">☰</span><span></span>';
+          ghost.querySelector('span').textContent=label;
+          document.body.appendChild(ghost);
+          drag={id, origin, ghost, x:ev.clientX, y:ev.clientY, moved:false};
+          origin.classList.add('yy-patch-placeholder');
+          document.body.classList.add('yy-patch-drag-active');
+          positionGhost(ev.clientX,ev.clientY);
+        };
+        const positionGhost=(x,y)=>{
+          if(!drag)return;
+          drag.ghost.style.left=(x+14)+'px';drag.ghost.style.top=(y+12)+'px';
+        };
+        const onMove=e=>{
+          if(!pending && !drag)return;
+          if(pending && !drag){
+            if(Math.hypot(e.clientX-pending.ev.clientX,e.clientY-pending.ev.clientY)>9)cleanup();
+            return;
+          }
+          if(!drag)return;
+          e.preventDefault();positionGhost(e.clientX,e.clientY);
+          const nodes=getNodes();const from=nodes.indexOf(drag.origin);
+          // Candidate: the current visual slot under the pointer. The midpoint
+          // threshold avoids chaotic swapping when the user is stationary.
+          let target=-1;
+          for(let i=0;i<nodes.length;i++){
+            const r=nodes[i].getBoundingClientRect();
+            if(kind==='user' ? e.clientX>=r.left&&e.clientX<=r.right
+                             : e.clientY>=r.top&&e.clientY<=r.bottom){target=i;break;}
+          }
+          if(target<0 || target===from)return;
+          if(kind==='user')moveTableColumn(from,target);
+          if(kind==='party')moveTableRow(from,target);
+          drag.moved=true;
+        };
+        const finish=(cancel=false)=>{
+          const d=drag;
+          if(d && d.moved && !cancel){
+            if(kind==='user'){
+              const order=getNodes().map(n=>n.dataset.patchUid);
+              if(order.length===state.registeredUsers.length)state.registeredUsers=order;
+            } else {
+              const order=getNodes().map(n=>n.dataset.patchParty);
+              const byId=new Map(state.channels.map(ch=>[ch.id,ch]));
+              state.channels=[...state.channels.filter(ch=>ch.id==='ch-video'),...order.map(id=>byId.get(id)).filter(Boolean)];
+              initChannelsDOM();
+              if(state.userAssignments?.[state.myUserId])applyAssignments(state.userAssignments[state.myUserId]);
+            }
+            cleanup();publishPatchOrder();return;
+          }
+          // For a cancelled touch, discard preview changes and use original arrays.
+          cleanup();if(cancel && d?.moved)buildAdminMatrix();
+        };
+        const onEnd=()=>finish(false),onCancel=()=>finish(true);
+        grip.addEventListener('pointerdown',e=>{
+          if(e.button!==0 && e.pointerType==='mouse')return;
+          if(pending || drag)return;
+          e.stopPropagation();
+          pending={id:kind==='user'?grip.dataset.uid:grip.dataset.id,ev:{clientX:e.clientX,clientY:e.clientY}};
+          window.addEventListener('pointermove',onMove,true);
+          window.addEventListener('pointerup',onEnd,true);
+          window.addEventListener('pointercancel',onCancel,true);
+          timer=setTimeout(startDrag,170);
+        });
+        grip.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();});
+      };
+      container.querySelectorAll('.yy-user-grip').forEach(grip=>bindPatchGrip(grip,'user'));
+      container.querySelectorAll('.yy-party-grip').forEach(grip=>bindPatchGrip(grip,'party'));
 
       container.querySelectorAll('.matrix-toggle').forEach(btn => {
 
