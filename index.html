@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 
 <html lang="ja">
-<!-- YY-Talk Broadcast Intercom · v53, based on v51 -->
+<!-- YY-Talk Broadcast Intercom · v55 headset PTT test, based on v51 -->
 
 <head>
 
@@ -2519,6 +2519,75 @@ body.yy-patch-drag-active{user-select:none!important;-webkit-user-select:none!im
  .yy-patch-floating-slab{transition:none!important;}
 }
 </style>
+
+<style id="v54-patch-corner-and-grip">
+/* Grip is a neutral drag HANDLE, not a pressable command. Only holding it for
+   180ms raises the row or column. No hover/press/focus color or scale change. */
+#admin-overlay .admin-matrix button.yy-patch-grip,
+#admin-overlay .admin-matrix button.yy-patch-grip:hover,
+#admin-overlay .admin-matrix button.yy-patch-grip:active,
+#admin-overlay .admin-matrix button.yy-patch-grip:focus,
+#admin-overlay .admin-matrix button.yy-patch-grip:focus-visible {
+  -webkit-appearance:none !important;appearance:none !important;
+  background:transparent !important;
+  background-color:transparent !important;
+  box-shadow:none !important;
+  border:0 !important;
+  outline:0 !important;
+  transform:none !important;
+  transition:none !important;
+  filter:none !important;
+  opacity:.85 !important;
+  color:#a1b0c3 !important;
+  -webkit-tap-highlight-color:transparent !important;
+  cursor:grab;
+}
+#admin-overlay .admin-matrix button.yy-patch-grip:active { cursor:grab !important; }
+#admin-overlay .admin-matrix button.yy-patch-grip .yy-grip-bars { pointer-events:none !important; }
+
+/* Only the header's VERTICAL sticky behavior is retained. The corner scrolls
+   away horizontally with the matrix instead of covering the USER columns. */
+#admin-overlay .admin-matrix th.diagonal-header {
+  position:sticky !important;
+  top:0 !important;
+  left:auto !important;
+  right:auto !important;
+  z-index:5 !important;
+  overflow:hidden;
+  height:86px !important;
+  min-height:86px !important;
+  vertical-align:middle;
+}
+#admin-overlay .admin-matrix th.diagonal-header .dh-member,
+#admin-overlay .admin-matrix th.diagonal-header .dh-party {
+  position:static !important;
+  top:auto !important;left:auto !important;right:auto !important;bottom:auto !important;
+  font-size:11px;line-height:14px;color:#b0c2d5 !important;
+  font-weight:700;letter-spacing:.5px;white-space:nowrap;
+}
+#admin-overlay .admin-matrix .yy-patch-corner-user,
+#admin-overlay .admin-matrix .yy-patch-corner-party {
+  position:absolute;display:flex;flex-direction:column;
+  gap:5px;align-items:center;justify-content:center;
+  z-index:1;
+}
+#admin-overlay .admin-matrix .yy-patch-corner-user {top:7px;right:12px;}
+#admin-overlay .admin-matrix .yy-patch-corner-party {bottom:7px;left:12px;}
+#admin-overlay .admin-matrix .yy-patch-corner-add {
+  min-width:65px;min-height:25px;padding:3px 9px;
+  border-radius:6px;border:1px solid #39759b;
+  color:#bfe7ff;background:#1a354c;
+  font-size:11px;font-weight:700;letter-spacing:0;
+  transition:background-color .12s ease;
+  white-space:nowrap;cursor:pointer;
+}
+#admin-overlay .admin-matrix .yy-patch-corner-add:hover { background:#254a65; }
+#admin-overlay .admin-matrix .yy-patch-corner-add:active { background:#173b54; }
+#admin-overlay .admin-matrix th.user-col { height:86px; }
+</style>
+<style id="yy-headset-ptt-css">
+.yy-ptt-sim{display:block;width:100%;min-height:39px;margin-top:8px;border:1px solid #3e546b;background:#1a2839;color:#c9dfec;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer}.yy-ptt-shade[hidden]{display:none!important}.yy-ptt-shade{position:fixed;inset:0;z-index:6500;background:rgba(4,8,15,.82);backdrop-filter:blur(6px);padding:max(12px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom));display:flex;align-items:center;justify-content:center;overflow:auto;overscroll-behavior:contain}.yy-ptt-dialog{background:#151b25;border:1px solid #354357;border-radius:18px;box-shadow:0 20px 65px #0009;max-width:570px;width:100%;max-height:calc(100dvh - 28px);overflow:auto;padding:20px;color:#eaf2fa;font-size:13px;line-height:1.55}.yy-ptt-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.yy-ptt-kicker{font:600 10px/1.5 monospace;letter-spacing:1.3px;color:#78d2e9}.yy-ptt-head h2{font-size:22px;margin:4px 0 8px;font-weight:700}.yy-ptt-version{font-size:11px;color:#7c93aa;font-weight:500}.yy-ptt-close{border:1px solid #405064;color:#f0f5fa;background:#263041;border-radius:9px;min-height:38px;min-width:38px;font-size:23px;cursor:pointer}.yy-ptt-desc{color:#b6c4d5;line-height:1.65;margin:7px 0 13px}.yy-ptt-action{width:100%;min-height:47px;border-radius:11px;border:1px solid #4c829a;background:#20374a;color:#e7fcff;font-size:14px;font-weight:700;cursor:pointer}.yy-ptt-action.on{border-color:#43dfb5;background:#145c50;color:white}.yy-ptt-status{min-height:26px;color:#a9c7df;line-height:1.55;margin:9px 0 14px;font-size:12px}.yy-ptt-caption{font-size:12px;color:#c6d8eb;font-weight:700;margin:16px 0 8px}.yy-ptt-targets{display:grid;gap:6px;max-height:180px;overflow:auto;background:#101720;border:1px solid #344357;border-radius:11px;padding:9px}.yy-ptt-targets label{display:flex;gap:10px;align-items:center;padding:7px;border-radius:7px;font-size:13px;color:#d8e4f2}.yy-ptt-targets input{accent-color:#32c6bd;width:18px;height:18px;flex-shrink:0}.yy-ptt-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:13px}.yy-ptt-diagnostic{border:1px solid #324356;background:#0d1520;border-radius:9px;padding:10px;min-width:0}.yy-ptt-diagnostic span{display:block;color:#8198ae;font-size:10px}.yy-ptt-diagnostic strong{display:block;font:600 12px/1.7 monospace;overflow-wrap:anywhere;color:#d5eff9}.yy-ptt-info{background:#0d1520;border-radius:9px;border:1px solid #344357;padding:11px;font:11px/1.65 monospace;white-space:pre-wrap;overflow-wrap:anywhere;color:#bfdaea}.yy-ptt-hint{font-size:11px;color:#a2abbc;line-height:1.65}.yy-ptt-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}.yy-ptt-actions button{min-height:42px;color:#d7e7f5;background:#253447;border:1px solid #4b617a;border-radius:9px;font-size:12px;cursor:pointer;padding:8px}.yy-ptt-log{border-radius:8px;border:1px solid #293d4f;background:#090f16;max-height:125px;overflow:auto;font:10px/1.5 monospace;white-space:pre-wrap;padding:10px;margin-top:10px;color:#a7bdca}.yy-ptt-action:disabled{opacity:.55;cursor:not-allowed}@media(max-width:430px){.yy-ptt-dialog{padding:15px}.yy-ptt-head h2{font-size:19px}.yy-ptt-grid{gap:6px}.yy-ptt-actions{grid-template-columns:1fr 1fr}}
+</style>
 </head>
 
 <body onload="if(window.forceResize) window.forceResize()">
@@ -2581,7 +2650,7 @@ body.yy-patch-drag-active{user-select:none!important;-webkit-user-select:none!im
 
           </div>
 
-          <div class="login-version">System version V53</div>
+          <div class="login-version">System version V55 (PTT TEST)</div>
 
         </div>
 
@@ -2657,6 +2726,7 @@ body.yy-patch-drag-active{user-select:none!important;-webkit-user-select:none!im
 
         </div>
 
+        <button type="button" id="yy-headset-open" class="btn-header-icon" title="イヤホンPTT設定（検証）" aria-label="イヤホンPTT設定"><i class="fa-solid fa-headphones"></i></button>
         <button type="button" id="btn-settings" class="btn-header-icon admin-only" title="設定"><i class="fa-solid fa-gear"></i></button>
 
         <button type="button" id="btn-show-login" class="btn-header-icon"><i class="fa-solid fa-satellite-dish"></i></button>
@@ -2737,7 +2807,7 @@ body.yy-patch-drag-active{user-select:none!important;-webkit-user-select:none!im
 
             <div id="admin-matrix-container"></div>
 
-            <button type="button" id="btn-add-ch" style="background: rgba(96, 165, 250, 0.1); color: var(--blue); border: 1px solid rgba(96, 165, 250, 0.4); width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background 0.2s;">＋ 新規パーティーを追加</button>
+
 
           </div>
 
@@ -2800,6 +2870,31 @@ body.yy-patch-drag-active{user-select:none!important;-webkit-user-select:none!im
   </div>
 
 
+
+  <section id="yy-headset-panel" class="yy-ptt-shade" role="dialog" aria-label="イヤホンPTT設定" aria-modal="true" hidden>
+    <div class="yy-ptt-dialog">
+      <div class="yy-ptt-head"><div><div class="yy-ptt-kicker">BROADCAST INTERCOM · EXPERIMENT</div><h2>イヤホンPTT <span class="yy-ptt-version">v55</span></h2></div><button type="button" id="yy-headset-close" class="yy-ptt-close" aria-label="設定を閉じる">×</button></div>
+      <p class="yy-ptt-desc">物理メディアボタンの <code>play / pause</code> を、選んだパーティーへの送話ON/OFFに割り当てます。ボタン通知に対応しないiOS・イヤホンでは画面上のTALKを使用してください。</p>
+      <button type="button" id="yy-headset-toggle" class="yy-ptt-action">接続後、イヤホンPTTを有効にする</button>
+      <p id="yy-headset-status" class="yy-ptt-status" role="status">未有効。まずROOMへ接続してください。</p>
+      <div class="yy-ptt-caption">物理ボタンで切り替える送話先（複数選択可）</div>
+      <div id="yy-headset-targets" class="yy-ptt-targets">JOINすると選択可能になります。</div>
+      <button type="button" id="yy-headset-test" class="yy-ptt-sim">物理ボタンを使わずPTT動作だけテスト</button>
+      <p class="yy-ptt-hint">※テストを押すと実際に選択先へTALKがONになる場合があります。受信者のいるテスト用ROOMで確認してください。</p>
+      <div class="yy-ptt-grid">
+        <div class="yy-ptt-diagnostic"><span>物理イベント</span><strong id="yy-headset-events">play 0 / pause 0</strong></div>
+        <div class="yy-ptt-diagnostic"><span>OS Audio Session</span><strong id="yy-headset-session">—</strong></div>
+      </div>
+      <div class="yy-ptt-caption">Safariが報告しているマイク入力</div>
+      <div class="yy-ptt-info" id="yy-headset-mic">取得状況を確認中…</div>
+      <p class="yy-ptt-hint">入力名・Track状態はブラウザーの報告値であり、イヤホンの物理マイクが選ばれた証明ではありません。iPhoneで入出力を別々に確認してください。</p>
+      <div class="yy-ptt-actions">
+        <button type="button" id="yy-headset-rescan">マイク入力を再取得（試験）</button>
+        <button type="button" id="yy-headset-copy">診断をコピー</button>
+      </div>
+      <div class="yy-ptt-log" id="yy-headset-log" aria-live="polite">イベント待機中</div>
+    </div>
+  </section>
 
   <audio id="terminal-output" autoplay playsinline style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0;pointer-events:none"></audio>
   <audio id="dummy-audio" loop playsinline src="https://raw.githubusercontent.com/anars/blank-audio/master/250-milliseconds-of-silence.mp3"></audio>
@@ -2971,7 +3066,7 @@ body.yy-patch-drag-active{user-select:none!important;-webkit-user-select:none!im
             if (typeof updateIoElementsState === 'function') updateIoElementsState(); if (typeof updatePttButtonsState === 'function') updatePttButtonsState();
 
             if (newState) {
-
+                yyHeadsetDeactivate('I/O BRIDGEが有効になりました');
                 let changed = false; state.channels?.forEach(ch => { if (state.talkStates[ch.id]) { state.talkStates[ch.id] = false; changed = true; } if (state.listenStates[ch.id]) { state.listenStates[ch.id] = false; changed = true; } const card = $(`card-${ch.id}`); if (card) card.classList.remove('talk-on', 'listen-on'); const tBtn = $(`talk-${ch.id}`); if (tBtn) tBtn.classList.remove('active', 'latched'); const lBtn = $(`listen-${ch.id}`); if (lBtn) lBtn.classList.remove('active', 'latched'); });
 
                 if(changed) { updateAudioRouting(); updateChannelIcons(); syncTalkStates(); syncListenStates(); }
@@ -3001,6 +3096,7 @@ body.yy-patch-drag-active{user-select:none!important;-webkit-user-select:none!im
     }
 
     async function kickIOSAudioSession(reason = 'route change') {
+      if (state.yyMicAcquiring) return;
       if (!isIOSLikeDevice() || !('audioSession' in navigator) || !navigator.audioSession) return;
       try {
         /* Toggling the category makes iOS recompute the hardware route after a headset change.
@@ -3012,7 +3108,12 @@ body.yy-patch-drag-active{user-select:none!important;-webkit-user-select:none!im
     }
 
     async function rebuildTerminalOutputRoute(reason = 'route rebuild') {
+      if (state.yyMicAcquiring) return;
       if (!state.audioCtx || !state.terminalAnalyser) return;
+      if (isIOSLikeDevice() && state.terminalDest?.stream?.getAudioTracks?.().some(t=>t.readyState==='live') && state.terminalAudioEl?.srcObject === state.terminalDest.stream && /AudioSession|visibility resume|window focus|pageshow/.test(reason)) {
+        try { if(state.audioCtx.state==='suspended') await state.audioCtx.resume(); await state.terminalAudioEl.play(); } catch(e){}
+        return;
+      }
       const useMediaElement = isIOSLikeDevice();
       try { state.terminalAnalyser.disconnect(); } catch(e) {}
 
@@ -3048,7 +3149,7 @@ body.yy-patch-drag-active{user-select:none!important;-webkit-user-select:none!im
         navigator.audioSession.addEventListener?.('statechange', () => {
           if (!state.hasSuccessfullyConnected) return;
           const s = navigator.audioSession?.state;
-          if (s === 'active' || s === 'inactive') {
+          if ((s === 'active' || s === 'inactive') && !state.yyMicAcquiring) {
             restorePlaybackAfterRouteChange(`AudioSession ${s}`);
           }
         });
@@ -3057,9 +3158,11 @@ body.yy-patch-drag-active{user-select:none!important;-webkit-user-select:none!im
 
     let yyRouteRestoreTimer = null;
     function restorePlaybackAfterRouteChange(reason = 'device route change') {
+      if (state.yyMicAcquiring) return;
       clearTimeout(yyRouteRestoreTimer);
       yyRouteRestoreTimer = setTimeout(async () => {
         try {
+          if (state.yyMicAcquiring) return;
           await kickIOSAudioSession(reason);
           const contexts = [state.audioCtx, state.ioLineAudioCtx, state.pgmAudioCtx].filter(Boolean);
           for (const ctx of contexts) {
@@ -3315,7 +3418,7 @@ body.yy-patch-drag-active{user-select:none!important;-webkit-user-select:none!im
 
         const bja = $('btn-join-admin'); if(bja) bja.onclick = () => joinNetwork(true);
 
-        const bStop = $('btn-stop'); if(bStop) bStop.onclick = () => { LocalProfile.clear(); location.reload(); };
+        const bStop = $('btn-stop'); if(bStop) bStop.onclick = () => { yySafeTalkOff('切断', true); LocalProfile.clear(); location.reload(); };
 
 
 
@@ -3524,9 +3627,9 @@ body.yy-patch-drag-active{user-select:none!important;-webkit-user-select:none!im
           });
         }
 
-        const bAdd = $('btn-add-ch');
-
-        if(bAdd) bAdd.onclick = () => {
+        /* v54: PARTY add is invoked from the upper-left matrix header, not a
+           separate button at the bottom of the PATCH PANEL. */
+        window.yyAddPartyFromMatrix = () => {
 
             try {
 
@@ -3544,9 +3647,8 @@ body.yy-patch-drag-active{user-select:none!important;-webkit-user-select:none!im
                 rebuildAllIoStereoPartyLegs();
 
                 saveRoomState(); buildAdminMatrix(); if (state.userAssignments && state.myUserId) { applyAssignments(state.userAssignments[state.myUserId] || state.channels.map(c=>c.id)); }
-
-            } catch (err) {}
-
+                return id;
+            } catch (err) { uiLog('PARTY ADD FAILED: '+String(err),'#f87171'); return null; }
         };
 
 
@@ -3677,7 +3779,8 @@ body.yy-patch-drag-active{user-select:none!important;-webkit-user-select:none!im
         state.audioEnabled = true;
         try {
             installAudioSessionRecovery();
-            try { if ('audioSession' in navigator && navigator.audioSession) navigator.audioSession.type = 'play-and-record'; } catch(_) {}
+            /* In iOS set auto immediately before gUM, not play-and-record here. */
+            try { if ('audioSession' in navigator && navigator.audioSession && !isIOSLikeDevice()) navigator.audioSession.type = 'play-and-record'; } catch(_) {}
             initAudioContext();
             state.audioCtx?.resume?.().catch(() => {});
             $('dummy-audio')?.play().catch(() => {});
@@ -3695,21 +3798,30 @@ body.yy-patch-drag-active{user-select:none!important;-webkit-user-select:none!im
             return Promise.resolve(true);
         }
 
-        /* Call getUserMedia immediately, before JOIN reaches its first await. */
+        /* Call getUserMedia immediately, before JOIN reaches its first await.
+           v55 iOS route workaround is experimental, and does not guarantee media-key delivery. */
         const constraints = { echoCancellation: true, noiseSuppression: true, autoGainControl: true };
+        if (isIOSLikeDevice()) constraints.channelCount = { ideal: 1 };
+        state.yyMicAcquiring = true;
+        if (isIOSLikeDevice()) { try { if(navigator.audioSession) navigator.audioSession.type='auto'; } catch(_){} }
         return navigator.mediaDevices.getUserMedia({ audio: constraints }).then(stream => {
+            if (isIOSLikeDevice()) { try { if(navigator.audioSession) navigator.audioSession.type='play-and-record'; } catch(_){} }
             if (forceNewStream && state.localStream && state.localStream !== stream) {
                 try { state.localStream.getTracks().forEach(t => t.stop()); } catch(e) {}
             }
             state.localStream = stream;
             attachLocalMicAnalyser(stream);
+            yyAttachMicTrackGuards(stream);
+            yyUpdateMicDiagnostic();
             const ao = $('audio-overlay'); if (ao) ao.style.display = 'none';
             return true;
         }).catch(err => {
             uiLog(`Mic permission/start failed: ${err?.message || err}`, '#f97316');
+            yySafeTalkOff('マイク取得失敗: '+(err?.message||err), true);
+            yyUpdateMicDiagnostic();
             if (showFallback) { const ao = $('audio-overlay'); if (ao) ao.style.display = 'flex'; }
             return false;
-        });
+        }).finally(()=>{state.yyMicAcquiring=false; if(isIOSLikeDevice()){try{if(navigator.audioSession)navigator.audioSession.type='play-and-record'}catch(_){}}});
     }
 
     async function resolveSavedIoInputDevices() {
@@ -4954,6 +5066,8 @@ body.yy-patch-drag-active{user-select:none!important;-webkit-user-select:none!im
     
 
     function resetAndApplyChannels(newChannels, newAssignments, newTallyAssignments, newRegistered) {
+        /* A published room/routing reset invalidates the physical PTT latch. */
+        if (state.yyHeadset?.enabled) yySafeTalkOff('パーティー構成を更新',true);
 
         if (state.audioCtx) { Object.values(state.channelNodes || {}).forEach(node => { try { node?.masterGain?.disconnect(); } catch(e){} try { node?.listenGain?.disconnect(); } catch(e){} try { node?.ioGain?.disconnect(); } catch(e){} try { node?.ioPanner?.disconnect(); } catch(e){} }); Object.values(state.mediaCalls || {}).forEach(call => { Object.values(call?.chGains || {}).forEach(g => { try { g.gain?.disconnect(); } catch(e){} }); if(call) call.chGains = {}; }); }
 
@@ -5263,10 +5377,22 @@ body.yy-patch-drag-active{user-select:none!important;-webkit-user-select:none!im
         if (!state.room || !state.localStream || state.room.state !== 'connected') return;
 
         const audioTrack = state.localStream.getAudioTracks()[0];
+        if (audioTrack && state.localMicTrack?.mediaStreamTrack?.readyState === 'ended' && state.localMicTrack.replaceTrack) {
+            const fresh = audioTrack.clone();
+            state.localMicTrack.replaceTrack(fresh,true).then(()=>{
+                yyAttachMicTrackGuards(state.localStream); yyUpdateMicDiagnostic();
+                uiLog('Existing LiveKit microphone publication restored', '#38bdf8');
+            }).catch(err=>{
+                fresh.stop(); yySafeTalkOff('送信Track復旧失敗',true);
+                uiLog('Publish track restore failed: '+(err?.message||err),'#f97316');
+            });
+            return;
+        }
 
         if (audioTrack && !state.localMicTrack) {
 
             try {
+                yyAttachMicTrackGuards(state.localStream);
 
                 const clonedTrack = audioTrack.clone();
 
@@ -5916,6 +6042,195 @@ body.yy-patch-drag-active{user-select:none!important;-webkit-user-select:none!im
 
 
 
+
+    /* ═══ v55 experimental media-key PTT: opt-in only; no WebRTC renegotiation ═══ */
+    const yyHeadset = { enabled:false, supported:false, seen:0, play:0, pause:0, lastAt:0,
+      targets:new Set(), logs:[], routingSignature:'', trackedMic:null, ignoredUntil:0 };
+    state.yyHeadset = yyHeadset;
+    const yyPts = id => document.getElementById(id);
+    const yyConnected = () => state.room?.state === 'connected';
+    function yyHeadsetLog(message) {
+      yyHeadset.logs.unshift('['+new Date().toLocaleTimeString('ja-JP',{hour12:false})+'] '+message);
+      yyHeadset.logs.length=Math.min(yyHeadset.logs.length,30);
+      if (yyPts('yy-headset-log')) yyPts('yy-headset-log').textContent=yyHeadset.logs.join('\n');
+      yyUpdateMicDiagnostic();
+    }
+    function yyStoredTargetsKey() { return 'yy_headset_targets_' + encodeURIComponent(state.roomId||'')+'_'+encodeURIComponent(state.myUserId||''); }
+    function yyRoutingSignature(ids) {
+      const arr=ids||state.userAssignments?.[state.myUserId]||[];
+      return JSON.stringify([...arr].sort());
+    }
+    function yyCanTalkTo(ch) {
+      if(!ch || ch.id==='ch-video' || ch.type==='Listen')return false;
+      const ids=state.userAssignments?.[state.myUserId];
+      if(Array.isArray(ids) && !ids.includes(ch.id))return false;
+      if(state.ioBridge?.enabled || !yyConnected())return false;
+      if(ch.type==='Local'){
+        let active=0;
+        state.registeredUsers.forEach(uid=>{
+          if(uid===state.myUserId) return;
+          if(state.room?.remoteParticipants?.has?.(uid) && state.remoteTalkStates?.[uid]?.[ch.id])active++;
+        });
+        if(active>=2)return false;
+      }
+      return true;
+    }
+    function yyGetMic() {return state.localStream?.getAudioTracks?.()[0]||null;}
+    function yyUpdateMicDiagnostic() {
+      const track=yyGetMic(); const b=yyPts('yy-headset-mic');
+      if(b){let label=track?.label||'未取得';let settings={};try{settings=track?.getSettings?.()||{}}catch(_){}
+        const reported=(settings.deviceId||'未提供');
+        b.textContent='取得入力: '+label+'\n状態: '+(track?track.readyState:'なし')+' / muted='+(track?.muted??'—')+' / enabled='+(track?.enabled??'—')+'\n設定: '+JSON.stringify({deviceId:reported,channelCount:settings.channelCount,sampleRate:settings.sampleRate})+'\n公開Track: '+(state.localMicTrack?.mediaStreamTrack?.readyState||'なし')+' / SID: '+(state.localMicTrack?.sid||'未確認');
+      }
+      const a=yyPts('yy-headset-session');if(a)a.textContent=navigator.audioSession?.type||'APIなし';
+      const ev=yyPts('yy-headset-events');if(ev)ev.textContent='play '+yyHeadset.play+' / pause '+yyHeadset.pause;
+      const status=yyPts('yy-headset-status');if(status)status.textContent=yyHeadset.enabled
+         ? (yyHeadset.seen?'イベント受信済（'+yyHeadset.seen+'回）。PTT動作中':'待受中（物理ボタンイベントは未確認）。無反応ならOSが通知していません。画面TALKを使用してください。')
+         : 'PTT無効。'+(yyHeadset.logs[0]?.split('] ').slice(1).join('] ')||'接続後に有効化できます。');
+      const btn=yyPts('yy-headset-toggle');if(btn){btn.classList.toggle('on',yyHeadset.enabled);btn.textContent=yyHeadset.enabled?'イヤホンPTTを解除':'イヤホンPTTを有効にする';}
+    }
+    function yyRenderHeadsetTargets() {
+      const host=yyPts('yy-headset-targets');if(!host)return;
+      const eligible=(state.channels||[]).filter(ch=>ch.id!=='ch-video'&&ch.type!=='Listen'&&(!Array.isArray(state.userAssignments?.[state.myUserId])||state.userAssignments[state.myUserId].includes(ch.id)));
+      host.replaceChildren();
+      if(!eligible.length){host.textContent='利用できるTALKパーティーがありません。管理者にSET割当を確認してください。';return;}
+      eligible.forEach(ch=>{
+        const label=document.createElement('label');
+        const box=document.createElement('input');box.type='checkbox';box.value=ch.id;box.checked=yyHeadset.targets.has(ch.id);
+        box.addEventListener('change',()=>{if(box.checked)yyHeadset.targets.add(ch.id);else yyHeadset.targets.delete(ch.id);
+          try{safeStorage.set(yyStoredTargetsKey(),JSON.stringify([...yyHeadset.targets]));}catch(_){}
+          if(yyHeadset.enabled){yyHeadsetDeactivate('PTT対象を変更しました。再度有効化してください。');}
+        });
+        const name=document.createElement('span');name.textContent=ch.name;
+        label.append(box,name);host.appendChild(label);
+      });
+    }
+    function yyLoadHeadsetTargets(){try{const arr=JSON.parse(safeStorage.get(yyStoredTargetsKey())||'[]');yyHeadset.targets=new Set(Array.isArray(arr)?arr:[]);}catch(_){yyHeadset.targets=new Set()}}
+    function yySyncHeadsetButtons() {
+      state.channels?.forEach(ch=>{
+        const on=state.talkStates[ch.id]===true,card=yyPts('card-'+ch.id),btn=yyPts('talk-'+ch.id);
+        card?.classList.toggle('talk-on',on);btn?.classList.toggle('active',on);btn?.classList.toggle('latched',on);
+        if(btn)btn.style.transform='translateX(0px)';
+        if(state.isAdmin){const remote=document.querySelector(`.remote-mic-btn[data-uid="${CSS.escape(state.myUserId)}"][data-chid="${CSS.escape(ch.id)}"]`);remote?.classList.toggle('active',on);}
+      });
+    }
+    function yySafeTalkOff(reason, deactivate=true){
+      const had=Object.values(state.talkStates||{}).some(Boolean);
+      for(const ch of state.channels||[]) if(state.talkStates[ch.id])state.talkStates[ch.id]=false;
+      yySyncHeadsetButtons();
+      if(had){updateAudioRouting();updateChannelIcons();syncTalkStates();}
+      if(deactivate) yyHeadsetDeactivate(reason);
+    }
+    function yyHeadsetDeactivate(reason='解除しました') {
+      const was=yyHeadset.enabled; yyHeadset.enabled=false; yyHeadset.routingSignature='';
+      const media=navigator.mediaSession;
+      if(media){for(const kind of ['play','pause'])try{media.setActionHandler(kind,null)}catch(_){}}
+      if(was||reason!=='解除しました')yyHeadsetLog('PTT受付OFF：'+reason);
+      yyUpdateMicDiagnostic();
+    }
+    function yyHeadsetToggle(reason='physical'){
+      if(!yyHeadset.enabled||!yyConnected()||state.ioBridge?.enabled)return;
+      const t=yyGetMic(),pub=state.localMicTrack?.mediaStreamTrack;
+      if(!t||t.readyState!=='live'||!pub||pub.readyState!=='live'){
+        yySafeTalkOff('マイク送信Trackが無効',true);return;
+      }
+      const ids=[...yyHeadset.targets].filter(id=>state.channels.some(ch=>ch.id===id));
+      if(!ids.length){yyHeadsetLog('PTT対象が未選択です');return;}
+      if(yyHeadset.routingSignature!==yyRoutingSignature()){yySafeTalkOff('送話先の割当が変わりました',true);return;}
+      const anyOn=ids.some(id=>state.talkStates[id]===true);
+      if(anyOn){ids.forEach(id=>state.talkStates[id]=false);}
+      else{
+        let count=0;
+        ids.forEach(id=>{const ch=state.channels.find(c=>c.id===id);if(yyCanTalkTo(ch)){state.talkStates[id]=true;count++;}});
+        if(!count){yyHeadsetLog('送信可能な対象がありません（LOCAL制限・SET割当を確認）');return;}
+      }
+      yySyncHeadsetButtons();updateAudioRouting();updateChannelIcons();syncTalkStates();
+      yyHeadsetLog('物理PTT '+(anyOn?'OFF':'ON')+' / 対象 '+ids.length+' / '+reason);
+    }
+    function yyHeadsetEvent(kind){
+      if(!yyHeadset.enabled)return;
+      const now=performance.now();
+      if(now-yyHeadset.lastAt<350){yyHeadsetLog(kind+' 重複通知を除外');return;}
+      yyHeadset.lastAt=now;yyHeadset.seen++;yyHeadset[kind]++;
+      yyHeadsetToggle(kind);yyUpdateMicDiagnostic();
+      try{if(navigator.mediaSession)navigator.mediaSession.playbackState='playing'}catch(_){}
+    }
+    async function yyHeadsetEnable(){
+      if(yyHeadset.enabled){yyHeadsetDeactivate();return;}
+      if(!yyConnected()){yyHeadsetLog('まずROOMへ接続してください');return;}
+      if(state.ioBridge?.enabled){yyHeadsetLog('I/O BRIDGE中はイヤホンPTTを使用できません');return;}
+      if(!yyGetMic()||yyGetMic().readyState!=='live'||state.localMicTrack?.mediaStreamTrack?.readyState!=='live'){
+        yyHeadsetLog('有効なマイク送信Trackがありません。マイクを確認してください');return;}
+      if(!yyHeadset.targets.size){yyHeadsetLog('少なくとも1つのTALK先を選択してください');return;}
+      if(!navigator.mediaSession?.setActionHandler){yyHeadsetLog('ブラウザーがMedia Session操作を公開していません');return;}
+      const done=[];
+      try{
+        for(const kind of ['play','pause']){navigator.mediaSession.setActionHandler(kind,()=>yyHeadsetEvent(kind));done.push(kind);}
+        yyHeadset.enabled=true;yyHeadset.lastAt=0;yyHeadset.routingSignature=yyRoutingSignature();yyHeadset.seen=0;yyHeadset.play=0;yyHeadset.pause=0;
+        try{navigator.mediaSession.metadata=new MediaMetadata({title:'YY-Talk Broadcast Intercom',artist:'イヤホン PTT',album:'Broadcast'});navigator.mediaSession.playbackState='playing'}catch(_){}
+        try{await yyPts('dummy-audio')?.play()}catch(e){yyHeadsetLog('メディア再生開始不可：'+(e?.name||e))}
+        yyHeadsetLog('PTT有効。物理ボタンを1回押してください。iOS通話モードでは通知されない場合があります');
+      }catch(e){for(const kind of done)try{navigator.mediaSession.setActionHandler(kind,null)}catch(_){}
+        yyHeadset.enabled=false;yyHeadsetLog('Media Session登録不可：'+(e?.message||e));}
+      yyUpdateMicDiagnostic();
+    }
+    function yyAttachMicTrackGuards(stream){
+      const t=stream?.getAudioTracks?.()[0];if(!t||t===yyHeadset.trackedMic)return;
+      yyHeadset.trackedMic=t;
+      const check=(reason)=>{if(state.yyMicAcquiring)return;yySafeTalkOff(reason,true)};
+      t.addEventListener('ended',()=>{if(t===yyHeadset.trackedMic)check('マイクTrack失効')});
+      t.addEventListener('mute',()=>{
+        setTimeout(()=>{if(t===yyHeadset.trackedMic&&t.muted&&t.readyState==='live')check('マイク取得がミュートのまま')},2500);
+      });
+      t.addEventListener('unmute',yyUpdateMicDiagnostic);
+    }
+    let yyRefreshBusy=false;
+    async function yyHeadsetReacquireMic(){
+      if(yyRefreshBusy)return;
+      if(!yyConnected()||state.ioBridge?.enabled){yyHeadsetLog('通常ユーザーとして接続中に再取得してください');return;}
+      if(!isIOSLikeDevice()){yyHeadsetLog('マイク再取得試験はiPhone/iPad向け。PC側の取得経路は維持します');return;}
+      yyRefreshBusy=true;yySafeTalkOff('マイク再取得',true);
+      const btn=yyPts('yy-headset-rescan');if(btn)btn.disabled=true;
+      const publisher=state.localMicTrack;const senderSid=publisher?.sid||'未確認';
+      try{
+        if(!publisher||!publisher.replaceTrack)throw Error('LiveKit公開Track差し替えAPIがありません');
+        state.yyMicAcquiring=true;
+        const old=yyGetMic(),oldPublished=publisher.mediaStreamTrack;
+        try{old?.stop()}catch(_){}; try{oldPublished?.stop()}catch(_){};
+        try{if(navigator.audioSession)navigator.audioSession.type='auto'}catch(_){}
+        const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:{ideal:1}}});
+        const fresh=stream.getAudioTracks()[0];if(!fresh)throw Error('取得した音声Trackがありません');
+        const clone=fresh.clone();clone.enabled=!state.isMasterMicMuted;
+        try{await publisher.replaceTrack(clone,true)}catch(err){try{clone.stop()}catch(_){};try{fresh.stop()}catch(_){};throw err;}
+        state.localStream=stream;attachLocalMicAnalyser(stream);yyAttachMicTrackGuards(stream);
+        yyHeadsetLog('マイク再取得成功。LiveKit公開SID '+senderSid+' → '+(state.localMicTrack?.sid||'未確認')+'（MediaStreamTrack IDは変化します）');
+        if(senderSid!=='未確認' && state.localMicTrack?.sid && senderSid!==state.localMicTrack.sid)yyHeadsetLog('注意：公開SIDが変更されました');
+      }catch(err){state.localStream=null;yySafeTalkOff('入力再取得失敗',true);yyHeadsetLog('再取得失敗：'+(err?.message||err)+'。自動フォールバックはしません。送信Trackを復帰できない場合は接続し直してください。');}
+      finally{state.yyMicAcquiring=false;try{if(navigator.audioSession)navigator.audioSession.type='play-and-record'}catch(_){}
+        yyRefreshBusy=false;if(btn)btn.disabled=false;yyUpdateMicDiagnostic();}
+    }
+    (function yyInitHeadsetUi(){
+      yyPts('yy-headset-open')?.addEventListener('click',()=>{
+        yyPts('yy-headset-panel').hidden=false;yyLoadHeadsetTargets();yyRenderHeadsetTargets();yyUpdateMicDiagnostic();
+      });
+      yyPts('yy-headset-close')?.addEventListener('click',()=>{yyPts('yy-headset-panel').hidden=true});
+      yyPts('yy-headset-toggle')?.addEventListener('click',yyHeadsetEnable);
+      yyPts('yy-headset-test')?.addEventListener('click',()=>{
+        if(!yyHeadset.enabled){yyHeadsetLog('PTTを有効化してから動作テストを実行してください');return;}
+        yyHeadsetToggle('画面上のテスト入力（物理イベントではありません）');
+      });
+      yyPts('yy-headset-rescan')?.addEventListener('click',yyHeadsetReacquireMic);
+      yyPts('yy-headset-copy')?.addEventListener('click',async()=>{
+        const lines=[yyPts('yy-headset-status')?.textContent,yyPts('yy-headset-events')?.textContent,yyPts('yy-headset-session')?.textContent,yyPts('yy-headset-mic')?.textContent,...yyHeadset.logs];
+        try{await navigator.clipboard.writeText(lines.join('\n'));yyHeadsetLog('診断をコピーしました')}catch(e){yyHeadsetLog('コピー失敗: '+e.message)}
+      });
+      window.addEventListener('pagehide',()=>yySafeTalkOff('ページ終了',true));
+      window.addEventListener('beforeunload',()=>yySafeTalkOff('ページ終了',true));
+      /* Visibility/lock never stops LISTEN or TALK on its own. */
+      setInterval(()=>{if(!yyPts('yy-headset-panel').hidden)yyUpdateMicDiagnostic();
+        if(yyHeadset.enabled && (!yyConnected()||yyGetMic()?.readyState!=='live'))yySafeTalkOff('接続/入力失効',true);
+      },1500);
+    })();
     function setupPTTButton(btn, type, channelId) {
 
       if(!btn) return; let isDown = false, startX = 0; let isLatched = btn.classList.contains('latched'); const slideDir = type === 'listen' ? 1 : -1;
@@ -5932,8 +6247,10 @@ body.yy-patch-drag-active{user-select:none!important;-webkit-user-select:none!im
 
       }
 
-      btn.addEventListener('pointerdown', (e) => { 
-
+      btn.addEventListener('pointerdown', (e) => {
+          /* A headset toggle may have changed the latched state since this button
+             registered its closure. Always re-read the visible/programmatic state. */
+          isLatched = btn.classList.contains('latched');
           if (state.ioBridge && state.ioBridge.enabled) return;
 
           if (type === 'talk') { const ch = state.channels.find(c => c.id === channelId); if (ch && ch.type === 'Local') { let activeTalkers = 0; state.registeredUsers.forEach(uid => { if (state.room && state.room.remoteParticipants && state.room.remoteParticipants.has(uid) && state.remoteTalkStates[uid] && state.remoteTalkStates[uid][channelId]) activeTalkers++; }); if (activeTalkers >= 2) { btn.style.opacity = '0.3'; setTimeout(() => btn.style.opacity = '1', 300); return; } } }
@@ -5982,7 +6299,13 @@ body.yy-patch-drag-active{user-select:none!important;-webkit-user-select:none!im
 
       
 
-      let headerHtml = `<thead><tr><th class="diagonal-header" style="min-width:180px;"><span class="dh-member" style="color:var(--text-sub);">USER</span><span class="dh-party" style="color:var(--text-sub);">PARTY</span></th>`;
+      /* Corner scrolls horizontally with the table; it stays in the header
+         when scrolling vertically. Its two independent add actions live just
+         under USER / PARTY so there are no extra last-row or last-column cells. */
+      let headerHtml = `<thead><tr><th class="diagonal-header" style="min-width:180px;">
+        <div class="yy-patch-corner-user"><span class="dh-member">USER</span><button type="button" id="btn-add-user" class="yy-patch-corner-add" aria-label="ユーザーを追加して最終列へ移動">＋ 追加</button></div>
+        <div class="yy-patch-corner-party"><span class="dh-party">PARTY</span><button type="button" id="btn-patch-add-party" class="yy-patch-corner-add" aria-label="パーティーを追加して最終行へ移動">＋ 追加</button></div>
+      </th>`;
 
       state.registeredUsers?.forEach((uid, idx) => {
 
@@ -5992,7 +6315,7 @@ body.yy-patch-drag-active{user-select:none!important;-webkit-user-select:none!im
 
       });
 
-      headerHtml += `<th style="width: auto; min-width: 100px; text-align: left; padding-left: 15px;"><button id="btn-add-user" style="background:rgba(96,165,250,0.1); color:var(--blue); border:1px solid rgba(96,165,250,0.4); padding:6px 12px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold;">＋ 追加</button></th></tr></thead><tbody>`;
+      headerHtml += `</tr></thead><tbody>`;
 
       let html = `<div class="admin-matrix-wrapper"><table class="admin-matrix">${headerHtml}`;
 
@@ -6337,9 +6660,47 @@ body.yy-patch-drag-active{user-select:none!important;-webkit-user-select:none!im
 
 
 
+      /* Jump after the matrix has been rebuilt. User = far-right column;
+         PARTY = lowest row. Scroll only the PATCH PANEL, never the page. */
+      const yyJumpToNewPatchItem = (type, id) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          const currentWrap = container.querySelector('.admin-matrix-wrapper');
+          if (!currentWrap) return;
+          if (type === 'user') {
+            const headers = Array.from(currentWrap.querySelectorAll('thead th.user-col'));
+            const target = headers.find(el => el.dataset.patchUid === id) || headers[headers.length - 1];
+            if (target) {
+              const w = currentWrap.getBoundingClientRect(), r = target.getBoundingClientRect();
+              const left = currentWrap.scrollLeft + r.right - w.right + 12;
+              currentWrap.scrollTo({left: Math.max(0,left), behavior:'smooth'});
+            }
+          } else {
+            const lastRow = Array.from(currentWrap.querySelectorAll('tbody tr[data-patch-party]'))
+              .find(el=>el.dataset.patchParty===id) || currentWrap.querySelector('tbody tr[data-patch-party]:last-child');
+            if (lastRow) lastRow.scrollIntoView({block:'end',inline:'nearest',behavior:'smooth'});
+          }
+        }));
+      };
+      const btnAddParty = $('btn-patch-add-party');
+      if (btnAddParty) btnAddParty.onclick = (e) => {
+        e.preventDefault();e.stopPropagation();
+        const id = window.yyAddPartyFromMatrix?.();
+        if (id) yyJumpToNewPatchItem('party',id);
+      };
       const btnAddUser = $('btn-add-user');
-
-      if(btnAddUser) { btnAddUser.onclick = () => { const uid = prompt('事前登録するメンバーのユーザーIDを入力してください:'); if (uid && uid.trim() !== '' && !state.registeredUsers.includes(uid)) { state.registeredUsers.push(uid); state.userAssignments[uid] = state.channels?.map(c => c.id) || []; state.tallyAssignments[uid] = []; saveRoomState(); buildAdminMatrix(); buildTallyAssignmentUI(); sendData({ type: 'update-registered', registered: state.registeredUsers }); sendData({ type: 'update-tally-assignments', assignments: state.tallyAssignments }); } }; }
+      if (btnAddUser) btnAddUser.onclick = (e) => {
+        e.preventDefault();e.stopPropagation();
+        const value = prompt('事前登録するメンバーのユーザーIDを入力してください:');
+        const uid = value?.trim();
+        if (!uid || state.registeredUsers.includes(uid)) return;
+        state.registeredUsers.push(uid);
+        state.userAssignments[uid] = state.channels?.map(c=>c.id) || [];
+        state.tallyAssignments[uid] = [];
+        saveRoomState();buildAdminMatrix();buildTallyAssignmentUI();
+        sendData({type:'update-registered',registered:state.registeredUsers});
+        sendData({type:'update-tally-assignments',assignments:state.tallyAssignments});
+        yyJumpToNewPatchItem('user',uid);
+      };
 
 
 
@@ -6390,6 +6751,7 @@ body.yy-patch-drag-active{user-select:none!important;-webkit-user-select:none!im
     function applyAssignments(assignedIds) {
 
       if (!assignedIds) return;
+      if (state.yyHeadset?.enabled && state.yyHeadset?.routingSignature && state.yyHeadset.routingSignature !== yyRoutingSignature(assignedIds)) yyHeadsetDeactivate('送話Routingが変更されました');
 
       state.channels?.forEach(ch => {
 
@@ -6495,6 +6857,7 @@ body.yy-patch-drag-active{user-select:none!important;-webkit-user-select:none!im
         else if (data.type === 'update-ch-info') { 
 
             if(data.data && Array.isArray(data.data)) {
+                if (state.yyHeadset?.enabled && data.data.some(ch=>{const old=state.channels.find(c=>c.id===ch.id);return old && old.type!==ch.type;})) yySafeTalkOff('パーティー種別が変更されました',true);
                 /* v11: channel metadata updates must never change PATCH PANEL assignments.
                    Renaming a party used to rebuild every card via initChannelsDOM(), which
                    temporarily made unassigned parties visible. Update labels in-place only;
@@ -6581,7 +6944,7 @@ body.yy-patch-drag-active{user-select:none!important;-webkit-user-select:none!im
 
         }
 
-        else if (data.type === 'remove-channel') { if(data.chId) removeChannel(data.chId); saveRoomState(); if(state.isAdmin) buildAdminMatrix(); }
+        else if (data.type === 'remove-channel') { yySafeTalkOff('パーティー削除', true); if(data.chId) removeChannel(data.chId); saveRoomState(); if(state.isAdmin) buildAdminMatrix(); }
 
         else if (data.type === 'update-monitor-title') { state.monitorTitle = data.title; const mmt=$('main-monitor-title'); if(mmt) { mmt.textContent = data.title || ''; mmt.style.display = (!data.title || data.title.trim() === '') ? 'none' : 'block'; } if (state.isAdmin) {const emt=$('edit-monitor-title'); if(emt) emt.value = data.title || '';} saveRoomState(); }
 
@@ -6703,6 +7066,7 @@ body.yy-patch-drag-active{user-select:none!important;-webkit-user-select:none!im
     window.addEventListener('online', () => {
       if (state.hasSuccessfullyConnected && state.room?.state !== 'connected') triggerAutoReconnect();
     });
+    window.addEventListener('offline', () => yySafeTalkOff('ネットワークがオフラインになりました',true));
 
     const joinNetwork = async function(isAdmin) {
 
@@ -6994,11 +7358,11 @@ body.yy-patch-drag-active{user-select:none!important;-webkit-user-select:none!im
 
 
 
-          room.on(LivekitClient.RoomEvent.Reconnecting, () => { yyVideoNote('LiveKit 再接続中'); showDisconnect(); });
+          room.on(LivekitClient.RoomEvent.Reconnecting, () => { yySafeTalkOff('ネットワーク再接続中',true); yyVideoNote('LiveKit 再接続中'); showDisconnect(); });
 
           room.on(LivekitClient.RoomEvent.Reconnected, () => { yyVideoNote('LiveKit 再接続完了'); hideDisconnect(); });
 
-          room.on(LivekitClient.RoomEvent.Disconnected, () => { showDisconnect('サーバーから切断されました。自動再接続を試行します…'); if (state.hasSuccessfullyConnected) triggerAutoReconnect(); });
+          room.on(LivekitClient.RoomEvent.Disconnected, () => { yySafeTalkOff('通信切断',true); showDisconnect('サーバーから切断されました。自動再接続を試行します…'); if (state.hasSuccessfullyConnected) triggerAutoReconnect(); });
 
 
 
