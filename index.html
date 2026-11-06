@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 
 <html lang="ja">
-<!-- YY-Talk Broadcast Intercom · v52, based on v51 -->
+<!-- YY-Talk Broadcast Intercom · v53, based on v51 -->
 
 <head>
 
@@ -2464,6 +2464,61 @@ select:not([multiple]):not([size]){
   max-width:100%!important;max-height:100%!important;
 }
 </style>
+
+<style id="v53-patch-full-row-column-drag">
+/* Small, unobtrusive top-left grip, leaving SET and name editable. */
+#admin-overlay .admin-matrix th.user-col,
+#admin-overlay .admin-matrix td.ch-cell {position:relative;}
+#admin-overlay .admin-matrix .yy-patch-grip{
+  position:absolute!important;top:4px;left:4px;z-index:4;
+  width:21px!important;min-width:21px!important;max-width:21px!important;
+  height:19px!important;min-height:19px!important;max-height:19px!important;
+  border:1px solid transparent!important;border-radius:5px;
+  padding:0!important;margin:0!important;flex:0 0 auto!important;
+  background:rgba(63,84,110,.24)!important;color:#9eafc3!important;
+  opacity:.82;touch-action:none!important;
+  -webkit-touch-callout:none;user-select:none;-webkit-user-select:none;
+  transition:opacity 120ms ease,background-color 120ms ease,box-shadow 120ms ease;
+}
+#admin-overlay .admin-matrix .yy-patch-grip .yy-grip-bars{
+  font-size:13px!important;line-height:1!important;font-weight:600;
+  letter-spacing:0!important;pointer-events:none;
+}
+#admin-overlay .admin-matrix .yy-patch-grip:hover,
+#admin-overlay .admin-matrix .yy-patch-grip:focus-visible{
+  color:#eaf5ff!important;background:#324c65!important;border-color:#567795!important;opacity:1;
+}
+#admin-overlay .admin-matrix th.user-col > div {padding-left:10px;}
+#admin-overlay .admin-matrix td.ch-cell > div {padding-left:22px;}
+/* The entire occupied cell in a moving row/column becomes a translucent slot. */
+#admin-overlay .admin-matrix .yy-patch-placeholder{
+  background:rgba(75,138,183,.11)!important;
+  outline:1px dashed rgba(129,184,224,.44)!important;
+  outline-offset:-2px;
+  box-shadow:inset 0 0 0 1px rgba(68,132,185,.13)!important;
+}
+#admin-overlay .admin-matrix .yy-patch-placeholder > * {visibility:hidden!important;}
+/* Actual live-looking row/column clone: one contiguous elevated slab. */
+.yy-patch-floating-slab{
+  position:fixed;z-index:99999;pointer-events:none;
+  transform-origin:center center;will-change:transform,opacity;
+  border:1px solid rgba(130,189,236,.75);border-radius:9px;
+  overflow:hidden;opacity:.97;
+  background:#1e2937;
+  box-shadow:0 20px 50px rgba(0,0,0,.68),0 6px 16px rgba(0,0,0,.5),0 0 0 1px rgba(143,193,229,.17);
+  transition:box-shadow 180ms ease,opacity 160ms ease;
+}
+.yy-patch-floating-slab table{margin:0!important;border-collapse:collapse!important;border-spacing:0!important;table-layout:fixed!important;}
+.yy-patch-floating-slab th,.yy-patch-floating-slab td{box-sizing:border-box!important;position:relative!important;}
+.yy-patch-floating-slab th,.yy-patch-floating-slab td{background:#263342!important;}
+.yy-patch-floating-slab .yy-patch-grip{opacity:1!important;}
+.yy-patch-floating-slab *{pointer-events:none!important;}
+.yy-patch-floating-slab.yy-patch-fading{opacity:0!important;}
+body.yy-patch-drag-active{user-select:none!important;-webkit-user-select:none!important;}
+@media (prefers-reduced-motion:reduce){
+ .yy-patch-floating-slab{transition:none!important;}
+}
+</style>
 </head>
 
 <body onload="if(window.forceResize) window.forceResize()">
@@ -2526,7 +2581,7 @@ select:not([multiple]):not([size]){
 
           </div>
 
-          <div class="login-version">System version V52</div>
+          <div class="login-version">System version V53</div>
 
         </div>
 
@@ -5991,116 +6046,219 @@ select:not([multiple]):not([size]){
         sendData({type:'reorder-patch', channelOrder:state.channels.map(ch=>ch.id), userOrder:[...state.registeredUsers]});
         buildAdminMatrix(); buildTallyAssignmentUI();
       };
-      /* v52 PATCH drag: the grip is the only drag activator; 170ms long press,
-         floating card-like helper, preview reorder of whole rows/columns. The
-         existing synchronized reorder-patch message is sent on release only. */
+      /* v53: long-press a subtle top-left grip. Float a complete physical
+         USER COLUMN (header + all its cells), or PARTY ROW (name + every SET
+         cell), rather than a label-sized token. Original cells remain as a
+         translucent placeholder, neighboring slots FLIP into place smoothly.
+         Only release commits saved IDs + reorder-patch, never modifies audio. */
       const bindPatchGrip = (grip, kind) => {
-        let pending = null, drag = null, timer = 0;
-        const getTable = () => container.querySelector('.admin-matrix');
-        const getNodes = () => kind === 'user'
-          ? Array.from(getTable()?.querySelectorAll('thead th.user-col') || [])
-          : Array.from(getTable()?.querySelectorAll('tbody tr[data-patch-party]') || []);
-        const position = (e, item) => kind === 'user'
-          ? e.clientX - item.getBoundingClientRect().left - item.getBoundingClientRect().width / 2
-          : e.clientY - item.getBoundingClientRect().top - item.getBoundingClientRect().height / 2;
-        const moveTableColumn = (from, to) => {
-          if (from === to) return;
-          const table=getTable(); if(!table) return;
-          for (const row of table.querySelectorAll('tr')) {
-            const cells=Array.from(row.children);
-            const element=cells[from+1]; if (!element) continue; // diagonal header is fixed
-            const reference=cells[to+1];
-            if (to < from) row.insertBefore(element,reference);
-            else row.insertBefore(element, reference?.nextSibling || null);
-          }
+        let pending=null, drag=null, timer=0;
+        const getTable=()=>container.querySelector('.admin-matrix');
+        const getNodes=()=>kind==='user'
+          ? Array.from(getTable()?.querySelectorAll('thead th.user-col')||[])
+          : Array.from(getTable()?.querySelectorAll('tbody tr[data-patch-party]')||[]);
+        const getIndexCells=index=>Array.from(getTable()?.querySelectorAll('tr')||[])
+          .map(row=>row.children[index+1]).filter(Boolean);
+        const liveCells=()=>kind==='user' ? getIndexCells(getNodes().indexOf(drag?.origin)) : [drag?.origin].filter(Boolean);
+        const getRepresentative=()=>kind==='user' ? getNodes() : Array.from(getTable()?.querySelectorAll('tbody tr[data-patch-party]')||[]);
+        const visualRects=()=>{
+          const elements=kind==='user'
+            ? Array.from(getTable()?.querySelectorAll('tr')||[]).flatMap(row=>Array.from(row.children).slice(1))
+            : getRepresentative();
+          const old=new Map();for(const el of elements)old.set(el,el.getBoundingClientRect());
+          return old;
         };
-        const moveTableRow = (from, to) => {
+        const animatePositions=before=>{
+          if(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;
+          before.forEach((r,el)=>{
+            if(!el.isConnected||el.classList.contains('yy-patch-placeholder'))return;
+            const after=el.getBoundingClientRect();
+            const dx=r.left-after.left,dy=r.top-after.top;
+            if(Math.abs(dx)<.5&&Math.abs(dy)<.5)return;
+            try{el.animate([{transform:`translate3d(${dx}px,${dy}px,0)`},{transform:'translate3d(0,0,0)'}],
+              {duration:210,easing:'cubic-bezier(.22,1,.36,1)'})}catch(e){}
+          });
+        };
+        const moveColumn=(from,to)=>{
           if(from===to)return;
-          const rows=getNodes(), el=rows[from], target=rows[to];if(!el||!target)return;
-          target.parentNode.insertBefore(el,from < to ? target.nextSibling : target);
+          const old=visualRects();
+          for(const row of getTable()?.querySelectorAll('tr')||[]){
+            const cells=Array.from(row.children),el=cells[from+1],target=cells[to+1];
+            if(!el||!target)continue;
+            row.insertBefore(el,to<from?target:target.nextSibling);
+          }
+          animatePositions(old);
         };
-        const cancelPending=()=>{clearTimeout(timer);timer=0;pending=null};
-        const cleanup=()=>{
-          clearTimeout(timer);timer=0;
-          if(drag){ drag.origin?.classList.remove('yy-patch-placeholder');drag.ghost?.remove(); }
-          document.body.classList.remove('yy-patch-drag-active');
-          drag=null;pending=null;
+        const moveRow=(from,to)=>{
+          if(from===to)return;
+          const rows=getNodes(),el=rows[from],target=rows[to];if(!el||!target)return;
+          const old=visualRects();
+          target.parentNode.insertBefore(el,from<to?target.nextSibling:target);
+          animatePositions(old);
+        };
+        const removeListeners=()=>{
           window.removeEventListener('pointermove',onMove,true);
           window.removeEventListener('pointerup',onEnd,true);
           window.removeEventListener('pointercancel',onCancel,true);
+          window.removeEventListener('keydown',onKey,true);
+        };
+        const cleanup=({animateGhost=false}={})=>{
+          clearTimeout(timer);timer=0;
+          if(drag){
+            drag.cells.forEach(el=>el.classList.remove('yy-patch-placeholder'));
+            if(animateGhost&&drag.ghost.isConnected){
+              const ghost=drag.ghost;
+              ghost.classList.add('yy-patch-fading');
+              ghost.style.transform='translate3d(0,0,0) scale(1)';
+              setTimeout(()=>ghost.remove(),185);
+            }else drag.ghost.remove();
+          }
+          document.body.classList.remove('yy-patch-drag-active');
+          drag=null;pending=null;removeListeners();
+        };
+        /* Clone the full row / entire column as a single floating table with
+           measured native widths and heights, not a small floating label. */
+        const buildGhost=(origin,index)=>{
+          const table=getTable();if(!table)return null;
+          const ghost=document.createElement('div');ghost.className='yy-patch-floating-slab';
+          ghost.setAttribute('aria-hidden','true');
+          const floatingTable=document.createElement('table');floatingTable.className='admin-matrix';
+          const srcCells=kind==='user' ? getIndexCells(index) : Array.from(origin.children);
+          const sourceRect=kind==='user'?origin.getBoundingClientRect():origin.getBoundingClientRect();
+          let totalWidth=0,totalHeight=0;
+          const safeClone=(cell,w,h)=>{
+            const clone=cell.cloneNode(true);
+            clone.classList.remove('yy-patch-placeholder');
+            clone.removeAttribute('id');clone.querySelectorAll('[id]').forEach(x=>x.removeAttribute('id'));
+            clone.querySelectorAll('[onclick]').forEach(x=>x.removeAttribute('onclick'));
+            clone.querySelectorAll('input,select,button,textarea').forEach(x=>{x.tabIndex=-1;x.disabled=true});
+            clone.style.setProperty('width',w+'px','important');
+            clone.style.setProperty('min-width',w+'px','important');
+            clone.style.setProperty('max-width',w+'px','important');
+            clone.style.setProperty('height',h+'px','important');
+            clone.style.setProperty('box-sizing','border-box','important');
+            clone.style.setProperty('position','relative','important');
+            return clone;
+          };
+          if(kind==='user'){
+            const thead=document.createElement('thead'),tbody=document.createElement('tbody');
+            srcCells.forEach((cell,i)=>{
+              const r=cell.getBoundingClientRect(),tr=document.createElement('tr');
+              tr.style.height=r.height+'px';tr.appendChild(safeClone(cell,r.width,r.height));
+              (i===0?thead:tbody).appendChild(tr);
+              totalHeight+=r.height;totalWidth=Math.max(totalWidth,r.width);
+            });
+            floatingTable.append(thead,tbody);
+          }else{
+            const tbody=document.createElement('tbody'),tr=document.createElement('tr');
+            tr.style.height=sourceRect.height+'px';
+            srcCells.forEach(cell=>{
+              const r=cell.getBoundingClientRect();totalWidth+=r.width;
+              tr.appendChild(safeClone(cell,r.width,sourceRect.height));
+            });
+            tbody.appendChild(tr);floatingTable.appendChild(tbody);
+            totalHeight=sourceRect.height;
+          }
+          const tableWidth=Math.max(1,totalWidth),tableHeight=Math.max(1,totalHeight);
+          floatingTable.style.width=tableWidth+'px';
+          ghost.style.width=tableWidth+'px';ghost.style.height=tableHeight+'px';
+          ghost.style.left=sourceRect.left+'px';ghost.style.top=sourceRect.top+'px';
+          ghost.appendChild(floatingTable);
+          document.body.appendChild(ghost);
+          return {ghost,sourceRect,totalWidth:tableWidth,totalHeight:tableHeight};
         };
         const startDrag=()=>{
           if(!pending)return;
-          const {ev, id}=pending;
-          const nodes=getNodes();
-          const origin=nodes.find(n=>n.dataset[kind === 'user'?'patchUid':'patchParty']===id);
+          const nodes=getNodes(),origin=nodes.find(n=>n.dataset[kind==='user'?'patchUid':'patchParty']===pending.id);
           if(!origin){cleanup();return;}
-          const label=kind==='user'?id:(state.channels?.find(c=>c.id===id)?.name||id);
-          const ghost=document.createElement('div');ghost.className='yy-patch-floating-card';
-          ghost.innerHTML='<span class="yy-grip-bars" aria-hidden="true">☰</span><span></span>';
-          ghost.querySelector('span').textContent=label;
-          document.body.appendChild(ghost);
-          drag={id, origin, ghost, x:ev.clientX, y:ev.clientY, moved:false};
-          origin.classList.add('yy-patch-placeholder');
+          const index=nodes.indexOf(origin),info=buildGhost(origin,index);
+          if(!info){cleanup();return;}
+          drag={id:pending.id,origin,ghost:info.ghost,start:pending.ev,pointerId:pending.pointerId,
+            cells:kind==='user'?getIndexCells(index):[origin],moved:false,dx:0,dy:0,
+            baseLeft:info.sourceRect.left,baseTop:info.sourceRect.top,
+            originScrollLeft:container.querySelector('.admin-matrix-wrapper')?.scrollLeft||0,
+            slots:nodes.map(n=>{const r=n.getBoundingClientRect();return kind==='user'?{low:r.left,high:r.right}:{low:r.top,high:r.bottom}})};
+          drag.cells.forEach(el=>el.classList.add('yy-patch-placeholder'));
           document.body.classList.add('yy-patch-drag-active');
-          positionGhost(ev.clientX,ev.clientY);
+          requestAnimationFrame(()=>{if(drag?.ghost===info.ghost)info.ghost.style.transform='translate3d(0,0,0) scale(1.025)';});
         };
-        const positionGhost=(x,y)=>{
+        const updateGhost=(x,y)=>{
           if(!drag)return;
-          drag.ghost.style.left=(x+14)+'px';drag.ghost.style.top=(y+12)+'px';
+          const dx=x-drag.start.clientX,dy=y-drag.start.clientY;
+          drag.dx=dx;drag.dy=dy;
+          drag.ghost.style.transform=`translate3d(${kind==='user'?dx:Math.max(-12,Math.min(12,dx))}px,${kind==='party'?dy:Math.max(-12,Math.min(12,dy))}px,0) scale(1.025)`;
         };
         const onMove=e=>{
-          if(!pending && !drag)return;
-          if(pending && !drag){
-            if(Math.hypot(e.clientX-pending.ev.clientX,e.clientY-pending.ev.clientY)>9)cleanup();
+          if(!pending&&!drag)return;
+          if(pending.pointerId!==e.pointerId)return;
+          if(!drag){
+            if(Math.hypot(e.clientX-pending.ev.clientX,e.clientY-pending.ev.clientY)>10)cleanup();
             return;
           }
-          if(!drag)return;
-          e.preventDefault();positionGhost(e.clientX,e.clientY);
-          const nodes=getNodes();const from=nodes.indexOf(drag.origin);
-          // Candidate: the current visual slot under the pointer. The midpoint
-          // threshold avoids chaotic swapping when the user is stationary.
-          let target=-1;
-          for(let i=0;i<nodes.length;i++){
-            const r=nodes[i].getBoundingClientRect();
-            if(kind==='user' ? e.clientX>=r.left&&e.clientX<=r.right
-                             : e.clientY>=r.top&&e.clientY<=r.bottom){target=i;break;}
+          e.preventDefault();updateGhost(e.clientX,e.clientY);
+          const nodes=getNodes(),from=nodes.indexOf(drag.origin);
+          if(from<0)return;
+          const coord=kind==='user'?e.clientX:e.clientY;
+          const scrollShift=kind==='user' ? drag.originScrollLeft - (container.querySelector('.admin-matrix-wrapper')?.scrollLeft||0) : 0;
+          /* Fixed original slot locations prevent oscillation while adjacent
+             cells are animating into their new positions. */
+          const target=drag.slots.findIndex(r=>coord>=r.low+scrollShift&&coord<=r.high+scrollShift);
+          if(target>=0&&target!==from){
+            // 20% threshold: adjacent targets need not be crossed halfway.
+            const low=drag.slots[target].low+scrollShift,high=drag.slots[target].high+scrollShift;
+            const threshold=Math.min(7,(high-low)*.08);
+            if(target>from&&coord<low+threshold)return;
+            if(target<from&&coord>high-threshold)return;
+            if(kind==='user')moveColumn(from,target);else moveRow(from,target);
+            drag.moved=true;
+            // The moving slot changed. Keep the whole column marked as a shadow.
+            drag.cells.forEach(el=>el.classList.remove('yy-patch-placeholder'));
+            drag.cells=liveCells();drag.cells.forEach(el=>el.classList.add('yy-patch-placeholder'));
           }
-          if(target<0 || target===from)return;
-          if(kind==='user')moveTableColumn(from,target);
-          if(kind==='party')moveTableRow(from,target);
-          drag.moved=true;
+          // Gently scroll near the edges of the matrix without jumping the page.
+          const wrapper=container.querySelector('.admin-matrix-wrapper');
+          if(kind==='user'&&wrapper){
+            const rect=wrapper.getBoundingClientRect(),edge=38;
+            if(e.clientX<rect.left+edge)wrapper.scrollLeft-=Math.min(12,(rect.left+edge-e.clientX)/2);
+            else if(e.clientX>rect.right-edge)wrapper.scrollLeft+=Math.min(12,(e.clientX-(rect.right-edge))/2);
+          }
         };
         const finish=(cancel=false)=>{
+          clearTimeout(timer);timer=0;
           const d=drag;
-          if(d && d.moved && !cancel){
+          if(d?.moved&&!cancel){
             if(kind==='user'){
               const order=getNodes().map(n=>n.dataset.patchUid);
               if(order.length===state.registeredUsers.length)state.registeredUsers=order;
-            } else {
+            }else{
               const order=getNodes().map(n=>n.dataset.patchParty);
               const byId=new Map(state.channels.map(ch=>[ch.id,ch]));
               state.channels=[...state.channels.filter(ch=>ch.id==='ch-video'),...order.map(id=>byId.get(id)).filter(Boolean)];
               initChannelsDOM();
               if(state.userAssignments?.[state.myUserId])applyAssignments(state.userAssignments[state.myUserId]);
             }
-            cleanup();publishPatchOrder();return;
+            cleanup({animateGhost:true});publishPatchOrder();return;
           }
-          // For a cancelled touch, discard preview changes and use original arrays.
-          cleanup();if(cancel && d?.moved)buildAdminMatrix();
+          cleanup({animateGhost:!!d});
+          if(cancel&&d?.moved)buildAdminMatrix();
         };
-        const onEnd=()=>finish(false),onCancel=()=>finish(true);
+        const onEnd=e=>{if(!pending||e.pointerId!==pending.pointerId)return;finish(false);};
+        const onCancel=e=>{if(!pending||e.pointerId!==pending.pointerId)return;finish(true);};
+        const onKey=e=>{if(e.key==='Escape'){e.preventDefault();finish(true);}};
         grip.addEventListener('pointerdown',e=>{
-          if(e.button!==0 && e.pointerType==='mouse')return;
-          if(pending || drag)return;
+          if(e.pointerType==='mouse'&&e.button!==0)return;
+          if(pending||drag)return;
           e.stopPropagation();
-          pending={id:kind==='user'?grip.dataset.uid:grip.dataset.id,ev:{clientX:e.clientX,clientY:e.clientY}};
+          pending={id:kind==='user'?grip.dataset.uid:grip.dataset.id,
+            pointerId:e.pointerId,ev:{clientX:e.clientX,clientY:e.clientY}};
           window.addEventListener('pointermove',onMove,true);
           window.addEventListener('pointerup',onEnd,true);
           window.addEventListener('pointercancel',onCancel,true);
-          timer=setTimeout(startDrag,170);
+          window.addEventListener('keydown',onKey,true);
+          timer=setTimeout(startDrag,180);
         });
-        grip.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();});
+        grip.addEventListener('click',e=>{e.preventDefault();e.stopPropagation()});
+        grip.addEventListener('contextmenu',e=>e.preventDefault());
       };
       container.querySelectorAll('.yy-user-grip').forEach(grip=>bindPatchGrip(grip,'user'));
       container.querySelectorAll('.yy-party-grip').forEach(grip=>bindPatchGrip(grip,'party'));
