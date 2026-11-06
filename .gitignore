@@ -1,0 +1,8 @@
+node_modules/
+.wrangler/
+.dev.vars*
+.env*
+*.pem
+*.key
+*service-account*.json
+work/
