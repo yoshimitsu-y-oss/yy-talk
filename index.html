@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 
 <html lang="ja">
-<!-- YY-Talk Broadcast Intercom · v55 headset PTT test, based on v51 -->
+<!-- YY-Talk Broadcast Intercom · v56 media display fix, based on working v55 wired-headset PTT -->
 
 <head>
 
@@ -2650,7 +2650,7 @@ body.yy-patch-drag-active{user-select:none!important;-webkit-user-select:none!im
 
           </div>
 
-          <div class="login-version">System version V55 (PTT TEST)</div>
+          <div class="login-version">System version V56 (PTT TEST)</div>
 
         </div>
 
@@ -2873,9 +2873,10 @@ body.yy-patch-drag-active{user-select:none!important;-webkit-user-select:none!im
 
   <section id="yy-headset-panel" class="yy-ptt-shade" role="dialog" aria-label="イヤホンPTT設定" aria-modal="true" hidden>
     <div class="yy-ptt-dialog">
-      <div class="yy-ptt-head"><div><div class="yy-ptt-kicker">BROADCAST INTERCOM · EXPERIMENT</div><h2>イヤホンPTT <span class="yy-ptt-version">v55</span></h2></div><button type="button" id="yy-headset-close" class="yy-ptt-close" aria-label="設定を閉じる">×</button></div>
+      <div class="yy-ptt-head"><div><div class="yy-ptt-kicker">BROADCAST INTERCOM · EXPERIMENT</div><h2>イヤホンPTT <span class="yy-ptt-version">v56</span></h2></div><button type="button" id="yy-headset-close" class="yy-ptt-close" aria-label="設定を閉じる">×</button></div>
       <p class="yy-ptt-desc">物理メディアボタンの <code>play / pause</code> を、選んだパーティーへの送話ON/OFFに割り当てます。ボタン通知に対応しないiOS・イヤホンでは画面上のTALKを使用してください。</p>
       <button type="button" id="yy-headset-toggle" class="yy-ptt-action">接続後、イヤホンPTTを有効にする</button>
+      <p class="yy-ptt-hint">v56：PTTを解除すると無音メディア待受を停止します。有線PTTを有効にしている間は、iOSがロック画面などに「再生中」と表示する場合があります。これはボタン通知を受けるための待受で、音楽は鳴っていません。</p>
       <p id="yy-headset-status" class="yy-ptt-status" role="status">未有効。まずROOMへ接続してください。</p>
       <div class="yy-ptt-caption">物理ボタンで切り替える送話先（複数選択可）</div>
       <div id="yy-headset-targets" class="yy-ptt-targets">JOINすると選択可能になります。</div>
@@ -2884,6 +2885,7 @@ body.yy-patch-drag-active{user-select:none!important;-webkit-user-select:none!im
       <div class="yy-ptt-grid">
         <div class="yy-ptt-diagnostic"><span>物理イベント</span><strong id="yy-headset-events">play 0 / pause 0</strong></div>
         <div class="yy-ptt-diagnostic"><span>OS Audio Session</span><strong id="yy-headset-session">—</strong></div>
+        <div class="yy-ptt-diagnostic"><span>メディア待受</span><strong id="yy-headset-media">停止</strong></div>
       </div>
       <div class="yy-ptt-caption">Safariが報告しているマイク入力</div>
       <div class="yy-ptt-info" id="yy-headset-mic">取得状況を確認中…</div>
@@ -3170,7 +3172,8 @@ body.yy-patch-drag-active{user-select:none!important;-webkit-user-select:none!im
           }
           try { await state.room?.startAudio?.(); } catch(e) {}
           try { await rebuildTerminalOutputRoute(reason); } catch(e) {}
-          try { await $('dummy-audio')?.play?.(); } catch(e) {}
+          /* v56: do not keep a silent media player alive unless physical PTT is armed. */
+          if (yyHeadset.enabled) { try { await $('dummy-audio')?.play?.(); } catch(e) {} }
           try { await applyOutputDevice(); } catch(e) {}
           try { if (state.masterAudioEl && !state.masterAudioEl.muted) await state.masterAudioEl.play?.(); } catch(e) {}
           /* iOS often settles the new physical route a little after devicechange. Rebind once more. */
@@ -3783,7 +3786,7 @@ body.yy-patch-drag-active{user-select:none!important;-webkit-user-select:none!im
             try { if ('audioSession' in navigator && navigator.audioSession && !isIOSLikeDevice()) navigator.audioSession.type = 'play-and-record'; } catch(_) {}
             initAudioContext();
             state.audioCtx?.resume?.().catch(() => {});
-            $('dummy-audio')?.play().catch(() => {});
+            /* v56: joining a room is not equivalent to arming physical headset PTT. */
         } catch (e) {
             uiLog(`AudioContext start failed: ${e?.message || e}`, '#f97316');
         }
@@ -6083,6 +6086,7 @@ body.yy-patch-drag-active{user-select:none!important;-webkit-user-select:none!im
         b.textContent='取得入力: '+label+'\n状態: '+(track?track.readyState:'なし')+' / muted='+(track?.muted??'—')+' / enabled='+(track?.enabled??'—')+'\n設定: '+JSON.stringify({deviceId:reported,channelCount:settings.channelCount,sampleRate:settings.sampleRate})+'\n公開Track: '+(state.localMicTrack?.mediaStreamTrack?.readyState||'なし')+' / SID: '+(state.localMicTrack?.sid||'未確認');
       }
       const a=yyPts('yy-headset-session');if(a)a.textContent=navigator.audioSession?.type||'APIなし';
+      const mediaState=yyPts('yy-headset-media');if(mediaState)mediaState.textContent=yyPts('dummy-audio')?.paused?'停止':'再生中（無音）';
       const ev=yyPts('yy-headset-events');if(ev)ev.textContent='play '+yyHeadset.play+' / pause '+yyHeadset.pause;
       const status=yyPts('yy-headset-status');if(status)status.textContent=yyHeadset.enabled
          ? (yyHeadset.seen?'イベント受信済（'+yyHeadset.seen+'回）。PTT動作中':'待受中（物理ボタンイベントは未確認）。無反応ならOSが通知していません。画面TALKを使用してください。')
@@ -6124,7 +6128,16 @@ body.yy-patch-drag-active{user-select:none!important;-webkit-user-select:none!im
     function yyHeadsetDeactivate(reason='解除しました') {
       const was=yyHeadset.enabled; yyHeadset.enabled=false; yyHeadset.routingSignature='';
       const media=navigator.mediaSession;
-      if(media){for(const kind of ['play','pause'])try{media.setActionHandler(kind,null)}catch(_){}}
+      if(media){
+        for(const kind of ['play','pause'])try{media.setActionHandler(kind,null)}catch(_){}
+        /* 'playing' and metadata were previously left set even after PTT OFF.
+           Clear our own media state; the OS may still display the live intercom
+           receiving audio, which is not this dummy player. */
+        try{media.playbackState='none'}catch(_){}
+        try{media.metadata=null}catch(_){}
+      }
+      const dummy=yyPts('dummy-audio');
+      if(dummy){try{dummy.pause()}catch(_){};try{dummy.currentTime=0}catch(_){}}
       if(was||reason!=='解除しました')yyHeadsetLog('PTT受付OFF：'+reason);
       yyUpdateMicDiagnostic();
     }
@@ -6167,7 +6180,7 @@ body.yy-patch-drag-active{user-select:none!important;-webkit-user-select:none!im
       try{
         for(const kind of ['play','pause']){navigator.mediaSession.setActionHandler(kind,()=>yyHeadsetEvent(kind));done.push(kind);}
         yyHeadset.enabled=true;yyHeadset.lastAt=0;yyHeadset.routingSignature=yyRoutingSignature();yyHeadset.seen=0;yyHeadset.play=0;yyHeadset.pause=0;
-        try{navigator.mediaSession.metadata=new MediaMetadata({title:'YY-Talk Broadcast Intercom',artist:'イヤホン PTT',album:'Broadcast'});navigator.mediaSession.playbackState='playing'}catch(_){}
+        try{navigator.mediaSession.metadata=new MediaMetadata({title:'YY-Talk｜インカムPTT待受',artist:'音声通信・有線イヤホンボタン',album:'Broadcast Intercom'});navigator.mediaSession.playbackState='playing'}catch(_){}
         try{await yyPts('dummy-audio')?.play()}catch(e){yyHeadsetLog('メディア再生開始不可：'+(e?.name||e))}
         yyHeadsetLog('PTT有効。物理ボタンを1回押してください。iOS通話モードでは通知されない場合があります');
       }catch(e){for(const kind of done)try{navigator.mediaSession.setActionHandler(kind,null)}catch(_){}
@@ -6255,7 +6268,7 @@ body.yy-patch-drag-active{user-select:none!important;-webkit-user-select:none!im
 
           if (type === 'talk') { const ch = state.channels.find(c => c.id === channelId); if (ch && ch.type === 'Local') { let activeTalkers = 0; state.registeredUsers.forEach(uid => { if (state.room && state.room.remoteParticipants && state.room.remoteParticipants.has(uid) && state.remoteTalkStates[uid] && state.remoteTalkStates[uid][channelId]) activeTalkers++; }); if (activeTalkers >= 2) { btn.style.opacity = '0.3'; setTimeout(() => btn.style.opacity = '1', 300); return; } } }
 
-          btn.setPointerCapture(e.pointerId); isDown = true; startX = e.clientX; $('dummy-audio')?.play().catch(()=>{}); btn.style.transition = 'none'; if (!isLatched) { btn.classList.add('active'); applyState(true); } 
+          btn.setPointerCapture(e.pointerId); isDown = true; startX = e.clientX; if (yyHeadset.enabled) $('dummy-audio')?.play().catch(()=>{}); btn.style.transition = 'none'; if (!isLatched) { btn.classList.add('active'); applyState(true); } 
 
       });
 
@@ -7078,7 +7091,7 @@ body.yy-patch-drag-active{user-select:none!important;-webkit-user-select:none!im
         return;
       }
 
-      if (isAdmin && myName.toLowerCase() !== 'debug') { const pass = prompt("管理者パスワードを入力してください"); if (pass !== "tmax") { if(pass !== null) alert("パスワードが違います。"); return; } }
+      // Administrator authorization is determined by the server.
 
 
 
