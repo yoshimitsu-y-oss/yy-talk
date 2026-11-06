@@ -1,0 +1,13 @@
+{
+  "name": "yy-talk-secure-development",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node test/security.test.js && node test/client.test.js",
+    "check": "node scripts/check.mjs",
+    "build": "python3 scripts/build.py"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

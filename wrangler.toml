@@ -1,3 +1,21 @@
-name = "yy-talk"
+name = "yy-talk-security-dev"
 main = "worker.js"
-compatibility_date = "2024-04-25"
+compatibility_date = "2026-11-01"
+workers_dev = false
+preview_urls = false
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = true
+
+[[durable_objects.bindings]]
+name = "ROOMS"
+class_name = "RoomCoordinator"
+
+[[migrations]]
+tag = "v1-secure-rooms"
+new_sqlite_classes = ["RoomCoordinator"]
+
+# No production routes, domains, account IDs or credentials.
+# See docs/SETUP-ja.md for required development settings and secret bindings.
